@@ -16,14 +16,15 @@ function saveOpen(open) {
 const quizCount = (n) => `${n} ${n === 1 ? "quiz" : "quizzes"}`;
 const CHEVRON = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
 
-// Stars earned over stars possible for a folder, e.g. "★ 4/6".
+// Stars earned over stars possible for a folder, e.g. "★ 4/18". Levels still in progress don't count.
 function starTotal(quizzes) {
-  const earned = quizzes.reduce((sum, q) => sum + (loadRating(q.id)?.stars ?? 0), 0);
+  const earned = quizzes.reduce((sum, q) => sum + earnedStars(quizLevels(q)), 0);
+  const possible = quizzes.reduce((sum, q) => sum + quizLevels(q).length, 0);
   const span = document.createElement("span");
   span.className = earned ? "total earned" : "total";
-  span.title = `${earned} of ${quizzes.length * 3} stars`;
+  span.title = `${earned} of ${possible} stars`;
   span.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_PATH}"/></svg>`;
-  span.append(`${earned}/${quizzes.length * 3}`);
+  span.append(`${earned}/${possible}`);
   return span;
 }
 
@@ -31,7 +32,7 @@ function renderQuizList(index, nameByCode) {
   const tree = document.getElementById("quiz-tree");
   document.getElementById("quiz-links-empty").hidden = index.quizzes.length > 0;
   const legend = document.getElementById("rating-help");
-  legend.textContent = RATING_LEGEND;
+  legend.replaceChildren(starEl(1), " level completed · ", starEl(0.5), " in progress");
   legend.title = RATING_HELP;
 
   const continents = new Map(); // continent -> place -> quizzes
@@ -73,9 +74,8 @@ function renderQuizList(index, nameByCode) {
     const name = document.createElement("span");
     name.className = "name";
     name.textContent = quiz.title;
-    const rating = loadRating(quiz.id);
-    const stars = starsEl(rating?.stars ?? 0, rating?.played ? `${rating.stars} of 3 stars` : "Not played yet");
-    if (!rating?.played) stars.classList.add("unplayed");
+    const stars = starsEl(quizLevels(quiz));
+    if (!loadRating(quiz.id)?.played) stars.classList.add("unplayed");
     a.append(name, stars);
     li.append(a);
     return li;

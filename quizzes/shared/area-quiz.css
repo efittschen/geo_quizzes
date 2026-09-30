@@ -73,7 +73,7 @@ body{overflow:hidden}
 .round small{color:var(--muted);font-size:.8rem;line-height:1.25}
 .round .n{grid-column:2;grid-row:1;font:600 1rem/1.1 var(--cond);color:var(--muted);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .round .best{grid-column:2;grid-row:2;display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:.75rem;color:var(--muted);white-space:nowrap}
-.round .stars svg{width:11px;height:11px}
+.tier-t .star{margin-left:2px}
 .round.custom{border-style:dashed}
 .icon{appearance:none;flex:0 0 36px;display:grid;place-items:center;border:1.5px solid var(--line);border-radius:var(--radius);background:transparent;color:var(--muted);cursor:pointer}
 .icon:hover{border-color:var(--ink);color:var(--ink)}

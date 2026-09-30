@@ -63,11 +63,14 @@ A country can have any number of quizzes. Clicking a country on the map lists th
          "id": "brazil-license-plates",
          "country": "076",
          "title": "License plates",
-         "description": "Optional one-liner shown in the country's quiz list."
+         "levels": 2,
+         "description": "Optional one-liner."
        }
      ]
    }
    ```
+
+   `levels` is how many stars the quiz has: one per difficulty level up to its hardest round (Beginner 1, Intermediate 2, Hard 3, Expert 4). A level's star is earned when every round of that level is played perfectly; the quiz page saves this progress in the browser, and the home and country pages show it.
 
    `country` is the country's [ISO 3166-1 numeric code](https://en.wikipedia.org/wiki/ISO_3166-1_numeric) as a 3-digit string (keep leading zeros, e.g. `"076"` for Brazil). That's how the map knows which country the quiz belongs to. A quiz covering several countries can list them all, e.g. `["356", "524"]`, and give an `area` name for the "All quizzes" list.
 

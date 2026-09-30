@@ -19,6 +19,7 @@
       "id": "brazil-ddd",
       "country": "076",
       "title": "Area Codes",
+      "levels": 4,
       "description": "Find phone area codes (DDD) or first-digit zones. Beginner to hard, including a street map with no borders.",
       "url": "quizzes/brazil-ddd/index.html"
     },
@@ -26,6 +27,7 @@
       "id": "brazil-states",
       "country": "076",
       "title": "States",
+      "levels": 2,
       "description": "Find Brazil's 27 states on the map, by name.",
       "url": "quizzes/brazil-states/index.html"
     },
@@ -33,6 +35,7 @@
       "id": "russia-codes",
       "country": "643",
       "title": "Area Codes",
+      "levels": 4,
       "description": "Find phone area codes, or zones by their first one or two digits. Includes a street map with no borders.",
       "url": "quizzes/russia-codes/index.html"
     },
@@ -40,6 +43,7 @@
       "id": "russia-regions",
       "country": "643",
       "title": "Regions",
+      "levels": 4,
       "description": "Find Russia's 8 federal districts and 83 regions on the map, by name.",
       "url": "quizzes/russia-regions/index.html"
     },
@@ -47,6 +51,7 @@
       "id": "mexico-codes",
       "country": "484",
       "title": "Area Codes",
+      "levels": 4,
       "description": "Find phone area codes, or zones by their first one or two digits. Includes a street map with no borders.",
       "url": "quizzes/mexico-codes/index.html"
     },
@@ -54,6 +59,7 @@
       "id": "mexico-states",
       "country": "484",
       "title": "States",
+      "levels": 3,
       "description": "Find Mexico's 32 states on the map, by name.",
       "url": "quizzes/mexico-states/index.html"
     },
@@ -61,6 +67,7 @@
       "id": "us-codes",
       "country": "840",
       "title": "Area Codes",
+      "levels": 4,
       "description": "Find phone area codes, overlays included. Pick the top N by area or city size, or play on a street map with no borders.",
       "url": "quizzes/us-codes/index.html"
     },
@@ -68,6 +75,7 @@
       "id": "us-states",
       "country": "840",
       "title": "States",
+      "levels": 3,
       "description": "Find the 50 states and Washington, D.C. on the map, by name.",
       "url": "quizzes/us-states/index.html"
     },
@@ -81,6 +89,7 @@
       ],
       "area": "South Asia",
       "title": "Scripts",
+      "levels": 4,
       "description": "Read a sign in one of 13 scripts and click where you'd see it: India, Nepal, Bangladesh and Bhutan.",
       "url": "quizzes/south-asia-scripts/index.html"
     },
@@ -94,6 +103,7 @@
       ],
       "area": "South Asia",
       "title": "States & Countries",
+      "levels": 3,
       "description": "Find India's states and territories, Nepal, Bangladesh and Bhutan on the map, by name.",
       "url": "quizzes/south-asia-regions/index.html"
     },
@@ -101,6 +111,7 @@
       "id": "india-std",
       "country": "356",
       "title": "STD Codes",
+      "levels": 4,
       "description": "See a real STD code and click the region its first two digits (or first digit) point to. Includes a street map with no borders.",
       "url": "quizzes/india-std/index.html"
     },
@@ -108,6 +119,7 @@
       "id": "south-africa-codes",
       "country": "710",
       "title": "Area Codes",
+      "levels": 3,
       "description": "Find phone area codes or first-digit zones. Includes a street map with no borders.",
       "url": "quizzes/south-africa-codes/index.html"
     },
@@ -115,6 +127,7 @@
       "id": "south-africa-provinces",
       "country": "710",
       "title": "Provinces",
+      "levels": 1,
       "description": "Find South Africa's nine provinces on the map, by name.",
       "url": "quizzes/south-africa-provinces/index.html"
     },
@@ -122,6 +135,7 @@
       "id": "canada-codes",
       "country": "124",
       "title": "Area Codes",
+      "levels": 3,
       "description": "Find phone area codes, overlays included. Pick the top N by area, or play on a street map with no borders.",
       "url": "quizzes/canada-codes/index.html"
     },
@@ -129,6 +143,7 @@
       "id": "canada-provinces",
       "country": "124",
       "title": "Provinces",
+      "levels": 2,
       "description": "Find Canada's 10 provinces and 3 territories on the map, by name.",
       "url": "quizzes/canada-provinces/index.html"
     },
@@ -136,6 +151,7 @@
       "id": "australia-prefixes",
       "country": "036",
       "title": "Phone Numbers",
+      "levels": 3,
       "description": "See a number's area code and next two digits (the old pre-1990s area codes) and click one of 55 regions; easier modes use the first digit or only the area code. Includes a street map with no borders.",
       "url": "quizzes/australia-prefixes/index.html"
     },
@@ -143,6 +159,7 @@
       "id": "australia-states",
       "country": "036",
       "title": "States",
+      "levels": 1,
       "description": "Find Australia's six states and two mainland territories on the map, by name.",
       "url": "quizzes/australia-states/index.html"
     },
@@ -150,6 +167,7 @@
       "id": "argentina-codes",
       "country": "032",
       "title": "Area Codes",
+      "levels": 4,
       "description": "Find area codes (características) or their zones by first one or two digits. Includes a street map with no borders.",
       "url": "quizzes/argentina-codes/index.html"
     },
@@ -157,6 +175,7 @@
       "id": "argentina-provinces",
       "country": "032",
       "title": "Provinces",
+      "levels": 2,
       "description": "Find Argentina's 23 provinces and the City of Buenos Aires on the map, by name.",
       "url": "quizzes/argentina-provinces/index.html"
     },
@@ -164,6 +183,7 @@
       "id": "turkey-codes",
       "country": "792",
       "title": "Area Codes",
+      "levels": 4,
       "description": "Find a province by its area code or its zone (first one or two digits). Includes a street map with no borders.",
       "url": "quizzes/turkey-codes/index.html"
     },
@@ -171,6 +191,7 @@
       "id": "turkey-provinces",
       "country": "792",
       "title": "Provinces",
+      "levels": 4,
       "description": "Find Turkey's 81 provinces on the map, by name, grouped by region.",
       "url": "quizzes/turkey-provinces/index.html"
     }

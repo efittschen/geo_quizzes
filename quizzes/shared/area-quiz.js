@@ -594,25 +594,34 @@
   }
 
   const bestFor = (kind, ids, map = chosenMap) => load(`best.${kind}.${map}.` + [...ids].sort().join(','));
-  // Stars for a first-try score: three for all right, two for 80%, one for half.
-  const starsFor = pct => pct >= 1 ? 3 : pct >= 0.8 ? 2 : pct >= 0.5 ? 1 : 0;
+  // One star per level, up to the quiz's highest: a level's star is earned when every one of its rounds has been
+  // played perfectly (all right on the first try, on either map). Until then the star fills with the average best
+  // score of those rounds. A level without rounds of its own follows the next harder one; random rounds don't count.
   const STAR = 'M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z';
-  const starsHtml = n => `<span class="stars" role="img" aria-label="${n} of 3 stars">` +
-    [0, 1, 2].map(i => `<svg viewBox="0 0 24 24" aria-hidden="true"${i < n ? ' class="on"' : ''}><path d="${STAR}"/></svg>`).join('') + '</span>';
-  // The quiz's rating for the home and country pages (saved per quiz folder, e.g. "brazil-ddd"): the stars of your
-  // best round at the quiz's hardest level; a round of an easier level earns one star at 80%. Both maps count.
+  const starHtml = p => {
+    const svg = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR}"/></svg>`;
+    return `<span class="star${p >= 1 ? ' done' : p > 0 ? ' part' : ''}" role="img" aria-label="${p >= 1 ? 'Level done' : `${Math.round(p * 100)}% done`}">${svg}` +
+      `<span class="fill" style="width:${Math.round(Math.min(p, 1) * 100)}%">${svg}</span></span>`;
+  };
   const PAGE_ID = document.body.dataset.quiz || location.pathname.replace(/\/(index\.html)?$/, '').split('/').pop();
-  function saveRating() {
-    const rounds = ROUNDS.filter(r => !r.random).map(r => { const ids = roundIds(r); return { kind: r.kind, ids, tier: tierOf(ids.length) }; });
-    if (!rounds.length) return;
-    const top = Math.max(...rounds.map(r => r.tier));
-    let stars = 0, played = false;
-    for (const r of rounds) for (const map of ['quiz', 'street']) {
-      const best = bestFor(r.kind, r.ids, map); if (!best) continue;
-      const pct = best.s / r.ids.length; played = true;
-      stars = Math.max(stars, r.tier === top ? starsFor(pct) : pct >= 0.8 ? 1 : 0);
+  function levelProgress() {
+    const rounds = ROUNDS.filter(r => !r.random).map(r => {
+      const ids = roundIds(r);
+      const best = Math.max(0, ...['quiz', 'street'].map(map => { const b = bestFor(r.kind, ids, map); return b ? b.s / ids.length : 0; }));
+      return { tier: tierOf(ids.length), best };
+    });
+    if (!rounds.length) return [];
+    const top = Math.max(...rounds.map(r => r.tier)), levels = [];
+    for (let t = top; t >= 0; t--) {
+      const own = rounds.filter(r => r.tier === t);
+      levels[t] = own.length ? own.reduce((sum, r) => sum + r.best, 0) / own.length : levels[t + 1];
     }
-    try { localStorage.setItem('geoquizzes.rating.' + PAGE_ID, JSON.stringify({ stars, played })); } catch (e) {}
+    return levels;
+  }
+  // Saved for the home and country pages, per quiz folder (e.g. "brazil-ddd").
+  function saveRating() {
+    const levels = levelProgress(); if (!levels.length) return;
+    try { localStorage.setItem('geoquizzes.rating.' + PAGE_ID, JSON.stringify({ levels, played: levels.some(p => p > 0) })); } catch (e) {}
   }
   const ICONS = {
     link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
@@ -630,11 +639,8 @@
     const n = document.createElement('span'); n.className = 'n'; n.textContent = plural(ids.length, KINDS[kind].noun);
     b.append(t, n);
     if (sub) { const s = document.createElement('small'); s.textContent = sub; b.append(s); }
-    const best = !random && bestFor(kind, ids);
-    if (best) {
-      const e = document.createElement('span'); e.className = 'best'; e.title = `Your best: ${best.s} of ${ids.length} on the first try`;
-      e.innerHTML = starsHtml(starsFor(best.s / ids.length)); e.append(` ${best.s}/${ids.length}`); b.append(e);
-    }
+    const best = !random && [bestFor(kind, ids, 'quiz'), bestFor(kind, ids, 'street')].filter(Boolean).sort((x, y) => y.s - x.s)[0];
+    if (best) { const e = document.createElement('span'); e.className = 'best'; e.textContent = (best.s === ids.length ? '✓ ' : '') + `${best.s}/${ids.length}`; b.append(e); }
     b.onclick = () => choose(key);
     return b;
   }
@@ -644,6 +650,7 @@
 
   function buildRounds() {
     const wrap = $('rounds'); wrap.replaceChildren();
+    const levels = levelProgress();
     const section = (tier, title, rows) => {
       if (!rows.length) return;
       const h = document.createElement('h3'); h.className = 'tier-t';
@@ -653,7 +660,8 @@
         h.append(lvl);
       }
       h.append(title);
-      const d = document.createElement('div'); d.className = 'tier'; d.append(h, ...rows); wrap.append(d);
+      if (tier >= 0 && levels[tier] !== undefined) h.insertAdjacentHTML('beforeend', starHtml(levels[tier]));
+      const d = document.createElement('div'); d.className = 'tier'; d.dataset.tier = tier; d.append(h, ...rows); wrap.append(d);
     };
     if (SHARED) section(-1, 'Shared with you', [withIcons(roundBtn('shared', SHARED.name, kindNote(SHARED.kind), SHARED.kind, SHARED.ids),
       iconBtn('save', 'Save to your quizzes', () => saveQuiz(SHARED.name, SHARED.kind, SHARED.ids)))]);

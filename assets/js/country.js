@@ -24,11 +24,10 @@ function renderQuizzes(quizzes) {
     const title = document.createElement("strong");
     title.textContent = quiz.title;
     a.appendChild(title);
-    const rating = loadRating(quiz.id);
     const row = document.createElement("span");
     row.className = "card-rating";
-    const stars = starsEl(rating?.stars ?? 0, rating?.played ? `${rating.stars} of 3 stars` : "Not played yet");
-    if (!rating?.played) stars.classList.add("unplayed");
+    const stars = starsEl(quizLevels(quiz));
+    if (!loadRating(quiz.id)?.played) stars.classList.add("unplayed");
     row.append(stars);
     row.title = RATING_HELP;
     a.appendChild(row);
