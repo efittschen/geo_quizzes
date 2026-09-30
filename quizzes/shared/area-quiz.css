@@ -159,6 +159,8 @@ body{overflow:hidden}
 #street path.ar.got,#street path.ar.t2,#street path.ar.t3,#street path.ar.miss{fill-opacity:.55;stroke:var(--ink);stroke-width:1;stroke-opacity:.6}
 #street path.ar.got{fill:var(--got)} #street path.ar.t2{fill:var(--t2)} #street path.ar.t3{fill:var(--t3)} #street path.ar.miss{fill:var(--miss)}
 #street path.ar.flash{fill:var(--bad);fill-opacity:.55;stroke:var(--bad);stroke-width:1.5;transition:none}
+/* setup preview on the street map: the round's areas, tinted */
+#street path.ar.pre{fill:var(--yellow);fill-opacity:.22}
 #street path.ar.sel{fill:var(--yellow);fill-opacity:.45;stroke:var(--ink);stroke-width:2}
 #street path.ar.ans{fill:var(--yellow);fill-opacity:.4;stroke:#15283A;stroke-width:3;animation:pulse 1s ease-in-out infinite alternate}
 .st-label span{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:700 14px/1 var(--cond);color:#15283A;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;pointer-events:none}

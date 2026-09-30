@@ -386,7 +386,7 @@
     flashTimers.clear();
     for (const a of AREAS) {
       EL[a].classList.remove('got', 't2', 't3', 'miss', 'ans', 'sel', 'flash', 'out');
-      if (SP[a]) SP[a].getElement().classList.remove('got', 't2', 't3', 'miss', 'ans', 'sel', 'flash');
+      if (SP[a]) SP[a].getElement().classList.remove('got', 't2', 't3', 'miss', 'ans', 'sel', 'flash', 'pre');
     }
     clearLabels();
     mark(null);
@@ -783,7 +783,11 @@
     $('helpWrap').hidden = [...$('helpWrap').querySelectorAll('.toggle')].every(t => t.hidden);
     pressed('mapSeg', 'map', chosenMap);
     if (view === 'setup') {
-      markOut(cur.ids.flatMap(id => K.areas[id]));
+      const chosen = cur.ids.flatMap(id => K.areas[id]);
+      markOut(chosen);
+      // On the street map the round's areas are tinted instead (the map itself has no borders to dim).
+      const inRound = new Set(chosen);
+      for (const a of AREAS) if (SP[a]) SP[a].getElement().classList.toggle('pre', onStreet() && inRound.has(a));
       showLabels(cur.kind, cur.ids);
       syncHints();
     }
@@ -802,8 +806,8 @@
   };
   $('selAll').onclick = () => { KINDS[pickKind].ids.forEach(id => SEL[pickKind].add(id)); syncPicker(); };
   $('selNone').onclick = () => { SEL[pickKind].clear(); syncPicker(); };
-  // Best scores are kept per map, so the rounds list shows the ones for the chosen map.
-  for (const b of $('mapSeg').querySelectorAll('button')) b.onclick = () => { chosenMap = b.dataset.map; buildRounds(); };
+  // The preview switches with the map choice; best scores are kept per map, so the rounds list follows too.
+  for (const b of $('mapSeg').querySelectorAll('button')) b.onclick = () => { chosenMap = b.dataset.map; if (view === 'setup') useMap(chosenMap); buildRounds(); };
   $('saveBtn').onclick = () => {
     const cur = current(); if (!cur.ids.length) return;
     saveQuiz($('saveName').value, cur.kind, cur.ids); $('saveName').value = '';
@@ -812,7 +816,7 @@
   $('shareBtn').onclick = () => { const cur = current(); if (cur.ids.length) copyLink(cur.kind, cur.ids, $('saveName').value.trim()); };
 
   function openSetup() {
-    clearInterval(timer); useMap('quiz'); clearMap();
+    clearInterval(timer); useMap(chosenMap); clearMap();
     show('setup');
     buildPicker(); buildRounds();
   }
