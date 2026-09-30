@@ -20,9 +20,16 @@ function dialFor(p) {
 }
 const zoneHubs = d => PREFIXES.filter(p => p[0] === d).flatMap(p => R[regionOf(p)].hubs.slice(0, 1)).slice(0, 4).map(h => `0${h[0]} ${h[1]}`).join(', ');
 
+// Hyderabad (040) and Ahmedabad (079) sit inside other zones and are only a few pixels wide, so the quiz map draws them
+// as circles somewhat larger than their real code areas, on top of their neighbours. The street map keeps the real outlines.
+const ENLARGED = { p40: 9, p79: 9 }; // circle radius in map units
+const circle = (x, y, r) => `M${x - r},${y}a${r},${r} 0 1,0 ${2 * r},0a${r},${r} 0 1,0 ${-2 * r},0z`;
+
 const QUIZ = {
   key: 'inpre',
-  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, g: r.k[0][0] })),
+  areas: DATA.reg.map(r => ({
+    id: r.id, d: ENLARGED[r.id] ? circle(r.lx, r.ly, ENLARGED[r.id]) : r.d, lx: r.lx, ly: r.ly, a: r.a, g: r.k[0][0], top: r.id in ENLARGED,
+  })),
   borders: DATA.ent,
   context: DATA.ctx,
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 50, labelScale: 0.3, fly: { pad: 1.6, min: 1.5 / 50 },

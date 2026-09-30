@@ -3,7 +3,8 @@
 // A quiz page defines a global QUIZ config before loading this file:
 //   key          localStorage prefix
 //   areas        [{ id, d, lx, ly, a, g }]  SVG path, label point, size and hint-color group of each map area
-//                (lx/ly/a may be left out: they're then computed from the path)
+//                (lx/ly/a may be left out: they're then computed from the path); top: true draws the area above
+//                its neighbours with its own border (e.g. a tiny city enlarged so it can be seen)
 //   borders      [d]                         thicker outlines drawn on top (states, federal districts…)
 //   size, pad    SVG map size [w, h] and padding; maxZoom, labelScale, fly: { pad, min } tune the quiz map
 //   geo          { [areaId]: { rings: [[[lat, lng]…]…], lab: [lat, lng] } } for the street map
@@ -80,8 +81,12 @@
     const p = document.createElementNS(NS, 'path');
     p.setAttribute('d', a.d); p.setAttribute('class', 'r');
     p.dataset.a = a.id; p.dataset.g = a.g;
+    if (a.top) p.classList.add('top');
     gR.appendChild(p); EL[a.id] = p;
   }
+  // Areas marked top stay above everything else in the map (they may overlap their neighbours).
+  const raiseTops = () => { for (const a of Q.areas) if (a.top) gR.appendChild(EL[a.id]); };
+  raiseTops();
   if (Q.context) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', Q.context); $('ctx').appendChild(p); }
   for (const d of Q.borders) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); gB.appendChild(p); }
   const AREAS = Q.areas.map(a => a.id);
@@ -457,13 +462,14 @@
     UNIT_LINES = [];
     for (const a of AREAS) { gR.appendChild(EL[a]); EL[a].style.removeProperty('--hint'); }
     svg.classList.toggle('merged', !!L);
-    if (!L) return;
+    if (!L) { raiseTops(); return; }
     for (const u of L.units) {
       const line = document.createElementNS(NS, 'path');
       line.setAttribute('class', 'unit'); line.setAttribute('d', u.map(a => AREA[a].d).join(' '));
       gR.appendChild(line); UNIT_LINES.push(line);
       for (const a of u) { gR.appendChild(EL[a]); if (L.color) EL[a].style.setProperty('--hint', L.color[a]); }
     }
+    raiseTops();
     syncUnitsOut();
   }
   function syncUnitsOut() {

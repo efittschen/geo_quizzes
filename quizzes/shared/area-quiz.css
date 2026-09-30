@@ -184,6 +184,8 @@ svg#map.grab{cursor:grabbing}
 .unit{fill:none;stroke:var(--state);stroke-width:4.4;vector-effect:non-scaling-stroke;stroke-linejoin:round;pointer-events:none}
 .unit.out{stroke-opacity:.3}
 .merged #borders{display:none}
+/* areas drawn on top of their neighbours keep their own border, merged or not */
+#regions .r.top{stroke:var(--state);stroke-width:1.2}
 .merged #hoverUse{fill:var(--ink);fill-opacity:.14;stroke:none}
 .merged #ansUse{fill:var(--ink);stroke:none;animation:tint 1s ease-in-out infinite alternate}
 @keyframes tint{from{fill-opacity:.04}to{fill-opacity:.24}}
