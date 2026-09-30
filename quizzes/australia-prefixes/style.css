@@ -1,0 +1,19 @@
+/* Australia quizzes: states are colored so neighbours differ, number regions in shades of their area code's color
+   (e.g. "2-0"…"2-3" for 02). All hint colors stay clear of the answer colors, see ../shared/area-quiz.css. */
+:root{ --ctx:#DCDED8; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --ctx:#1B242D; } }
+:root[data-theme="dark"]{ --ctx:#1B242D; }
+.r[data-g="1"]{--hint:var(--h10)} .r[data-g="2"]{--hint:var(--h1)} .r[data-g="3"]{--hint:var(--h4)} .r[data-g="4"]{--hint:var(--h3)} .r[data-g="5"]{--hint:var(--h5)} .r[data-g="6"]{--hint:var(--h2)}
+.r[data-g="7"]{--hint:var(--h11)} .r[data-g="8"]{--hint:var(--h6)}
+/* number regions: shades of blue for 02, cyan for 03, pink for 07, violet for 08 (--au20 … --au83);
+   the zone modes pick from the same shades per area code, see quiz.js */
+:root{ --au20:#D6E6FC; --au21:#BCD6FC; --au22:#A8C6F2; --au23:#98B6E1; --au30:#C1EDFD; --au31:#A1DFF5; --au32:#91CFE5; --au33:#81BFD4; --au70:#F3DAFE; --au71:#E6C7F4; --au72:#D6B7E4; --au73:#C5A7D3; --au80:#E2E1FF; --au81:#D1CEFE; --au82:#C0BEF0; --au83:#B1AEDF; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --au20:#495C77; --au21:#3D4F6A; --au22:#32455E; --au23:#283A53; --au30:#3A616F; --au31:#2D5562; --au32:#224A57; --au33:#163F4C; --au70:#66526E; --au71:#594661; --au72:#4E3C56; --au73:#43314B; --au80:#595776; --au81:#4C4A69; --au82:#42405D; --au83:#373552; } }
+:root[data-theme="dark"]{ --au20:#495C77; --au21:#3D4F6A; --au22:#32455E; --au23:#283A53; --au30:#3A616F; --au31:#2D5562; --au32:#224A57; --au33:#163F4C; --au70:#66526E; --au71:#594661; --au72:#4E3C56; --au73:#43314B; --au80:#595776; --au81:#4C4A69; --au82:#42405D; --au83:#373552; }
+.r[data-g="2-0"]{--hint:var(--au20)} .r[data-g="2-1"]{--hint:var(--au21)} .r[data-g="2-2"]{--hint:var(--au22)} .r[data-g="2-3"]{--hint:var(--au23)} .r[data-g="3-0"]{--hint:var(--au30)} .r[data-g="3-1"]{--hint:var(--au31)} .r[data-g="3-2"]{--hint:var(--au32)} .r[data-g="3-3"]{--hint:var(--au33)} .r[data-g="7-0"]{--hint:var(--au70)} .r[data-g="7-1"]{--hint:var(--au71)} .r[data-g="7-2"]{--hint:var(--au72)} .r[data-g="7-3"]{--hint:var(--au73)} .r[data-g="8-0"]{--hint:var(--au80)} .r[data-g="8-1"]{--hint:var(--au81)} .r[data-g="8-2"]{--hint:var(--au82)} .r[data-g="8-3"]{--hint:var(--au83)}
+.dial .code{font-size:4.2rem}
+@media (max-width:760px){ .dial .code{font-size:3.2rem} }
+/* the number carries its own brackets, "(02) 9" */
+#dial > .p{display:none}
+/* each question draws its own dots for the rest of the number */
+#dial > .rest{display:none}

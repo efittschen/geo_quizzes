@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quiz · Geo Quizzes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">🌍 Geo Quizzes</a>
+    <nav><a href="index.html">← Back to map</a></nav>
+  </header>
+
+  <main class="quiz-page">
+    <section class="quiz-head">
+      <h1 id="quiz-title">Loading…</h1>
+      <p id="quiz-description" class="muted"></p>
+    </section>
+
+    <section id="quiz" class="card" hidden>
+      <div class="quiz-meta">
+        <span id="progress"></span>
+        <span id="score"></span>
+      </div>
+      <h2 id="question" class="question"></h2>
+      <img id="question-image" class="question-image" alt="" hidden>
+      <div id="options" class="options"></div>
+      <div id="feedback" class="feedback" hidden></div>
+      <button id="next" class="primary" type="button" hidden>Next</button>
+    </section>
+
+    <section id="results" class="card results" hidden>
+      <h2>Quiz complete!</h2>
+      <p id="final-score" class="final-score"></p>
+      <div class="actions">
+        <button id="retry" class="primary" type="button">Try again</button>
+        <a class="ghost" href="index.html">Pick another country</a>
+      </div>
+    </section>
+
+    <section id="error" class="card" hidden>
+      <p id="error-message"></p>
+      <a class="primary" href="index.html">Back to map</a>
+    </section>
+  </main>
+
+  <script src="assets/js/quiz.js"></script>
+</body>
+</html>

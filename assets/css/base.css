@@ -1,0 +1,60 @@
+/* Shared style for every page: colors, fonts, buttons and form controls.
+   The home and country pages add assets/css/style.css, the map quizzes add quizzes/shared/area-quiz.css. */
+:root{
+  --sea:#D6E2E7; --panel:#F6F8F6; --card:#FFFFFF; --ink:#15283A; --muted:#5A6B78; --line:#C9D3D8;
+  --land:#EDF0E4; --edge:rgba(21,40,58,.32); --state:#15283A;
+  --yellow:#F2B705; --ok:#1E8757; --bad:#D2433B; --got:#62B686; --t2:#F2CF5B; --t3:#EE9A4D; --miss:#E8877E;
+  --halo:rgba(246,248,246,.9); --btn:#15283A; --btnink:#F6F8F6; --shadow:0 2px 8px rgba(0,0,0,.12);
+  --sans:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --cond:"Barlow Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --sea:#0E1A23; --panel:#142230; --card:#1A2B3B; --ink:#E4ECF0; --muted:#94A6B3; --line:#263846;
+    --land:#233340; --edge:rgba(228,236,240,.28); --state:#DCE6EC;
+    --got:#2F7A55; --t2:#7C6A26; --t3:#84522A; --miss:#8C3E38;
+    --halo:rgba(14,26,35,.85); --btn:#E4ECF0; --btnink:#142230; --shadow:0 2px 10px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --sea:#0E1A23; --panel:#142230; --card:#1A2B3B; --ink:#E4ECF0; --muted:#94A6B3; --line:#263846;
+  --land:#233340; --edge:rgba(228,236,240,.28); --state:#DCE6EC;
+  --got:#2F7A55; --t2:#7C6A26; --t3:#84522A; --miss:#8C3E38;
+  --halo:rgba(14,26,35,.85); --btn:#E4ECF0; --btnink:#142230; --shadow:0 2px 10px rgba(0,0,0,.4);
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--panel);color:var(--ink);font:400 16px/1.45 var(--sans);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+[hidden]{display:none!important}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.muted{color:var(--muted)}
+
+/* buttons: primary is the one main action, ghost everything else */
+.primary,.ghost{display:inline-flex;align-items:center;justify-content:center;gap:6px;appearance:none;border-radius:999px;cursor:pointer;text-decoration:none;font-weight:600}
+.primary{border:0;background:var(--btn);color:var(--btnink);padding:12px 22px}
+.primary:hover{filter:brightness(1.12)}
+.primary:disabled{opacity:.4;cursor:default;filter:none}
+.ghost{border:1.5px solid var(--line);background:transparent;color:var(--ink);padding:9px 16px;font-weight:500}
+.ghost:hover{border-color:var(--ink)}
+.ghost.small{padding:4px 12px;font-size:.88rem}
+.linkbtn{appearance:none;border:0;background:none;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:.88rem}
+.linkbtn:hover{color:var(--ink)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* segmented choice: a row of buttons, the chosen one aria-pressed */
+.seg{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px}
+.seg button{appearance:none;display:flex;flex-direction:column;gap:2px;text-align:left;padding:9px 11px;border:1.5px solid var(--line);border-radius:var(--radius);background:transparent;cursor:pointer}
+.seg button b{font-weight:600;line-height:1.2}
+.seg button small{color:var(--muted);font-size:.78rem;line-height:1.25}
+.seg button:hover{border-color:var(--ink)}
+.seg button[aria-pressed="true"]{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 7%,transparent)}
+
+.toggle{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.toggle input{width:18px;height:18px;accent-color:var(--ink);margin:0}
+
+/* star ratings (three stars, the earned ones filled) */
+.stars{display:inline-flex;gap:1px;flex:none;vertical-align:middle}
+.stars svg{width:14px;height:14px;fill:none;stroke:color-mix(in srgb,var(--muted) 50%,var(--card));stroke-width:1.8;stroke-linejoin:round}
+.stars svg.on{fill:var(--yellow);stroke:var(--yellow)}

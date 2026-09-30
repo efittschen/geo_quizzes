@@ -1,0 +1,230 @@
+/* Map quiz styles (area-quiz.js), on top of ../../assets/css/base.css. Each quiz's own style.css assigns
+   hint colors to its map areas and may resize the dial. */
+:root{
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  /* Hint colors: a shared palette of blues, violets, pinks, cyans and greys that stays clear of the answer
+     colors (green, yellow, orange, red). Quizzes pick from it per area: .r[data-g="1"]{--hint:var(--h3)} */
+  --h1:#A7D9F6; --h2:#E5A8CD; --h3:#A5B0EB; --h4:#A3B9BA; --h5:#E5D0FE; --h6:#77CFD1; --h7:#C8C5D6; --h8:#7CBEE2;
+  --h9:#CABDFA; --h10:#C7A5DC; --h11:#CABAAE; --h12:#C3EFEC; --h13:#A5C9FF; --h14:#B5AFCF; --h15:#CCDBF9; --h16:#A7C1DA;
+  --h17:#D6B2C0; --h18:#C5CEFC; --h19:#97E9FF; --h20:#DDCBD6; --h21:#C3D4E0; --h22:#E4C1FA; --h23:#D0B1D9; --h24:#B6B9E7;
+  --fade:55%; /* how much hint color is left while playing, so answered areas stand out */
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --h1:#385B6F; --h2:#523447; --h3:#3E446C; --h4:#3B4B4C; --h5:#635473; --h6:#0A585A; --h7:#524F5C; --h8:#1B4D67;
+    --h9:#534A73; --h10:#543D62; --h11:#4D423A; --h12:#415756; --h13:#395277; --h14:#48445A; --h15:#515C70; --h16:#3C4F5F;
+    --h17:#543D46; --h18:#4E5474; --h19:#1B5C6B; --h20:#4F464B; --h21:#4D5861; --h22:#634B72; --h23:#59445F; --h24:#484968;
+    --fade:60%;
+  }
+}
+:root[data-theme="dark"]{
+  --h1:#385B6F; --h2:#523447; --h3:#3E446C; --h4:#3B4B4C; --h5:#635473; --h6:#0A585A; --h7:#524F5C; --h8:#1B4D67;
+  --h9:#534A73; --h10:#543D62; --h11:#4D423A; --h12:#415756; --h13:#395277; --h14:#48445A; --h15:#515C70; --h16:#3C4F5F;
+  --h17:#543D46; --h18:#4E5474; --h19:#1B5C6B; --h20:#4F464B; --h21:#4D5861; --h22:#634B72; --h23:#59445F; --h24:#484968;
+  --fade:60%;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%}
+body{overflow:hidden}
+
+.app{display:grid;grid-template-columns:minmax(300px,360px) 1fr;height:100%}
+.panel{display:flex;flex-direction:column;gap:20px;padding:28px 26px;border-right:1px solid var(--line);overflow-y:auto;min-height:0}
+.stage{position:relative;background:var(--sea);min-width:0;min-height:0;overflow:hidden}
+
+.back{display:inline-block;margin-bottom:10px;color:var(--muted);text-decoration:none;font-size:.9rem}
+.back:hover{color:var(--ink)}
+.brand h1{font:700 2.1rem/1 var(--cond);letter-spacing:-.01em;margin:0 0 6px}
+.brand p{margin:0;color:var(--muted);max-width:30ch}
+
+/* setup */
+.setup{display:flex;flex-direction:column;gap:20px}
+.group{display:flex;flex-direction:column;gap:8px}
+.group > h2{font:600 .95rem/1.2 var(--sans);margin:0;color:var(--muted)}
+.pick-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 8px}
+.pick-head h2{white-space:nowrap;font:600 .95rem/1.2 var(--sans);margin:0;color:var(--muted)}
+.groups{display:grid;gap:10px}
+.grp{display:grid;gap:5px}
+.grp-t{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.grp-t input{width:16px;height:16px;accent-color:var(--ink);margin:0}
+.grp-t b{font:700 1.1rem/1 var(--cond)}
+.grp-t span{color:var(--muted);font-size:.85rem}
+.codes{display:flex;flex-wrap:wrap;gap:4px;padding-left:24px}
+.cd{appearance:none;border:1.5px solid var(--line);background:transparent;border-radius:6px;padding:2px 7px;font:700 1rem/1.2 var(--cond);font-variant-numeric:tabular-nums;color:var(--muted);cursor:pointer}
+.cd:hover{border-color:var(--ink)}
+.cd[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--panel)}
+.topn{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.9rem;color:var(--muted)}
+.topn input[type=number]{width:4.2em;padding:4px 6px;border:1.5px solid var(--line);border-radius:6px;background:transparent;color:var(--ink);font:inherit}
+.topn select{padding:4px 6px;border:1.5px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit}
+.cd.ov{border-style:dashed}
+
+/* rounds: ready-made quizzes grouped by difficulty, the player's own ones, and "Custom quiz" */
+.rounds{display:grid;gap:14px}
+.tier{display:grid;gap:6px}
+.tier-t{display:flex;align-items:center;gap:8px;margin:0;font:600 .78rem/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.lvl{display:inline-flex;gap:2px;align-items:flex-end}
+.lvl i{width:4px;border-radius:1px;background:var(--line)}
+.lvl i:nth-child(1){height:5px} .lvl i:nth-child(2){height:8px} .lvl i:nth-child(3){height:11px} .lvl i:nth-child(4){height:14px}
+.lvl i.on{background:var(--ink)}
+.round-row{display:flex;gap:4px}
+.round{appearance:none;flex:1;min-width:0;display:grid;grid-template-columns:1fr auto;align-items:center;gap:1px 10px;text-align:left;padding:8px 12px;border:1.5px solid var(--line);border-radius:var(--radius);background:transparent;cursor:pointer}
+.round:hover{border-color:var(--ink)}
+.round[aria-pressed="true"]{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 7%,transparent);box-shadow:inset 4px 0 0 var(--ink)}
+.round b{font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.round small{color:var(--muted);font-size:.8rem;line-height:1.25}
+.round .n{grid-column:2;grid-row:1;font:600 1rem/1.1 var(--cond);color:var(--muted);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.round .best{grid-column:2;grid-row:2;display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:.75rem;color:var(--muted);white-space:nowrap}
+.round .stars svg{width:11px;height:11px}
+.round.custom{border-style:dashed}
+.icon{appearance:none;flex:0 0 36px;display:grid;place-items:center;border:1.5px solid var(--line);border-radius:var(--radius);background:transparent;color:var(--muted);cursor:pointer}
+.icon:hover{border-color:var(--ink);color:var(--ink)}
+.icon svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.custom-wrap{display:flex;flex-direction:column;gap:14px;padding:14px;border:1.5px dashed var(--line);border-radius:var(--radius)}
+.save{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.save input{flex:1 1 9em;min-width:0;padding:6px 12px;border:1.5px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);font:inherit;font-size:.92rem}
+.save input:focus{border-color:var(--ink);outline:none}
+/* the start bar stays at the bottom of the panel however long the setup gets */
+.startbar{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;gap:10px;margin:-8px -26px 0;padding:12px 26px 16px;background:var(--panel);border-top:1px solid var(--line)}
+/* sticky stops at the panel's padding, so on the setup screen the bar itself provides the bottom space */
+.app:not(.playing) .panel{padding-bottom:0}
+.startbar .seg{grid-template-columns:1fr 1fr}
+.startbar .seg button{flex-direction:row;align-items:baseline;flex-wrap:wrap;gap:0 6px;padding:6px 10px}
+.startbar .row{flex-wrap:nowrap}
+.startbar .primary{flex:1;min-width:0}
+.toast{margin:0;font-size:.85rem;color:var(--muted);min-height:0}
+.toast:empty{display:none}
+
+/* neighbouring countries drawn under the areas (Q.context) */
+#ctx path{fill:var(--ctx,#DCDED8);stroke:var(--edge);stroke-width:.6;vector-effect:non-scaling-stroke;pointer-events:none}
+/* dial codes shown in parts: the digits that matter bold, the rest faded */
+.dial .code .hot{color:var(--ink)} .dial .code .cold{color:var(--muted);opacity:.45}
+/* pin for the last answered place */
+#pins circle{fill:var(--ink);stroke:var(--panel);stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none}
+#pins text{font-family:var(--sans);font-weight:600;fill:var(--ink);stroke:var(--halo);paint-order:stroke;text-anchor:middle;pointer-events:none}
+.leaflet-tooltip.st-pin{font:600 12px/1.2 var(--sans);padding:2px 6px}
+.count{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:1001;pointer-events:none;background:var(--panel);border:1.5px solid var(--ink);border-radius:999px;padding:6px 16px;font-weight:600;white-space:nowrap;box-shadow:var(--shadow)}
+.count b{font:700 1.35rem/1 var(--cond);margin-right:2px;font-variant-numeric:tabular-nums}
+
+.dial .cc{font-weight:500;font-size:1.7rem;color:var(--muted);margin-right:.15em}
+/* the dial: the area code shown the way the country writes a phone number */
+.dial{display:flex;align-items:baseline;gap:.12em;font-family:var(--cond);line-height:.9;white-space:nowrap}
+.dial .p{font-weight:500;font-size:4.4rem;color:var(--muted)}
+.dial .code{font-weight:700;font-size:6.6rem;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.dial .rest{font-weight:500;font-size:1.7rem;color:var(--muted);margin-left:.35em;letter-spacing:.04em}
+.dial.pop .code{animation:pop .35s ease-out}
+@keyframes pop{from{transform:translateY(8px);opacity:.2}to{transform:none;opacity:1}}
+.bigname{font:700 3.2rem/1 var(--cond);letter-spacing:-.01em}
+.bigname.pop{animation:pop .35s ease-out}
+.ask{margin:-6px 0 0;color:var(--muted)}
+.ask strong{color:var(--ink);font-weight:600}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.stats div{display:flex;flex-direction:column}
+.stats b{font:700 1.5rem/1.1 var(--cond);font-variant-numeric:tabular-nums}
+.stats span{font-size:.8rem;color:var(--muted)}
+.ticks{display:flex;gap:2px;height:6px}
+.ticks i{flex:1;border-radius:2px;background:var(--line)}
+.ticks i.got{background:var(--ok)} .ticks i.t2{background:var(--t2)} .ticks i.t3{background:var(--t3)} .ticks i.miss{background:var(--bad)} .ticks i.now{background:var(--ink)}
+
+.feedback{min-height:4.4em;padding:12px 14px;border-radius:var(--radius);background:color-mix(in srgb,var(--ink) 5%,transparent);border-left:4px solid var(--line)}
+.feedback.ok{border-left-color:var(--ok)} .feedback.bad{border-left-color:var(--bad)}
+.feedback p{margin:0}
+.feedback.old{opacity:.55}
+/* nothing to say yet (start of a round, Explore before a tap): no empty box */
+.feedback:empty,.ask:empty{display:none}
+.feedback .t{font-weight:600}
+.feedback .c{color:var(--muted);font-size:.92rem}
+
+.result h2{font:700 3.6rem/1 var(--cond);margin:0}
+.result p{margin:6px 0 0;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{appearance:none;border:1.5px solid var(--line);background:transparent;border-radius:6px;padding:3px 9px;font:700 1.05rem/1.2 var(--cond);cursor:pointer}
+.chip.t2{border-color:var(--t2)} .chip.t3{border-color:var(--t3)} .chip.miss{border-color:var(--bad)}
+.chip:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.result .group > h2{font:600 .95rem/1.2 var(--sans);color:var(--muted)}
+.panel .muted{margin:0}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;padding:0;list-style:none;font-size:.85rem;color:var(--muted)}
+.legend li{display:flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:3px}
+.legend .got{background:var(--got)} .legend .t2{background:var(--t2)} .legend .t3{background:var(--t3)} .legend .miss{background:var(--miss)}
+
+.info .dial .code{font-size:5rem}
+.info .dial .p{font-size:3.4rem}
+.info .dial.multi .code{font-size:3rem} .info .dial.multi .p{font-size:2.2rem}
+.note{font-size:.85rem;color:var(--muted);margin:auto 0 0}
+
+/* street map (hard mode) */
+#street{position:absolute;inset:0;background:var(--sea)}
+#street .leaflet-control-attribution{font-size:.7rem}
+#street path.ar{fill:transparent;stroke:none;transition:fill .18s}
+#street path.ar.got,#street path.ar.t2,#street path.ar.t3,#street path.ar.miss{fill-opacity:.55;stroke:var(--ink);stroke-width:1;stroke-opacity:.6}
+#street path.ar.got{fill:var(--got)} #street path.ar.t2{fill:var(--t2)} #street path.ar.t3{fill:var(--t3)} #street path.ar.miss{fill:var(--miss)}
+#street path.ar.flash{fill:var(--bad);fill-opacity:.55;stroke:var(--bad);stroke-width:1.5;transition:none}
+#street path.ar.sel{fill:var(--yellow);fill-opacity:.45;stroke:var(--ink);stroke-width:2}
+#street path.ar.ans{fill:var(--yellow);fill-opacity:.4;stroke:#15283A;stroke-width:3;animation:pulse 1s ease-in-out infinite alternate}
+.st-label span{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:700 14px/1 var(--cond);color:#15283A;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;pointer-events:none}
+
+/* map */
+svg#map{width:100%;height:100%;display:block;touch-action:none;cursor:pointer;user-select:none;-webkit-user-select:none}
+svg#map.grab{cursor:grabbing}
+/* an area's color lives in --fill, so merged layouts can paint the seams between areas in it too */
+.r{--fill:var(--land);fill:var(--fill);stroke:var(--edge);stroke-width:.8;vector-effect:non-scaling-stroke;fill-rule:evenodd;transition:fill .18s,stroke .18s}
+.hints .r{--fill:var(--hint,var(--land))}
+/* while playing and on the results, hints fade so the answer colors are the only strong ones */
+.hints.fade .r{--fill:color-mix(in oklab,var(--hint,var(--land)) var(--fade),var(--land))}
+#regions .r.out{--fill:color-mix(in oklab,var(--land) 45%,var(--sea));stroke-opacity:.45;pointer-events:none}
+.picking #regions .r.out{pointer-events:auto}
+#regions .r.got{--fill:var(--got)} #regions .r.t2{--fill:var(--t2)} #regions .r.t3{--fill:var(--t3)} #regions .r.miss{--fill:var(--miss)}
+#regions .r.ans{--fill:var(--yellow)} #regions .r.sel{--fill:var(--yellow)}
+#regions .r.found{--fill:var(--got)}
+#regions .r.flash{--fill:var(--bad);transition:none}
+/* merged layouts (zones, states): only each unit's outline, no lines between its areas (see applyLayout) */
+/* Each area's own-color stroke (2px) covers seams and small gaps between areas that don't line up exactly; the
+   unit outline underneath is 4.4px, so 2.2 - 1 = 1.2px of it shows, at the coast and between units alike. */
+.merged .r{stroke:var(--fill);stroke-width:2;stroke-opacity:1}
+.unit{fill:none;stroke:var(--state);stroke-width:4.4;vector-effect:non-scaling-stroke;stroke-linejoin:round;pointer-events:none}
+.unit.out{stroke-opacity:.3}
+.merged #borders{display:none}
+.merged #hoverUse{fill:var(--ink);fill-opacity:.14;stroke:none}
+.merged #ansUse{fill:var(--ink);stroke:none;animation:tint 1s ease-in-out infinite alternate}
+@keyframes tint{from{fill-opacity:.04}to{fill-opacity:.24}}
+#borders path{fill:none;stroke:var(--state);stroke-width:1.5;vector-effect:non-scaling-stroke;stroke-linejoin:round;pointer-events:none;opacity:.75}
+#hl path{fill:none;pointer-events:none;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+#hoverUse{stroke:var(--ink);stroke-width:2.5}
+#ansUse{stroke:var(--ink);stroke-width:3;animation:pulse 1s ease-in-out infinite alternate}
+@keyframes pulse{from{stroke-width:2}to{stroke-width:5}}
+#labels text{font-family:var(--cond);font-weight:700;fill:var(--ink);stroke:var(--halo);stroke-width:3px;paint-order:stroke;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+#labels text.off{display:none}
+
+.zoom{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;border-radius:var(--radius);overflow:hidden;background:var(--panel);border:1px solid var(--line)}
+.zoom button{appearance:none;border:0;background:transparent;width:40px;height:40px;font:600 1.25rem/1 var(--sans);cursor:pointer}
+.zoom button + button{border-top:1px solid var(--line)}
+.zoom button:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+
+@media (max-width:760px){
+  .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .panel{border-right:0;border-bottom:1px solid var(--line);padding:14px 16px;gap:10px;max-height:52vh}
+  .playing .brand{display:none}
+  .brand h1{font-size:1.7rem}
+  .dial .code{font-size:3.6rem} .dial .p{font-size:2.6rem} .dial .rest{font-size:1.05rem}
+  .info .dial .code{font-size:3.6rem} .info .dial .p{font-size:2.6rem}
+  .feedback{min-height:0;padding:7px 11px;font-size:.92rem}
+  .playing .panel{gap:8px}
+  .ask{margin:-4px 0 0;font-size:.9rem}
+  .primary,.ghost{padding:8px 16px}
+  .stats span{font-size:.72rem}
+  .feedback .c{font-size:.85rem}
+  .stats b{font-size:1.2rem}
+  .playing .panel{max-height:40vh}
+  .startbar{margin:-2px -16px 0;padding:8px 16px 10px;gap:6px}
+  .startbar .seg button{padding:5px 10px}
+  .startbar .seg button small{display:none}
+  .setup{gap:12px}
+  .rounds{gap:10px}
+  .round{padding:6px 10px}
+  .note{display:none}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important}
+  #ansUse{stroke-width:4}
+  .merged #ansUse{fill-opacity:.2}
+}

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Country · Geo Quizzes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">🌍 Geo Quizzes</a>
+    <nav><a href="index.html">← Back to map</a></nav>
+  </header>
+
+  <main class="country-page">
+    <section class="country-hero">
+      <svg id="country-shape" class="country-shape" aria-hidden="true"></svg>
+      <div>
+        <h1 id="country-name">Loading…</h1>
+        <p id="country-count" class="muted"></p>
+      </div>
+    </section>
+
+    <ul id="quiz-cards" class="quiz-cards"></ul>
+    <p id="empty" class="empty" hidden></p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+  <script src="assets/js/common.js"></script>
+  <script src="assets/js/country.js"></script>
+</body>
+</html>

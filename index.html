@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Geo Quizzes</title>
+  <meta name="description" content="GeoGuessr-style quizzes for every country. Pick a country on the map to start.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">🌍 Geo Quizzes</a>
+    <nav><a href="#quiz-list">All quizzes</a></nav>
+  </header>
+
+  <main>
+    <section class="intro">
+      <h1>Pick a country</h1>
+    </section>
+
+    <section class="map-wrap" id="map-wrap">
+      <svg id="map" role="img" aria-label="World map"></svg>
+      <div id="tooltip" class="tooltip" hidden></div>
+      <button id="reset-zoom" class="ghost small reset-zoom" type="button">Reset zoom</button>
+      <p id="map-status" class="map-status">Loading map…</p>
+    </section>
+
+    <section id="quiz-list" class="quiz-list">
+      <div class="list-head">
+        <h2>All quizzes</h2>
+        <span><button class="linkbtn" id="open-all" type="button">Open all</button> · <button class="linkbtn" id="close-all" type="button">Close all</button></span>
+      </div>
+      <p id="rating-help" class="muted rating-help"></p>
+      <div id="quiz-tree" class="tree"></div>
+      <p id="quiz-links-empty" class="muted" hidden>No quizzes yet.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Map data: <a href="https://github.com/topojson/world-atlas">world-atlas</a> (Natural Earth).</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+  <script src="assets/js/common.js"></script>
+  <script src="assets/js/map.js"></script>
+</body>
+</html>

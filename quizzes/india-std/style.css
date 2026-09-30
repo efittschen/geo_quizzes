@@ -1,0 +1,12 @@
+/* India STD codes: prefix regions are colored by their first digit;
+   hint colors come from the shared palette in ../shared/area-quiz.css, picked so neighbouring zones differ. */
+:root{ --ctx:#DCDED8; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --ctx:#1B242D; } }
+:root[data-theme="dark"]{ --ctx:#1B242D; }
+.r[data-g="1"]{--hint:var(--h5)} .r[data-g="2"]{--hint:var(--h3)} .r[data-g="3"]{--hint:var(--h6)} .r[data-g="4"]{--hint:var(--h9)} .r[data-g="5"]{--hint:var(--h8)} .r[data-g="6"]{--hint:var(--h2)}
+.r[data-g="7"]{--hint:var(--h1)} .r[data-g="8"]{--hint:var(--h11)}
+/* prefix regions get firm borders; state lines are faint, since prefixes cross them */
+.r{stroke:var(--ink);stroke-width:1.1}
+#borders path{opacity:.45;stroke-width:.8}
+.dial .code{font-size:4.2rem}
+@media (max-width:760px){ .dial .code{font-size:3.2rem} }

@@ -1,0 +1,31 @@
+/* South Asia Scripts: the script font, the sign card and per-script hint colors on top of ../shared/area-quiz.css.
+   hint colors come from the shared palette in ../shared/area-quiz.css, picked so neighbouring zones differ. */
+:root{
+  --script:"Noto Sans","Noto Sans Devanagari","Noto Sans Bengali","Noto Sans Gurmukhi","Noto Sans Gujarati","Noto Sans Oriya","Noto Sans Telugu","Noto Sans Kannada","Noto Sans Malayalam","Noto Sans Tamil","Noto Nastaliq Urdu","Noto Serif Tibetan","Noto Sans Meetei Mayek",system-ui,sans-serif;
+  --ctx:#E6E7E3;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --ctx:#1C2530; } }
+:root[data-theme="dark"]{ --ctx:#1C2530; }
+.r[data-g="arab"]{--hint:var(--h11)} .r[data-g="beng"]{--hint:var(--h3)} .r[data-g="deva"]{--hint:var(--h1)} .r[data-g="gujr"]{--hint:var(--h14)} .r[data-g="guru"]{--hint:var(--h10)} .r[data-g="knda"]{--hint:var(--h8)}
+.r[data-g="latn"]{--hint:var(--h6)} .r[data-g="mlym"]{--hint:var(--h9)} .r[data-g="mtei"]{--hint:var(--h15)} .r[data-g="orya"]{--hint:var(--h4)} .r[data-g="taml"]{--hint:var(--h12)} .r[data-g="telu"]{--hint:var(--h2)}
+.r[data-g="tibt"]{--hint:var(--h5)}
+
+/* "show a letter of each region's script" */
+.all-labels #labels text.off{display:inline}
+#labels text{font-family:var(--script)}
+
+/* the sign card */
+.card{border:1.5px solid var(--ink);border-radius:14px;padding:18px 18px 16px;background:color-mix(in srgb,var(--ink) 3%,transparent);min-height:7.2rem;display:flex;align-items:center}
+.sent{margin:0;font:500 2.1rem/1.45 var(--script);overflow-wrap:anywhere;width:100%}
+.sent.s-arab{font-size:1.9rem;line-height:2.1}
+.sent.s-tibt{font-size:2.2rem;line-height:1.6}
+.card.pop .sent{animation:pop .35s ease-out}
+
+.cd,.chip{font-family:var(--script);font-weight:500}
+.bigname{font:700 2.6rem/1.2 var(--script)}
+#eDial .code{font:500 3rem/1.2 var(--script);letter-spacing:0}
+@media (max-width:760px){
+  .card{min-height:0;padding:12px 14px}
+  .sent{font-size:1.6rem} .sent.s-arab{font-size:1.5rem} .sent.s-tibt{font-size:1.7rem}
+  .bigname{font-size:1.9rem}
+}

@@ -1,0 +1,13 @@
+/* Turkey quizzes: area codes are colored by their first two digits, provinces by geographic region;
+   hint colors come from the shared palette in ../shared/area-quiz.css, picked so neighbouring zones differ. */
+:root{ --ctx:#DCDED8; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --ctx:#1B242D; } }
+:root[data-theme="dark"]{ --ctx:#1B242D; }
+.r[data-g="21"]{--hint:var(--h18)} .r[data-g="22"]{--hint:var(--h23)} .r[data-g="23"]{--hint:var(--h16)} .r[data-g="24"]{--hint:var(--h21)} .r[data-g="25"]{--hint:var(--h5)} .r[data-g="26"]{--hint:var(--h3)}
+.r[data-g="27"]{--hint:var(--h11)} .r[data-g="28"]{--hint:var(--h7)} .r[data-g="31"]{--hint:var(--h4)} .r[data-g="32"]{--hint:var(--h14)} .r[data-g="33"]{--hint:var(--h8)} .r[data-g="34"]{--hint:var(--h12)}
+.r[data-g="35"]{--hint:var(--h1)} .r[data-g="36"]{--hint:var(--h24)} .r[data-g="37"]{--hint:var(--h6)} .r[data-g="38"]{--hint:var(--h2)} .r[data-g="41"]{--hint:var(--h19)} .r[data-g="42"]{--hint:var(--h22)}
+.r[data-g="43"]{--hint:var(--h10)} .r[data-g="44"]{--hint:var(--h15)} .r[data-g="45"]{--hint:var(--h20)} .r[data-g="46"]{--hint:var(--h9)} .r[data-g="47"]{--hint:var(--h17)} .r[data-g="48"]{--hint:var(--h13)}
+.r[data-g="AKD"]{--hint:var(--h5)} .r[data-g="DA"]{--hint:var(--h2)} .r[data-g="EGE"]{--hint:var(--h24)} .r[data-g="GDA"]{--hint:var(--h4)} .r[data-g="IA"]{--hint:var(--h1)} .r[data-g="KAR"]{--hint:var(--h3)}
+.r[data-g="MAR"]{--hint:var(--h11)}
+/* the plate-number prompt */
+.bigname{font-variant-numeric:tabular-nums}

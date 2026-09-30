@@ -1,0 +1,101 @@
+/* Home, country and multiple-choice quiz pages, on top of base.css (colors, fonts, buttons). */
+main{max-width:1100px;margin:0 auto;padding:0 16px 48px}
+h1{font:700 2.6rem/1 var(--cond);letter-spacing:-.01em;margin:32px 0 8px}
+h2{font:700 1.6rem/1.1 var(--cond);margin:36px 0 12px}
+
+/* Header / footer: the header's content lines up with the page's 1100px column */
+.site-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px max(16px,calc((100% - 1100px) / 2 + 16px));background:var(--panel);border-bottom:1px solid var(--line)}
+.site-header a{text-decoration:none}
+.brand{font:700 1.5rem/1 var(--cond);letter-spacing:-.01em;color:var(--ink)}
+.site-header nav a{color:var(--muted);font-weight:500}
+.site-header nav a:hover{color:var(--ink)}
+.site-footer{text-align:center;font-size:.85rem;color:var(--muted);padding:24px 16px}
+
+/* Home: map */
+.intro p{margin:0 0 16px;color:var(--muted)}
+.map-wrap{position:relative;background:var(--sea);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+#map{display:block;width:100%;height:auto;cursor:grab;touch-action:none}
+#map:active{cursor:grabbing}
+.country{fill:var(--land);stroke:var(--edge);stroke-width:.5;vector-effect:non-scaling-stroke;transition:fill .15s;cursor:pointer}
+.country:not(.has-quiz):hover{fill:color-mix(in srgb,var(--land) 80%,var(--ink))}
+/* countries with quizzes: dark, with light borders so neighbours (US, Canada, Mexico) stay apart */
+.country.has-quiz{fill:var(--ink);stroke:var(--panel);stroke-width:.8}
+.country.has-quiz:hover,.country.has-quiz:focus{fill:var(--yellow);outline:none}
+.tooltip{position:absolute;pointer-events:none;padding:6px 10px;border-radius:8px;background:var(--panel);color:var(--ink);border:1.5px solid var(--ink);font-size:.9rem;white-space:nowrap;box-shadow:var(--shadow)}
+.tooltip strong{font-weight:600}
+.tooltip .soon{color:var(--muted)}
+.reset-zoom{position:absolute;top:10px;right:10px;background:var(--panel)}
+.map-status{position:absolute;inset:0;display:grid;place-items:center;margin:0;color:var(--muted)}
+.map-status:empty{display:none}
+
+/* Home: every quiz as a folder tree, continent › country › quiz */
+.list-head{display:flex;align-items:baseline;justify-content:space-between;gap:4px 12px;flex-wrap:wrap;margin:36px 0 4px}
+.list-head h2{margin:0}
+.rating-help{margin:0 0 14px;font-size:.88rem;max-width:72ch}
+.tree{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);overflow:hidden}
+.folder > summary{display:flex;align-items:center;gap:10px;padding:11px 16px;cursor:pointer;list-style:none;user-select:none}
+.folder > summary::-webkit-details-marker{display:none}
+.folder > summary:hover,.files a:hover{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.continent + .continent{border-top:1px solid var(--line)}
+.continent > summary .name{font:700 1.3rem/1.1 var(--cond)}
+.place > summary{padding-left:40px}
+.place > summary .name{font-weight:600}
+.chev{width:16px;height:16px;flex:none;fill:none;stroke:var(--muted);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+.folder[open] > summary > .chev{transform:rotate(90deg)}
+.folder .name{flex:1;min-width:0}
+.folder .count{color:var(--muted);font-size:.85rem;white-space:nowrap}
+.total{display:inline-flex;align-items:center;justify-content:flex-end;gap:4px;min-width:4.4em;color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums}
+.total svg{width:13px;height:13px;fill:none;stroke:color-mix(in srgb,var(--muted) 50%,var(--card));stroke-width:1.8;stroke-linejoin:round}
+.total.earned svg{fill:var(--yellow);stroke:var(--yellow)}
+/* guide lines, like a file tree */
+.continent > .place,.place > .files{position:relative}
+.continent > .place::before{content:"";position:absolute;left:23px;top:0;bottom:0;border-left:1.5px solid var(--line)}
+.files{list-style:none;margin:0;padding:0 0 6px}
+.files::before{content:"";position:absolute;left:47px;top:0;bottom:10px;border-left:1.5px solid var(--line)}
+.files a{display:flex;align-items:center;gap:10px;padding:8px 16px 8px 66px;color:var(--ink);text-decoration:none}
+.files a .name{flex:1;min-width:0}
+.stars.unplayed{opacity:.6}
+
+/* Country page */
+.country-hero{display:flex;align-items:center;gap:24px;margin:28px 0 24px}
+.country-hero h1{margin:0 0 6px}
+.country-hero p{margin:0}
+.country-shape{flex:0 0 auto;width:140px;height:140px;padding:10px;background:var(--sea);border:1px solid var(--line);border-radius:var(--radius)}
+.country-shape path{fill:var(--ink);stroke:var(--panel);stroke-width:.5}
+.quiz-cards{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.quiz-card{display:block;height:100%;padding:16px 18px;border:1.5px solid var(--line);border-radius:var(--radius);color:var(--ink);text-decoration:none}
+.quiz-card:hover{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.quiz-card strong{display:block;font:700 1.4rem/1.1 var(--cond)}
+.quiz-card .desc{display:block;margin-top:6px;color:var(--muted);font-size:.92rem}
+.quiz-card .card-rating{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.85rem}
+.empty{padding:32px 20px;text-align:center;border:1.5px dashed var(--line);border-radius:var(--radius);color:var(--muted)}
+
+/* Multiple-choice quiz page */
+.quiz-page{max-width:720px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+.quiz-meta{display:flex;justify-content:space-between;color:var(--muted);font-size:.9rem}
+.question{margin:12px 0 16px;font:600 1.3rem/1.3 var(--sans)}
+.question-image{display:block;max-width:100%;border-radius:var(--radius);margin-bottom:16px}
+.options{display:grid;gap:8px}
+.option{appearance:none;text-align:left;padding:12px 16px;border:1.5px solid var(--line);border-radius:var(--radius);background:transparent;color:var(--ink);font:inherit;cursor:pointer}
+.option:hover:not(:disabled){border-color:var(--ink)}
+.option:disabled{cursor:default}
+.option.correct{border-color:var(--ok);background:color-mix(in srgb,var(--got) 30%,transparent)}
+.option.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--miss) 30%,transparent)}
+.feedback{margin:16px 0;padding:12px 16px;border-radius:var(--radius);background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.feedback strong.correct{color:var(--ok)}
+.feedback strong.wrong{color:var(--bad)}
+.results{text-align:center}
+.final-score{font:700 3rem/1 var(--cond)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+
+@media (max-width:520px){
+  h1{font-size:2.1rem}
+  .folder > summary{padding:10px 12px}
+  .place > summary{padding-left:32px}
+  .continent > .place::before{left:19px}
+  .files::before{left:39px}
+  .files a{padding:8px 12px 8px 52px}
+  .country-hero{gap:16px}
+  .country-shape{width:96px;height:96px}
+}
