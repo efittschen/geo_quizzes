@@ -2,6 +2,7 @@
   "continents": {
     "032": "South America",
     "036": "Oceania",
+    "040": "Europe",
     "050": "Asia",
     "064": "Asia",
     "076": "South America",
@@ -471,6 +472,41 @@
       "title": "Cities",
       "levels": 4,
       "url": "quizzes/portugal-cities/index.html"
+    },
+    {
+      "id": "austria-codes",
+      "country": "040",
+      "title": "Area Codes",
+      "levels": 4,
+      "url": "quizzes/austria-codes/index.html"
+    },
+    {
+      "id": "austria-regions",
+      "country": "040",
+      "title": "Regions",
+      "levels": 1,
+      "url": "quizzes/austria-regions/index.html"
+    },
+    {
+      "id": "austria-roads",
+      "country": "040",
+      "title": "Road Numbers",
+      "levels": 4,
+      "url": "quizzes/austria-roads/index.html"
+    },
+    {
+      "id": "austria-vienna",
+      "country": "040",
+      "title": "Vienna Districts",
+      "levels": 2,
+      "url": "quizzes/austria-vienna/index.html"
+    },
+    {
+      "id": "austria-cities",
+      "country": "040",
+      "title": "Cities",
+      "levels": 4,
+      "url": "quizzes/austria-cities/index.html"
     }
   ]
 }

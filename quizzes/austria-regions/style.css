@@ -1,0 +1,7 @@
+/* Austria Regions and Road Numbers: areas are colored by state (tools/hints.mjs). Sign cards: a town sign for the
+   bilingual-sign mode, a road-number sign (white on blue, StVO § 53 Z 19) for the B-road mode. */
+.sent.osign{display:inline-block;width:auto;white-space:pre-line;text-align:center;font:600 2rem/1.25 var(--sans);color:#111;background:#fff;border:3px solid #111;border-radius:4px;padding:.25em .7em}
+.sent.bsign{display:inline-block;width:auto;font:600 3.4rem/1.05 var(--cond);color:#fff;background:#1F4E9A;border:3px solid #fff;outline:2px solid #1F4E9A;border-radius:6px;padding:.05em .4em .08em}
+/* hints: state (tools/hints.mjs) */
+.r[data-g="1"]{--hint:var(--h7)} .r[data-g="2"]{--hint:var(--h4)} .r[data-g="3"]{--hint:var(--h2)} .r[data-g="4"]{--hint:var(--h5)} .r[data-g="5"]{--hint:var(--h3)} .r[data-g="6"]{--hint:var(--h1)} .r[data-g="7"]{--hint:var(--h6)} .r[data-g="8"]{--hint:var(--h8)} .r[data-g="9"]{--hint:var(--h9)}
+/* end hints: state */
