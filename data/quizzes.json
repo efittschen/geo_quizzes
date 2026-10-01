@@ -5,6 +5,7 @@
     "050": "Asia",
     "064": "Asia",
     "076": "South America",
+    "116": "Asia",
     "124": "North America",
     "218": "South America",
     "356": "Asia",
@@ -281,6 +282,20 @@
       "title": "Cities",
       "levels": 4,
       "url": "quizzes/ecuador-cities/index.html"
+    },
+    {
+      "id": "cambodia-regions",
+      "country": "116",
+      "title": "Provinces",
+      "levels": 2,
+      "url": "quizzes/cambodia-regions/index.html"
+    },
+    {
+      "id": "cambodia-cities",
+      "country": "116",
+      "title": "Cities",
+      "levels": 4,
+      "url": "quizzes/cambodia-cities/index.html"
     }
   ]
 }

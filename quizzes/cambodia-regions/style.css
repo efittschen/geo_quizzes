@@ -1,0 +1,15 @@
+/* hints: zone (tools/hints.mjs) */
+.r[data-g="CP"]{--hint:var(--h1)} .r[data-g="CS"]{--hint:var(--h2)} .r[data-g="PM"]{--hint:var(--h3)} .r[data-g="TS"]{--hint:var(--h4)}
+/* end hints: zone */
+
+/* Cambodia Provinces: Khmer and Chinese fonts, the sign card and the road-marker card, on top of ../shared/area-quiz.css. */
+:root{--khmer:"Noto Sans Khmer","Noto Sans SC",var(--sans);--stone-red:#C8322B}
+#labels text,.chip,#eDial .code{font-family:"Barlow Condensed","Noto Sans Khmer","Noto Sans SC",sans-serif}
+.card{border:1.5px solid var(--ink);border-radius:14px;padding:18px 18px 16px;background:color-mix(in srgb,var(--ink) 3%,transparent);min-height:6.4rem;display:flex;align-items:center;justify-content:center}
+.card.pop .sent{animation:pop .35s ease-out}
+.sent{margin:0;font:600 2.3rem/1.5 var(--khmer);overflow-wrap:anywhere;width:100%;white-space:pre-line}
+.sent.zh{text-align:center;font-size:2rem}
+/* road marker: white stone with a rounded red top, road number on it */
+.sent.stone{width:auto;position:relative;padding:34px 22px 6px;min-width:3.2em;text-align:center;font:700 2.6rem/1.1 var(--cond);color:#16181B;background:#F4F2EC;border:2px solid #9A968C;border-radius:46% 46% 6px 6px / 38% 38% 6px 6px;overflow:hidden}
+.sent.stone::before{content:"";position:absolute;left:0;right:0;top:0;height:28px;background:var(--stone-red)}
+@media (max-width:720px){ .card{min-height:0;padding:12px 14px} .sent{font-size:1.7rem} .sent.stone{font-size:2rem;padding-top:26px} .sent.stone::before{height:20px} }
