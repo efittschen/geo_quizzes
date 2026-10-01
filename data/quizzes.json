@@ -6,6 +6,7 @@
     "064": "Asia",
     "076": "South America",
     "124": "North America",
+    "218": "South America",
     "356": "Asia",
     "484": "North America",
     "512": "Asia",
@@ -259,6 +260,27 @@
       "title": "Cities",
       "levels": 4,
       "url": "quizzes/bangladesh-cities/index.html"
+    },
+    {
+      "id": "ecuador-regions",
+      "country": "218",
+      "title": "Provinces",
+      "levels": 2,
+      "url": "quizzes/ecuador-regions/index.html"
+    },
+    {
+      "id": "ecuador-codes",
+      "country": "218",
+      "title": "Area Codes",
+      "levels": 1,
+      "url": "quizzes/ecuador-codes/index.html"
+    },
+    {
+      "id": "ecuador-cities",
+      "country": "218",
+      "title": "Cities",
+      "levels": 4,
+      "url": "quizzes/ecuador-cities/index.html"
     }
   ]
 }
