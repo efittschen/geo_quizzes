@@ -9,6 +9,7 @@
     "356": "Asia",
     "484": "North America",
     "512": "Asia",
+    "516": "Africa",
     "524": "Asia",
     "643": "Europe",
     "710": "Africa",
@@ -216,6 +217,27 @@
       "title": "Cities",
       "levels": 3,
       "url": "quizzes/oman-cities/index.html"
+    },
+    {
+      "id": "namibia-codes",
+      "country": "516",
+      "title": "Area Codes",
+      "levels": 1,
+      "url": "quizzes/namibia-codes/index.html"
+    },
+    {
+      "id": "namibia-regions",
+      "country": "516",
+      "title": "Regions",
+      "levels": 2,
+      "url": "quizzes/namibia-regions/index.html"
+    },
+    {
+      "id": "namibia-cities",
+      "country": "516",
+      "title": "Cities",
+      "levels": 4,
+      "url": "quizzes/namibia-cities/index.html"
     }
   ]
 }

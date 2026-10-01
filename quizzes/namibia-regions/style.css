@@ -1,0 +1,6 @@
+/* hints: region (tools/hints.mjs) */
+.r[data-g="Erongo"]{--hint:var(--h4)} .r[data-g="Hardap"]{--hint:var(--h5)} .r[data-g="Karas"]{--hint:var(--h13)} .r[data-g="Kavango East"]{--hint:var(--h8)} .r[data-g="Kavango West"]{--hint:var(--h9)} .r[data-g="Khomas"]{--hint:var(--h6)} .r[data-g="Kunene"]{--hint:var(--h2)} .r[data-g="Ohangwena"]{--hint:var(--h10)} .r[data-g="Omaheke"]{--hint:var(--h11)} .r[data-g="Omusati"]{--hint:var(--h12)} .r[data-g="Oshana"]{--hint:var(--h7)} .r[data-g="Oshikoto"]{--hint:var(--h3)} .r[data-g="Otjozondjupa"]{--hint:var(--h1)} .r[data-g="Zambezi"]{--hint:var(--h14)}
+/* end hints: region */
+/* hints: code (tools/hints.mjs) */
+.r[data-g="061"]{--hint:var(--h6)} .r[data-g="062"]{--hint:var(--h1)} .r[data-g="063"]{--hint:var(--h4)} .r[data-g="064"]{--hint:var(--h2)} .r[data-g="065"]{--hint:var(--h5)} .r[data-g="066"]{--hint:var(--h7)} .r[data-g="067"]{--hint:var(--h3)}
+/* end hints: code */
