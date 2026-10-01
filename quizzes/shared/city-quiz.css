@@ -1,0 +1,8 @@
+/* City quizzes (shared/city-config.js): the sign card that shows a city's name in the local script.
+   Pages load the Noto font for their script; --script falls back through the common Noto families. */
+:root{--script:'Noto Sans','Noto Sans Thai','Noto Sans JP','Noto Sans KR','Noto Sans Khmer','Noto Sans Bengali','Noto Sans Sinhala','Noto Sans Tamil','Noto Sans Devanagari','Noto Naskh Arabic',var(--sans)}
+.card{border:1.5px solid var(--ink);border-radius:14px;padding:18px 18px 16px;background:color-mix(in srgb,var(--ink) 3%,transparent);min-height:6rem;display:flex;align-items:center}
+.sent{margin:0;font:600 2.3rem/1.35 var(--script);overflow-wrap:anywhere;width:100%}
+.sent:lang(ar),.sent:lang(fa),.sent:lang(ur){font-size:2.1rem;line-height:1.9}
+.card.pop .sent{animation:pop .35s ease-out}
+@media (max-width:720px){ .card{min-height:0;padding:12px 14px} .sent{font-size:1.7rem} }

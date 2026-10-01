@@ -13,6 +13,9 @@
 //   kinds        what can be asked, see KINDS below
 //   explore(areaId) -> { code, title, sub }  (sub may be an array of lines)
 //   context      optional SVG path drawn under the areas (neighbouring countries), not clickable
+//   base, dots   city quizzes: base { land, lines } draws the country and its region borders under the areas;
+//                dots: true draws each area (a zero-length path "Mx,yl0,0") as a dot that keeps its size on
+//                screen at every zoom, with its label above it (see shared/city-config.js)
 //   geo/street   leave out to offer the quiz map only (no street-map mode)
 //   hintsDefault whether "color areas" starts ticked (default true)
 //   lettersLabel optional option text: show every area's label while playing
@@ -88,6 +91,9 @@
   const raiseTops = () => { for (const a of Q.areas) if (a.top) gR.appendChild(EL[a.id]); };
   raiseTops();
   if (Q.context) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', Q.context); $('ctx').appendChild(p); }
+  // City quizzes: the country's land and its region borders under the clickable dots (Q.base = { land, lines }).
+  if (Q.base) for (const cls of ['land', 'lines']) if (Q.base[cls]) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', Q.base[cls]); p.setAttribute('class', cls); $('ctx').appendChild(p); }
+  if (Q.dots) svg.classList.add('dots');
   for (const d of Q.borders) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); gB.appendChild(p); }
   const AREAS = Q.areas.map(a => a.id);
   const gPins = document.createElementNS(NS, 'g'); gPins.id = 'pins'; svg.appendChild(gPins);
@@ -359,8 +365,9 @@
     for (const c of gPins.querySelectorAll('circle')) c.setAttribute('r', (4.5 / s).toFixed(3));
     for (const t of gPins.querySelectorAll('text')) { t.setAttribute('font-size', (13 / s).toFixed(3)); t.setAttribute('dy', (-9 / s).toFixed(3)); t.style.strokeWidth = (3 / s).toFixed(3) + 'px'; }
     for (const e of ENTRIES) {
-      const fs = Math.min(15 / s, Math.max(9 / s, Math.sqrt(e.area) * Q.labelScale));
+      const fs = Q.dots ? 12 / s : Math.min(15 / s, Math.max(9 / s, Math.sqrt(e.area) * Q.labelScale));
       e.el.setAttribute('font-size', fs.toFixed(3)); e.el.style.strokeWidth = (3 / s).toFixed(3) + 'px';
+      if (Q.dots) e.el.setAttribute('dy', (-13 / s).toFixed(3)); // city names sit above their dot, like pins
     }
   }
 

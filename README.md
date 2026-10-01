@@ -100,6 +100,21 @@ When a mode's answers are groups of areas (first-digit or two-digit zones, state
 
 One config can serve several pages. The page's `<body>` lists which question types it shows and where it saves scores, e.g. `quizzes/brazil-states/index.html` reuses Brazil's files with `<body data-kinds="states" data-key="dddstates">`, while the area-code page has `<body data-kinds="codes digits">`.
 
+### City quizzes ("click the city")
+
+`quizzes/<country>-cities/` asks for a country's largest cities: the top 200 by population plus every capital. Each city is a dot on the country's map with its regions drawn in. The dots keep their size on screen at every zoom, so crowded areas come apart when you zoom in. A city is asked by its English name, or by its local name in the local language and script. Rounds go from the 8 largest cities to all of them, and custom quizzes can be grouped by region.
+
+A page needs only `cities.js` (the data, made by `tools/cities.mjs`), an optional `CITY_OPTS` (e.g. `{ key: 'thcities', localLabel: 'Thai script' }`), `shared/city-config.js` (which builds the quiz config) and the usual engine. Copy `quizzes/thailand-cities/index.html`. Cities come from GeoNames (CC BY 4.0) and names from Wikidata (CC0). There is no street map, because its tiles print the city names.
+
+## Tools (build time only)
+
+`tools/` holds the Node scripts that make the quiz data. The site itself never loads them. Run `npm install` in `tools/` once. Downloads are cached in `tools/cache/`, which is not committed. Usage is at the top of each file:
+
+- `geo2quiz.mjs`: boundary polygons (GeoJSON) → `data.js` + `geo.js`. It fits an equal-area projection to the country, simplifies shared borders once, and adds the neighbouring land.
+- `cities.mjs`: GeoNames + Wikidata → `cities.js` for a city quiz, in the same projection as its base map.
+- `hints.mjs`: hint colors (`style.css`), so groups that touch never share a color.
+- `smoke.mjs`: opens pages in headless Chromium, reports errors, plays a click and saves screenshots.
+
 ## Deploy to GitHub Pages
 
 1. Create a new repository on GitHub and push this folder to it:

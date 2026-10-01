@@ -93,8 +93,20 @@ body{overflow:hidden}
 .toast{margin:0;font-size:.85rem;color:var(--muted);min-height:0}
 .toast:empty{display:none}
 
-/* neighbouring countries drawn under the areas (Q.context) */
+/* neighbouring countries drawn under the areas (Q.context); a quiz's own style.css may override --ctx */
+:root{--ctx:#DCDED8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ctx:#1B242D}}
+:root[data-theme="dark"]{--ctx:#1B242D}
 #ctx path{fill:var(--ctx,#DCDED8);stroke:var(--edge);stroke-width:.6;vector-effect:non-scaling-stroke;pointer-events:none}
+/* city quizzes (Q.base, Q.dots): the country's land and region borders, and dots that keep their size on screen
+   at every zoom (a zero-length stroke with round caps), so zooming in pulls crowded cities apart */
+#ctx path.land{fill:var(--land)} #ctx path.lines{fill:none;stroke-opacity:.55}
+.dots .r{--fill:var(--ink);fill:none;stroke:var(--fill);stroke-width:11px;stroke-linecap:round}
+.dots.hints .r,.dots.hints.fade .r{--fill:color-mix(in oklab,var(--hint,var(--ink)) 55%,var(--ink))}
+.dots #regions .r.out{visibility:hidden}
+.dots #hl path{fill:none;stroke-linecap:round;stroke-width:22px;stroke-opacity:.3}
+.dots #ansUse{stroke:var(--yellow);animation:dotpulse 1s ease-in-out infinite alternate}
+@keyframes dotpulse{from{stroke-width:16px;stroke-opacity:.35}to{stroke-width:28px;stroke-opacity:.8}}
 /* dial codes shown in parts: the digits that matter bold, the rest faded */
 .dial .code .hot{color:var(--ink)} .dial .code .cold{color:var(--muted);opacity:.45}
 /* pin for the last answered place */
