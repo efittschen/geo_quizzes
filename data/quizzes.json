@@ -18,6 +18,7 @@
     "516": "Africa",
     "524": "Asia",
     "600": "South America",
+    "620": "Europe",
     "643": "Europe",
     "686": "Africa",
     "710": "Africa",
@@ -449,6 +450,27 @@
       "title": "Cities",
       "levels": 4,
       "url": "quizzes/hungary-cities/index.html"
+    },
+    {
+      "id": "portugal-codes",
+      "country": "620",
+      "title": "Area Codes",
+      "levels": 3,
+      "url": "quizzes/portugal-codes/index.html"
+    },
+    {
+      "id": "portugal-regions",
+      "country": "620",
+      "title": "Regions",
+      "levels": 2,
+      "url": "quizzes/portugal-regions/index.html"
+    },
+    {
+      "id": "portugal-cities",
+      "country": "620",
+      "title": "Cities",
+      "levels": 4,
+      "url": "quizzes/portugal-cities/index.html"
     }
   ]
 }

@@ -1,0 +1,5 @@
+/* Portugal regions: municipalities are colored by district (or autonomous region); hint colors come from the shared
+   palette in ../shared/area-quiz.css, picked so neighbouring districts differ. */
+/* hints: district (tools/hints.mjs) */
+.r[data-g="Aveiro"]{--hint:var(--h10)} .r[data-g="Açores"]{--hint:var(--h19)} .r[data-g="Beja"]{--hint:var(--h11)} .r[data-g="Braga"]{--hint:var(--h12)} .r[data-g="Bragança"]{--hint:var(--h13)} .r[data-g="Castelo Branco"]{--hint:var(--h3)} .r[data-g="Coimbra"]{--hint:var(--h4)} .r[data-g="Faro"]{--hint:var(--h17)} .r[data-g="Guarda"]{--hint:var(--h6)} .r[data-g="Leiria"]{--hint:var(--h7)} .r[data-g="Lisboa"]{--hint:var(--h16)} .r[data-g="Madeira"]{--hint:var(--h20)} .r[data-g="Portalegre"]{--hint:var(--h14)} .r[data-g="Porto"]{--hint:var(--h8)} .r[data-g="Santarém"]{--hint:var(--h1)} .r[data-g="Setúbal"]{--hint:var(--h15)} .r[data-g="Viana do Castelo"]{--hint:var(--h18)} .r[data-g="Vila Real"]{--hint:var(--h9)} .r[data-g="Viseu"]{--hint:var(--h2)} .r[data-g="Évora"]{--hint:var(--h5)}
+/* end hints: district */
