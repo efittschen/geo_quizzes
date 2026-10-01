@@ -238,6 +238,27 @@
       "title": "Cities",
       "levels": 4,
       "url": "quizzes/namibia-cities/index.html"
+    },
+    {
+      "id": "bangladesh-regions",
+      "country": "050",
+      "title": "Divisions & Districts",
+      "levels": 4,
+      "url": "quizzes/bangladesh-regions/index.html"
+    },
+    {
+      "id": "bangladesh-postcodes",
+      "country": "050",
+      "title": "Postcodes",
+      "levels": 1,
+      "url": "quizzes/bangladesh-postcodes/index.html"
+    },
+    {
+      "id": "bangladesh-cities",
+      "country": "050",
+      "title": "Cities",
+      "levels": 4,
+      "url": "quizzes/bangladesh-cities/index.html"
     }
   ]
 }

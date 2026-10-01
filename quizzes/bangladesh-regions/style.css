@@ -1,0 +1,15 @@
+/* Bangladesh Divisions & Districts: Bangla-script font, the name card, and hint colors by division (tools/hints.mjs)
+   on top of ../shared/area-quiz.css. */
+:root{
+  --sans:"Barlow","Noto Sans Bengali",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --cond:"Barlow Condensed","Noto Sans Bengali","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
+  --bn:"Noto Sans Bengali",var(--sans);
+}
+.card{border:1.5px solid var(--ink);border-radius:14px;padding:18px 18px 16px;background:color-mix(in srgb,var(--ink) 3%,transparent);min-height:6rem;display:flex;align-items:center}
+.sent{margin:0;font:600 2.3rem/1.45 var(--bn);overflow-wrap:anywhere;width:100%}
+.card.pop .sent{animation:pop .35s ease-out}
+#eDial .code{font-family:var(--bn);letter-spacing:0}
+@media (max-width:720px){ .card{min-height:0;padding:12px 14px} .sent{font-size:1.8rem} }
+/* hints: division (tools/hints.mjs) */
+.r[data-g="BD10"]{--hint:var(--h4)} .r[data-g="BD20"]{--hint:var(--h5)} .r[data-g="BD30"]{--hint:var(--h1)} .r[data-g="BD40"]{--hint:var(--h6)} .r[data-g="BD45"]{--hint:var(--h2)} .r[data-g="BD50"]{--hint:var(--h3)} .r[data-g="BD55"]{--hint:var(--h8)} .r[data-g="BD60"]{--hint:var(--h7)}
+/* end hints: division */
