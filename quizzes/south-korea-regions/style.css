@@ -1,0 +1,12 @@
+/* South Korea Regions: the Hangul name card and the local-road shield, on top of ../shared/area-quiz.css and the
+   hint colors in ../south-korea-codes/style.css. */
+:root{--ko:'Noto Sans KR',var(--sans),sans-serif}
+.card{border:1.5px solid var(--ink);border-radius:14px;padding:18px 18px 16px;background:color-mix(in srgb,var(--ink) 3%,transparent);min-height:6rem;display:flex;align-items:center}
+.sent{margin:0;font:700 2.6rem/1.3 var(--ko);overflow-wrap:anywhere;width:100%}
+.card.pop .sent{animation:pop .35s ease-out}
+/* 지방도 shield: blue numbers on a yellow rectangle */
+.card:has(.shield){border:0;background:none;padding:0}
+.sent.shield{width:auto;font:700 3.4rem/1 var(--cond);color:#1D4E9E;background:#F7C600;border:3px solid #1D4E9E;border-radius:8px;padding:.18em .4em .12em;letter-spacing:.01em}
+.chip,#eDial .code,#labels text{font-family:var(--ko)}
+#eDial .code{font-size:4rem;letter-spacing:0}
+@media (max-width:720px){ .card{min-height:0;padding:12px 14px} .sent{font-size:1.9rem} .sent.shield{font-size:2.6rem} }

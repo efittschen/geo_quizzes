@@ -14,6 +14,7 @@
     "348": "Europe",
     "356": "Asia",
     "398": "Asia",
+    "410": "Asia",
     "484": "North America",
     "512": "Asia",
     "516": "Africa",
@@ -507,6 +508,27 @@
       "title": "Cities",
       "levels": 4,
       "url": "quizzes/austria-cities/index.html"
+    },
+    {
+      "id": "south-korea-codes",
+      "country": "410",
+      "title": "Area Codes",
+      "levels": 2,
+      "url": "quizzes/south-korea-codes/index.html"
+    },
+    {
+      "id": "south-korea-regions",
+      "country": "410",
+      "title": "Regions",
+      "levels": 2,
+      "url": "quizzes/south-korea-regions/index.html"
+    },
+    {
+      "id": "south-korea-cities",
+      "country": "410",
+      "title": "Cities",
+      "levels": 4,
+      "url": "quizzes/south-korea-cities/index.html"
     }
   ]
 }
