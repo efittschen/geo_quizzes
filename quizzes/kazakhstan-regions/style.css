@@ -1,0 +1,7 @@
+/* hints: region (tools/hints.mjs) */
+.r[data-g="abai"]{--hint:var(--h6)} .r[data-g="akmola"]{--hint:var(--h4)} .r[data-g="aktobe"]{--hint:var(--h2)} .r[data-g="almaty"]{--hint:var(--h17)} .r[data-g="almaty-region"]{--hint:var(--h7)} .r[data-g="astana"]{--hint:var(--h18)} .r[data-g="atyrau"]{--hint:var(--h11)} .r[data-g="east-kazakhstan"]{--hint:var(--h19)} .r[data-g="jetisu"]{--hint:var(--h12)} .r[data-g="karaganda"]{--hint:var(--h1)} .r[data-g="kostanay"]{--hint:var(--h5)} .r[data-g="kyzylorda"]{--hint:var(--h13)} .r[data-g="mangystau"]{--hint:var(--h15)} .r[data-g="north-kazakhstan"]{--hint:var(--h14)} .r[data-g="pavlodar"]{--hint:var(--h8)} .r[data-g="shymkent"]{--hint:var(--h20)} .r[data-g="turkistan"]{--hint:var(--h9)} .r[data-g="ulytau"]{--hint:var(--h3)} .r[data-g="west-kazakhstan"]{--hint:var(--h16)} .r[data-g="zhambyl"]{--hint:var(--h10)}
+/* end hints: region */
+
+/* Kazakh Cyrillic (Ә Ғ Қ Ң Ө Ұ Ү Һ І): Barlow has no Cyrillic, so map labels, chips and the sign card fall back to Noto Sans */
+#labels text,.chip,.cd,#eCode{font-family:var(--cond),'Noto Sans',sans-serif}
+.sent.kk{font-family:'Noto Sans',var(--sans)}
