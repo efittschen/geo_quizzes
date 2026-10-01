@@ -5,6 +5,7 @@
     "050": "Asia",
     "064": "Asia",
     "076": "South America",
+    "100": "Europe",
     "116": "Asia",
     "124": "North America",
     "218": "South America",
@@ -384,6 +385,27 @@
       "title": "Cities",
       "levels": 4,
       "url": "quizzes/ghana-cities/index.html"
+    },
+    {
+      "id": "bulgaria-codes",
+      "country": "100",
+      "title": "Area Codes",
+      "levels": 4,
+      "url": "quizzes/bulgaria-codes/index.html"
+    },
+    {
+      "id": "bulgaria-regions",
+      "country": "100",
+      "title": "Provinces",
+      "levels": 2,
+      "url": "quizzes/bulgaria-regions/index.html"
+    },
+    {
+      "id": "bulgaria-cities",
+      "country": "100",
+      "title": "Cities",
+      "levels": 4,
+      "url": "quizzes/bulgaria-cities/index.html"
     }
   ]
 }

@@ -1,0 +1,5 @@
+/* hints: planning region (tools/hints.mjs) */
+.r[data-g="BG31"]{--hint:var(--h1)} .r[data-g="BG32"]{--hint:var(--h3)} .r[data-g="BG33"]{--hint:var(--h5)} .r[data-g="BG34"]{--hint:var(--h2)} .r[data-g="BG41"]{--hint:var(--h6)} .r[data-g="BG42"]{--hint:var(--h4)}
+/* end hints: planning region */
+/* Cyrillic: Barlow has no Cyrillic letters, so they come from Noto Sans */
+:root{--sans:"Barlow","Noto Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--cond:"Barlow Condensed","Noto Sans",system-ui,sans-serif}
