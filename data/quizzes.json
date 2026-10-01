@@ -10,6 +10,7 @@
     "124": "North America",
     "218": "South America",
     "288": "Africa",
+    "348": "Europe",
     "356": "Asia",
     "398": "Asia",
     "484": "North America",
@@ -406,6 +407,48 @@
       "title": "Cities",
       "levels": 4,
       "url": "quizzes/bulgaria-cities/index.html"
+    },
+    {
+      "id": "hungary-codes",
+      "country": "348",
+      "title": "Area Codes",
+      "levels": 3,
+      "url": "quizzes/hungary-codes/index.html"
+    },
+    {
+      "id": "hungary-regions",
+      "country": "348",
+      "title": "Counties",
+      "levels": 2,
+      "url": "quizzes/hungary-regions/index.html"
+    },
+    {
+      "id": "hungary-signs",
+      "country": "348",
+      "title": "Minority Signs",
+      "levels": 1,
+      "url": "quizzes/hungary-signs/index.html"
+    },
+    {
+      "id": "hungary-roads",
+      "country": "348",
+      "title": "Road Numbers",
+      "levels": 1,
+      "url": "quizzes/hungary-roads/index.html"
+    },
+    {
+      "id": "hungary-districts",
+      "country": "348",
+      "title": "Budapest Districts",
+      "levels": 2,
+      "url": "quizzes/hungary-districts/index.html"
+    },
+    {
+      "id": "hungary-cities",
+      "country": "348",
+      "title": "Cities",
+      "levels": 4,
+      "url": "quizzes/hungary-cities/index.html"
     }
   ]
 }
