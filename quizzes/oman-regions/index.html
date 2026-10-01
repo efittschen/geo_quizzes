@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Oman Regions · Geo Quizzes</title>
+<meta name="description" content="Find Oman's 11 governorates and 63 wilayats on the map, by English or Arabic name.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Noto+Naskh+Arabic:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="../../assets/css/base.css">
+<link rel="stylesheet" href="../shared/area-quiz.css">
+<link rel="stylesheet" href="../shared/city-quiz.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="panel">
+    <header class="brand">
+      <a class="back" href="../../country.html?code=512">← Oman</a>
+      <h1>Oman Regions</h1>
+    </header>
+
+    <section id="setup" class="setup">
+      <div class="group">
+        <h2>Choose a round</h2>
+        <div class="rounds" id="rounds"></div>
+      </div>
+      <div class="custom-wrap" id="customWrap" hidden>
+        <div class="group">
+          <h2>What to practice</h2>
+          <div class="seg" id="kindSeg"></div>
+        </div>
+        <div class="group">
+          <div class="pick-head">
+            <h2 id="pickTitle"></h2>
+            <span><button class="linkbtn" id="selAll" type="button">All</button> · <button class="linkbtn" id="selNone" type="button">None</button><span id="presets"></span></span>
+          </div>
+          <div class="topn" id="topn">
+            <span>Top</span> <input type="number" id="topN" min="1" value="20" inputmode="numeric" aria-label="How many">
+            <span>by</span> <select id="topBy" aria-label="Rank by"></select>
+            <button class="ghost small" id="topGo" type="button">Select</button>
+          </div>
+          <div class="groups" id="groups"></div>
+        </div>
+        <div class="group">
+          <h2>Save or share it</h2>
+          <div class="save">
+            <input type="text" id="saveName" maxlength="40" placeholder="Name your quiz" aria-label="Quiz name">
+            <button class="ghost small" id="saveBtn" type="button">Save</button>
+            <button class="ghost small" id="shareBtn" type="button">Copy link</button>
+          </div>
+        </div>
+      </div>
+      <div class="group" id="helpWrap">
+        <h2>Help</h2>
+        <label class="toggle" id="optColorsWrap"><input type="checkbox" id="optColors" checked> <span id="optColorsText"></span></label>
+        <label class="toggle" id="optDetailWrap"><input type="checkbox" id="optDetail"> <span id="optDetailText"></span></label>
+      </div>
+    </section>
+
+    <section id="play" class="group" hidden>
+      <div class="bigname" id="bigname" aria-live="polite" hidden></div>
+      <div class="card" id="card" hidden><p class="sent" id="sent" dir="auto" aria-live="polite"></p></div>
+      <div class="dial" id="dial" aria-live="polite"><span class="cc">+968</span><span class="p">(</span><span class="code" id="code">---</span><span class="p">)</span><span class="rest" aria-hidden="true">··· ····</span></div>
+      <p class="ask" id="ask"></p>
+      <div class="stats">
+        <div><b id="sQ">1/10</b><span>Question</span></div>
+        <div><b id="sScore">0</b><span>First try</span></div>
+        <div><b id="sStreak">0</b><span>Streak</span></div>
+        <div><b id="sTime">0:00</b><span>Time</span></div>
+      </div>
+      <div class="ticks" id="ticks"></div>
+      <div class="feedback" id="fb" role="status"></div>
+      <div class="row">
+        <button class="ghost" id="restartBtn" type="button">Restart</button>
+        <button class="ghost" id="endBtn" type="button">End round</button>
+      </div>
+    </section>
+
+    <section id="done" class="group result" hidden>
+      <div>
+        <h2 id="rScore">8 of 10</h2>
+        <p id="rLine"></p>
+      </div>
+      <ul class="legend" aria-label="Map colors">
+        <li><i class="got"></i>First try</li>
+        <li><i class="t2"></i>Second try</li>
+        <li><i class="t3"></i>Third try</li>
+        <li><i class="miss"></i>Shown</li>
+      </ul>
+      <div class="group" id="missWrap">
+        <h2>Missed</h2>
+        <div class="chips" id="chips"></div>
+        <p id="rPick" class="muted"></p>
+      </div>
+      <div class="row">
+        <button class="primary" id="againBtn" type="button">Play again</button>
+        <button class="ghost" id="retryBtn" type="button">Retry missed</button>
+        <button class="ghost" id="menuBtn" type="button">Change round</button>
+      </div>
+    </section>
+
+    <section id="explore" class="group info" hidden>
+      <div class="dial" id="eDial"><span class="code" id="eCode">?</span></div>
+      <div class="feedback" id="eInfo"></div>
+      <div class="row"><button class="ghost" id="eBack" type="button">Back</button></div>
+    </section>
+
+    <p class="note">Borders &amp; names: OpenStreetMap contributors (ODbL), Sur relabelled · Street map © OpenStreetMap contributors</p>
+    <div class="startbar" id="startbar">
+      <div class="seg" id="mapSeg">
+        <button type="button" data-map="quiz"><b>Quiz map</b><small>with borders</small></button>
+        <button type="button" data-map="street"><b>Street map</b><small>hard, no borders</small></button>
+      </div>
+      <div class="row">
+        <button class="primary" id="startBtn" type="button">Start</button>
+        <button class="ghost" id="exploreBtn" type="button">Explore</button>
+      </div>
+      <p class="toast" id="toast" role="status" aria-live="polite"></p>
+    </div>
+  </aside>
+
+  <main class="stage" id="stage">
+    <svg id="map" class="hints" preserveAspectRatio="xMidYMid meet" aria-label="Map of Oman's governorates and wilayats">
+      <g id="ctx"></g>
+      <g id="regions"></g>
+      <g id="borders"></g>
+      <g id="hl"><path id="hoverUse" d=""/><path id="ansUse" d=""/></g>
+      <g id="labels"></g>
+    </svg>
+    <div class="zoom" id="zoomCtl" aria-label="Map zoom">
+      <button id="zIn" type="button" aria-label="Zoom in">+</button>
+      <button id="zOut" type="button" aria-label="Zoom out">&minus;</button>
+      <button id="zFit" type="button" aria-label="Show all of Oman">&#8634;</button>
+    </div>
+    <div id="street" hidden></div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="data.js"></script>
+<script src="geo.js"></script>
+<script src="quiz.js"></script>
+<script src="../shared/area-quiz.js"></script>
+</body>
+</html>

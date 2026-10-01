@@ -8,6 +8,7 @@
     "124": "North America",
     "356": "Asia",
     "484": "North America",
+    "512": "Asia",
     "524": "Asia",
     "643": "Europe",
     "710": "Africa",
@@ -194,6 +195,27 @@
       "levels": 4,
       "description": "Find Turkey's 81 provinces on the map, by name, grouped by region.",
       "url": "quizzes/turkey-provinces/index.html"
+    },
+    {
+      "id": "oman-codes",
+      "country": "512",
+      "title": "Area Codes",
+      "levels": 1,
+      "url": "quizzes/oman-codes/index.html"
+    },
+    {
+      "id": "oman-regions",
+      "country": "512",
+      "title": "Regions",
+      "levels": 4,
+      "url": "quizzes/oman-regions/index.html"
+    },
+    {
+      "id": "oman-cities",
+      "country": "512",
+      "title": "Cities",
+      "levels": 3,
+      "url": "quizzes/oman-cities/index.html"
     }
   ]
 }
