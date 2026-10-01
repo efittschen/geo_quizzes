@@ -16,6 +16,7 @@
     "524": "Asia",
     "600": "South America",
     "643": "Europe",
+    "686": "Africa",
     "710": "Africa",
     "792": "Asia",
     "840": "North America"
@@ -347,6 +348,27 @@
       "title": "Cities",
       "levels": 4,
       "url": "quizzes/paraguay-cities/index.html"
+    },
+    {
+      "id": "senegal-regions",
+      "country": "686",
+      "title": "Regions",
+      "levels": 3,
+      "url": "quizzes/senegal-regions/index.html"
+    },
+    {
+      "id": "senegal-codes",
+      "country": "686",
+      "title": "Area Codes",
+      "levels": 1,
+      "url": "quizzes/senegal-codes/index.html"
+    },
+    {
+      "id": "senegal-cities",
+      "country": "686",
+      "title": "Cities",
+      "levels": 4,
+      "url": "quizzes/senegal-cities/index.html"
     }
   ]
 }
