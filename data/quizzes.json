@@ -14,6 +14,7 @@
     "512": "Asia",
     "516": "Africa",
     "524": "Asia",
+    "600": "South America",
     "643": "Europe",
     "710": "Africa",
     "792": "Asia",
@@ -318,6 +319,34 @@
       "title": "Cities",
       "levels": 4,
       "url": "quizzes/kazakhstan-cities/index.html"
+    },
+    {
+      "id": "paraguay-regions",
+      "country": "600",
+      "title": "Regions",
+      "levels": 2,
+      "url": "quizzes/paraguay-regions/index.html"
+    },
+    {
+      "id": "paraguay-districts",
+      "country": "600",
+      "title": "Districts",
+      "levels": 4,
+      "url": "quizzes/paraguay-districts/index.html"
+    },
+    {
+      "id": "paraguay-codes",
+      "country": "600",
+      "title": "Area Codes",
+      "levels": 4,
+      "url": "quizzes/paraguay-codes/index.html"
+    },
+    {
+      "id": "paraguay-cities",
+      "country": "600",
+      "title": "Cities",
+      "levels": 4,
+      "url": "quizzes/paraguay-cities/index.html"
     }
   ]
 }
