@@ -5,6 +5,7 @@
     "040": "Europe",
     "050": "Asia",
     "064": "Asia",
+    "068": "South America",
     "076": "South America",
     "100": "Europe",
     "116": "Asia",
@@ -529,6 +530,27 @@
       "title": "Cities",
       "levels": 4,
       "url": "quizzes/south-korea-cities/index.html"
+    },
+    {
+      "id": "bolivia-regions",
+      "country": "068",
+      "title": "Departments",
+      "levels": 1,
+      "url": "quizzes/bolivia-regions/index.html"
+    },
+    {
+      "id": "bolivia-codes",
+      "country": "068",
+      "title": "Area Codes",
+      "levels": 1,
+      "url": "quizzes/bolivia-codes/index.html"
+    },
+    {
+      "id": "bolivia-cities",
+      "country": "068",
+      "title": "Cities",
+      "levels": 4,
+      "url": "quizzes/bolivia-cities/index.html"
     }
   ]
 }
