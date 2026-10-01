@@ -10,6 +10,7 @@
     "100": "Europe",
     "116": "Asia",
     "124": "North America",
+    "144": "Asia",
     "218": "South America",
     "288": "Africa",
     "348": "Europe",
@@ -551,6 +552,27 @@
       "title": "Cities",
       "levels": 4,
       "url": "quizzes/bolivia-cities/index.html"
+    },
+    {
+      "id": "sri-lanka-codes",
+      "country": "144",
+      "title": "Area Codes",
+      "levels": 2,
+      "url": "quizzes/sri-lanka-codes/index.html"
+    },
+    {
+      "id": "sri-lanka-regions",
+      "country": "144",
+      "title": "Provinces & Districts",
+      "levels": 2,
+      "url": "quizzes/sri-lanka-regions/index.html"
+    },
+    {
+      "id": "sri-lanka-cities",
+      "country": "144",
+      "title": "Cities",
+      "levels": 4,
+      "url": "quizzes/sri-lanka-cities/index.html"
     }
   ]
 }

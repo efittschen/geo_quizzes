@@ -1,0 +1,16 @@
+/* Sri Lanka Provinces & Districts: Sinhala and Tamil fonts, the name card, and hint colors by province
+   (tools/hints.mjs) on top of ../shared/area-quiz.css. */
+:root{
+  --sans:"Barlow","Noto Sans Sinhala","Noto Sans Tamil",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --cond:"Barlow Condensed","Noto Sans Sinhala","Noto Sans Tamil","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
+  --si:"Noto Sans Sinhala",var(--sans);
+  --ta:"Noto Sans Tamil",var(--sans);
+}
+.card{border:1.5px solid var(--ink);border-radius:14px;padding:18px 18px 16px;background:color-mix(in srgb,var(--ink) 3%,transparent);min-height:6rem;display:flex;align-items:center}
+.sent{margin:0;font:600 2.1rem/1.5 var(--si);overflow-wrap:break-word;width:100%}
+.sent.ta,.sent:lang(ta){font-family:var(--ta);font-size:1.55rem}
+.card.pop .sent{animation:pop .35s ease-out}
+@media (max-width:720px){ .card{min-height:0;padding:12px 14px} .sent{font-size:1.7rem} .sent.ta,.sent:lang(ta){font-size:1.3rem} }
+/* hints: province (tools/hints.mjs) */
+.r[data-g="LK1"]{--hint:var(--h8)} .r[data-g="LK2"]{--hint:var(--h1)} .r[data-g="LK3"]{--hint:var(--h5)} .r[data-g="LK4"]{--hint:var(--h9)} .r[data-g="LK5"]{--hint:var(--h2)} .r[data-g="LK6"]{--hint:var(--h3)} .r[data-g="LK7"]{--hint:var(--h6)} .r[data-g="LK8"]{--hint:var(--h7)} .r[data-g="LK9"]{--hint:var(--h4)}
+/* end hints: province */
