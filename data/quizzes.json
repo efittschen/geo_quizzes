@@ -8,6 +8,7 @@
     "116": "Asia",
     "124": "North America",
     "218": "South America",
+    "288": "Africa",
     "356": "Asia",
     "398": "Asia",
     "484": "North America",
@@ -369,6 +370,20 @@
       "title": "Cities",
       "levels": 4,
       "url": "quizzes/senegal-cities/index.html"
+    },
+    {
+      "id": "ghana-regions",
+      "country": "288",
+      "title": "Regions",
+      "levels": 2,
+      "url": "quizzes/ghana-regions/index.html"
+    },
+    {
+      "id": "ghana-cities",
+      "country": "288",
+      "title": "Cities",
+      "levels": 4,
+      "url": "quizzes/ghana-cities/index.html"
     }
   ]
 }

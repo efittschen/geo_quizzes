@@ -1,0 +1,8 @@
+/* Ghana Regions: districts are colored by their current region; hint colors from the shared palette in
+   ../shared/area-quiz.css, picked so neighbouring regions differ. */
+:root{ --ctx:#DCDED8; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --ctx:#1B242D; } }
+:root[data-theme="dark"]{ --ctx:#1B242D; }
+/* hints: region (tools/hints.mjs) */
+.r[data-g="Ahafo"]{--hint:var(--h10)} .r[data-g="Ashanti"]{--hint:var(--h1)} .r[data-g="Bono"]{--hint:var(--h4)} .r[data-g="Bono East"]{--hint:var(--h5)} .r[data-g="Central"]{--hint:var(--h6)} .r[data-g="Eastern"]{--hint:var(--h2)} .r[data-g="Greater Accra"]{--hint:var(--h11)} .r[data-g="North East"]{--hint:var(--h9)} .r[data-g="Northern"]{--hint:var(--h12)} .r[data-g="Oti"]{--hint:var(--h7)} .r[data-g="Savannah"]{--hint:var(--h3)} .r[data-g="Upper East"]{--hint:var(--h15)} .r[data-g="Upper West"]{--hint:var(--h13)} .r[data-g="Volta"]{--hint:var(--h14)} .r[data-g="Western"]{--hint:var(--h16)} .r[data-g="Western North"]{--hint:var(--h8)}
+/* end hints: region */
