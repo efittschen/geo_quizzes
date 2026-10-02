@@ -1,9 +1,10 @@
 /* Map quiz styles (area-quiz.js), on top of ../../assets/css/base.css. Each quiz's own style.css assigns
    hint colors to its map areas and may resize the dial. */
-:root{
-  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
-  /* Hint colors: a shared palette of blues, violets, pinks, cyans and greys that stays clear of the answer
-     colors (green, yellow, orange, red). Quizzes pick from it per area: .r[data-g="1"]{--hint:var(--h3)} */
+:root{padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px)}
+/* Hint colors: a shared palette of blues, violets, pinks, cyans and greys that stays clear of the answer
+   colors (green, yellow, orange, red). Quizzes pick from it per area: .r[data-g="1"]{--hint:var(--h3)}
+   The street map's tiles are light in either theme, so the areas drawn on it (overlay) keep the light palette. */
+:root,#street{
   --h1:#A7D9F6; --h2:#E5A8CD; --h3:#A5B0EB; --h4:#A3B9BA; --h5:#E5D0FE; --h6:#77CFD1; --h7:#C8C5D6; --h8:#7CBEE2;
   --h9:#CABDFA; --h10:#C7A5DC; --h11:#CABAAE; --h12:#C3EFEC; --h13:#A5C9FF; --h14:#B5AFCF; --h15:#CCDBF9; --h16:#A7C1DA;
   --h17:#D6B2C0; --h18:#C5CEFC; --h19:#97E9FF; --h20:#DDCBD6; --h21:#C3D4E0; --h22:#E4C1FA; --h23:#D0B1D9; --h24:#B6B9E7;
@@ -86,8 +87,10 @@ body{overflow:hidden}
 .startbar{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;gap:10px;margin:-8px -26px 0;padding:12px 26px 16px;background:var(--panel);border-top:1px solid var(--line)}
 /* sticky stops at the panel's padding, so on the setup screen the bar itself provides the bottom space */
 .app:not(.playing) .panel{padding-bottom:0}
-.startbar .seg{grid-template-columns:1fr 1fr}
-.startbar .seg button{flex-direction:row;align-items:baseline;flex-wrap:wrap;gap:0 6px;padding:6px 10px}
+/* the map choice: two or three buttons side by side, each at least as wide as its title */
+.startbar .seg{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(min-content,1fr)}
+.startbar .seg button{flex-direction:row;align-items:baseline;flex-wrap:wrap;gap:0 6px;padding:6px 8px}
+.startbar .seg button b{white-space:nowrap}
 .startbar .row{flex-wrap:nowrap}
 .startbar .primary{flex:1;min-width:0}
 .toast{margin:0;font-size:.85rem;color:var(--muted);min-height:0}
@@ -107,6 +110,11 @@ body{overflow:hidden}
 .dots #hl path{fill:none;stroke-linecap:round;stroke-width:22px;stroke-opacity:.3}
 .dots #ansUse{stroke:var(--yellow);animation:dotpulse 1s ease-in-out infinite alternate}
 @keyframes dotpulse{from{stroke-width:16px;stroke-opacity:.35}to{stroke-width:28px;stroke-opacity:.8}}
+/* city quizzes played on the map (Q.free): dots stay hidden until answered; the last guess is joined to its city */
+.dots.freeplay #regions .r:not(.got):not(.t2):not(.t3):not(.miss){visibility:hidden}
+svg#map.freeplay:not(.grab){cursor:crosshair}
+#free line{stroke:var(--ink);stroke-width:2;stroke-dasharray:6 4;vector-effect:non-scaling-stroke;pointer-events:none}
+#free circle{fill:var(--panel);stroke:var(--ink);stroke-width:2.5;vector-effect:non-scaling-stroke;pointer-events:none}
 /* dial codes shown in parts: the digits that matter bold, the rest faded */
 .dial .code .hot{color:var(--ink)} .dial .code .cold{color:var(--muted);opacity:.45}
 /* pin for the last answered place */
@@ -159,6 +167,22 @@ body{overflow:hidden}
 .legend i{width:12px;height:12px;border-radius:3px}
 .legend .got{background:var(--got)} .legend .t2{background:var(--t2)} .legend .t3{background:var(--t3)} .legend .miss{background:var(--miss)}
 
+/* review (area-review.js): the clock runs down to the time limit, green while a right answer still counts as known,
+   then yellow; the notch marks where known ends. A review has three results, and nothing to restart or retry. */
+#reviewWrap .round:disabled{opacity:.5;cursor:default;border-color:var(--line)}
+.rv-timer{position:relative;flex:none;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.rv-timer i{display:block;height:100%;background:var(--ok);transform-origin:left}
+.rv-timer.slow i{background:var(--yellow)}
+.rv-timer::after{content:"";position:absolute;top:0;bottom:0;left:var(--known,60%);width:2px;background:var(--panel)}
+.feedback.unsure{border-left-color:var(--yellow)}
+.reviewing #restartBtn,.reviewing #againBtn,.reviewing #retryBtn,.reviewing .legend li:nth-child(3){display:none}
+/* a review is several rounds shown as one: it has its own ticks, and its results count cards, not the last round */
+#rvTicks,.reviewing #ticks,.reviewing #missWrap{display:none}
+.reviewing #rvTicks{display:flex}
+/* between two pages of a review over several quizzes, the page stays as it is while playing: no results in between */
+.moving #play[hidden]{display:flex!important}
+.moving #done{display:none!important}
+
 .info .dial .code{font-size:5rem}
 .info .dial .p{font-size:3.4rem}
 .info .dial.multi .code{font-size:3rem} .info .dial.multi .p{font-size:2.2rem}
@@ -175,6 +199,33 @@ body{overflow:hidden}
 #street path.ar.pre{fill:var(--yellow);fill-opacity:.22}
 #street path.ar.sel{fill:var(--yellow);fill-opacity:.45;stroke:var(--ink);stroke-width:2}
 #street path.ar.ans{fill:var(--yellow);fill-opacity:.4;stroke:#15283A;stroke-width:3;animation:pulse 1s ease-in-out infinite alternate}
+/* overlay: the street map with the quiz map's outlines and colors on it. The areas are painted solid, as on the
+   quiz map, in a pane that tints the tiles under it as a whole (multiply: roads and names stay as dark as they are,
+   and white leaves the map as it is). That way the lines covering the seams inside a unit don't add up with its
+   color. --base is an area's hint color, --fill its color now, --paint that with the pointer on it.
+   The tiles are light in either theme, so lines are dark and the answer colors are the light theme's. */
+#street.overlay{--st-line:#15283A;--got:#62B686;--t2:#F2CF5B;--t3:#EE9A4D;--miss:#E8877E}
+#street.overlay .leaflet-areas-pane{mix-blend-mode:multiply;opacity:.8}
+#street.overlay path.ar{--base:transparent;--fill:var(--base);--paint:var(--fill);fill:var(--paint);fill-opacity:1;stroke:var(--st-line);stroke-width:1;stroke-opacity:1;animation:none;transition:fill .18s,stroke .18s}
+#street.overlay.hints path.ar{--base:var(--hint,transparent)}
+#street.overlay.hints.fade path.ar{--base:color-mix(in oklab,var(--hint,transparent) var(--fade),#fff)}
+#street.overlay path.ar.out{--fill:#D8DCDF;stroke-opacity:.3}
+#street.overlay:not(.picking) path.ar.out{pointer-events:none}
+#street.overlay path.ar.got{--fill:var(--got)} #street.overlay path.ar.t2{--fill:var(--t2)} #street.overlay path.ar.t3{--fill:var(--t3)} #street.overlay path.ar.miss{--fill:var(--miss)}
+#street.overlay path.ar.ans,#street.overlay path.ar.sel{--fill:var(--yellow)}
+#street.overlay path.ar.found{--fill:var(--got)}
+#street.overlay path.ar.flash{--fill:var(--bad);transition:none}
+#street.overlay path.ar.hov{--paint:color-mix(in oklab,var(--fill) 82%,var(--st-line))}
+#street.overlay path.ar.ans{animation:st-ans 1s ease-in-out infinite alternate}
+@keyframes st-ans{from{fill:#fff}}
+/* merged layouts: only each unit's outline (L.polyline.unit), the areas' own lines cover the seams between them */
+#street path.unit{display:none}
+#street.overlay.merged path.unit{display:inline;stroke:var(--st-line);stroke-width:1.4;stroke-opacity:1}
+#street.overlay.merged path.unit.out{stroke-opacity:.3}
+#street.overlay.merged path.ar{stroke:var(--paint);stroke-width:1.2;stroke-opacity:1}
+#street.overlay.merged path.ar.top{stroke:var(--st-line)}
+#street.overlay.merged path.ar.ans{animation-name:st-ans-merged}
+@keyframes st-ans-merged{from{fill:#fff;stroke:#fff}}
 .st-label span{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:700 14px/1 var(--cond);color:#15283A;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;pointer-events:none}
 
 /* map */
@@ -191,12 +242,13 @@ svg#map.grab{cursor:grabbing}
 #regions .r.ans{--fill:var(--yellow)} #regions .r.sel{--fill:var(--yellow)}
 #regions .r.found{--fill:var(--got)}
 #regions .r.flash{--fill:var(--bad);transition:none}
-/* merged layouts (zones, states): only each unit's outline, no lines between its areas (see applyLayout) */
-/* Each area's own-color stroke (2px) covers seams and small gaps between areas that don't line up exactly; the
-   unit outline underneath is 4.4px, so 2.2 - 1 = 1.2px of it shows, at the coast and between units alike. */
-.merged .r{stroke:var(--fill);stroke-width:2;stroke-opacity:1}
-.unit{fill:none;stroke:var(--state);stroke-width:4.4;vector-effect:non-scaling-stroke;stroke-linejoin:round;pointer-events:none}
-.unit.out{stroke-opacity:.3}
+/* merged layouts (zones, states): only each unit's outline, no lines between its areas (see unitOutlines) */
+/* Each area's own-color stroke covers the seams and small gaps between a unit's areas. It is no wider than the unit
+   outline drawn on top of it, which hides it at the coast and between units, so shapes keep their real edge at
+   every zoom. Dimmed units get a solid paler line: see-through lines would add up where two of them meet. */
+.merged .r{stroke:var(--fill);stroke-width:1.2;stroke-opacity:1}
+.unit{fill:none;stroke:var(--state);stroke-width:1.2;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round;pointer-events:none}
+.unit.out{stroke:color-mix(in oklab,var(--state) 30%,color-mix(in oklab,var(--land) 45%,var(--sea)))}
 .merged #borders{display:none}
 /* areas drawn on top of their neighbours keep their own border, merged or not */
 #regions .r.top{stroke:var(--state);stroke-width:1.2}
@@ -232,7 +284,7 @@ svg#map.grab{cursor:grabbing}
   .stats b{font-size:1.2rem}
   .playing .panel{max-height:40vh}
   .startbar{margin:-2px -16px 0;padding:8px 16px 10px;gap:6px}
-  .startbar .seg button{padding:5px 10px}
+  .startbar .seg button{padding:5px 8px}
   .startbar .seg button small{display:none}
   .setup{gap:12px}
   .rounds{gap:10px}
