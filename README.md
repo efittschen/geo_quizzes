@@ -102,6 +102,10 @@ The three suites follow the order in which guides teach the game (the [Plonk It 
 
 A suite's name says who it is for. It is not a round's level: inside every quiz, a round's level still comes from its size alone.
 
+### Names
+
+Quizzes ask the name a player sees in the country, not the English one: München and Bayern, Roma and Toscana, Warszawa and Mazowieckie. That holds for cities, regions and the places named in code and postcode quizzes of the countries written in Latin letters; the English name is said beside the answer where it is another. Countries written in another script keep the English (romanised) name as their Latin version, next to the name in their own script. A second language of a country is not used for this (Swedish in Finland, Sami in Norway, Māori in New Zealand, the regional names in Spain and Romania), and names of groupings made for the quiz ("North-West", "Central Transdanubia") stay English.
+
 ### What gets a quiz
 
 - Only clues that can be read in Street View. No license-plate codes: plates are blurred.
@@ -156,7 +160,7 @@ Insets (Alaska and Hawaii, the Azores and Madeira, Rapa Nui, San Andrés, the Ga
 
 The US list follows a different order: how often a city is the name on direction signs. In every 100 km square, the place named on OpenStreetMap direction signs (destination tags) in the most 10 km cells gets a point, and the runner-up half a point; squares without tagged signs are decided by a pull model (big and close places win each direction). The 200 places with the most points come first, then the state capitals. A cities.js marks such an order with `order: 'signs'`; custom quizzes can then take the top N by that order or by population.
 
-A page needs only `cities.js` (the data, made by `tools/cities.mjs`), an optional `CITY_OPTS` (e.g. `{ key: 'thcities', lang: 'Thai' }`; `lang` names the local language and is set only when its script is not Latin), `shared/city-config.js` (which builds the quiz config) and the usual engine. Copy `quizzes/thailand-cities/index.html`. Cities come from GeoNames (CC BY 4.0) and names from Wikidata (CC0).
+A page needs only `cities.js` (the data, made by `tools/cities.mjs`), an optional `CITY_OPTS` (e.g. `{ key: 'thcities', lang: 'Thai' }`; `lang` names the local language and is set only when its script is not Latin; `names: 'de'` names the language of the country's signs when it is written in Latin letters, and its names are then asked instead of the English ones: München, not Munich, with the English name said beside the answer), `shared/city-config.js` (which builds the quiz config) and the usual engine. Copy `quizzes/thailand-cities/index.html`. Cities come from GeoNames (CC BY 4.0) and names from Wikidata (CC0).
 
 City quizzes and town names can put the street map behind their drawn map: a picker on the map (Quiz map, Overlay, Street map), where the other quizzes have theirs. `quizzes/shared/map-tiles.js` redraws the OpenStreetMap tiles in the map's own projection, so dots, paint, distances and scores stay as they are; the overlay keeps the region borders on it. An inset (Alaska, the Azores) has no tiles and stays drawn in its frame: the frame comes from `inset` in cities.js (a path of boxes), from d3's own for Albers USA, or else from the land around the cities that are off the projection. The script is loaded when a player first picks a street map. The standard tiles print place names.
 

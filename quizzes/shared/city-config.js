@@ -1,9 +1,11 @@
 // City quizzes: builds the QUIZ config for ./area-quiz.js from a country's CITIES data (made by tools/cities.mjs).
 // Each city is a dot (Q.dots) on the country's land and region borders (Q.base); clicking the right dot answers.
-// The kind 'en' asks the English name. Where the local language is written in another script than Latin, the page
-// names it (CITY_OPTS.lang) and the kind 'local' asks the name in that language and script: every round then offers
-// both languages in its box (see area-quiz.js), the local one with the round's cities that have such a name. Names
-// in Latin letters are nearly always the English name again, so they get no kind. Rounds take the cities in list
+// The kind 'en' asks the name in Latin letters: the English name, or, where the page names the language of the
+// country's signs (CITY_OPTS.names), the name in that language, which is what a player sees there (München, not
+// Munich; the English name is said with the answer). Where the local language is written in another script than
+// Latin, the page names it (CITY_OPTS.lang) and the kind 'local' asks the name in that language and script: every
+// round then offers both languages in its box (see area-quiz.js), the local one with the round's cities that have
+// such a name. Rounds take the cities in list
 // order: largest first, or the order cities.js names in CITIES.order (e.g. 'signs': the order players meet them on
 // direction signs). Custom quizzes group them by region and can take the top N by that order or by population.
 // Cities that share a name are asked with their region ("Portland, Oregon").
@@ -19,6 +21,10 @@
 //   CITY_OPTS = { key, lang: 'Thai', top: [8, 25, 50, 100] }
 //     key         localStorage prefix (default <iso3>cities)
 //     lang        the local language, when its script is not Latin: 'Thai', 'Russian', 'Local script' (India)
+//     names       the language(s) of the country's signs, when written in Latin letters: 'de', ['fr']. A city whose
+//                 local name (cities.js: local, lang) is in one of them is asked by it instead of its English name.
+//                 Not for a second language of a country (Swedish in Finland, Māori in New Zealand): there the
+//                 English name is the one on the signs.
 //     top         sizes of the "Top N" rounds; a round with every city is added at the end
 
 const QUIZ = (() => {
@@ -28,15 +34,19 @@ const QUIZ = (() => {
   const BY_POP = ALL.slice().sort((a, b) => BY[b].pop - BY[a].pop);
   const LATIN = /^[\p{Script=Latin}\p{Script=Common}\p{Script=Inherited}]*$/u;
   const LOCAL = O.lang ? ALL.filter(id => BY[id].local && !LATIN.test(BY[id].local)) : [];
+  const NAMES = [].concat(O.names || []);
+  // A city's name in Latin letters: as on the signs there, where the page says which language that is.
+  const latin = id => { const c = BY[id]; return c.local && NAMES.includes(c.lang) && LATIN.test(c.local) ? c.local : c.en; };
+  const english = id => (latin(id) === BY[id].en ? [] : [BY[id].en]); // said with it, where it is another name
   const region = id => C.regions[BY[id].adm] || BY[id].adm;
   const REGIONS = [...new Set(C.list.map(c => c.adm))]; // ordered by their largest city
   const groupsOf = ids => REGIONS.map(r => ({ title: C.regions[r] || r, sub: '', ids: ids.filter(id => BY[id].adm === r) })).filter(g => g.ids.length);
   const fmtPop = n => n >= 1e6 ? `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1)} million` : n.toLocaleString('en-US');
   const rank = id => (C.order ? BY_POP : ALL).indexOf(id) + 1; // "#N" next to the population: the population rank
   // Names asked twice in the list get their region, so "Portland" is never a coin flip.
-  const dupes = key => { const n = {}; for (const c of C.list) if (c[key]) n[c[key]] = (n[c[key]] || 0) + 1; return n; };
-  const DUP_EN = dupes('en'), DUP_LOCAL = dupes('local');
-  const fullEn = id => DUP_EN[BY[id].en] > 1 ? `${BY[id].en}, ${region(id)}` : BY[id].en;
+  const dupes = of => { const n = {}; for (const c of C.list) if (of(c)) n[of(c)] = (n[of(c)] || 0) + 1; return n; };
+  const DUP_EN = dupes(c => latin(c.id)), DUP_LOCAL = dupes(c => c.local);
+  const fullEn = id => DUP_EN[latin(id)] > 1 ? `${latin(id)}, ${region(id)}` : latin(id);
   const fullLocal = id => DUP_LOCAL[BY[id].local] > 1 ? `${BY[id].local}, ${region(id)}` : BY[id].local;
   const capitals = ids => ids.filter(id => /^PPL[CA]$/.test(BY[id].fc));
   const sizes = O.top || [8, 25, 50, 100];
@@ -49,7 +59,7 @@ const QUIZ = (() => {
     rankings: C.order ? [{ label: C.order, order: ids }, { label: 'population', order: BY_POP.filter(id => ids.includes(id)) }] : [{ label: 'population', order: ids }],
     presets: [{ label: 'Capitals', ids: capitals(ids) }],
     merge: false,
-    about: id => [region(id), `#${rank(id)} · ${fmtPop(BY[id].pop)}`],
+    about: id => [...english(id), region(id), `#${rank(id)} · ${fmtPop(BY[id].pop)}`],
     chipTitle: id => region(id),
     ...extra,
   });
@@ -57,7 +67,7 @@ const QUIZ = (() => {
   const kinds = [
     kind('en', ALL, {
       label: 'English', lang: 'English', sub: `${ALL.length} cities`,
-      prompt: 'name', name: fullEn, short: id => BY[id].en,
+      prompt: 'name', name: fullEn, short: latin,
       clicked: a => fullEn(a), chip: fullEn,
     }),
   ];
@@ -65,8 +75,8 @@ const QUIZ = (() => {
     label: O.lang, lang: O.lang, of: 'en', sub: `${LOCAL.length} cities`,
     prompt: 'text', text: id => ({ text: fullLocal(id), lang: BY[id].lang, cls: 'city' }),
     name: fullLocal, short: id => BY[id].local,
-    clicked: a => BY[a].local ? `${fullLocal(a)} · ${BY[a].en}` : fullEn(a),
-    chip: fullLocal, chipTitle: id => `${BY[id].en} · ${region(id)}`,
+    clicked: a => BY[a].local ? `${fullLocal(a)} · ${latin(a)}` : fullEn(a),
+    chip: fullLocal, chipTitle: id => `${latin(id)} · ${region(id)}`,
   }));
 
   // Hint colors by region from the shared palette (--h1…--h24): each region takes the color least used among its
@@ -154,7 +164,7 @@ const QUIZ = (() => {
     size: [C.w, C.h], pad: 16, maxZoom: 40, labelScale: 0.25, fly: { pad: 1.6, min: 1.5 / 40 },
     hintLabel: 'Color by region',
     exploreKind: 'en',
-    explore: a => ({ code: BY[a].local || BY[a].en, title: BY[a].en, sub: [region(a), `#${rank(a)} · ${fmtPop(BY[a].pop)}`] }),
+    explore: a => ({ code: LATIN.test(BY[a].local || '') ? latin(a) : BY[a].local, title: latin(a), sub: [...english(a), region(a), `#${rank(a)} · ${fmtPop(BY[a].pop)}`] }),
     rounds,
     kinds,
   };
