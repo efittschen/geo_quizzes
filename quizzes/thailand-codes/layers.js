@@ -1,0 +1,55 @@
+// Thailand Area Codes on the province map of ../thailand-regions (data.js, geo.js).
+// Codes: ITU-T E.129 national numbering plan for +66 (Office of the NBTC; ITU posting of 2024-06-28). Every code is
+// assigned to whole provinces, so code areas are unions of provinces. 033 and 038 share one area, as do 052 and 053;
+// the plan also lists 010, 016, 018 and 019 as fixed-line codes for Bangkok and vicinity (Bangkok, Nonthaburi,
+// Pathum Thani, Samut Prakan), next to 02.
+
+const LAYERS = {
+  key: "thcodes",
+  size: [1000,1879],
+  pad: 16,
+  maxZoom: 40,
+  labelScale: 0.22,
+  fly: {"pad":1.6,"min":0.0375},
+  street: {"bounds":[[5.6,97.3],[20.5,105.7]],"maxBounds":[[0,88],[27,115]]},
+  hintLabel: "Color by code area",
+  exploreKind: "codes",
+  kinds: [
+    {
+      key: "codes",
+      label: "Area codes",
+      noun: ["code","codes"],
+      prompt: "dial",
+      groups: [["Bangkok","01x, 02",["010","016","018","019","02"]],["03x","Central, East, West",["032","033","034","035","036","037","038","039"]],["04x","Northeast",["042","043","044","045"]],["05x","North",["052","053","054","055","056"]],["07x","South",["073","074","075","076","077"]]],
+      areas: "@ph[]",
+      name: "{id}",
+      short: "{id}",
+      chip: "{id}",
+      chipTitle: {"x":{"010":"Bangkok, Nonthaburi, Pathum Thani, Samut Prakan","016":"Bangkok, Nonthaburi, Pathum Thani, Samut Prakan","018":"Bangkok, Nonthaburi, Pathum Thani, Samut Prakan","019":"Bangkok, Nonthaburi, Pathum Thani, Samut Prakan","02":"Bangkok, Nonthaburi, Pathum Thani, Samut Prakan","032":"Phetchaburi, Prachuap Khiri Khan, Ratchaburi","033":"Chachoengsao, Chon Buri, Rayong","034":"Kanchanaburi, Nakhon Pathom, Samut Sakhon, Samut Songkhram","035":"Ang Thong, Phra Nakhon Si Ayutthaya, Suphan Buri","036":"Lopburi, Saraburi, Sing Buri","037":"Nakhon Nayok, Prachin Buri, Sa Kaeo","038":"Chachoengsao, Chon Buri, Rayong","039":"Chanthaburi, Trat","042":"Bueng Kan, Loei, Mukdahan, Nakhon Phanom, Nong Bua Lamphu, Nong Khai, Sakon Nakhon, Udon Thani","043":"Kalasin, Khon Kaen, Maha Sarakham, Roi Et","044":"Buriram, Chaiyaphum, Nakhon Ratchasima, Surin","045":"Amnat Charoen, Si Sa Ket, Ubon Ratchathani, Yasothon","052":"Chiang Mai, Chiang Rai, Lamphun, Mae Hong Son","053":"Chiang Mai, Chiang Rai, Lamphun, Mae Hong Son","054":"Lampang, Nan, Phayao, Phrae","055":"Kamphaeng Phet, Phitsanulok, Sukhothai, Tak, Uttaradit","056":"Chai Nat, Nakhon Sawan, Phetchabun, Phichit, Uthai Thani","073":"Narathiwat, Pattani, Yala","074":"Phatthalung, Satun, Songkhla","075":"Krabi, Nakhon Si Thammarat, Trang","076":"Phang Nga, Phuket","077":"Chumphon, Ranong, Surat Thani"}},
+      detail: ["Show region",{"t":"{groupSub}","x":{"010":"Bangkok and vicinity","016":"Bangkok and vicinity","018":"Bangkok and vicinity","019":"Bangkok and vicinity","02":"Bangkok and vicinity"}}],
+      about: {"t":["{chipTitle}","{detail}"]},
+      primary: {"x":{"TH10":"02","TH11":"02","TH12":"02","TH13":"02"}},
+      clicked: "{@pa} ({@en})",
+      presets: [["Big cities",["02","038","053","074","044","043","042","076","077"]]],
+    },
+    {
+      key: "digit1",
+      label: "First digit",
+      noun: ["zone","zones"],
+      prompt: "dial",
+      hints: false,
+      groups: [["Zones","area codes by first digit",["1","2","3","4","5","7"]]],
+      areas: {"x":{"1":["TH10","TH11","TH12","TH13"],"2":["TH10","TH11","TH12","TH13"],"3":["TH70","TH76","TH77","TH20","TH21","TH24","TH71","TH73","TH74","TH75","TH14","TH15","TH72","TH16","TH17","TH19","TH25","TH26","TH27","TH22","TH23"],"4":["TH38","TH39","TH41","TH42","TH43","TH47","TH48","TH49","TH40","TH44","TH45","TH46","TH30","TH31","TH32","TH36","TH33","TH34","TH35","TH37"],"5":["TH50","TH51","TH57","TH58","TH52","TH54","TH55","TH56","TH53","TH62","TH63","TH64","TH65","TH18","TH60","TH61","TH66","TH67"],"7":["TH94","TH95","TH96","TH90","TH91","TH93","TH80","TH81","TH92","TH82","TH83","TH84","TH85","TH86"]}},
+      name: {"t":"0{id}x","x":{"2":"02"}},
+      short: "{name}",
+      chip: "{name}",
+      chipTitle: {"x":{"1":"Bangkok and vicinity","2":"Bangkok and vicinity","3":"Central, East, West","4":"Northeast","5":"North","7":"South"}},
+      about: "{chipTitle}",
+      dial: {"t":[["0","cold"],["{id}","hot"],["x","cold"]],"x":{"2":[["0","cold"],["2","hot"]]}},
+      primary: {"x":{"TH10":"2","TH11":"2","TH12":"2","TH13":"2"}},
+      clicked: "{name} ({chipTitle})",
+    },
+  ],
+  g: "{@pa}",
+  explore: {"t":{"code":"{@pa}","title":"{@en}","sub":["{@th}","{codes.detail}"]}},
+};

@@ -14,18 +14,14 @@
 <body>
   <header class="site-header">
     <a class="brand" href="index.html">🌍 Geo Quizzes</a>
-    <nav><a href="#quiz-list">All quizzes</a></nav>
+    <nav><a href="review.html" id="review-link">Review</a><a href="#quiz-list">All quizzes</a></nav>
   </header>
 
   <main>
-    <section class="intro">
-      <h1>Pick a country</h1>
-    </section>
-
     <section class="map-wrap" id="map-wrap">
       <svg id="map" role="img" aria-label="World map"></svg>
       <div id="tooltip" class="tooltip" hidden></div>
-      <button id="reset-zoom" class="ghost small reset-zoom" type="button">Reset zoom</button>
+      <a class="ghost small map-corner" href="coverage.html">Street coverage</a>
       <p id="map-status" class="map-status">Loading map…</p>
     </section>
 
@@ -46,7 +42,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+  <script src="assets/js/store.js"></script>
   <script src="assets/js/common.js"></script>
+  <script src="assets/js/srs.js"></script>
   <script src="assets/js/map.js"></script>
 </body>
 </html>

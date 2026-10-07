@@ -1,0 +1,3 @@
+/* hints: 6 regions (tools/hints.mjs) */
+.r[data-g="C"]{--hint:var(--h1)} .r[data-g="E"]{--hint:var(--h3)} .r[data-g="N"]{--hint:var(--h4)} .r[data-g="NE"]{--hint:var(--h5)} .r[data-g="S"]{--hint:var(--h6)} .r[data-g="W"]{--hint:var(--h2)}
+/* end hints: 6 regions */

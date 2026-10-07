@@ -46,20 +46,19 @@ window.areaReview = E => {
     return { deck, items };
   }
 
-  /* ---------- setup screen: Review, above the rounds: the due cards, or all of this page's ---------- */
-  const wrap = document.createElement('div'); wrap.className = 'group'; wrap.id = 'reviewWrap';
-  wrap.innerHTML = '<h2>Review</h2><div class="round-row">' +
-    '<button class="round" id="reviewDue" type="button"><b>Due</b><span class="n"></span><small></small></button>' +
-    '<button class="round" id="reviewAll" type="button"><b>All</b><span class="n"></span></button></div>';
-  $('setup').prepend(wrap);
+  /* ---------- setup screen: Due and All, two small buttons to the right of the title: the due cards, or all of
+     this page's ---------- */
+  const wrap = document.createElement('div'); wrap.className = 'rv-go'; wrap.id = 'reviewWrap';
+  wrap.innerHTML = '<button class="ghost small" id="reviewDue" type="button"></button><button class="ghost small" id="reviewAll" type="button"></button>';
+  { const h1 = document.querySelector('.brand h1'), row = document.createElement('div'); row.className = 'brand-row'; h1.replaceWith(row); row.append(h1, wrap); }
   const dueBtn = wrap.querySelector('#reviewDue'), allBtn = wrap.querySelector('#reviewAll');
   function syncButtons() {
     const now = Date.now(), s = SRS.stats(stack().deck, now);
     wrap.hidden = !s.total;
     const limit = !SRS.dayLeft(now); // enough cards reviewed for today
     dueBtn.disabled = !s.due || limit;
-    dueBtn.children[1].textContent = s.due; allBtn.children[1].textContent = s.total;
-    dueBtn.children[2].textContent = !s.total ? '' : !s.due ? `Next ${SRS.until(s.next, now)}` : limit ? 'Daily limit' : '';
+    dueBtn.textContent = `Due ${s.due}`; allBtn.textContent = `All ${s.total}`;
+    dueBtn.title = !s.total ? '' : !s.due ? `Next ${SRS.until(s.next, now)}` : limit ? 'Daily limit' : ''; // why it can't be pressed
   }
   dueBtn.onclick = () => open('due');
   allBtn.onclick = () => open('all');
@@ -141,10 +140,10 @@ window.areaReview = E => {
 
   /* ---------- a review over several quizzes, on this page ---------- */
   // Arriving (…?review=1) or going on: ask the cards drawn for this quiz, or move on if there are none.
-  let index = null; // the quizzes of data/quizzes.json, read once; if that fails the review ends with this page
+  let index = null; // the quizzes of data/quizzes.json that aren't hidden, read once; if that fails the review ends with this page
   async function travel() {
     stack(); // sets aside cards whose question is gone, so that none are drawn
-    index ||= fetch(ROOT + 'data/quizzes.json').then(r => r.json()).then(j => j.quizzes).catch(() => [{ id: PAGE, url: location.pathname }]);
+    index ||= fetch(ROOT + 'data/quizzes.json').then(r => r.json()).then(j => j.quizzes.filter(q => !q.hidden)).catch(() => [{ id: PAGE, url: location.pathname }]);
     const drawn = SRS.stretch(await index, PAGE);
     if (!open('run', drawn)) location.href = SRS.stopUrl(ROOT, drawn.next);
   }

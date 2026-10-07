@@ -1,0 +1,8 @@
+/* New Zealand State Highways: the prompt is a state highway shield (white numerals on a red shield, as on NZ signs).
+   Map hint colors come from ../new-zealand-regions/style.css. */
+.dial.shield{display:inline-flex;align-self:flex-start;align-items:center;justify-content:center;min-width:1.6em;padding:.12em .32em .2em;
+  font-size:4.2rem;background:#C8102E;border:.06em solid #fff;outline:2px solid #C8102E;border-radius:.16em .16em .5em .5em}
+.dial.shield .code{font-size:1em;line-height:1;color:#fff}
+.dial.shield .code .hot{color:#fff} .dial.shield .code .cold{color:#fff;opacity:.6}
+.info .dial .code{font-size:2.6rem;white-space:normal}
+@media (max-width:760px){.dial.shield{font-size:3rem}}

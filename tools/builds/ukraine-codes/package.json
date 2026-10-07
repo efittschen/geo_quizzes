@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "type": "commonjs",
+  "description": "The .js build scripts here are CommonJS (tools/package.json makes .js mean ES modules)"
+}

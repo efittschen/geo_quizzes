@@ -1,0 +1,51 @@
+// Colombia Departments. 32 departments plus Bogotá D.C. (DANE MGN via HDX COD-AB),
+// grouped into the 6 natural regions by whole department: Pacífica, Caribe, Amazonía and Orinoquía as the members of the
+// RAP Pacífico, RAP Caribe, RAP Amazonía and RAP Llanos (Regiones Administrativas y de Planificación), the rest Andina,
+// San Andrés Insular. The real natural regions cut across departments, so this grouping is approximate.
+// San Andrés y Providencia is drawn as an enlarged inset off the Caribbean coast; the street map has it at its real position.
+
+const LAYERS = {
+  key: "codept",
+  size: [1000,1468],
+  pad: 16,
+  maxZoom: 30,
+  labelScale: 0.3,
+  fly: {"pad":1.6,"min":0.05},
+  street: {"bounds":[[-4.3,-79.1],[12.6,-66.8]],"maxBounds":[[-10,-90],[18,-60]]},
+  hintLabel: "Color by region",
+  exploreKind: "departments",
+  kinds: [
+    {
+      key: "regions",
+      label: "Natural regions",
+      noun: ["region","regions"],
+      prompt: "name",
+      hints: false,
+      groups: [["Regions","",["AN","CA","PA","OR","AM","IN"]]],
+      areas: "@region",
+      name: {"x":{"AN":"Andina","CA":"Caribe","PA":"Pacífica","OR":"Orinoquía","AM":"Amazonía","IN":"Insular"}},
+      short: "{name}",
+      chip: "{name}",
+      chipTitle: {"x":{"AN":"Andes","CA":"Caribbean","PA":"Pacific","OR":"Llanos","AM":"Amazon","IN":"Islands"}},
+      about: {"x":{"AN":["Andes","11 departments"],"CA":["Caribbean","7 departments"],"PA":["Pacific","4 departments"],"OR":["Llanos","4 departments"],"AM":["Amazon","6 departments"],"IN":["Islands","1 department"]}},
+      clicked: {"t":"{name} ({@name})","x":{"d88":"Insular (San Andrés)"}},
+    },
+    {
+      key: "departments",
+      label: "Departments",
+      noun: ["department","departments"],
+      prompt: "name",
+      groups: [["Andina","Andes",["d05","d11","d15","d17","d25","d41","d54","d63","d66","d68","d73"]],["Caribe","Caribbean",["d08","d13","d20","d23","d44","d47","d70"]],["Pacífica","Pacific",["d19","d27","d52","d76"]],["Orinoquía","Llanos",["d81","d85","d50","d99"]],["Amazonía","Amazon",["d91","d18","d94","d95","d86","d97"]],["Insular","Islands",["d88"]]],
+      areas: "@id",
+      name: "{@name}",
+      short: {"t":"{name}","x":{"d88":"San Andrés"}},
+      chip: "{short}",
+      chipTitle: "{@capital}",
+      detail: ["Show region","{group}"],
+      about: {"t":["{group}","Capital: {@capital}","Area code 60{@phone}"]},
+      clicked: "{name}",
+    },
+  ],
+  g: "{@region}",
+  explore: {"t":{"code":"60{@phone}","title":"{@name}","sub":["{regions.name}","{departments.about1}"]}},
+};

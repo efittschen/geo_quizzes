@@ -1,0 +1,5 @@
+[out:json][timeout:300];
+rel(id:72634)->.r;
+.r out body;
+way(r.r);
+out skel geom;

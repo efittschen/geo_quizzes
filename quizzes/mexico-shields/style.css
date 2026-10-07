@@ -1,0 +1,4 @@
+/* Mexico Road Shields: the prompt drawn like a state highway shield (straight sides, initials on top). */
+#dial.shield{display:inline-flex;align-self:flex-start;justify-content:center;min-width:8.5rem;padding:.18em .45em .9em;border:5px solid var(--ink);border-radius:8px 8px 46% 46% / 8px 8px 34% 34%;background:color-mix(in srgb,var(--ink) 3%,transparent)}
+#dial.shield .code{font-size:4.4rem;letter-spacing:.02em}
+@media (max-width:720px){ #dial.shield{min-width:6rem;border-width:4px} #dial.shield .code{font-size:3rem} }

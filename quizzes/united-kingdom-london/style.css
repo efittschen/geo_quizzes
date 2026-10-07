@@ -1,0 +1,4 @@
+/* London postcode districts: hint color per postal area. */
+/* hints: postal area (tools/hints.mjs) */
+.r[data-g="E"]{--hint:var(--h7)} .r[data-g="EC"]{--hint:var(--h3)} .r[data-g="N"]{--hint:var(--h2)} .r[data-g="NW"]{--hint:var(--h4)} .r[data-g="SE"]{--hint:var(--h8)} .r[data-g="SW"]{--hint:var(--h5)} .r[data-g="W"]{--hint:var(--h6)} .r[data-g="WC"]{--hint:var(--h1)}
+/* end hints: postal area */

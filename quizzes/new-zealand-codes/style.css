@@ -1,0 +1,16 @@
+/* New Zealand area codes: calling areas in shades of their area code's color ("9-0"…"9-3" for 09), neighbours in
+   different shades. All hint colors stay clear of the answer colors, see ../shared/area-quiz.css. The Chatham Islands
+   inset gets a dashed frame (drawn as the map's context path). */
+#ctx path{fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:5 4;opacity:.7}
+/* blue for 09, pink for 07, cyan for 06, taupe for 04, violet for 03 (--nz90 … --nz33); the area-code and main-area
+   modes pick from the same shades, see quiz.js */
+:root{ --nz90:#D6E6FC; --nz91:#BCD6FC; --nz92:#A8C6F2; --nz93:#98B6E1; --nz70:#F3DAFE; --nz71:#E6C7F4; --nz72:#D6B7E4; --nz73:#C5A7D3; --nz60:#C1EDFD; --nz61:#A1DFF5; --nz62:#91CFE5; --nz63:#81BFD4; --nz40:#E3DAD2; --nz41:#D4C7BC; --nz42:#C6B7AA; --nz43:#B8A898; --nz30:#E2E1FF; --nz31:#D1CEFE; --nz32:#C0BEF0; --nz33:#B1AEDF; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --nz90:#495C77; --nz91:#3D4F6A; --nz92:#32455E; --nz93:#283A53; --nz70:#66526E; --nz71:#594661; --nz72:#4E3C56; --nz73:#43314B; --nz60:#3A616F; --nz61:#2D5562; --nz62:#224A57; --nz63:#163F4C; --nz40:#5E5248; --nz41:#51463D; --nz42:#453B33; --nz43:#3A312A; --nz30:#595776; --nz31:#4C4A69; --nz32:#42405D; --nz33:#373552; } }
+:root[data-theme="dark"]{ --nz90:#495C77; --nz91:#3D4F6A; --nz92:#32455E; --nz93:#283A53; --nz70:#66526E; --nz71:#594661; --nz72:#4E3C56; --nz73:#43314B; --nz60:#3A616F; --nz61:#2D5562; --nz62:#224A57; --nz63:#163F4C; --nz40:#5E5248; --nz41:#51463D; --nz42:#453B33; --nz43:#3A312A; --nz30:#595776; --nz31:#4C4A69; --nz32:#42405D; --nz33:#373552; }
+.r[data-g="9-0"]{--hint:var(--nz90)} .r[data-g="9-1"]{--hint:var(--nz91)} .r[data-g="9-2"]{--hint:var(--nz92)} .r[data-g="9-3"]{--hint:var(--nz93)} .r[data-g="7-0"]{--hint:var(--nz70)} .r[data-g="7-1"]{--hint:var(--nz71)} .r[data-g="7-2"]{--hint:var(--nz72)} .r[data-g="7-3"]{--hint:var(--nz73)} .r[data-g="6-0"]{--hint:var(--nz60)} .r[data-g="6-1"]{--hint:var(--nz61)} .r[data-g="6-2"]{--hint:var(--nz62)} .r[data-g="6-3"]{--hint:var(--nz63)} .r[data-g="4-0"]{--hint:var(--nz40)} .r[data-g="4-1"]{--hint:var(--nz41)} .r[data-g="4-2"]{--hint:var(--nz42)} .r[data-g="4-3"]{--hint:var(--nz43)} .r[data-g="3-0"]{--hint:var(--nz30)} .r[data-g="3-1"]{--hint:var(--nz31)} .r[data-g="3-2"]{--hint:var(--nz32)} .r[data-g="3-3"]{--hint:var(--nz33)}
+.dial .code{font-size:4.2rem}
+@media (max-width:760px){ .dial .code{font-size:3.2rem} }
+/* the number carries its own brackets, "(03) 34" */
+#dial > .p{display:none}
+/* each question draws its own dots for the rest of the number */
+#dial > .rest{display:none}

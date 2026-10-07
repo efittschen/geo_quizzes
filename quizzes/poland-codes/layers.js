@@ -1,0 +1,51 @@
+// Poland Area Codes. Each map area is one of the 49 numbering zones (strefy
+// numeracyjne), built from the gminas that UKE lists for it (wykaz gmin w SN, as of 1.01.2026). Numbers are dialled
+// as 9 digits: the 2-digit zone code, then 7 digits (e.g. 22 123 45 67), with no trunk 0.
+
+const LAYERS = {
+  key: "plcodes",
+  size: [1000,935],
+  pad: 16,
+  maxZoom: 30,
+  labelScale: 0.4,
+  fly: {"pad":1.6,"min":0.05},
+  street: {"bounds":[[49,14.1],[54.9,24.2]],"maxBounds":[[45,8],[58,30]]},
+  hintLabel: "Color by first digit",
+  exploreKind: "codes",
+  kinds: [
+    {
+      key: "codes",
+      label: "Area codes",
+      noun: ["code","codes"],
+      prompt: "dial",
+      groups: [["1x","Lesser Poland & Podkarpackie",["12","13","14","15","16","17","18"]],["2x","Masovia",["22","23","24","25","29"]],["3x","Silesia",["32","33","34"]],["4x","Łódź & Świętokrzyskie",["41","42","43","44","46","48"]],["5x","Kuyavia & Pomerania",["52","54","55","56","58","59"]],["6x","Greater Poland & Lubusz",["61","62","63","65","67","68"]],["7x","Lower Silesia & Opole",["71","74","75","76","77"]],["8x","Lublin, Podlaskie & Warmia-Masuria",["81","82","83","84","85","86","87","89"]],["9x","West Pomerania & Gorzów",["91","94","95"]]],
+      areas: "@id",
+      name: "{id}",
+      short: "{id}",
+      chip: "{id}",
+      chipTitle: "{@name}",
+      detail: ["Show voivodeship",{"x":{"12":"Lesser Poland","13":"Podkarpackie, Lesser Poland","14":"Podkarpackie, Lesser Poland","15":"Świętokrzyskie, Podkarpackie, Lublin","16":"Podkarpackie","17":"Podkarpackie","18":"Lesser Poland","22":"Masovian","23":"Masovian, Warmian-Masurian","24":"Masovian, Łódź","25":"Masovian, Lublin","29":"Masovian","32":"Silesian, Lesser Poland","33":"Silesian, Lesser Poland","34":"Łódź, Silesian, Świętokrzyskie, Opole","41":"Świętokrzyskie, Lesser Poland","42":"Łódź","43":"Łódź","44":"Łódź, Świętokrzyskie","46":"Masovian, Łódź","48":"Łódź, Masovian, Świętokrzyskie","52":"Kuyavian-Pomeranian, Pomeranian","54":"Kuyavian-Pomeranian","55":"Warmian-Masurian, Pomeranian","56":"Kuyavian-Pomeranian, Warmian-Masurian","58":"Pomeranian","59":"Pomeranian, West Pomeranian","61":"Greater Poland","62":"Greater Poland, Lower Silesian, Łódź","63":"Greater Poland, Łódź","65":"Lower Silesian, Greater Poland, Lubusz","67":"Greater Poland, West Pomeranian","68":"Lubusz, Greater Poland","71":"Lower Silesian","74":"Lower Silesian","75":"Lower Silesian","76":"Lower Silesian","77":"Opole","81":"Lublin","82":"Lublin","83":"Lublin, Masovian","84":"Lublin","85":"Podlaskie","86":"Podlaskie, Masovian","87":"Podlaskie, Warmian-Masurian","89":"Warmian-Masurian","91":"West Pomeranian","94":"West Pomeranian","95":"Lubusz, West Pomeranian, Greater Poland"}}],
+      about: {"t":["{@name}","{detail}"]},
+      clicked: "{@id} {@name}",
+      presets: [["Big cities",["22","12","42","71","61","58","91","52","81","85","32"]]],
+    },
+    {
+      key: "digit1",
+      label: "First digit",
+      noun: ["zone","zones"],
+      prompt: "dial",
+      hints: false,
+      groups: [["Zones","area codes by first digit",["1","2","3","4","5","6","7","8","9"]]],
+      areas: {"x":{"1":["12","13","14","15","16","17","18"],"2":["22","23","24","25","29"],"3":["32","33","34"],"4":["41","42","43","44","46","48"],"5":["52","54","55","56","58","59"],"6":["61","62","63","65","67","68"],"7":["71","74","75","76","77"],"8":["81","82","83","84","85","86","87","89"],"9":["91","94","95"]}},
+      name: "{@d1}x",
+      short: "{name}",
+      chip: "{name}",
+      chipTitle: {"x":{"1":"Lesser Poland & Podkarpackie","2":"Masovia","3":"Silesia","4":"Łódź & Świętokrzyskie","5":"Kuyavia & Pomerania","6":"Greater Poland & Lubusz","7":"Lower Silesia & Opole","8":"Lublin, Podlaskie & Warmia-Masuria","9":"West Pomerania & Gorzów"}},
+      about: {"x":{"1":["Lesser Poland & Podkarpackie","12 Kraków, 13 Krosno, 14 Tarnów, 15 Tarnobrzeg, 16 Przemyśl, 17 Rzeszów, 18 Nowy Sącz"],"2":["Masovia","22 Warszawa, 23 Ciechanów, 24 Płock, 25 Siedlce, 29 Ostrołęka"],"3":["Silesia","32 Katowice, 33 Bielsko-Biała, 34 Częstochowa"],"4":["Łódź & Świętokrzyskie","41 Kielce, 42 Łódź, 43 Sieradz, 44 Piotrków Trybunalski, 46 Skierniewice, 48 Radom"],"5":["Kuyavia & Pomerania","52 Bydgoszcz, 54 Włocławek, 55 Elbląg, 56 Toruń, 58 Gdańsk, 59 Słupsk"],"6":["Greater Poland & Lubusz","61 Poznań, 62 Kalisz, 63 Konin, 65 Leszno, 67 Piła, 68 Zielona Góra"],"7":["Lower Silesia & Opole","71 Wrocław, 74 Wałbrzych, 75 Jelenia Góra, 76 Legnica, 77 Opole"],"8":["Lublin, Podlaskie & Warmia-Masuria","81 Lublin, 82 Chełm, 83 Biała Podlaska, 84 Zamość, 85 Białystok, 86 Łomża, 87 Suwałki, 89 Olsztyn"],"9":["West Pomerania & Gorzów","91 Szczecin, 94 Koszalin, 95 Gorzów Wielkopolski"]}},
+      dial: {"t":[["{id}","hot"],["x","cold"]]},
+      clicked: "{name} ({chipTitle})",
+    },
+  ],
+  g: "{@d1}",
+  explore: {"t":{"code":"{a}","title":"{@name}","sub":"{codes.detail}"}},
+};

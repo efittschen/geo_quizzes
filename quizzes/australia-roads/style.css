@@ -1,0 +1,5 @@
+/* hints: first digit (tools/hints.mjs) */
+.r[data-g="c1"]{--hint:var(--h2)} .r[data-g="c2"]{--hint:var(--h7)} .r[data-g="c3"]{--hint:var(--h3)} .r[data-g="c4"]{--hint:var(--h4)} .r[data-g="c5"]{--hint:var(--h8)} .r[data-g="c6"]{--hint:var(--h5)} .r[data-g="c7"]{--hint:var(--h1)} .r[data-g="c8"]{--hint:var(--h6)} .r[data-g="c9"]{--hint:var(--h9)}
+/* end hints: first digit */
+/* the route number carries no brackets and no trailing dots */
+#dial > .p, #dial > .rest{display:none}

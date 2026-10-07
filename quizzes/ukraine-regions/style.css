@@ -1,0 +1,16 @@
+/* hints: oblast (tools/hints.mjs) */
+.r[data-g="cherkasy"]{--hint:var(--h11)} .r[data-g="chernihiv"]{--hint:var(--h18)} .r[data-g="chernivtsi"]{--hint:var(--h12)} .r[data-g="crimea"]{--hint:var(--h22)} .r[data-g="dnipropetrovsk"]{--hint:var(--h1)} .r[data-g="donetsk"]{--hint:var(--h13)} .r[data-g="ivanofrankivsk"]{--hint:var(--h14)} .r[data-g="kharkiv"]{--hint:var(--h6)} .r[data-g="kherson"]{--hint:var(--h15)} .r[data-g="khmelnytskyi"]{--hint:var(--h7)} .r[data-g="kirovohrad"]{--hint:var(--h4)} .r[data-g="kyiv"]{--hint:var(--h2)} .r[data-g="kyivoblast"]{--hint:var(--h5)} .r[data-g="luhansk"]{--hint:var(--h23)} .r[data-g="lviv"]{--hint:var(--h8)} .r[data-g="mykolaiv"]{--hint:var(--h16)} .r[data-g="odesa"]{--hint:var(--h19)} .r[data-g="poltava"]{--hint:var(--h2)} .r[data-g="rivne"]{--hint:var(--h9)} .r[data-g="sevastopol"]{--hint:var(--h3)} .r[data-g="sumy"]{--hint:var(--h20)} .r[data-g="ternopil"]{--hint:var(--h10)} .r[data-g="vinnytsia"]{--hint:var(--h3)} .r[data-g="volyn"]{--hint:var(--h24)} .r[data-g="zakarpattia"]{--hint:var(--h1)} .r[data-g="zaporizhzhia"]{--hint:var(--h21)} .r[data-g="zhytomyr"]{--hint:var(--h17)}
+/* end hints: oblast */
+/* Ukraine Regions: the name card (Cyrillic) and the T-road number, on top of
+   ../shared/area-quiz.css. Barlow has no Cyrillic, so Ukrainian text uses Noto Sans. */
+:root{--uk:'Noto Sans',var(--sans),sans-serif}
+.card{border:1.5px solid var(--ink);border-radius:14px;padding:18px 18px 16px;background:color-mix(in srgb,var(--ink) 3%,transparent);min-height:6rem;display:flex;align-items:center}
+.sent{margin:0;font:600 2.2rem/1.3 var(--uk);overflow-wrap:anywhere;width:100%}
+.card.pop .sent{animation:pop .35s ease-out}
+/* T-road number: black on white */
+.card:has(.troad){border:0;background:none;padding:0}
+.sent.troad{width:auto;font:700 3.2rem/1 var(--cond);color:#111;background:#fff;border:3px solid #111;border-radius:8px;padding:.16em .4em .1em;letter-spacing:.02em}
+.sent.troad::after{content:'-xx';color:#9aa0a6}
+.chip,#labels text{font-family:var(--uk)}
+#eDial .code{letter-spacing:.04em}
+@media (max-width:720px){ .card{min-height:0;padding:12px 14px} .sent{font-size:1.6rem} .sent.troad{font-size:2.4rem} }

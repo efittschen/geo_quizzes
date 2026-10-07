@@ -1,0 +1,8 @@
+/* hints: county (tools/hints.mjs) */
+.r[data-g="01"]{--hint:var(--h19)} .r[data-g="03"]{--hint:var(--h6)} .r[data-g="04"]{--hint:var(--h2)} .r[data-g="05"]{--hint:var(--h7)} .r[data-g="06"]{--hint:var(--h3)} .r[data-g="07"]{--hint:var(--h4)} .r[data-g="08"]{--hint:var(--h8)} .r[data-g="09"]{--hint:var(--h21)} .r[data-g="10"]{--hint:var(--h14)} .r[data-g="12"]{--hint:var(--h15)} .r[data-g="13"]{--hint:var(--h9)} .r[data-g="14"]{--hint:var(--h10)} .r[data-g="17"]{--hint:var(--h16)} .r[data-g="18"]{--hint:var(--h1)} .r[data-g="19"]{--hint:var(--h11)} .r[data-g="20"]{--hint:var(--h5)} .r[data-g="21"]{--hint:var(--h12)} .r[data-g="22"]{--hint:var(--h17)} .r[data-g="23"]{--hint:var(--h13)} .r[data-g="24"]{--hint:var(--h18)} .r[data-g="25"]{--hint:var(--h20)}
+/* end hints: county */
+/* road-number bands: white digits on a blue Swedish road-number sign */
+body[data-kinds="roads"] #dial{width:max-content;background:#1F5AA6;border:3px solid #fff;outline:2px solid #1F5AA6;border-radius:6px;padding:.08em .28em .12em}
+body[data-kinds="roads"] #dial .code{font-size:3.6rem} body[data-kinds="roads"] #dial .code .hot{color:#fff}
+/* explore shows a kommun name */
+.info .dial .code{font-size:2.6rem}

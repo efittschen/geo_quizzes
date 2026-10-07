@@ -3,7 +3,7 @@
 //
 //   node tools/hints.mjs --in areas.geojson --group zone [--name "first digit"] --out quizzes/<folder>/style.css
 //
-// Each feature's properties[--group] is the value the quiz puts in the area's data-g (quiz.js: g). Groups are
+// Each feature's properties[--group] is the value the quiz puts in the area's data-g (layers.js: g). Groups are
 // colored greedily, most neighbours first, from the shared palette (--h1…--h24 in shared/area-quiz.css, which
 // avoids the answer colors). Writes `.r[data-g="…"]{--hint:var(--hN)}` rules into --out, inside a marked block
 // that is replaced on the next run (so several groupings can live in one style.css). Several --group properties

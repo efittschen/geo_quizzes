@@ -9,22 +9,38 @@ h2{font:700 1.6rem/1.1 var(--cond);margin:36px 0 12px}
 .brand{font:700 1.5rem/1 var(--cond);letter-spacing:-.01em;color:var(--ink)}
 .site-header nav a{color:var(--muted);font-weight:500}
 .site-header nav a:hover{color:var(--ink)}
+.site-header nav{display:flex;gap:18px}
 .site-footer{text-align:center;font-size:.85rem;color:var(--muted);padding:24px 16px}
 
 /* Home: map */
 .intro p{margin:0 0 16px;color:var(--muted)}
+/* the suites: what to play first, above everything else */
+.suites{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 10px}
+.suites:empty{display:none}
+.suite{display:grid;grid-template-columns:auto auto;align-items:baseline;gap:0 14px;flex:1 1 200px;padding:10px 16px;border:1.5px solid var(--ink);border-radius:var(--radius);color:var(--ink);text-decoration:none}
+.suite:hover{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.suite b{font:700 1.4rem/1.1 var(--cond)}
+.suite small{grid-column:1;color:var(--muted);font-size:.88rem}
+.suite .total{grid-column:2;grid-row:1 / span 2;align-self:center;justify-self:end}
+/* the world and the continents: links to their own quizzes, above the map */
+.areas{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 14px}
+.areas:empty{display:none}
 .map-wrap{position:relative;background:var(--sea);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+main > .map-wrap:first-child{margin-top:24px}
 #map{display:block;width:100%;height:auto;cursor:grab;touch-action:none}
 #map:active{cursor:grabbing}
 .country{fill:var(--land);stroke:var(--edge);stroke-width:.5;vector-effect:non-scaling-stroke;transition:fill .15s;cursor:pointer}
-.country:not(.has-quiz):hover{fill:color-mix(in srgb,var(--land) 80%,var(--ink))}
 /* countries with quizzes: dark, with light borders so neighbours (US, Canada, Mexico) stay apart */
 .country.has-quiz{fill:var(--ink);stroke:var(--panel);stroke-width:.8}
-.country.has-quiz:hover,.country.has-quiz:focus{fill:var(--yellow);outline:none}
+/* pointed at: the country turns slate, and its roads with Street View coverage are drawn on it in yellow (map.js) */
+.country:hover{fill:#5A7189}
+.country.has-quiz:hover,.country.has-quiz:focus{fill:#2F4A66;outline:none}
+.roads{pointer-events:none}
 .tooltip{position:absolute;pointer-events:none;padding:6px 10px;border-radius:8px;background:var(--panel);color:var(--ink);border:1.5px solid var(--ink);font-size:.9rem;white-space:nowrap;box-shadow:var(--shadow)}
 .tooltip strong{font-weight:600}
 .tooltip .soon{color:var(--muted)}
-.reset-zoom{position:absolute;top:10px;right:10px;background:var(--panel)}
+/* the button in the map's corner: to the Street View coverage map */
+.map-corner{position:absolute;top:10px;right:10px;background:var(--panel)}
 .map-status{position:absolute;inset:0;display:grid;place-items:center;margin:0;color:var(--muted)}
 .map-status:empty{display:none}
 
@@ -54,6 +70,11 @@ h2{font:700 1.6rem/1.1 var(--cond);margin:36px 0 12px}
 .files::before{content:"";position:absolute;left:47px;top:0;bottom:10px;border-left:1.5px solid var(--line)}
 .files a{display:flex;align-items:center;gap:10px;padding:8px 16px 8px 66px;color:var(--ink);text-decoration:none}
 .files a .name{flex:1;min-width:0}
+/* a continent's own quizzes (and the world's), before its countries: one step less deep */
+.continent > .files.own{position:relative;padding-bottom:0}
+.files.own::before{left:23px;bottom:0}
+.files.own a{padding-left:40px}
+.files.own a .name{font-weight:600}
 .stars.unplayed{opacity:.6}
 
 /* Country page */
@@ -62,13 +83,61 @@ h2{font:700 1.6rem/1.1 var(--cond);margin:36px 0 12px}
 .country-hero p{margin:0}
 .country-shape{flex:0 0 auto;width:140px;height:140px;padding:10px;background:var(--sea);border:1px solid var(--line);border-radius:var(--radius)}
 .country-shape path{fill:var(--ink);stroke:var(--panel);stroke-width:.5}
+/* pointed at: the outline turns slate and the country's roads with Street View coverage show on it in yellow, as on
+   the home map; a click opens the coverage map in a box over the page */
+.country-shape{cursor:pointer}
+.country-shape path{transition:fill .15s}
+.country-shape .roads{opacity:0;transition:opacity .15s;pointer-events:none}
+.country-shape:hover path,.country-shape:focus-visible path{fill:#2F4A66}
+.country-shape:hover .roads,.country-shape:focus-visible .roads{opacity:1}
+.coverage-box{width:min(1100px,94vw);height:min(760px,88vh);padding:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);color:var(--ink);overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.coverage-box[open]{display:flex;flex-direction:column}
+.coverage-box::backdrop{background:rgba(10,20,30,.55)}
+.coverage-box header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px 8px 16px;border-bottom:1px solid var(--line)}
+.coverage-box header b{font:700 1.25rem/1.1 var(--cond)}
+.coverage-box iframe{flex:1;min-height:0;width:100%;border:0}
 .quiz-cards{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
-.quiz-card{display:block;height:100%;padding:16px 18px;border:1.5px solid var(--line);border-radius:var(--radius);color:var(--ink);text-decoration:none}
+.quiz-card{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:12px;height:100%;padding:11px 18px;border:1.5px solid var(--line);border-radius:var(--radius);color:var(--ink);text-decoration:none}
 .quiz-card:hover{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 5%,transparent)}
 .quiz-card strong{display:block;font:700 1.4rem/1.1 var(--cond)}
-.quiz-card .desc{display:block;margin-top:6px;color:var(--muted);font-size:.92rem}
-.quiz-card .card-rating{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.85rem}
+.quiz-card .desc{display:block;grid-column:1;margin-top:2px;color:var(--muted);font-size:.92rem}
+/* the groups of a country's quizzes (basics, codes, extra): a heading across the list before each */
+.quiz-cards .group-t{grid-column:1 / -1;margin:8px 0 -2px;font:600 .78rem/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.quiz-cards .group-t:first-child{margin-top:0}
+/* a quiz inside another's entry (town names inside cities): a smaller entry joined to it from below */
+.quiz-cards li{display:flex;flex-direction:column}
+.quiz-cards .quiz-card{flex:1;height:auto}
+.quiz-card.has-inside{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.quiz-card.inside{flex:none;margin-top:-1.5px;padding:7px 18px;border-top-left-radius:0;border-top-right-radius:0;background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.quiz-card.inside strong{font-size:1.1rem}
+/* a suite's quizzes are numbered: they are meant to be played in order */
+.quiz-cards.ordered{counter-reset:quiz}
+.quiz-cards.ordered .quiz-card strong::before{counter-increment:quiz;content:counter(quiz);display:inline-block;min-width:1.3em;color:var(--muted);font-weight:600}
+.quiz-card .card-rating{grid-column:2;grid-row:1 / span 2;display:flex;align-items:center;gap:8px;font-size:.85rem}
 .empty{padding:32px 20px;text-align:center;border:1.5px dashed var(--line);border-radius:var(--radius);color:var(--muted)}
+
+/* Review: the buttons that start one ("Due 12", "All 80"), its result, and the review page's stack and timer */
+.review-go{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}
+.review-go .label{color:var(--muted);font-weight:500;margin-right:4px}
+.run{display:flex;flex-wrap:wrap;gap:4px 18px;list-style:none;margin:14px 0 0;padding:0;color:var(--muted)}
+.run li{display:flex;align-items:center;gap:6px}
+.run i{width:12px;height:12px;border-radius:3px}
+.run .got{background:var(--got)} .run .t2{background:var(--t2)} .run .miss{background:var(--miss)}
+.run b{font:700 1.3rem/1 var(--cond);color:var(--ink);font-variant-numeric:tabular-nums}
+.review-page{max-width:860px}
+.decks{width:100%;border-collapse:collapse}
+.decks th,.decks td{padding:8px 14px;text-align:left;border-top:1px solid var(--line);font-weight:400}
+.decks thead th{border-top:0;font:600 .78rem/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.decks .num{text-align:right;font-variant-numeric:tabular-nums}
+.decks .next{color:var(--muted);white-space:nowrap}
+.decks .due{font-weight:700}
+.decks .place th{font:700 1.2rem/1.1 var(--cond)}
+.decks tr:not(.place) td:first-child{padding-left:32px}
+.decks a{text-decoration:none}
+.decks a:hover{text-decoration:underline}
+.decks .acts{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px 8px}
+.timer-opts{display:flex;flex-wrap:wrap;gap:10px 28px;color:var(--muted)}
+.timer-opts input{width:4.6em;margin:0 4px;padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;background:transparent;color:var(--ink);font:inherit}
 
 /* Multiple-choice quiz page */
 .quiz-page{max-width:720px}
@@ -90,12 +159,45 @@ h2{font:700 1.6rem/1.1 var(--cond);margin:36px 0 12px}
 .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 
 @media (max-width:520px){
+  .decks th,.decks td{padding:8px 8px}
+  .decks .next{display:none}
+  .decks tr:not(.place) td:first-child{padding-left:18px}
   h1{font-size:2.1rem}
   .folder > summary{padding:10px 12px}
   .place > summary{padding-left:32px}
   .continent > .place::before{left:19px}
   .files::before{left:39px}
   .files a{padding:8px 12px 8px 52px}
+  .files.own::before{left:19px}
+  .files.own a{padding-left:32px}
   .country-hero{gap:16px}
   .country-shape{width:96px;height:96px}
 }
+
+/* Coverage page: a street map as tall as the window (drawn in grey by coverage.js) under the Street View coverage layer */
+.coverage-page{display:flex;flex-direction:column;height:100dvh}
+.coverage-page main{flex:1;min-height:0;max-width:none;width:100%;padding:0}
+.coverage-page.embed .site-header{display:none}
+#cov{height:100%;background:var(--sea);font-family:var(--sans)}
+/* multiplied onto the map, so place names stay readable under the coverage; while the map moves it is simply laid
+   over it, because the blend is worked out again on every frame */
+.cov-tiles{mix-blend-mode:multiply}
+.moving .cov-tiles{mix-blend-mode:normal;opacity:.88}
+/* past the finest level the tiles are enlarged: show their pixels as they are, not smoothed */
+.cov-tiles img{image-rendering:pixelated}
+/* a country picked out: the rest of the world a little darker, with a line along its border */
+.cov-others{fill:#0E1A23;fill-opacity:.3;stroke:#15283A;stroke-width:1.2;stroke-opacity:.6}
+.leaflet-shade-pane svg{overflow:visible}
+.leaflet-shade-pane{pointer-events:none}
+.cov-legend{display:flex;flex-direction:column;gap:4px;padding:8px 11px;border-radius:8px;background:#fff;color:#15283A;font:500 .8rem/1.2 var(--sans);box-shadow:0 1px 5px rgba(0,0,0,.4)}
+.cov-legend b{font-weight:600}
+.cov-legend span{display:flex;align-items:center;gap:7px;font-variant-numeric:tabular-nums}
+.cov-legend i{width:20px;height:5px;border-radius:3px}
+.cov-pick{display:flex;border-radius:8px;overflow:hidden;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.4)}
+.cov-pick button{appearance:none;display:flex;flex-direction:column;align-items:center;justify-content:center;border:0;border-left:1px solid #D5DBE0;background:#fff;color:#15283A;padding:7px 13px;font:600 .88rem/1.15 var(--sans);cursor:pointer}
+.cov-pick button:first-child{border-left:0}
+.cov-pick button small{font-weight:400;font-size:.72rem;color:#5A6B78}
+.cov-pick button[aria-pressed="true"]{background:#15283A;color:#fff}
+.cov-pick button[aria-pressed="true"] small{color:#C9D3D8}
+/* on a narrow screen the credits wrap onto a second line: keep the legend above them */
+@media (max-width:640px){.leaflet-bottom .cov-legend{margin-bottom:44px}}

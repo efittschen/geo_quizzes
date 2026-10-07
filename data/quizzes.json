@@ -11,22 +11,46 @@
     "116": "Asia",
     "124": "North America",
     "144": "Asia",
+    "152": "South America",
+    "170": "South America",
     "218": "South America",
+    "246": "Europe",
+    "250": "Europe",
+    "276": "Europe",
     "288": "Africa",
+    "300": "Europe",
     "348": "Europe",
     "356": "Asia",
+    "360": "Asia",
+    "380": "Europe",
+    "392": "Asia",
     "398": "Asia",
+    "404": "Africa",
     "410": "Asia",
+    "458": "Asia",
     "484": "North America",
     "512": "Asia",
     "516": "Africa",
     "524": "Asia",
+    "554": "Oceania",
+    "566": "Africa",
+    "578": "Europe",
     "600": "South America",
+    "604": "South America",
+    "608": "Asia",
+    "616": "Europe",
     "620": "Europe",
+    "642": "Europe",
     "643": "Europe",
     "686": "Africa",
+    "704": "Asia",
     "710": "Africa",
+    "724": "Europe",
+    "752": "Europe",
+    "764": "Asia",
     "792": "Asia",
+    "804": "Europe",
+    "826": "Europe",
     "840": "North America"
   },
   "quizzes": [
@@ -34,6 +58,7 @@
       "id": "brazil-ddd",
       "country": "076",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 4,
       "description": "Find phone area codes (DDD) or first-digit zones. Beginner to hard, including a street map with no borders.",
       "url": "quizzes/brazil-ddd/index.html"
@@ -41,7 +66,8 @@
     {
       "id": "brazil-states",
       "country": "076",
-      "title": "States",
+      "title": "Regions",
+      "role": "regions",
       "levels": 2,
       "description": "Find Brazil's 27 states on the map, by name.",
       "url": "quizzes/brazil-states/index.html"
@@ -50,6 +76,7 @@
       "id": "russia-codes",
       "country": "643",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 4,
       "description": "Find phone area codes, or zones by their first one or two digits. Includes a street map with no borders.",
       "url": "quizzes/russia-codes/index.html"
@@ -58,6 +85,7 @@
       "id": "russia-regions",
       "country": "643",
       "title": "Regions",
+      "role": "regions",
       "levels": 4,
       "description": "Find Russia's 8 federal districts and 83 regions on the map, by name.",
       "url": "quizzes/russia-regions/index.html"
@@ -66,6 +94,7 @@
       "id": "mexico-codes",
       "country": "484",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 4,
       "description": "Find phone area codes, or zones by their first one or two digits. Includes a street map with no borders.",
       "url": "quizzes/mexico-codes/index.html"
@@ -73,7 +102,8 @@
     {
       "id": "mexico-states",
       "country": "484",
-      "title": "States",
+      "title": "Regions",
+      "role": "regions",
       "levels": 3,
       "description": "Find Mexico's 32 states on the map, by name.",
       "url": "quizzes/mexico-states/index.html"
@@ -82,6 +112,7 @@
       "id": "us-codes",
       "country": "840",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 4,
       "description": "Find phone area codes, overlays included. Pick the top N by area or city size, or play on a street map with no borders.",
       "url": "quizzes/us-codes/index.html"
@@ -89,10 +120,19 @@
     {
       "id": "us-states",
       "country": "840",
-      "title": "States",
-      "levels": 3,
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
       "description": "Find the 50 states and Washington, D.C. on the map, by name.",
       "url": "quizzes/us-states/index.html"
+    },
+    {
+      "id": "us-zip",
+      "country": "840",
+      "title": "ZIP Codes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/us-zip/index.html"
     },
     {
       "id": "south-asia-scripts",
@@ -106,26 +146,14 @@
       "title": "Scripts",
       "levels": 4,
       "description": "Read a sign in one of 13 scripts and click where you'd see it: India, Nepal, Bangladesh and Bhutan.",
-      "url": "quizzes/south-asia-scripts/index.html"
-    },
-    {
-      "id": "south-asia-regions",
-      "country": [
-        "356",
-        "524",
-        "050",
-        "064"
-      ],
-      "area": "South Asia",
-      "title": "States & Countries",
-      "levels": 3,
-      "description": "Find India's states and territories, Nepal, Bangladesh and Bhutan on the map, by name.",
-      "url": "quizzes/south-asia-regions/index.html"
+      "url": "quizzes/south-asia-scripts/index.html",
+      "hidden": true
     },
     {
       "id": "india-std",
       "country": "356",
       "title": "STD Codes",
+      "role": "area-codes",
       "levels": 4,
       "description": "See a real STD code and click the region its first two digits (or first digit) point to. Includes a street map with no borders.",
       "url": "quizzes/india-std/index.html"
@@ -134,6 +162,7 @@
       "id": "south-africa-codes",
       "country": "710",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 3,
       "description": "Find phone area codes or first-digit zones. Includes a street map with no borders.",
       "url": "quizzes/south-africa-codes/index.html"
@@ -141,7 +170,8 @@
     {
       "id": "south-africa-provinces",
       "country": "710",
-      "title": "Provinces",
+      "title": "Regions",
+      "role": "regions",
       "levels": 1,
       "description": "Find South Africa's nine provinces on the map, by name.",
       "url": "quizzes/south-africa-provinces/index.html"
@@ -150,6 +180,7 @@
       "id": "canada-codes",
       "country": "124",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 3,
       "description": "Find phone area codes, overlays included. Pick the top N by area, or play on a street map with no borders.",
       "url": "quizzes/canada-codes/index.html"
@@ -157,15 +188,25 @@
     {
       "id": "canada-provinces",
       "country": "124",
-      "title": "Provinces",
+      "title": "Regions",
+      "role": "regions",
       "levels": 2,
       "description": "Find Canada's 10 provinces and 3 territories on the map, by name.",
       "url": "quizzes/canada-provinces/index.html"
     },
     {
+      "id": "canada-postcodes",
+      "country": "124",
+      "title": "Postal Codes",
+      "role": "postcodes",
+      "levels": 2,
+      "url": "quizzes/canada-postcodes/index.html"
+    },
+    {
       "id": "australia-prefixes",
       "country": "036",
       "title": "Phone Numbers",
+      "role": "area-codes",
       "levels": 3,
       "description": "See a number's area code and next two digits (the old pre-1990s area codes) and click one of 55 regions; easier modes use the first digit or only the area code. Includes a street map with no borders.",
       "url": "quizzes/australia-prefixes/index.html"
@@ -173,15 +214,25 @@
     {
       "id": "australia-states",
       "country": "036",
-      "title": "States",
+      "title": "Regions",
+      "role": "regions",
       "levels": 1,
       "description": "Find Australia's six states and two mainland territories on the map, by name.",
       "url": "quizzes/australia-states/index.html"
     },
     {
+      "id": "australia-postcodes",
+      "country": "036",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 3,
+      "url": "quizzes/australia-postcodes/index.html"
+    },
+    {
       "id": "argentina-codes",
       "country": "032",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 4,
       "description": "Find area codes (características) or their zones by first one or two digits. Includes a street map with no borders.",
       "url": "quizzes/argentina-codes/index.html"
@@ -189,7 +240,8 @@
     {
       "id": "argentina-provinces",
       "country": "032",
-      "title": "Provinces",
+      "title": "Regions",
+      "role": "regions",
       "levels": 2,
       "description": "Find Argentina's 23 provinces and the City of Buenos Aires on the map, by name.",
       "url": "quizzes/argentina-provinces/index.html"
@@ -198,6 +250,7 @@
       "id": "turkey-codes",
       "country": "792",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 4,
       "description": "Find a province by its area code or its zone (first one or two digits). Includes a street map with no borders.",
       "url": "quizzes/turkey-codes/index.html"
@@ -205,7 +258,8 @@
     {
       "id": "turkey-provinces",
       "country": "792",
-      "title": "Provinces",
+      "title": "Regions",
+      "role": "regions",
       "levels": 4,
       "description": "Find Turkey's 81 provinces on the map, by name, grouped by region.",
       "url": "quizzes/turkey-provinces/index.html"
@@ -214,6 +268,7 @@
       "id": "oman-codes",
       "country": "512",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 1,
       "url": "quizzes/oman-codes/index.html"
     },
@@ -221,6 +276,7 @@
       "id": "oman-regions",
       "country": "512",
       "title": "Regions",
+      "role": "regions",
       "levels": 4,
       "url": "quizzes/oman-regions/index.html"
     },
@@ -228,6 +284,7 @@
       "id": "oman-cities",
       "country": "512",
       "title": "Cities",
+      "role": "cities",
       "levels": 3,
       "url": "quizzes/oman-cities/index.html"
     },
@@ -235,6 +292,7 @@
       "id": "namibia-codes",
       "country": "516",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 1,
       "url": "quizzes/namibia-codes/index.html"
     },
@@ -242,20 +300,47 @@
       "id": "namibia-regions",
       "country": "516",
       "title": "Regions",
+      "role": "regions",
       "levels": 2,
       "url": "quizzes/namibia-regions/index.html"
+    },
+    {
+      "id": "namibia-roads",
+      "country": "516",
+      "title": "Road Numbers",
+      "levels": 1,
+      "url": "quizzes/namibia-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "namibia-redline",
+      "country": "516",
+      "title": "Red Line",
+      "levels": 1,
+      "url": "quizzes/namibia-redline/index.html",
+      "hidden": true
     },
     {
       "id": "namibia-cities",
       "country": "516",
       "title": "Cities",
+      "role": "cities",
       "levels": 4,
       "url": "quizzes/namibia-cities/index.html"
     },
     {
+      "id": "namibia-town-names",
+      "country": "516",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/namibia-town-names/index.html"
+    },
+    {
       "id": "bangladesh-regions",
       "country": "050",
-      "title": "Divisions & Districts",
+      "title": "Regions",
+      "role": "regions",
       "levels": 4,
       "url": "quizzes/bangladesh-regions/index.html"
     },
@@ -263,20 +348,31 @@
       "id": "bangladesh-postcodes",
       "country": "050",
       "title": "Postcodes",
-      "levels": 1,
+      "role": "postcodes",
+      "levels": 4,
       "url": "quizzes/bangladesh-postcodes/index.html"
     },
     {
       "id": "bangladesh-cities",
       "country": "050",
       "title": "Cities",
+      "role": "cities",
       "levels": 4,
       "url": "quizzes/bangladesh-cities/index.html"
     },
     {
+      "id": "bangladesh-town-names",
+      "country": "050",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/bangladesh-town-names/index.html"
+    },
+    {
       "id": "ecuador-regions",
       "country": "218",
-      "title": "Provinces",
+      "title": "Regions",
+      "role": "regions",
       "levels": 2,
       "url": "quizzes/ecuador-regions/index.html"
     },
@@ -284,6 +380,7 @@
       "id": "ecuador-codes",
       "country": "218",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 1,
       "url": "quizzes/ecuador-codes/index.html"
     },
@@ -291,20 +388,31 @@
       "id": "ecuador-cities",
       "country": "218",
       "title": "Cities",
+      "role": "cities",
       "levels": 4,
       "url": "quizzes/ecuador-cities/index.html"
     },
     {
       "id": "cambodia-regions",
       "country": "116",
-      "title": "Provinces",
+      "title": "Regions",
+      "role": "regions",
       "levels": 2,
       "url": "quizzes/cambodia-regions/index.html"
+    },
+    {
+      "id": "cambodia-roads",
+      "country": "116",
+      "title": "Roads & Signs",
+      "levels": 1,
+      "url": "quizzes/cambodia-roads/index.html",
+      "hidden": true
     },
     {
       "id": "cambodia-cities",
       "country": "116",
       "title": "Cities",
+      "role": "cities",
       "levels": 4,
       "url": "quizzes/cambodia-cities/index.html"
     },
@@ -312,6 +420,7 @@
       "id": "kazakhstan-codes",
       "country": "398",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 4,
       "url": "quizzes/kazakhstan-codes/index.html"
     },
@@ -319,6 +428,7 @@
       "id": "kazakhstan-regions",
       "country": "398",
       "title": "Regions",
+      "role": "regions",
       "levels": 2,
       "url": "quizzes/kazakhstan-regions/index.html"
     },
@@ -326,27 +436,39 @@
       "id": "kazakhstan-cities",
       "country": "398",
       "title": "Cities",
+      "role": "cities",
       "levels": 4,
       "url": "quizzes/kazakhstan-cities/index.html"
+    },
+    {
+      "id": "kazakhstan-town-names",
+      "country": "398",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/kazakhstan-town-names/index.html"
     },
     {
       "id": "paraguay-regions",
       "country": "600",
       "title": "Regions",
-      "levels": 2,
+      "role": "regions",
+      "levels": 4,
       "url": "quizzes/paraguay-regions/index.html"
     },
     {
-      "id": "paraguay-districts",
+      "id": "paraguay-colonies",
       "country": "600",
-      "title": "Districts",
-      "levels": 4,
-      "url": "quizzes/paraguay-districts/index.html"
+      "title": "Mennonite Colonies",
+      "levels": 2,
+      "url": "quizzes/paraguay-colonies/index.html",
+      "hidden": true
     },
     {
       "id": "paraguay-codes",
       "country": "600",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 4,
       "url": "quizzes/paraguay-codes/index.html"
     },
@@ -354,6 +476,7 @@
       "id": "paraguay-cities",
       "country": "600",
       "title": "Cities",
+      "role": "cities",
       "levels": 4,
       "url": "quizzes/paraguay-cities/index.html"
     },
@@ -361,6 +484,7 @@
       "id": "senegal-regions",
       "country": "686",
       "title": "Regions",
+      "role": "regions",
       "levels": 3,
       "url": "quizzes/senegal-regions/index.html"
     },
@@ -368,48 +492,86 @@
       "id": "senegal-codes",
       "country": "686",
       "title": "Area Codes",
-      "levels": 1,
+      "role": "area-codes",
+      "levels": 3,
       "url": "quizzes/senegal-codes/index.html"
     },
     {
       "id": "senegal-cities",
       "country": "686",
       "title": "Cities",
+      "role": "cities",
       "levels": 4,
       "url": "quizzes/senegal-cities/index.html"
+    },
+    {
+      "id": "senegal-town-names",
+      "country": "686",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/senegal-town-names/index.html"
     },
     {
       "id": "ghana-regions",
       "country": "288",
       "title": "Regions",
+      "role": "regions",
       "levels": 2,
       "url": "quizzes/ghana-regions/index.html"
+    },
+    {
+      "id": "ghana-languages",
+      "country": "288",
+      "title": "Languages",
+      "levels": 2,
+      "url": "quizzes/ghana-languages/index.html"
     },
     {
       "id": "ghana-cities",
       "country": "288",
       "title": "Cities",
+      "role": "cities",
       "levels": 4,
       "url": "quizzes/ghana-cities/index.html"
+    },
+    {
+      "id": "ghana-town-names",
+      "country": "288",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 2,
+      "url": "quizzes/ghana-town-names/index.html"
     },
     {
       "id": "bulgaria-codes",
       "country": "100",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 4,
       "url": "quizzes/bulgaria-codes/index.html"
     },
     {
       "id": "bulgaria-regions",
       "country": "100",
-      "title": "Provinces",
+      "title": "Regions",
+      "role": "regions",
       "levels": 2,
       "url": "quizzes/bulgaria-regions/index.html"
+    },
+    {
+      "id": "bulgaria-power",
+      "country": "100",
+      "title": "Power Companies",
+      "levels": 1,
+      "url": "quizzes/bulgaria-power/index.html",
+      "hidden": true
     },
     {
       "id": "bulgaria-cities",
       "country": "100",
       "title": "Cities",
+      "role": "cities",
       "levels": 4,
       "url": "quizzes/bulgaria-cities/index.html"
     },
@@ -417,13 +579,15 @@
       "id": "hungary-codes",
       "country": "348",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 3,
       "url": "quizzes/hungary-codes/index.html"
     },
     {
       "id": "hungary-regions",
       "country": "348",
-      "title": "Counties",
+      "title": "Regions",
+      "role": "regions",
       "levels": 2,
       "url": "quizzes/hungary-regions/index.html"
     },
@@ -439,7 +603,8 @@
       "country": "348",
       "title": "Road Numbers",
       "levels": 1,
-      "url": "quizzes/hungary-roads/index.html"
+      "url": "quizzes/hungary-roads/index.html",
+      "hidden": true
     },
     {
       "id": "hungary-districts",
@@ -452,13 +617,23 @@
       "id": "hungary-cities",
       "country": "348",
       "title": "Cities",
+      "role": "cities",
       "levels": 4,
       "url": "quizzes/hungary-cities/index.html"
+    },
+    {
+      "id": "hungary-town-names",
+      "country": "348",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/hungary-town-names/index.html"
     },
     {
       "id": "portugal-codes",
       "country": "620",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 3,
       "url": "quizzes/portugal-codes/index.html"
     },
@@ -466,13 +641,31 @@
       "id": "portugal-regions",
       "country": "620",
       "title": "Regions",
+      "role": "regions",
       "levels": 2,
       "url": "quizzes/portugal-regions/index.html"
+    },
+    {
+      "id": "portugal-postcodes",
+      "country": "620",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/portugal-postcodes/index.html"
+    },
+    {
+      "id": "portugal-roads",
+      "country": "620",
+      "title": "Road Numbers",
+      "levels": 1,
+      "url": "quizzes/portugal-roads/index.html",
+      "hidden": true
     },
     {
       "id": "portugal-cities",
       "country": "620",
       "title": "Cities",
+      "role": "cities",
       "levels": 4,
       "url": "quizzes/portugal-cities/index.html"
     },
@@ -480,6 +673,7 @@
       "id": "austria-codes",
       "country": "040",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 4,
       "url": "quizzes/austria-codes/index.html"
     },
@@ -487,15 +681,32 @@
       "id": "austria-regions",
       "country": "040",
       "title": "Regions",
+      "role": "regions",
       "levels": 1,
       "url": "quizzes/austria-regions/index.html"
+    },
+    {
+      "id": "austria-postcodes",
+      "country": "040",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/austria-postcodes/index.html"
+    },
+    {
+      "id": "austria-languages",
+      "country": "040",
+      "title": "Sign Languages",
+      "levels": 1,
+      "url": "quizzes/austria-languages/index.html"
     },
     {
       "id": "austria-roads",
       "country": "040",
       "title": "Road Numbers",
       "levels": 4,
-      "url": "quizzes/austria-roads/index.html"
+      "url": "quizzes/austria-roads/index.html",
+      "hidden": true
     },
     {
       "id": "austria-vienna",
@@ -508,13 +719,23 @@
       "id": "austria-cities",
       "country": "040",
       "title": "Cities",
+      "role": "cities",
       "levels": 4,
       "url": "quizzes/austria-cities/index.html"
+    },
+    {
+      "id": "austria-town-names",
+      "country": "040",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/austria-town-names/index.html"
     },
     {
       "id": "south-korea-codes",
       "country": "410",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 2,
       "url": "quizzes/south-korea-codes/index.html"
     },
@@ -522,20 +743,47 @@
       "id": "south-korea-regions",
       "country": "410",
       "title": "Regions",
+      "role": "regions",
       "levels": 2,
       "url": "quizzes/south-korea-regions/index.html"
+    },
+    {
+      "id": "south-korea-postcodes",
+      "country": "410",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/south-korea-postcodes/index.html"
+    },
+    {
+      "id": "south-korea-roads",
+      "country": "410",
+      "title": "Road Numbers",
+      "levels": 1,
+      "url": "quizzes/south-korea-roads/index.html",
+      "hidden": true
     },
     {
       "id": "south-korea-cities",
       "country": "410",
       "title": "Cities",
+      "role": "cities",
       "levels": 4,
       "url": "quizzes/south-korea-cities/index.html"
     },
     {
+      "id": "south-korea-town-names",
+      "country": "410",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/south-korea-town-names/index.html"
+    },
+    {
       "id": "bolivia-regions",
       "country": "068",
-      "title": "Departments",
+      "title": "Regions",
+      "role": "regions",
       "levels": 1,
       "url": "quizzes/bolivia-regions/index.html"
     },
@@ -543,36 +791,1544 @@
       "id": "bolivia-codes",
       "country": "068",
       "title": "Area Codes",
-      "levels": 1,
+      "role": "area-codes",
+      "levels": 2,
       "url": "quizzes/bolivia-codes/index.html"
     },
     {
       "id": "bolivia-cities",
       "country": "068",
       "title": "Cities",
+      "role": "cities",
       "levels": 4,
       "url": "quizzes/bolivia-cities/index.html"
+    },
+    {
+      "id": "bolivia-town-names",
+      "country": "068",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 2,
+      "url": "quizzes/bolivia-town-names/index.html"
     },
     {
       "id": "sri-lanka-codes",
       "country": "144",
       "title": "Area Codes",
+      "role": "area-codes",
       "levels": 2,
       "url": "quizzes/sri-lanka-codes/index.html"
     },
     {
       "id": "sri-lanka-regions",
       "country": "144",
-      "title": "Provinces & Districts",
+      "title": "Regions",
+      "role": "regions",
       "levels": 2,
       "url": "quizzes/sri-lanka-regions/index.html"
+    },
+    {
+      "id": "sri-lanka-languages",
+      "country": "144",
+      "title": "Languages",
+      "levels": 1,
+      "url": "quizzes/sri-lanka-languages/index.html"
     },
     {
       "id": "sri-lanka-cities",
       "country": "144",
       "title": "Cities",
+      "role": "cities",
       "levels": 4,
       "url": "quizzes/sri-lanka-cities/index.html"
+    },
+    {
+      "id": "sri-lanka-town-names",
+      "country": "144",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 2,
+      "url": "quizzes/sri-lanka-town-names/index.html"
+    },
+    {
+      "id": "brazil-roads",
+      "country": "076",
+      "title": "Road Prefixes",
+      "levels": 3,
+      "url": "quizzes/brazil-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "brazil-postcodes",
+      "country": "076",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/brazil-postcodes/index.html"
+    },
+    {
+      "id": "brazil-cities",
+      "country": "076",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/brazil-cities/index.html"
+    },
+    {
+      "id": "brazil-town-names",
+      "country": "076",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 2,
+      "url": "quizzes/brazil-town-names/index.html"
+    },
+    {
+      "id": "mexico-postcodes",
+      "country": "484",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/mexico-postcodes/index.html"
+    },
+    {
+      "id": "mexico-shields",
+      "country": "484",
+      "title": "Road Shields",
+      "levels": 2,
+      "url": "quizzes/mexico-shields/index.html",
+      "hidden": true
+    },
+    {
+      "id": "mexico-cities",
+      "country": "484",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/mexico-cities/index.html"
+    },
+    {
+      "id": "mexico-town-names",
+      "country": "484",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/mexico-town-names/index.html"
+    },
+    {
+      "id": "france-codes",
+      "country": "250",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 4,
+      "url": "quizzes/france-codes/index.html"
+    },
+    {
+      "id": "france-regions",
+      "country": "250",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/france-regions/index.html"
+    },
+    {
+      "id": "france-postcodes",
+      "country": "250",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/france-postcodes/index.html"
+    },
+    {
+      "id": "france-languages",
+      "country": "250",
+      "title": "Regional Languages",
+      "levels": 1,
+      "url": "quizzes/france-languages/index.html"
+    },
+    {
+      "id": "france-cities",
+      "country": "250",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/france-cities/index.html"
+    },
+    {
+      "id": "france-town-names",
+      "country": "250",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 3,
+      "url": "quizzes/france-town-names/index.html"
+    },
+    {
+      "id": "thailand-codes",
+      "country": "764",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 2,
+      "url": "quizzes/thailand-codes/index.html"
+    },
+    {
+      "id": "thailand-regions",
+      "country": "764",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/thailand-regions/index.html"
+    },
+    {
+      "id": "thailand-postcodes",
+      "country": "764",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/thailand-postcodes/index.html"
+    },
+    {
+      "id": "thailand-roads",
+      "country": "764",
+      "title": "Road Numbers",
+      "levels": 4,
+      "url": "quizzes/thailand-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "thailand-cities",
+      "country": "764",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/thailand-cities/index.html"
+    },
+    {
+      "id": "thailand-town-names",
+      "country": "764",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 2,
+      "url": "quizzes/thailand-town-names/index.html"
+    },
+    {
+      "id": "turkey-roads",
+      "country": "792",
+      "title": "Road Numbers",
+      "levels": 4,
+      "url": "quizzes/turkey-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "turkey-postcodes",
+      "country": "792",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/turkey-postcodes/index.html"
+    },
+    {
+      "id": "turkey-cities",
+      "country": "792",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/turkey-cities/index.html"
+    },
+    {
+      "id": "turkey-town-names",
+      "country": "792",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/turkey-town-names/index.html"
+    },
+    {
+      "id": "russia-languages",
+      "country": "643",
+      "title": "Sign Languages",
+      "levels": 2,
+      "url": "quizzes/russia-languages/index.html"
+    },
+    {
+      "id": "russia-highways",
+      "country": "643",
+      "title": "M Highways",
+      "levels": 2,
+      "url": "quizzes/russia-highways/index.html",
+      "hidden": true
+    },
+    {
+      "id": "russia-cities",
+      "country": "643",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/russia-cities/index.html"
+    },
+    {
+      "id": "russia-town-names",
+      "country": "643",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 2,
+      "url": "quizzes/russia-town-names/index.html"
+    },
+    {
+      "id": "us-road-grid",
+      "country": "840",
+      "title": "Road Grid",
+      "levels": 2,
+      "url": "quizzes/us-road-grid/index.html",
+      "hidden": true
+    },
+    {
+      "id": "us-ny-markers",
+      "country": "840",
+      "title": "NY Reference Markers",
+      "levels": 4,
+      "url": "quizzes/us-ny-markers/index.html",
+      "hidden": true
+    },
+    {
+      "id": "us-ca-postmiles",
+      "country": "840",
+      "title": "California Postmiles",
+      "levels": 3,
+      "url": "quizzes/us-ca-postmiles/index.html",
+      "hidden": true
+    },
+    {
+      "id": "us-cities",
+      "country": "840",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/us-cities/index.html"
+    },
+    {
+      "id": "us-town-names",
+      "country": "840",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/us-town-names/index.html"
+    },
+    {
+      "id": "us-bollards",
+      "country": "840",
+      "title": "Bollards",
+      "levels": 4,
+      "url": "quizzes/us-bollards/index.html",
+      "hidden": true
+    },
+    {
+      "id": "argentina-routes",
+      "country": "032",
+      "title": "National Routes",
+      "levels": 4,
+      "url": "quizzes/argentina-routes/index.html",
+      "hidden": true
+    },
+    {
+      "id": "argentina-partidos",
+      "country": "032",
+      "title": "Buenos Aires Partidos",
+      "levels": 4,
+      "url": "quizzes/argentina-partidos/index.html"
+    },
+    {
+      "id": "argentina-gba",
+      "country": "032",
+      "title": "Greater Buenos Aires",
+      "levels": 2,
+      "url": "quizzes/argentina-gba/index.html"
+    },
+    {
+      "id": "argentina-cities",
+      "country": "032",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/argentina-cities/index.html"
+    },
+    {
+      "id": "argentina-town-names",
+      "country": "032",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/argentina-town-names/index.html"
+    },
+    {
+      "id": "south-africa-roads",
+      "country": "710",
+      "title": "Road Numbers",
+      "levels": 1,
+      "url": "quizzes/south-africa-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "south-africa-languages",
+      "country": "710",
+      "title": "Languages",
+      "levels": 2,
+      "url": "quizzes/south-africa-languages/index.html"
+    },
+    {
+      "id": "south-africa-cities",
+      "country": "710",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/south-africa-cities/index.html"
+    },
+    {
+      "id": "south-africa-town-names",
+      "country": "710",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/south-africa-town-names/index.html"
+    },
+    {
+      "id": "colombia-regions",
+      "country": "170",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 3,
+      "url": "quizzes/colombia-regions/index.html"
+    },
+    {
+      "id": "colombia-codes",
+      "country": "170",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 1,
+      "url": "quizzes/colombia-codes/index.html"
+    },
+    {
+      "id": "colombia-cities",
+      "country": "170",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/colombia-cities/index.html"
+    },
+    {
+      "id": "indonesia-codes",
+      "country": "360",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 4,
+      "url": "quizzes/indonesia-codes/index.html"
+    },
+    {
+      "id": "indonesia-regions",
+      "country": "360",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/indonesia-regions/index.html"
+    },
+    {
+      "id": "indonesia-postcodes",
+      "country": "360",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/indonesia-postcodes/index.html"
+    },
+    {
+      "id": "indonesia-scripts",
+      "country": "360",
+      "title": "Scripts",
+      "levels": 1,
+      "url": "quizzes/indonesia-scripts/index.html",
+      "hidden": true
+    },
+    {
+      "id": "indonesia-cities",
+      "country": "360",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/indonesia-cities/index.html"
+    },
+    {
+      "id": "indonesia-town-names",
+      "country": "360",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 2,
+      "url": "quizzes/indonesia-town-names/index.html"
+    },
+    {
+      "id": "philippines-regions",
+      "country": "608",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/philippines-regions/index.html"
+    },
+    {
+      "id": "philippines-codes",
+      "country": "608",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 3,
+      "url": "quizzes/philippines-codes/index.html"
+    },
+    {
+      "id": "philippines-cities",
+      "country": "608",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/philippines-cities/index.html"
+    },
+    {
+      "id": "philippines-town-names",
+      "country": "608",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/philippines-town-names/index.html"
+    },
+    {
+      "id": "spain-codes",
+      "country": "724",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 3,
+      "url": "quizzes/spain-codes/index.html"
+    },
+    {
+      "id": "spain-regions",
+      "country": "724",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 3,
+      "url": "quizzes/spain-regions/index.html"
+    },
+    {
+      "id": "spain-postcodes",
+      "country": "724",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 3,
+      "url": "quizzes/spain-postcodes/index.html"
+    },
+    {
+      "id": "spain-languages",
+      "country": "724",
+      "title": "Sign Languages",
+      "levels": 1,
+      "url": "quizzes/spain-languages/index.html"
+    },
+    {
+      "id": "spain-roads",
+      "country": "724",
+      "title": "Road Prefixes",
+      "levels": 4,
+      "url": "quizzes/spain-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "spain-cities",
+      "country": "724",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/spain-cities/index.html"
+    },
+    {
+      "id": "spain-town-names",
+      "country": "724",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/spain-town-names/index.html"
+    },
+    {
+      "id": "australia-power",
+      "country": "036",
+      "title": "Power Networks",
+      "levels": 2,
+      "url": "quizzes/australia-power/index.html",
+      "hidden": true
+    },
+    {
+      "id": "australia-roads",
+      "country": "036",
+      "title": "Victoria C Roads",
+      "levels": 1,
+      "url": "quizzes/australia-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "australia-cities",
+      "country": "036",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/australia-cities/index.html"
+    },
+    {
+      "id": "india-districts",
+      "country": "356",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/india-districts/index.html"
+    },
+    {
+      "id": "india-pin",
+      "country": "356",
+      "title": "PIN Codes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/india-pin/index.html"
+    },
+    {
+      "id": "india-cities",
+      "country": "356",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/india-cities/index.html"
+    },
+    {
+      "id": "india-town-names",
+      "country": "356",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 3,
+      "url": "quizzes/india-town-names/index.html"
+    },
+    {
+      "id": "canada-signs",
+      "country": "124",
+      "title": "Sign Languages",
+      "levels": 2,
+      "url": "quizzes/canada-signs/index.html"
+    },
+    {
+      "id": "canada-routes",
+      "country": "124",
+      "title": "Route Numbers",
+      "levels": 2,
+      "url": "quizzes/canada-routes/index.html",
+      "hidden": true
+    },
+    {
+      "id": "canada-counties",
+      "country": "124",
+      "title": "Ontario Counties",
+      "levels": 3,
+      "url": "quizzes/canada-counties/index.html"
+    },
+    {
+      "id": "canada-cities",
+      "country": "124",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/canada-cities/index.html"
+    },
+    {
+      "id": "nigeria-regions",
+      "country": "566",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 3,
+      "url": "quizzes/nigeria-regions/index.html"
+    },
+    {
+      "id": "nigeria-languages",
+      "country": "566",
+      "title": "Languages",
+      "levels": 1,
+      "url": "quizzes/nigeria-languages/index.html"
+    },
+    {
+      "id": "nigeria-cities",
+      "country": "566",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/nigeria-cities/index.html"
+    },
+    {
+      "id": "nigeria-town-names",
+      "country": "566",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 4,
+      "url": "quizzes/nigeria-town-names/index.html"
+    },
+    {
+      "id": "vietnam-regions",
+      "country": "704",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/vietnam-regions/index.html"
+    },
+    {
+      "id": "vietnam-codes",
+      "country": "704",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 4,
+      "url": "quizzes/vietnam-codes/index.html"
+    },
+    {
+      "id": "vietnam-roads",
+      "country": "704",
+      "title": "Road Numbers",
+      "levels": 4,
+      "url": "quizzes/vietnam-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "vietnam-cities",
+      "country": "704",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/vietnam-cities/index.html"
+    },
+    {
+      "id": "vietnam-town-names",
+      "country": "704",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 2,
+      "url": "quizzes/vietnam-town-names/index.html"
+    },
+    {
+      "id": "ukraine-codes",
+      "country": "804",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 4,
+      "url": "quizzes/ukraine-codes/index.html"
+    },
+    {
+      "id": "ukraine-regions",
+      "country": "804",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 2,
+      "url": "quizzes/ukraine-regions/index.html"
+    },
+    {
+      "id": "ukraine-roads",
+      "country": "804",
+      "title": "Road Numbers",
+      "levels": 2,
+      "url": "quizzes/ukraine-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "ukraine-cities",
+      "country": "804",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/ukraine-cities/index.html"
+    },
+    {
+      "id": "ukraine-town-names",
+      "country": "804",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 2,
+      "url": "quizzes/ukraine-town-names/index.html"
+    },
+    {
+      "id": "norway-codes",
+      "country": "578",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 3,
+      "url": "quizzes/norway-codes/index.html"
+    },
+    {
+      "id": "norway-regions",
+      "country": "578",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/norway-regions/index.html"
+    },
+    {
+      "id": "norway-postcodes",
+      "country": "578",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/norway-postcodes/index.html"
+    },
+    {
+      "id": "norway-languages",
+      "country": "578",
+      "title": "Languages",
+      "levels": 2,
+      "url": "quizzes/norway-languages/index.html"
+    },
+    {
+      "id": "norway-cities",
+      "country": "578",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/norway-cities/index.html"
+    },
+    {
+      "id": "chile-regions",
+      "country": "152",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 2,
+      "url": "quizzes/chile-regions/index.html"
+    },
+    {
+      "id": "chile-roads",
+      "country": "152",
+      "title": "Road Letters",
+      "levels": 2,
+      "url": "quizzes/chile-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "chile-codes",
+      "country": "152",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 2,
+      "url": "quizzes/chile-codes/index.html"
+    },
+    {
+      "id": "chile-cities",
+      "country": "152",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/chile-cities/index.html"
+    },
+    {
+      "id": "kenya-regions",
+      "country": "404",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 3,
+      "url": "quizzes/kenya-regions/index.html"
+    },
+    {
+      "id": "kenya-postcodes",
+      "country": "404",
+      "title": "PO Box Codes",
+      "role": "postcodes",
+      "levels": 3,
+      "url": "quizzes/kenya-postcodes/index.html"
+    },
+    {
+      "id": "kenya-cities",
+      "country": "404",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/kenya-cities/index.html"
+    },
+    {
+      "id": "kenya-town-names",
+      "country": "404",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/kenya-town-names/index.html"
+    },
+    {
+      "id": "italy-codes",
+      "country": "380",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 4,
+      "url": "quizzes/italy-codes/index.html"
+    },
+    {
+      "id": "italy-regions",
+      "country": "380",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/italy-regions/index.html"
+    },
+    {
+      "id": "italy-postcodes",
+      "country": "380",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/italy-postcodes/index.html"
+    },
+    {
+      "id": "italy-languages",
+      "country": "380",
+      "title": "Sign Languages",
+      "levels": 1,
+      "url": "quizzes/italy-languages/index.html"
+    },
+    {
+      "id": "italy-roads",
+      "country": "380",
+      "title": "SS Roads",
+      "levels": 1,
+      "url": "quizzes/italy-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "italy-cities",
+      "country": "380",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/italy-cities/index.html"
+    },
+    {
+      "id": "italy-town-names",
+      "country": "380",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/italy-town-names/index.html"
+    },
+    {
+      "id": "germany-codes",
+      "country": "276",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 4,
+      "url": "quizzes/germany-codes/index.html"
+    },
+    {
+      "id": "germany-regions",
+      "country": "276",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/germany-regions/index.html"
+    },
+    {
+      "id": "germany-postcodes",
+      "country": "276",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/germany-postcodes/index.html"
+    },
+    {
+      "id": "germany-roads",
+      "country": "276",
+      "title": "Road Prefixes",
+      "levels": 1,
+      "url": "quizzes/germany-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "germany-languages",
+      "country": "276",
+      "title": "Sign Languages",
+      "levels": 1,
+      "url": "quizzes/germany-languages/index.html"
+    },
+    {
+      "id": "germany-cities",
+      "country": "276",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/germany-cities/index.html"
+    },
+    {
+      "id": "germany-town-names",
+      "country": "276",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 3,
+      "url": "quizzes/germany-town-names/index.html"
+    },
+    {
+      "id": "malaysia-codes",
+      "country": "458",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 2,
+      "url": "quizzes/malaysia-codes/index.html"
+    },
+    {
+      "id": "malaysia-regions",
+      "country": "458",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 2,
+      "url": "quizzes/malaysia-regions/index.html"
+    },
+    {
+      "id": "malaysia-postcodes",
+      "country": "458",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/malaysia-postcodes/index.html"
+    },
+    {
+      "id": "malaysia-roads",
+      "country": "458",
+      "title": "Road Letters",
+      "levels": 2,
+      "url": "quizzes/malaysia-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "malaysia-power",
+      "country": "458",
+      "title": "Power Companies",
+      "levels": 1,
+      "url": "quizzes/malaysia-power/index.html",
+      "hidden": true
+    },
+    {
+      "id": "malaysia-bins",
+      "country": "458",
+      "title": "Bin Companies",
+      "levels": 1,
+      "url": "quizzes/malaysia-bins/index.html",
+      "hidden": true
+    },
+    {
+      "id": "malaysia-jawi",
+      "country": "458",
+      "title": "Jawi Signs",
+      "levels": 1,
+      "url": "quizzes/malaysia-jawi/index.html",
+      "hidden": true
+    },
+    {
+      "id": "malaysia-cities",
+      "country": "458",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/malaysia-cities/index.html"
+    },
+    {
+      "id": "malaysia-town-names",
+      "country": "458",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 2,
+      "url": "quizzes/malaysia-town-names/index.html"
+    },
+    {
+      "id": "peru-codes",
+      "country": "604",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 2,
+      "url": "quizzes/peru-codes/index.html"
+    },
+    {
+      "id": "peru-regions",
+      "country": "604",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 2,
+      "url": "quizzes/peru-regions/index.html"
+    },
+    {
+      "id": "peru-roads",
+      "country": "604",
+      "title": "Road Prefixes",
+      "levels": 2,
+      "url": "quizzes/peru-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "peru-power",
+      "country": "604",
+      "title": "Power Companies",
+      "levels": 2,
+      "url": "quizzes/peru-power/index.html",
+      "hidden": true
+    },
+    {
+      "id": "peru-cities",
+      "country": "604",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/peru-cities/index.html"
+    },
+    {
+      "id": "peru-town-names",
+      "country": "604",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 2,
+      "url": "quizzes/peru-town-names/index.html"
+    },
+    {
+      "id": "new-zealand-regions",
+      "country": "554",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/new-zealand-regions/index.html"
+    },
+    {
+      "id": "new-zealand-codes",
+      "country": "554",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 1,
+      "url": "quizzes/new-zealand-codes/index.html"
+    },
+    {
+      "id": "new-zealand-highways",
+      "country": "554",
+      "title": "State Highways",
+      "levels": 4,
+      "url": "quizzes/new-zealand-highways/index.html",
+      "hidden": true
+    },
+    {
+      "id": "new-zealand-lines",
+      "country": "554",
+      "title": "Lines Companies",
+      "levels": 2,
+      "url": "quizzes/new-zealand-lines/index.html",
+      "hidden": true
+    },
+    {
+      "id": "new-zealand-cities",
+      "country": "554",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/new-zealand-cities/index.html"
+    },
+    {
+      "id": "finland-regions",
+      "country": "246",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/finland-regions/index.html"
+    },
+    {
+      "id": "finland-postcodes",
+      "country": "246",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/finland-postcodes/index.html"
+    },
+    {
+      "id": "finland-languages",
+      "country": "246",
+      "title": "Sign Languages",
+      "levels": 3,
+      "url": "quizzes/finland-languages/index.html"
+    },
+    {
+      "id": "finland-roads",
+      "country": "246",
+      "title": "Road Numbers",
+      "levels": 2,
+      "url": "quizzes/finland-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "finland-codes",
+      "country": "246",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 2,
+      "url": "quizzes/finland-codes/index.html"
+    },
+    {
+      "id": "finland-cities",
+      "country": "246",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/finland-cities/index.html"
+    },
+    {
+      "id": "finland-town-names",
+      "country": "246",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/finland-town-names/index.html"
+    },
+    {
+      "id": "romania-codes",
+      "country": "642",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 4,
+      "url": "quizzes/romania-codes/index.html"
+    },
+    {
+      "id": "romania-regions",
+      "country": "642",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 3,
+      "url": "quizzes/romania-regions/index.html"
+    },
+    {
+      "id": "romania-languages",
+      "country": "642",
+      "title": "Sign Languages",
+      "levels": 2,
+      "url": "quizzes/romania-languages/index.html"
+    },
+    {
+      "id": "romania-roads",
+      "country": "642",
+      "title": "Road Numbers",
+      "levels": 1,
+      "url": "quizzes/romania-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "romania-cities",
+      "country": "642",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/romania-cities/index.html"
+    },
+    {
+      "id": "sweden-codes",
+      "country": "752",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 4,
+      "url": "quizzes/sweden-codes/index.html"
+    },
+    {
+      "id": "sweden-regions",
+      "country": "752",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 2,
+      "url": "quizzes/sweden-regions/index.html"
+    },
+    {
+      "id": "sweden-postcodes",
+      "country": "752",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/sweden-postcodes/index.html"
+    },
+    {
+      "id": "sweden-roads",
+      "country": "752",
+      "title": "Road Numbers",
+      "levels": 1,
+      "url": "quizzes/sweden-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "sweden-languages",
+      "country": "752",
+      "title": "Minority Languages",
+      "levels": 1,
+      "url": "quizzes/sweden-languages/index.html"
+    },
+    {
+      "id": "sweden-cities",
+      "country": "752",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/sweden-cities/index.html"
+    },
+    {
+      "id": "sweden-town-names",
+      "country": "752",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 2,
+      "url": "quizzes/sweden-town-names/index.html"
+    },
+    {
+      "id": "poland-codes",
+      "country": "616",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 3,
+      "url": "quizzes/poland-codes/index.html"
+    },
+    {
+      "id": "poland-regions",
+      "country": "616",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 2,
+      "url": "quizzes/poland-regions/index.html"
+    },
+    {
+      "id": "poland-postcodes",
+      "country": "616",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/poland-postcodes/index.html"
+    },
+    {
+      "id": "poland-languages",
+      "country": "616",
+      "title": "Sign Languages",
+      "levels": 1,
+      "url": "quizzes/poland-languages/index.html"
+    },
+    {
+      "id": "poland-roads",
+      "country": "616",
+      "title": "Road Numbers",
+      "levels": 1,
+      "url": "quizzes/poland-roads/index.html",
+      "hidden": true
+    },
+    {
+      "id": "poland-power",
+      "country": "616",
+      "title": "Power Companies",
+      "levels": 1,
+      "url": "quizzes/poland-power/index.html",
+      "hidden": true
+    },
+    {
+      "id": "poland-cities",
+      "country": "616",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/poland-cities/index.html"
+    },
+    {
+      "id": "poland-town-names",
+      "country": "616",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 2,
+      "url": "quizzes/poland-town-names/index.html"
+    },
+    {
+      "id": "japan-codes",
+      "country": "392",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 4,
+      "url": "quizzes/japan-codes/index.html"
+    },
+    {
+      "id": "japan-regions",
+      "country": "392",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 3,
+      "url": "quizzes/japan-regions/index.html"
+    },
+    {
+      "id": "japan-postcodes",
+      "country": "392",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/japan-postcodes/index.html"
+    },
+    {
+      "id": "japan-power",
+      "country": "392",
+      "title": "Power Companies",
+      "levels": 2,
+      "url": "quizzes/japan-power/index.html",
+      "hidden": true
+    },
+    {
+      "id": "japan-cities",
+      "country": "392",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/japan-cities/index.html"
+    },
+    {
+      "id": "japan-town-names",
+      "country": "392",
+      "title": "Town Names",
+      "role": "names",
+      "levels": 1,
+      "url": "quizzes/japan-town-names/index.html"
+    },
+    {
+      "id": "greece-codes",
+      "country": "300",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 4,
+      "url": "quizzes/greece-codes/index.html"
+    },
+    {
+      "id": "greece-regions",
+      "country": "300",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/greece-regions/index.html"
+    },
+    {
+      "id": "united-kingdom-codes",
+      "country": "826",
+      "title": "Area Codes",
+      "role": "area-codes",
+      "levels": 4,
+      "url": "quizzes/united-kingdom-codes/index.html"
+    },
+    {
+      "id": "united-kingdom-regions",
+      "country": "826",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/united-kingdom-regions/index.html"
+    },
+    {
+      "id": "united-kingdom-postcodes",
+      "country": "826",
+      "title": "Postcodes",
+      "role": "postcodes",
+      "levels": 4,
+      "url": "quizzes/united-kingdom-postcodes/index.html"
+    },
+    {
+      "id": "united-kingdom-languages",
+      "country": "826",
+      "title": "Sign Languages",
+      "levels": 2,
+      "url": "quizzes/united-kingdom-languages/index.html"
+    },
+    {
+      "id": "united-kingdom-london",
+      "country": "826",
+      "title": "London Postcodes",
+      "levels": 4,
+      "url": "quizzes/united-kingdom-london/index.html"
+    },
+    {
+      "id": "world-countries",
+      "scope": "World",
+      "title": "Countries",
+      "levels": 4,
+      "url": "quizzes/world-countries/index.html"
+    },
+    {
+      "id": "world-driving-side",
+      "scope": "World",
+      "title": "Driving Side",
+      "levels": 1,
+      "url": "quizzes/world-driving-side/index.html"
+    },
+    {
+      "id": "world-languages",
+      "scope": "World",
+      "title": "Scripts & Languages",
+      "levels": 3,
+      "url": "quizzes/world-languages/index.html"
+    },
+    {
+      "id": "world-bollards",
+      "scope": "World",
+      "title": "Bollards",
+      "levels": 4,
+      "url": "quizzes/world-bollards/index.html",
+      "hidden": true
+    },
+    {
+      "id": "world-flags",
+      "scope": "World",
+      "title": "Flags",
+      "levels": 4,
+      "url": "quizzes/world-flags/index.html"
+    },
+    {
+      "id": "world-domains",
+      "scope": "World",
+      "title": "Domains",
+      "levels": 4,
+      "url": "quizzes/world-domains/index.html"
+    },
+    {
+      "id": "world-calling-codes",
+      "scope": "World",
+      "title": "Calling Codes",
+      "levels": 4,
+      "url": "quizzes/world-calling-codes/index.html"
+    },
+    {
+      "id": "africa-bollards",
+      "scope": "Africa",
+      "title": "Bollards",
+      "levels": 3,
+      "url": "quizzes/africa-bollards/index.html",
+      "hidden": true
+    },
+    {
+      "id": "asia-bollards",
+      "scope": "Asia",
+      "title": "Bollards",
+      "levels": 4,
+      "url": "quizzes/asia-bollards/index.html",
+      "hidden": true
+    },
+    {
+      "id": "europe-bollards",
+      "scope": "Europe",
+      "title": "Bollards",
+      "levels": 4,
+      "url": "quizzes/europe-bollards/index.html",
+      "hidden": true
+    },
+    {
+      "id": "north-america-bollards",
+      "scope": "North America",
+      "title": "Bollards",
+      "levels": 4,
+      "url": "quizzes/north-america-bollards/index.html",
+      "hidden": true
+    },
+    {
+      "id": "oceania-bollards",
+      "scope": "Oceania",
+      "title": "Bollards",
+      "levels": 3,
+      "url": "quizzes/oceania-bollards/index.html",
+      "hidden": true
+    },
+    {
+      "id": "south-america-bollards",
+      "scope": "South America",
+      "title": "Bollards",
+      "levels": 4,
+      "url": "quizzes/south-america-bollards/index.html",
+      "hidden": true
     }
   ]
 }

@@ -1,0 +1,3 @@
+/* hints: zone (tools/hints.mjs) */
+.r[data-g="NC"]{--hint:var(--h1)} .r[data-g="NE"]{--hint:var(--h3)} .r[data-g="NW"]{--hint:var(--h4)} .r[data-g="SE"]{--hint:var(--h5)} .r[data-g="SS"]{--hint:var(--h2)} .r[data-g="SW"]{--hint:var(--h6)}
+/* end hints: zone */

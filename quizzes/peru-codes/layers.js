@@ -1,0 +1,50 @@
+// Peru Area Codes. Each map area is a department (HDX COD-AB admin 1); each landline
+// area code covers one department, except 1, which covers Lima and Callao (MTC numbering plan, see ../peru-regions/peru.js).
+// The first digit is one of six official numbering zones (1, 4, 5, 6, 7, 8; zones 2 and 3 are reserved).
+
+const LAYERS = {
+  key: "pecodes",
+  size: [1000,1474],
+  pad: 16,
+  maxZoom: 40,
+  labelScale: 0.25,
+  fly: {"pad":1.6,"min":0.0375},
+  street: {"bounds":[[-18.4,-81.4],[-0.03,-68.65]],"maxBounds":[[-26,-92],[6,-58]]},
+  hintLabel: "Color by first digit",
+  exploreKind: "codes",
+  kinds: [
+    {
+      key: "codes",
+      label: "Area codes",
+      noun: ["code","codes"],
+      prompt: "dial",
+      groups: [["01","Callao, Lima",["1"]],["04x","Amazonas, Áncash, La Libertad, San Martín",["41","42","43","44"]],["05x","Arequipa, Ica, Moquegua, Puno, Tacna",["51","52","53","54","56"]],["06x","Ayacucho, Huancavelica, Huánuco, Junín, Loreto, Pasco, Ucayali",["61","62","63","64","65","66","67"]],["07x","Cajamarca, Lambayeque, Piura, Tumbes",["72","73","74","76"]],["08x","Apurímac, Cusco, Madre de Dios",["82","83","84"]]],
+      areas: {"x":{"1":["15","07"],"41":["01"],"42":["22"],"43":["02"],"44":["13"],"51":["21"],"52":["23"],"53":["18"],"54":["04"],"56":["11"],"61":["25"],"62":["10"],"63":["19"],"64":["12"],"65":["16"],"66":["05"],"67":["09"],"72":["24"],"73":["20"],"74":["14"],"76":["06"],"82":["17"],"83":["03"],"84":["08"]}},
+      name: "0{id}",
+      short: "{name}",
+      chip: "{name}",
+      chipTitle: {"x":{"1":"Lima and Callao","41":"Amazonas","42":"San Martín","43":"Áncash","44":"La Libertad","51":"Puno","52":"Tacna","53":"Moquegua","54":"Arequipa","56":"Ica","61":"Ucayali","62":"Huánuco","63":"Pasco","64":"Junín","65":"Loreto","66":"Ayacucho","67":"Huancavelica","72":"Tumbes","73":"Piura","74":"Lambayeque","76":"Cajamarca","82":"Madre de Dios","83":"Apurímac","84":"Cusco"}},
+      about: {"t":["{chipTitle}","Capital: {chipTitle}"],"x":{"1":["Lima and Callao","Capital: Lima, Callao"],"41":["Amazonas","Capital: Chachapoyas"],"42":["San Martín","Capital: Moyobamba"],"43":["Áncash","Capital: Huaraz"],"44":["La Libertad","Capital: Trujillo"],"61":["Ucayali","Capital: Pucallpa"],"63":["Pasco","Capital: Cerro de Pasco"],"64":["Junín","Capital: Huancayo"],"65":["Loreto","Capital: Iquitos"],"74":["Lambayeque","Capital: Chiclayo"],"82":["Madre de Dios","Capital: Puerto Maldonado"],"83":["Apurímac","Capital: Abancay"]}},
+      clicked: {"t":"{name}, {chipTitle}","x":{"15":"01, Lima","07":"01, Callao"}},
+      presets: [["Big cities",["1","54","44","73","74","64","84","65"]]],
+    },
+    {
+      key: "digit1",
+      label: "First digit",
+      noun: ["zone","zones"],
+      prompt: "dial",
+      hints: false,
+      groups: [["Zones","area codes by first digit",["1","4","5","6","7","8"]]],
+      areas: {"x":{"1":["15","07"],"4":["01","22","02","13"],"5":["21","23","18","04","11"],"6":["25","10","19","12","16","05","09"],"7":["24","20","14","06"],"8":["17","03","08"]}},
+      name: {"t":"0{id}x","x":{"1":"01"}},
+      short: "{name}",
+      chip: "{name}",
+      chipTitle: {"x":{"1":"Callao, Lima","4":"Amazonas, Áncash, La Libertad, San Martín","5":"Arequipa, Ica, Moquegua, Puno, Tacna","6":"Ayacucho, Huancavelica, Huánuco, Junín, Loreto, Pasco, Ucayali","7":"Cajamarca, Lambayeque, Piura, Tumbes","8":"Apurímac, Cusco, Madre de Dios"}},
+      about: "{chipTitle}",
+      dial: {"t":[["0","cold"],["{id}","hot"],["x","cold"]],"x":{"1":[["0","cold"],["1","hot"]]}},
+      clicked: "{name} ({chipTitle})",
+    },
+  ],
+  g: "{digit1.p}",
+  explore: {"t":{"code":"{codes.name}","title":"{codes.about0}","sub":["{codes.about1}","Zone {digit1.name}"]},"x":{"15":{"code":"01","title":"Lima","sub":["Capital: Lima","Zone 01"]},"07":{"code":"01","title":"Callao","sub":["Capital: Callao","Zone 01"]}}},
+};

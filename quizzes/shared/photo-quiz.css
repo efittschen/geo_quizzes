@@ -1,0 +1,42 @@
+/* Picture quizzes (prompt 'photo', see area-quiz.js and photo-config.js), on top of area-quiz.css: the picture that
+   is the question, the same picture large, answered pictures as thumbnails, and dots for places too small to hit. */
+:root{--rar0:var(--ok); --rar1:var(--yellow); --rar2:var(--bad)}
+
+/* the question: a picture as wide as the panel; a click shows it large */
+.photo{appearance:none;display:block;width:100%;padding:0;border:1.5px solid var(--ink);border-radius:var(--radius);overflow:hidden;background:#000;cursor:zoom-in;aspect-ratio:16/10;flex:none}
+.photo img{display:block;width:100%;height:100%;object-fit:contain}
+.photo.pop img{animation:pop .35s ease-out}
+
+.lightbox{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:16px;background:rgba(8,14,20,.92);cursor:zoom-out}
+.lightbox figure{margin:0;display:grid;gap:10px;justify-items:center;max-width:100%}
+.lightbox img{display:block;max-width:100%;max-height:calc(100vh - 90px);border-radius:6px}
+.lightbox figcaption{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:center;align-items:baseline;color:#F6F8F6;font-weight:600}
+.lightbox a{color:#F6F8F6;font-weight:500}
+
+/* answered pictures: next to the answer, on the results and in Explore */
+.ph{appearance:none;padding:0;border:1.5px solid var(--line);border-radius:6px;overflow:hidden;background:#000;cursor:zoom-in;line-height:0}
+.ph:hover{border-color:var(--ink)}
+.ph img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover}
+.ph.rar0{border-bottom:4px solid var(--rar0)} .ph.rar1{border-bottom:4px solid var(--rar1)} .ph.rar2{border-bottom:4px solid var(--rar2)}
+.feedback > .ph{float:right;width:88px;margin:0 0 4px 10px}
+.feedback::after{content:"";display:block;clear:both}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;margin-top:10px}
+.chips .chip.ph{display:flex;flex-direction:column;width:104px;line-height:1.2;background:transparent;cursor:pointer;border-width:2px}
+.chips .chip.ph img{margin-bottom:3px}
+
+/* rarity in the picker: a colored edge under each picture's number */
+.cd.rar0{box-shadow:inset 0 -3px 0 var(--rar0)} .cd.rar1{box-shadow:inset 0 -3px 0 var(--rar1)} .cd.rar2{box-shadow:inset 0 -3px 0 var(--rar2)}
+.legend .rar0{background:var(--rar0)} .legend .rar1{background:var(--rar1)} .legend .rar2{background:var(--rar2)}
+
+/* places too small to hit: a dot that keeps its size on screen (a zero-length stroke with round caps) */
+#regions .r.dot{--fill:color-mix(in oklab,var(--ink) 38%,var(--land));fill:none;stroke:var(--fill);stroke-width:11px;stroke-linecap:round;stroke-opacity:1}
+#regions .r.dot.out{--fill:color-mix(in oklab,var(--ink) 14%,var(--sea))}
+#regions .r.dot.got{--fill:var(--ok)} #regions .r.dot.t2{--fill:var(--t2)} #regions .r.dot.t3{--fill:var(--t3)} #regions .r.dot.miss{--fill:var(--bad)}
+#regions .r.dot.ans,#regions .r.dot.sel{--fill:var(--yellow);stroke-width:17px}
+#regions .r.dot.flash{--fill:var(--bad)}
+
+@media (max-width:760px){
+  .photo{aspect-ratio:auto;height:21vh}
+  .feedback > .ph{width:64px}
+  .playing .panel{max-height:56vh}
+}

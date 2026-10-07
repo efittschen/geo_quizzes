@@ -1,0 +1,74 @@
+// Kazakhstan Regions. The map is the 20 first-level units since June 2022
+// (17 regions and the cities of Astana, Almaty and Shymkent; OpenStreetMap). Kinds: English names, Kazakh (Cyrillic)
+// names and five macro-regions.
+//   kk     official Kazakh name (OpenStreetMap name, matches the Wikidata Kazakh label)
+//   plate  region number (01–20, as on number plates); only orders the regions here
+//   cap    administrative centre;  tel  its landline code (ITU-T numbering plan of Kazakhstan, 2022)
+//   macro  economic-geographic region (ru.wikipedia "Экономическое районирование Казахстана"; conventional, unofficial)
+
+const LAYERS = {
+  key: "kzregions",
+  size: [1000,563],
+  pad: 16,
+  maxZoom: 30,
+  labelScale: 0.3,
+  fly: {"pad":1.6,"min":0.05},
+  street: {"bounds":[[40.6,46.5],[55.4,87.3]],"maxBounds":[[34,38],[60,95]]},
+  hintLabel: "Color regions",
+  exploreKind: "regions",
+  d: {"almaty":"M770.9,445a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z","astana":"M603.8,160.4a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z","shymkent":"M570.9,495.8a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z"},
+  top: ["almaty","astana","shymkent"],
+  kinds: [
+    {
+      key: "regions",
+      label: "Regions",
+      noun: ["region","regions"],
+      prompt: "name",
+      lang: "English",
+      groups: [["West","",["aktobe","atyrau","west-kazakhstan","mangystau"]],["North","",["astana","akmola","kostanay","pavlodar","north-kazakhstan"]],["Central","",["karaganda","ulytau"]],["East","",["east-kazakhstan","abai"]],["South","",["almaty","almaty-region","zhambyl","kyzylorda","turkistan","shymkent","jetisu"]]],
+      areas: "@id",
+      name: {"t":"{@en} Region","x":{"astana":"Astana","almaty":"Almaty","almaty-region":"Almaty Region","shymkent":"Shymkent"}},
+      short: "{@en}",
+      chip: "{@en}",
+      chipTitle: "{@kk}",
+      detail: ["Show capital",{"x":{"aktobe":"Aktobe","atyrau":"Atyrau","west-kazakhstan":"Oral","mangystau":"Aktau","astana":"City","akmola":"Kokshetau","kostanay":"Kostanay","pavlodar":"Pavlodar","north-kazakhstan":"Petropavl","karaganda":"Karaganda","ulytau":"Zhezkazgan","east-kazakhstan":"Oskemen","abai":"Semey","almaty":"City","almaty-region":"Konaev","zhambyl":"Taraz","kyzylorda":"Kyzylorda","turkistan":"Turkistan","shymkent":"City","jetisu":"Taldykorgan"}}],
+      about: {"x":{"aktobe":["Ақтөбе облысы","Capital Aktobe · Phone 7132"],"atyrau":["Атырау облысы","Capital Atyrau · Phone 7122"],"west-kazakhstan":["Батыс Қазақстан облысы","Capital Oral · Phone 7112"],"mangystau":["Маңғыстау облысы","Capital Aktau · Phone 7292"],"astana":["Астана","Phone 7172"],"akmola":["Ақмола облысы","Capital Kokshetau · Phone 7162"],"kostanay":["Қостанай облысы","Capital Kostanay · Phone 7142"],"pavlodar":["Павлодар облысы","Capital Pavlodar · Phone 7182"],"north-kazakhstan":["Солтүстік Қазақстан облысы","Capital Petropavl · Phone 7152"],"karaganda":["Қарағанды облысы","Capital Karaganda · Phone 7212"],"ulytau":["Ұлытау облысы","Capital Zhezkazgan · Phone 7102"],"east-kazakhstan":["Шығыс Қазақстан облысы","Capital Oskemen · Phone 7232"],"abai":["Абай облысы","Capital Semey · Phone 7222"],"almaty":["Алматы","Phone 727"],"almaty-region":["Алматы облысы","Capital Konaev · Phone 72772"],"zhambyl":["Жамбыл облысы","Capital Taraz · Phone 7262"],"kyzylorda":["Қызылорда облысы","Capital Kyzylorda · Phone 7242"],"turkistan":["Түркістан облысы","Capital Turkistan · Phone 72533"],"shymkent":["Шымкент","Phone 7252"],"jetisu":["Жетісу облысы","Capital Taldykorgan · Phone 7282"]}},
+      clicked: "{name}",
+      presets: [["New in 2022",["abai","jetisu","ulytau"]]],
+    },
+    {
+      key: "kazakh",
+      label: "Kazakh names",
+      noun: ["region","regions"],
+      prompt: "text",
+      of: "regions",
+      lang: "Kazakh",
+      groups: [["West","",["aktobe","atyrau","west-kazakhstan","mangystau"]],["North","",["astana","akmola","kostanay","pavlodar","north-kazakhstan"]],["Central","",["karaganda","ulytau"]],["East","",["east-kazakhstan","abai"]],["South","",["almaty","almaty-region","zhambyl","kyzylorda","turkistan","shymkent","jetisu"]]],
+      areas: "@id",
+      name: "{@kk}",
+      short: "{@kk}",
+      chip: "{@kk}",
+      chipTitle: {"t":"{@en} Region","x":{"astana":"Astana","almaty":"Almaty","almaty-region":"Almaty Region","shymkent":"Shymkent"}},
+      about: {"t":["{chipTitle}","Russian: {@ru}"]},
+      text: {"t":{"text":"{@kk}","lang":"kk","cls":"kk"}},
+      clicked: "{@kk} · {chipTitle}",
+    },
+    {
+      key: "macro",
+      label: "Macro-regions",
+      noun: ["area","areas"],
+      prompt: "name",
+      hints: false,
+      groups: [["Macro-regions","unofficial",["west","north","central","east","south"]]],
+      areas: {"x":{"west":["aktobe","atyrau","west-kazakhstan","mangystau"],"north":["astana","akmola","kostanay","pavlodar","north-kazakhstan"],"central":["karaganda","ulytau"],"east":["east-kazakhstan","abai"],"south":["almaty","almaty-region","zhambyl","kyzylorda","turkistan","shymkent","jetisu"]}},
+      name: {"x":{"west":"West","north":"North","central":"Central","east":"East","south":"South"}},
+      short: "{name}",
+      chip: "{name}",
+      chipTitle: {"x":{"west":"Aktobe, Atyrau, West Kazakhstan, Mangystau","north":"Astana, Akmola, Kostanay, Pavlodar, North Kazakhstan","central":"Karaganda, Ulytau","east":"East Kazakhstan, Abai","south":"Almaty, Almaty Region, Zhambyl, Kyzylorda, Turkistan, Shymkent, Jetisu"}},
+      about: "{chipTitle}",
+      clicked: "{name} · {@en}",
+    },
+  ],
+  g: "{a}",
+  explore: {"x":{"atyrau":{"code":"7122","title":"Atyrau Region","sub":["Атырау облысы","Capital Atyrau · Phone 7122"]},"west-kazakhstan":{"code":"7112","title":"West Kazakhstan Region","sub":["Батыс Қазақстан облысы","Capital Oral · Phone 7112"]},"aktobe":{"code":"7132","title":"Aktobe Region","sub":["Ақтөбе облысы","Capital Aktobe · Phone 7132"]},"mangystau":{"code":"7292","title":"Mangystau Region","sub":["Маңғыстау облысы","Capital Aktau · Phone 7292"]},"east-kazakhstan":{"code":"7232","title":"East Kazakhstan Region","sub":["Шығыс Қазақстан облысы","Capital Oskemen · Phone 7232"]},"almaty-region":{"code":"72772","title":"Almaty Region","sub":["Алматы облысы","Capital Konaev · Phone 72772"]},"zhambyl":{"code":"7262","title":"Zhambyl Region","sub":["Жамбыл облысы","Capital Taraz · Phone 7262"]},"kyzylorda":{"code":"7242","title":"Kyzylorda Region","sub":["Қызылорда облысы","Capital Kyzylorda · Phone 7242"]},"turkistan":{"code":"72533","title":"Turkistan Region","sub":["Түркістан облысы","Capital Turkistan · Phone 72533"]},"akmola":{"code":"7162","title":"Akmola Region","sub":["Ақмола облысы","Capital Kokshetau · Phone 7162"]},"north-kazakhstan":{"code":"7152","title":"North Kazakhstan Region","sub":["Солтүстік Қазақстан облысы","Capital Petropavl · Phone 7152"]},"pavlodar":{"code":"7182","title":"Pavlodar Region","sub":["Павлодар облысы","Capital Pavlodar · Phone 7182"]},"karaganda":{"code":"7212","title":"Karaganda Region","sub":["Қарағанды облысы","Capital Karaganda · Phone 7212"]},"kostanay":{"code":"7142","title":"Kostanay Region","sub":["Қостанай облысы","Capital Kostanay · Phone 7142"]},"almaty":{"code":"727","title":"Almaty","sub":["Алматы","Phone 727"]},"astana":{"code":"7172","title":"Astana","sub":["Астана","Phone 7172"]},"shymkent":{"code":"7252","title":"Shymkent","sub":["Шымкент","Phone 7252"]},"abai":{"code":"7222","title":"Abai Region","sub":["Абай облысы","Capital Semey · Phone 7222"]},"jetisu":{"code":"7282","title":"Jetisu Region","sub":["Жетісу облысы","Capital Taldykorgan · Phone 7282"]},"ulytau":{"code":"7102","title":"Ulytau Region","sub":["Ұлытау облысы","Capital Zhezkazgan · Phone 7102"]}}},
+};

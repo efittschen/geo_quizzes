@@ -1,0 +1,7 @@
+/* United Kingdom area codes: hint colors by region (nations, English regions, Crown Dependencies). */
+:root{ --ctx:#DCDED8; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --ctx:#1B242D; } }
+:root[data-theme="dark"]{ --ctx:#1B242D; }
+/* hints: region (tools/hints.mjs) */
+.r[data-g="Channel Islands"]{--hint:var(--h12)} .r[data-g="East Midlands"]{--hint:var(--h2)} .r[data-g="East of England"]{--hint:var(--h5)} .r[data-g="Isle of Man"]{--hint:var(--h13)} .r[data-g="London"]{--hint:var(--h10)} .r[data-g="North East"]{--hint:var(--h6)} .r[data-g="North West"]{--hint:var(--h1)} .r[data-g="Northern Ireland"]{--hint:var(--h14)} .r[data-g="Scotland"]{--hint:var(--h11)} .r[data-g="South East"]{--hint:var(--h3)} .r[data-g="South West"]{--hint:var(--h7)} .r[data-g="Wales"]{--hint:var(--h8)} .r[data-g="West Midlands"]{--hint:var(--h4)} .r[data-g="Yorkshire and The Humber"]{--hint:var(--h9)}
+/* end hints: region */

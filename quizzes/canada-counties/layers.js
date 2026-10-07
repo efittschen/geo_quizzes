@@ -1,0 +1,47 @@
+// Ontario Counties. Areas are Ontario's 49 census divisions (Statistics Canada
+// 2021), with Haldimand-Norfolk split into its two single-tier counties, so 50 areas: counties, united counties,
+// regions, districts and single-tier cities. The coarse level groups them into Ontario's 11 economic regions.
+
+const LAYERS = {
+  key: "oncounties",
+  size: [1000,1084],
+  pad: 16,
+  maxZoom: 40,
+  labelScale: 0.22,
+  fly: {"pad":1.6,"min":0.0375},
+  street: {"bounds":[[41.7,-95.2],[56.9,-74.3]],"maxBounds":[[38,-102],[60,-68]]},
+  hintLabel: "Color each county",
+  exploreKind: "counties",
+  kinds: [
+    {
+      key: "regions",
+      label: "Regions",
+      noun: ["region","regions"],
+      prompt: "name",
+      groups: [["Southern Ontario","",["3510","3515","3520","3530","3540","3550","3560","3570","3580"]],["Northern Ontario","",["3590","3595"]]],
+      areas: "@er",
+      name: {"x":{"3510":"Ottawa","3515":"Kingston–Pembroke","3520":"Muskoka–Kawarthas","3530":"Toronto","3540":"Kitchener–Waterloo–Barrie","3550":"Hamilton–Niagara Peninsula","3560":"London","3570":"Windsor–Sarnia","3580":"Stratford–Bruce Peninsula","3590":"Northeast","3595":"Northwest"}},
+      short: "{name}",
+      chip: "{name}",
+      chipTitle: {"x":{"3510":"Lanark County, Leeds and Grenville, Ottawa, Prescott and Russell, Stormont, Dundas and Glengarry","3515":"Frontenac County, Hastings County, Lennox and Addington County, Prince Edward County, Renfrew County","3520":"Haliburton County, Kawartha Lakes, Muskoka, Northumberland County, Peterborough County","3530":"Durham Region, Halton Region, Peel Region, Toronto, York Region","3540":"Dufferin County, Simcoe County, Waterloo Region, Wellington County","3550":"Brant County, Haldimand County, Hamilton, Niagara Region, Norfolk County","3560":"Elgin County, Middlesex County, Oxford County","3570":"Chatham-Kent, Essex County, Lambton County","3580":"Bruce County, Grey County, Huron County, Perth County","3590":"Algoma District, Cochrane District, Greater Sudbury, Manitoulin District, Nipissing District, Parry Sound District, Sudbury District, Timiskaming District","3595":"Kenora District, Rainy River District, Thunder Bay District"}},
+      about: "{chipTitle}",
+      clicked: "{name}",
+    },
+    {
+      key: "counties",
+      label: "Counties",
+      noun: ["county","counties"],
+      prompt: "name",
+      groups: [["Ottawa","",["3509","3507","3506","3502","3501"]],["Kingston–Pembroke","",["3510","3512","3511","3513","3547"]],["Muskoka–Kawarthas","",["3546","3516","3544","3514","3515"]],["Toronto","",["3518","3524","3521","3520","3519"]],["Kitchener–Waterloo–Barrie","",["3522","3543","3530","3523"]],["Hamilton–Niagara Peninsula","",["3529","3528H","3525","3526","3528N"]],["London","",["3534","3539","3532"]],["Windsor–Sarnia","",["3536","3537","3538"]],["Stratford–Bruce Peninsula","",["3541","3542","3540","3531"]],["Northeast","",["3557","3556","3553","3551","3548","3549","3552","3554"]],["Northwest","",["3560","3559","3558"]]],
+      areas: "@id",
+      name: {"x":{"3501":"Stormont, Dundas and Glengarry","3502":"Prescott and Russell","3506":"Ottawa","3507":"Leeds and Grenville","3509":"Lanark County","3510":"Frontenac County","3511":"Lennox and Addington County","3512":"Hastings County","3513":"Prince Edward County","3514":"Northumberland County","3515":"Peterborough County","3516":"Kawartha Lakes","3518":"Durham Region","3519":"York Region","3520":"Toronto","3521":"Peel Region","3522":"Dufferin County","3523":"Wellington County","3524":"Halton Region","3525":"Hamilton","3526":"Niagara Region","3529":"Brant County","3530":"Waterloo Region","3531":"Perth County","3532":"Oxford County","3534":"Elgin County","3536":"Chatham-Kent","3537":"Essex County","3538":"Lambton County","3539":"Middlesex County","3540":"Huron County","3541":"Bruce County","3542":"Grey County","3543":"Simcoe County","3544":"Muskoka","3546":"Haliburton County","3547":"Renfrew County","3548":"Nipissing District","3549":"Parry Sound District","3551":"Manitoulin District","3552":"Sudbury District","3553":"Greater Sudbury","3554":"Timiskaming District","3556":"Cochrane District","3557":"Algoma District","3558":"Thunder Bay District","3559":"Rainy River District","3560":"Kenora District","3528H":"Haldimand County","3528N":"Norfolk County"}},
+      short: "{name}",
+      chip: "{name}",
+      chipTitle: "{group}",
+      about: {"x":{"3501":["United counties","Ottawa"],"3502":["United counties","Ottawa"],"3506":["Single-tier municipality","Ottawa"],"3507":["United counties","Ottawa"],"3509":["County","Ottawa"],"3510":["County","Kingston–Pembroke"],"3511":["County","Kingston–Pembroke"],"3512":["County","Kingston–Pembroke"],"3513":["Single-tier municipality","Kingston–Pembroke"],"3514":["County","Muskoka–Kawarthas"],"3515":["County","Muskoka–Kawarthas"],"3516":["Single-tier municipality","Muskoka–Kawarthas"],"3518":["Regional municipality","Toronto"],"3519":["Regional municipality","Toronto"],"3520":["Single-tier municipality","Toronto"],"3521":["Regional municipality","Toronto"],"3522":["County","Kitchener–Waterloo–Barrie"],"3523":["County","Kitchener–Waterloo–Barrie"],"3524":["Regional municipality","Toronto"],"3525":["Single-tier municipality","Hamilton–Niagara Peninsula"],"3526":["Regional municipality","Hamilton–Niagara Peninsula"],"3529":["Single-tier municipality","Hamilton–Niagara Peninsula"],"3530":["Regional municipality","Kitchener–Waterloo–Barrie"],"3531":["County","Stratford–Bruce Peninsula"],"3532":["County","London"],"3534":["County","London"],"3536":["Single-tier municipality","Windsor–Sarnia"],"3537":["County","Windsor–Sarnia"],"3538":["County","Windsor–Sarnia"],"3539":["County","London"],"3540":["County","Stratford–Bruce Peninsula"],"3541":["County","Stratford–Bruce Peninsula"],"3542":["County","Stratford–Bruce Peninsula"],"3543":["County","Kitchener–Waterloo–Barrie"],"3544":["District municipality","Muskoka–Kawarthas"],"3546":["County","Muskoka–Kawarthas"],"3547":["County","Kingston–Pembroke"],"3548":["District","Northeast"],"3549":["District","Northeast"],"3551":["District","Northeast"],"3552":["District","Northeast"],"3553":["Single-tier municipality","Northeast"],"3554":["District","Northeast"],"3556":["District","Northeast"],"3557":["District","Northeast"],"3558":["District","Northwest"],"3559":["District","Northwest"],"3560":["District","Northwest"],"3528H":["Single-tier municipality","Hamilton–Niagara Peninsula"],"3528N":["Single-tier municipality","Hamilton–Niagara Peninsula"]}},
+      clicked: "{name}",
+    },
+  ],
+  g: "{a}",
+  explore: {"t":{"code":"{counties.name}","title":"{counties.about0}","sub":"{regions.name}"}},
+};

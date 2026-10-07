@@ -1,0 +1,5 @@
+// The countries of the town-name quizzes (every country with a cities quiz) and their codes, for build.mjs and
+// choose.mjs. PLACES: the credit for the places, where they are not from GeoNames (tools/lib/names.mjs: OWN_LIST);
+// India's list has to be made first: node tools/builds/town-names/india-places.mjs
+export const ISO2 = { argentina: 'AR', australia: 'AU', austria: 'AT', bangladesh: 'BD', bolivia: 'BO', brazil: 'BR', bulgaria: 'BG', cambodia: 'KH', canada: 'CA', chile: 'CL', colombia: 'CO', ecuador: 'EC', finland: 'FI', france: 'FR', germany: 'DE', ghana: 'GH', hungary: 'HU', india: 'IN', indonesia: 'ID', italy: 'IT', japan: 'JP', kazakhstan: 'KZ', kenya: 'KE', malaysia: 'MY', mexico: 'MX', namibia: 'NA', 'new-zealand': 'NZ', nigeria: 'NG', norway: 'NO', oman: 'OM', paraguay: 'PY', peru: 'PE', philippines: 'PH', poland: 'PL', portugal: 'PT', romania: 'RO', russia: 'RU', senegal: 'SN', 'south-africa': 'ZA', 'south-korea': 'KR', spain: 'ES', 'sri-lanka': 'LK', sweden: 'SE', thailand: 'TH', turkey: 'TR', ukraine: 'UA', us: 'US', vietnam: 'VN' };
+export const PLACES = { india: 'Local Government Directory, PMGSY (GODL-India)' };

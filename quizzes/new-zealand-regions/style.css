@@ -1,0 +1,6 @@
+/* New Zealand quizzes on the region map (regions, area codes, state highways): areas are colored by region; the
+   Chatham Islands inset gets a dashed frame (drawn as the map's context path). */
+#ctx path{fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:5 4;opacity:.7}
+/* hints: region (tools/hints.mjs) */
+.r[data-g="Auckland"]{--hint:var(--h10)} .r[data-g="Bay of Plenty"]{--hint:var(--h7)} .r[data-g="CI"]{--hint:var(--h17)} .r[data-g="Canterbury"]{--hint:var(--h2)} .r[data-g="Gisborne"]{--hint:var(--h11)} .r[data-g="Hawke's Bay"]{--hint:var(--h3)} .r[data-g="Manawatū-Whanganui"]{--hint:var(--h4)} .r[data-g="Marlborough"]{--hint:var(--h8)} .r[data-g="Nelson"]{--hint:var(--h12)} .r[data-g="Northland"]{--hint:var(--h15)} .r[data-g="Otago"]{--hint:var(--h9)} .r[data-g="Southland"]{--hint:var(--h13)} .r[data-g="Taranaki"]{--hint:var(--h14)} .r[data-g="Tasman"]{--hint:var(--h5)} .r[data-g="Waikato"]{--hint:var(--h1)} .r[data-g="Wellington"]{--hint:var(--h16)} .r[data-g="West Coast"]{--hint:var(--h6)}
+/* end hints: region */

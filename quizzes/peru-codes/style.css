@@ -1,0 +1,5 @@
+/* Peru Area Codes: departments colored by numbering zone (first digit); hint colors from the shared palette in
+   ../shared/area-quiz.css, picked by tools/hints.mjs so neighbouring zones differ. */
+/* hints: first digit (tools/hints.mjs) */
+.r[data-g="1"]{--hint:var(--h2)} .r[data-g="4"]{--hint:var(--h3)} .r[data-g="5"]{--hint:var(--h4)} .r[data-g="6"]{--hint:var(--h1)} .r[data-g="7"]{--hint:var(--h6)} .r[data-g="8"]{--hint:var(--h5)}
+/* end hints: first digit */

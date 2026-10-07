@@ -1,7 +1,8 @@
-// Shared engine for "click the right area" map quizzes (used by quizzes/brazil-ddd and quizzes/russia-codes).
+// Shared engine for "click the right area" map quizzes. The page itself (panel and map) comes from ./quiz-page.js.
 //
 // A quiz page defines a global QUIZ config before loading this file:
-//   key          localStorage prefix
+//   key          the quiz's short name. What a page keeps in the browser is in the record of the page (its folder
+//                name, see assets/js/store.js); the short name is how it was kept before, and what moves it over
 //   areas        [{ id, d, lx, ly, a, g }]  SVG path, label point, size and hint-color group of each map area
 //                (lx/ly/a may be left out: they're then computed from the path); top: true draws the area above
 //                its neighbours with its own border (e.g. a tiny city enlarged so it can be seen); dot: true draws
@@ -33,12 +34,19 @@
 //                titles] | top: N (largest first, or rank: i for another ranking) | preset: label | ids: [...] or
 //                () => [...] }]; with none of them a round is every item of its kind. Rounds are grouped by size into
 //                Beginner (under 10), Intermediate (under 30), Hard (under 60) and Expert: size alone sets a round's
-//                level. Rounds of kinds not on the page are left out. Without rounds, each kind is offered whole.
+//                level. Rounds of kinds not on the page are left out. Without rounds, the engine makes them by one
+//                rule for every quiz (see standardRounds): what the layer quizzes of shared/layer-config.js get.
 //                key: tells apart rounds with the same label; box: [x0, y0, x1, y1] frames a part of the map while
 //                the round is chosen and played.
+//   (languages)  a kind can ask another kind's items in another language: of: '<that kind's key>', and both carry
+//                lang: the language's name ('English', 'Thai'). It needs no rounds of its own: every round of the
+//                kind it follows offers it as a language to pick, in the round's own box (where a round's sub would
+//                be), with the round's items that have a name in that language. The language picked last is the one
+//                every box starts with; best scores, stars and review cards stay per kind.
 //
 // One config can serve several pages: <body data-kinds="states" data-key="dddstates"> keeps only the listed
-// kinds and saves scores under its own key (e.g. an area-code quiz and a states quiz on the same map).
+// kinds; each page keeps its own scores (data-key: its short name, see `key`), e.g. an area-code quiz and a states
+// quiz on the same map.
 //
 // Besides the rounds, players can pick their own items ("Custom quiz"), save them under a name (localStorage)
 // and share them as a link: ?quiz=<kind>.<bits>&name=…, one bit per item of the kind, in the kind's order.
@@ -145,7 +153,9 @@
     for (const id of ids) for (const a of areas[id]) (at[a] ??= []).push(id);
     const size = id => areas[id].reduce((s, a) => s + (AREA[a].a || 0) / at[a].length, 0);
     const rankings = [...(k.areaRank === false ? [] : [{ label: 'largest area', order: ids.slice().sort((a, b) => size(b) - size(a)) }]), ...(k.rankings || [])];
-    KINDS[k.key] = { ...k, ids, areas, at, rankings, primary: k.primary || (a => (at[a] || [])[0]) };
+    const many = k.noun[1], count = new Set(ids).size;
+    KINDS[k.key] = { ...k, ids, areas, at, rankings, primary: k.primary || (a => (at[a] || [])[0]),
+      sub: k.sub ?? `${count.toLocaleString('en-US')} ${count === 1 ? k.noun[0] : many}`, pickTitle: k.pickTitle ?? `${many[0].toUpperCase()}${many.slice(1)} to practice` };
   }
 
   /* ---------- rounds: ready-made quizzes, grouped by how many items they ask ---------- */
@@ -163,10 +173,71 @@
     else if (r.top) { const rank = K.rankings[r.rank || 0]; ids = rank.order.slice(0, r.top); if (rank.expand) ids = ids.flatMap(rank.expand); }
     return uniq(ids).filter(id => K.areas[id]);
   }
-  let ROUNDS = (Q.rounds || []).filter(r => KINDS[r.kind]);
-  if (!ROUNDS.length) ROUNDS = Q.kinds.map(k => ({ kind: k.key, label: k.label, sub: k.sub }));
+  // The rounds of a quiz that brings none: the same rule for every layer of every quiz, coarse layers first.
+  //   A layer of under 10 items is one round, named after the layer.
+  //   A bigger layer is cut by the layers above it (the items inside each of their units) and by its own groups,
+  //   and ends with all of it. Names: one round per unit ("Bavaria"), of 3 items or more. Codes: by the coarsest
+  //   layer of codes above (the first digit), neighbours joined while a round stays under 30 ("Two digits · 02x–04x").
+  //   Its quick selections (Big cities) are rounds too. No round has a note; kinds in another language have none.
+  function standardRounds() {
+    const layers = Q.kinds.filter(k => !KINDS[k.of]).map(k => KINDS[k.key]).map(K => ({ K, ids: uniq(K.ids), code: !['name', 'text', 'photo'].includes(K.prompt) }));
+    layers.sort((a, b) => a.ids.length - b.ids.length);
+    // the units of a coarser layer that hold this layer's items: [[title, ids]…], or null if they don't hold nearly all
+    const cutBy = (L, P) => {
+      const held_ = new Map(P.ids.map(p => [p, []])), has = (a, p) => (P.K.at[a] || []).includes(p);
+      for (const id of L.ids) { const areas = L.K.areas[id]; for (const p of areas.length ? P.K.at[areas[0]] || [] : []) if (held_.has(p) && areas.every(a => has(a, p))) held_.get(p).push(id); }
+      const units = P.ids.map(p => [P.K.short(p), held_.get(p), P.K.name(p)]).filter(u => u[1].length);
+      const held = new Set(units.flatMap(u => u[1])).size, twice = units.reduce((n, u) => n + u[1].length, 0) - held;
+      return units.length > 1 && held >= 0.9 * L.ids.length && twice <= 0.1 * L.ids.length ? units : null;
+    };
+    const rounds = [];
+    for (const [i, L] of layers.entries()) {
+      const { K, ids } = L, kind = K.key, n = ids.length;
+      if (n < 10) { rounds.push({ kind, label: K.label }); continue; }
+      // (two cuts can name a unit alike, "North" of 4 regions and of 6: the later one says which cut it is)
+      // A round of a small part of the map frames that part (from its areas' middles and sizes).
+      const boxOf = list => {
+        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+        for (const id of list) for (const a of K.areas[id]) { const A = AREA[a], r = Math.sqrt(A.a || 0) * 0.7; x0 = Math.min(x0, A.lx - r); y0 = Math.min(y0, A.ly - r); x1 = Math.max(x1, A.lx + r); y1 = Math.max(y1, A.ly + r); }
+        return (x1 - x0) * (y1 - y0) < 0.25 * Q.size[0] * Q.size[1] ? [x0, y0, x1, y1] : undefined;
+      };
+      const seen = new Set([ids.slice().sort().join('|')]), named = new Set(), add = (label, list, key, cut) => {
+        const sig = list.slice().sort().join('|');
+        if (list.length < 3 || seen.has(sig)) return;
+        if (named.has(label) && cut) label = `${label} · ${cut}`;
+        seen.add(sig); named.add(label); rounds.push({ kind, label, key, ids: list, box: boxOf(list) });
+      };
+      for (const p of K.presets || []) if (typeof p.ids !== 'function') add(p.label, uniq(p.ids).filter(id => K.areas[id]), 'preset ' + p.label);
+      const above = layers.slice(0, i).map(P => [P, cutBy(L, P)]).filter(c => c[1]);
+      const own = K.groups.length > 1 ? K.groups.map(g => [g.title, uniq(g.ids)]) : null;
+      if (L.code) {
+        // codes: the coarsest cut by codes above, else the layer's own groups; neighbours joined while under 30
+        const cut = (above.find(c => c[0].code) || [])[1] || own, digits = cut && cut.every(u => /^[\d(+][\d\s()x·…-]*$/.test(u[0]));
+        if (cut && digits) {
+          const bundles = [];
+          for (const u of cut) { const b = bundles[bundles.length - 1]; if (b && (b.ids.length < 3 || b.ids.length + u[1].length < 30)) { b.to = u[0]; b.ids.push(...u[1]); } else bundles.push({ from: u[0], to: u[0], ids: [...u[1]] }); }
+          if (bundles.length > 1 && bundles[bundles.length - 1].ids.length < 3) { const last = bundles.pop(), b = bundles[bundles.length - 1]; b.to = last.to; b.ids.push(...last.ids); }
+          if (bundles.length > 1) for (const b of bundles) add(`${K.label} · ${b.from === b.to ? b.from : `${b.from}–${b.to}`}`, uniq(b.ids), 'cut ' + b.from);
+        } else if (cut) for (const u of cut) add(u[2] || u[0], u[1], 'cut ' + u[0]); // units with names (a state's codes): by name
+      } else {
+        for (const [P, units] of above) if (!P.code) for (const u of units) add(u[2] || u[0], u[1], `in ${P.K.key} ${u[0]}`, P.K.label); // by the unit's name, not its short form ("Texas", not "TX")
+        if (own) for (const u of own) add(u[0], u[1], 'group ' + u[0], 'groups');
+      }
+      const proper = /^\p{Lu}/u.test(K.noun[1]);
+      rounds.push({ kind, label: rounds.some(r => r.kind === kind) ? `All ${proper ? K.label : K.label[0].toLowerCase() + K.label.slice(1)}` : K.label });
+    }
+    return rounds;
+  }
+  let ROUNDS = (Q.rounds || standardRounds()).filter(r => KINDS[r.kind]);
+  if (!ROUNDS.length) ROUNDS = Q.kinds.filter(k => !KINDS[k.of]).map(k => ({ kind: k.key, label: k.label, sub: k.sub }));
   // Rounds drawn at random (e.g. one sign per script) have no fixed items, so no best score either.
   ROUNDS = ROUNDS.map(r => ({ ...r, id: r.kind + ':' + (r.key || r.label), random: typeof r.ids === 'function' || (!!r.preset && typeof presetOf(r).ids === 'function') }));
+  // A round in another language (a kind that is `of` the round's kind): the same round with the items that have a
+  // name in that language. `of` is the round it belongs to, whose box offers it.
+  ROUNDS = ROUNDS.flatMap(r => [r, ...Q.kinds.filter(k => k.of === r.kind && KINDS[k.key]).map(k => {
+    const mine = () => roundIds(r).filter(id => KINDS[k.key].areas[id]);
+    return { ...r, kind: k.key, id: k.key + ':' + (r.key || r.label), of: r, ids: r.random ? mine : mine(), groups: null, preset: null, top: null };
+  }).filter(v => v.random || v.ids.length)]);
 
   /* ---------- pan & zoom for the quiz map (viewBox based) ---------- */
   const [MW, MH] = Q.size, PAD = Q.pad;
@@ -276,6 +347,7 @@
   function initStreet() {
     if (lmap) return;
     lmap = L.map('street', { minZoom: 2, maxBounds: Q.street.maxBounds });
+    lmap.attributionControl.setPrefix(false); // credits name the map data only, not the Leaflet library
     fitHome();
     L.tileLayer(TILE_URL, { maxZoom: 19, attribution: TILE_ATTRIBUTION }).addTo(lmap);
     // The areas get a pane of their own, under pins and labels: the overlay tints the map with it as a whole.
@@ -756,8 +828,23 @@
   }
 
   /* ---------- storage & options ---------- */
-  function store(k, v) { try { localStorage.setItem(Q.key + '.' + k, JSON.stringify(v)); } catch (e) {} }
-  function load(k) { try { const v = localStorage.getItem(Q.key + '.' + k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  // Kept in this browser, in the page's record (assets/js/store.js): under `last` what was chosen on the setup screen
+  // (store and load; a selection of items per kind as 'sel.<kind>'), under `custom` the player's own quizzes, under
+  // `best` the best result of every round played, and `stars`, the progress per level worked out from them.
+  const PAGE_ID = document.body.dataset.quiz || location.pathname.replace(/\/(index\.html)?$/, '').split('/').pop();
+  STORE.adopt(PAGE_ID, Q.key, Q.kinds.map(k => k.key)); // what was kept under the quiz's short name before
+  // The record is read once for all that is asked of it in one go (every round's best, when the rounds are listed).
+  let held = null;
+  const record = () => held || (queueMicrotask(() => { held = null; }), held = STORE.quiz(PAGE_ID));
+  const keep = change => { STORE.setQuiz(PAGE_ID, change); held = null; };
+  function store(k, v) {
+    keep(r => {
+      const last = r.last ||= {}, sel = k.startsWith('sel.') ? (last.sel ||= {}) : null, name = sel ? k.slice(4) : k;
+      if (v == null) delete (sel || last)[name]; else (sel || last)[name] = v;
+      if (sel && !Object.keys(sel).length) delete last.sel;
+    });
+  }
+  function load(k) { const last = record().last || {}; return (k.startsWith('sel.') ? (last.sel || {})[k.slice(4)] : last[k]) ?? null; }
 
   $('optColorsText').textContent = Q.hintLabel;
   $('optColors').checked = Q.hintsDefault ?? true;
@@ -794,6 +881,7 @@
     ['setup', 'play', 'done', 'explore'].forEach(x => $(x).hidden = x !== id);
     $('app').classList.toggle('playing', id !== 'setup');
     $('startbar').hidden = id !== 'setup';
+    $('mapSeg').hidden = id !== 'setup' || $('mapSeg').childElementCount < 2;
     mapClass('picking', id === 'setup');
     // Hint colors fade while playing and on the results, so the answer colors stand out.
     mapClass('fade', id === 'play' || id === 'done');
@@ -808,7 +896,7 @@
   for (const k of Q.kinds) {
     const b = document.createElement('button'); b.type = 'button'; b.dataset.kind = k.key;
     const t = document.createElement('b'); t.textContent = k.label;
-    const s = document.createElement('small'); s.textContent = k.sub;
+    const s = document.createElement('small'); s.textContent = KINDS[k.key].sub;
     b.append(t, s); $('kindSeg').appendChild(b);
     b.onclick = () => { pickKind = k.key; buildPicker(); };
   }
@@ -816,26 +904,26 @@
   let pickKind = KINDS[load('kind')] ? load('kind') : Q.kinds[0].key;
   // The maps to play on: the quiz map, the street map, or the overlay (the street map with the quiz map's outlines
   // and colors on it). City quizzes (Q.free) choose between clicking anywhere on the map (the default) and clicking
-  // the dots instead.
+  // the dots instead. The choice is a small picker on the map itself, shown on the setup screen.
   const FREE = !!Q.free;
   const MAPS = FREE ? [['free', 'Map', 'by distance'], ['quiz', 'Dots', '3 tries']]
     : [['quiz', 'Quiz map', 'with borders'], ['overlay', 'Overlay', 'borders on streets'], ['street', 'Street map', 'hard, no borders']].slice(0, Q.geo ? 3 : 1);
   let chosenMap = MAPS.some(([m]) => m === load('map')) ? load('map') : MAPS[0][0];
   $('mapSeg').hidden = MAPS.length < 2; // nothing to choose between
   $('mapSeg').replaceChildren(...MAPS.map(([m, t, sub]) => {
-    const b = document.createElement('button'); b.type = 'button'; b.dataset.map = m;
-    const bt = document.createElement('b'); bt.textContent = t; const sm = document.createElement('small'); sm.textContent = sub;
-    b.append(bt, sm); return b;
+    const b = document.createElement('button'); b.type = 'button'; b.dataset.map = m; b.textContent = t; b.title = sub;
+    return b;
   }));
   const SEL = {};
   for (const k in KINDS) {
-    const saved = load('sel.' + k) ?? (k === Q.kinds[0].key ? load('sel') : null);
+    const saved = load('sel.' + k);
     SEL[k] = new Set(Array.isArray(saved) ? saved.filter(id => KINDS[k].ids.includes(id)) : KINDS[k].ids);
   }
   let groupEls = [], chipEls = {};
 
   // Saved quizzes ({ name, kind, ids }) and a quiz shared by link.
-  const SAVED = (load('saved') || []).filter(s => KINDS[s.kind] && Array.isArray(s.ids));
+  const SAVED = (record().custom || []).filter(s => KINDS[s.kind] && Array.isArray(s.ids));
+  const keepSaved = () => keep(r => { r.custom = SAVED; });
   const itemList = kind => uniq(KINDS[kind].ids);
   function encode(kind, ids) {
     const set = new Set(ids), bytes = new Uint8Array(Math.ceil(itemList(kind).length / 8));
@@ -855,8 +943,18 @@
   const SHARED = decode(params.get('quiz'));
   if (SHARED) SHARED.name = (params.get('name') || '').trim().slice(0, 40) || 'Shared quiz';
 
+  // The layers of a quiz are folders: tabs under the list of rounds, the open one showing its rounds (and its saved
+  // quizzes, and a custom quiz of its kind). A kind in another language is in the folder of the kind it follows.
+  const folderOf = kind => KINDS[KINDS[kind].of] ? KINDS[kind].of : kind;
+  const FOLDERS = uniq(ROUNDS.filter(r => !r.of).map(r => r.kind)), lastIn = {}; // lastIn: the round last chosen in a folder
+  const PAGE_FOLDERS = !!document.body.dataset.folders; // the tabs are pages of their own, made by quiz-page.js
   // What Start plays: 'r:<round id>', 's:<saved index>', 'shared' or 'custom'.
   let choice = SHARED ? 'shared' : load('choice') || '';
+  if (!PAGE_FOLDERS) $('folders').replaceChildren(...FOLDERS.map(k => {
+    const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.folder = k; b.textContent = KINDS[k].label;
+    b.onclick = () => { if (folderOf(choiceKind()) === k) return; choice = lastIn[k] || 'r:' + ROUNDS.find(r => !r.of && r.kind === k).id; store('choice', choice); buildRounds(); frameRound(); $('setup').scrollTop = 0; };
+    return b;
+  }));
   const roundOf = key => ROUNDS.find(r => 'r:' + r.id === key);
   const savedOf = key => key.startsWith('s:') ? SAVED[+key.slice(2)] : null;
   function validChoice() {
@@ -876,12 +974,24 @@
   }
   function choose(key) {
     choice = key; store('choice', key === 'shared' ? '' : key);
+    if (roundOf(key)) lastIn[folderOf(roundOf(key).kind)] = key;
     if (key === 'custom') buildPicker(); else syncSetup();
     frameRound();
     if (key === 'custom') $('customWrap').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
-  const bestFor = (kind, ids, map = chosenMap) => load(`best.${kind}.${map}.` + [...ids].sort().join(','));
+  // The best result of a set of items on a map, as { s: score, t: ms, p: points }: whatever round or custom quiz asks
+  // exactly those items shares it. It is kept with the name of the round it was played as, for someone reading the
+  // data file.
+  const bestKey = (kind, ids, map) => `${kind}/${map}/${STORE.print(ids)}`;
+  const bestFor = (kind, ids, map = chosenMap) => STORE.bestIn((record().best || {})[bestKey(kind, ids, map)]);
+  const nameOf = (kind, ids) => { const p = STORE.print(ids), r = ROUNDS.find(r => r.kind === kind && !r.random && STORE.print(roundIds(r)) === p); return r ? r.label : (SAVED.find(q => q.kind === kind && STORE.print(q.ids) === p) || {}).name; };
+  const keepBest = (kind, ids, map, best) => keep(r => { (r.best ||= {})[bestKey(kind, ids, map)] = STORE.bestOut(best, ids.length, nameOf(kind, ids)); });
+  { // results taken over from the layout before came without a name: those of this page's rounds get theirs
+    const best = record().best || {}, unnamed = [];
+    for (const r of ROUNDS) if (!r.random) { const p = STORE.print(roundIds(r)); for (const map of ['quiz', 'overlay', 'street', 'free']) { const k = `${r.kind}/${map}/${p}`; if (best[k] && !best[k].name) unnamed.push([k, r.label]); } }
+    if (unnamed.length) keep(r => { for (const [k, name] of unnamed) if (r.best?.[k]) r.best[k].name = name; });
+  }
   // One star per level, up to the quiz's highest: a level's star is earned when every one of its rounds has been
   // played perfectly (all right on the first try, on any map). Until then the star fills with the average best
   // score of those rounds. A level without rounds of its own follows the next harder one; random rounds don't count.
@@ -891,9 +1001,8 @@
     return `<span class="star${p >= 1 ? ' done' : p > 0 ? ' part' : ''}" role="img" aria-label="${p >= 1 ? 'Level done' : `${Math.round(p * 100)}% done`}">${svg}` +
       `<span class="fill" style="width:${Math.round(Math.min(p, 1) * 100)}%">${svg}</span></span>`;
   };
-  const PAGE_ID = document.body.dataset.quiz || location.pathname.replace(/\/(index\.html)?$/, '').split('/').pop();
-  function levelProgress() {
-    const rounds = ROUNDS.filter(r => !r.random).map(r => {
+  function levelProgress(folder) { // of one folder's rounds, or of all
+    const rounds = ROUNDS.filter(r => !r.random && (!folder || folderOf(r.kind) === folder)).map(r => {
       const ids = roundIds(r);
       const best = Math.max(0, ...['quiz', 'overlay', 'street', 'free'].map(map => { const b = bestFor(r.kind, ids, map); return b ? b.s / ids.length : 0; }));
       return { tier: tierOf(ids.length), best };
@@ -906,10 +1015,10 @@
     }
     return levels;
   }
-  // Saved for the home and country pages, per quiz folder (e.g. "brazil-ddd").
+  // Kept for the home and country pages, in the page's record (e.g. "brazil-ddd").
   function saveRating() {
     const levels = levelProgress(); if (!levels.length) return;
-    try { localStorage.setItem('geoquizzes.rating.' + PAGE_ID, JSON.stringify({ levels, played: levels.some(p => p > 0) })); } catch (e) {}
+    keep(r => { r.stars = levels; });
   }
   const ICONS = {
     link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
@@ -933,13 +1042,34 @@
     b.onclick = () => choose(key);
     return b;
   }
+  // A round offered in several languages is one box: the languages are buttons where a round's sub would be. The box
+  // shows (and a click on it chooses) the round in the language picked last, or in its first one.
+  function roundBox(variants) {
+    const keyOf = v => 'r:' + v.id, langOf = v => KINDS[v.kind].lang || KINDS[v.kind].label;
+    if (variants.length < 2) { const r = variants[0]; return roundBtn(keyOf(r), r.label, r.sub, r.kind, roundIds(r), r.random); }
+    const on = variants.find(v => keyOf(v) === choice) || variants.find(v => langOf(v) === load('lang')) || variants[0];
+    const b = roundBtn(keyOf(on), on.label, '', on.kind, roundIds(on), on.random), box = document.createElement('div');
+    box.className = 'round'; box.dataset.choice = keyOf(on); box.setAttribute('role', 'group'); box.setAttribute('aria-label', on.label);
+    const langs = document.createElement('span'); langs.className = 'langs';
+    langs.append(...variants.map(v => {
+      const l = document.createElement('button'); l.type = 'button'; l.textContent = langOf(v); l.setAttribute('aria-pressed', v === on);
+      l.onclick = e => { e.stopPropagation(); store('lang', langOf(v)); choice = keyOf(v); store('choice', choice); buildRounds(); frameRound(); };
+      return l;
+    }));
+    const [title, ...rest] = b.childNodes;
+    box.append(title, ...rest.filter(n => !n.classList.contains('best')), langs, ...rest.filter(n => n.classList.contains('best')));
+    box.onclick = () => choose(keyOf(on));
+    return box;
+  }
   const withIcons = (btn, ...icons) => { const d = document.createElement('div'); d.className = 'round-row'; d.append(btn, ...icons); return d; };
   // The quiz's own kind label tells saved quizzes apart when a page has several kinds.
   const kindNote = kind => Q.kinds.length > 1 ? KINDS[kind].label : '';
 
   function buildRounds() {
     const wrap = $('rounds'); wrap.replaceChildren();
-    const levels = levelProgress();
+    const many = FOLDERS.length > 1, open = folderOf(choiceKind()), inOpen = kind => !many || folderOf(kind) === open;
+    const levels = levelProgress(many ? open : null);
+    if (!PAGE_FOLDERS) { $('folders').hidden = !many; for (const b of $('folders').children) b.setAttribute('aria-selected', b.dataset.folder === open); }
     const section = (tier, title, rows) => {
       if (!rows.length) return;
       const h = document.createElement('h3'); h.className = 'tier-t';
@@ -952,32 +1082,35 @@
       if (tier >= 0 && levels[tier] !== undefined) h.insertAdjacentHTML('beforeend', starHtml(levels[tier]));
       const d = document.createElement('div'); d.className = 'tier'; d.dataset.tier = tier; d.append(h, ...rows); wrap.append(d);
     };
-    if (SHARED) section(-1, 'Shared with you', [withIcons(roundBtn('shared', SHARED.name, kindNote(SHARED.kind), SHARED.kind, SHARED.ids),
+    if (SHARED && inOpen(SHARED.kind)) section(-1, 'Shared with you', [withIcons(roundBtn('shared', SHARED.name, kindNote(SHARED.kind), SHARED.kind, SHARED.ids),
       iconBtn('save', 'Save to your quizzes', () => saveQuiz(SHARED.name, SHARED.kind, SHARED.ids)))]);
     const byTier = TIERS.map(() => []);
-    for (const r of ROUNDS) { const ids = roundIds(r); byTier[tierOf(ids.length)].push(roundBtn('r:' + r.id, r.label, r.sub, r.kind, ids, r.random)); }
+    for (const r of ROUNDS) if (!r.of && inOpen(r.kind)) byTier[tierOf(roundIds(r).length)].push(roundBox(ROUNDS.filter(v => v === r || v.of === r)));
     TIERS.forEach(([, name], i) => section(i, name, byTier[i]));
-    section(-1, 'Your quizzes', SAVED.map((s, i) => withIcons(roundBtn('s:' + i, s.name, kindNote(s.kind), s.kind, s.ids),
+    section(-1, 'Your quizzes', SAVED.map((s, i) => inOpen(s.kind) && withIcons(roundBtn('s:' + i, s.name, kindNote(s.kind), s.kind, s.ids),
       iconBtn('link', 'Copy a link to this quiz', () => copyLink(s.kind, s.ids, s.name)),
-      iconBtn('del', 'Delete this quiz', () => deleteQuiz(i)))));
+      iconBtn('del', 'Delete this quiz', () => deleteQuiz(i)))).filter(Boolean));
     const custom = document.createElement('button'); custom.type = 'button'; custom.className = 'round custom'; custom.dataset.choice = 'custom';
     const ct = document.createElement('b'); ct.textContent = 'Custom quiz';
     const cn = document.createElement('span'); cn.className = 'n'; cn.id = 'customCount';
     const cs = document.createElement('small'); cs.textContent = 'Pick your own';
-    custom.append(ct, cn, cs); custom.onclick = () => choose('custom');
+    custom.append(ct, cn, cs); custom.onclick = () => { if (many && folderOf(pickKind) !== open) pickKind = open; choose('custom'); };
     wrap.append(custom);
+    // a custom quiz is of the open folder's kind, in any of its languages
+    for (const b of $('kindSeg').children) b.hidden = !inOpen(b.dataset.kind);
+    $('kindSeg').parentElement.hidden = [...$('kindSeg').children].filter(b => !b.hidden).length < 2;
     syncSetup();
     saveRating();
   }
   function saveQuiz(name, kind, ids) {
     name = (name || '').trim().slice(0, 40) || `My ${KINDS[kind].noun[1]} (${ids.length})`;
-    SAVED.push({ name, kind, ids: [...ids] }); store('saved', SAVED);
+    SAVED.push({ name, kind, ids: [...ids] }); keepSaved();
     choice = 's:' + (SAVED.length - 1); store('choice', choice);
     buildRounds(); toast('Saved');
   }
   function deleteQuiz(i) {
     if (!confirm(`Delete “${SAVED[i].name}”?`)) return;
-    SAVED.splice(i, 1); store('saved', SAVED);
+    SAVED.splice(i, 1); keepSaved();
     if (choice === 's:' + i) choice = '';
     else if (choice.startsWith('s:') && +choice.slice(2) > i) choice = 's:' + (+choice.slice(2) - 1);
     validChoice(); store('choice', choice); buildRounds();
@@ -1048,7 +1181,7 @@
     }
     for (const id of K.ids) chipEls[id].setAttribute('aria-pressed', sel.has(id));
     pressed('kindSeg', 'kind', pickKind);
-    store('sel.' + pickKind, [...sel]); store('kind', pickKind);
+    store('sel.' + pickKind, sel.size < uniq(K.ids).length ? [...sel] : null); store('kind', pickKind); // every item picked is the default: nothing to keep
     syncSetup();
   }
   // Everything that follows from the chosen round and map: start button, help options, the map preview.
@@ -1333,14 +1466,13 @@
     mark(null);
     for (const id of G.items) showLabel(G.kind, id);
     const complete = n === G.items.length;
-    const key = `best.${G.kind}.${mapStyle}.` + [...G.items].sort().join(',');
-    const prev = G.retry ? null : load(key);
+    const prev = G.retry ? null : bestFor(G.kind, G.items, mapStyle);
     const free = mapStyle === 'free';
     const better = !prev || (free ? G.points > (prev.p || 0) || (G.points === prev.p && ms < prev.t) : G.score > prev.s || (G.score === prev.s && ms < prev.t));
     if (!G.retry && complete) {
       // Map play keeps two records: the most points (with its time) and the most close answers, which the stars use.
-      if (free && (better || G.score > (prev ? prev.s : 0))) { store(key, { s: Math.max(G.score, prev ? prev.s : 0), t: better ? ms : prev.t, p: better ? G.points : prev.p }); saveRating(); }
-      else if (!free && better) { store(key, { s: G.score, t: ms }); saveRating(); }
+      if (free && (better || G.score > (prev ? prev.s : 0))) { keepBest(G.kind, G.items, mapStyle, { s: Math.max(G.score, prev ? prev.s : 0), t: better ? ms : prev.t, p: better ? G.points : prev.p }); saveRating(); }
+      else if (!free && better) { keepBest(G.kind, G.items, mapStyle, { s: G.score, t: ms }); saveRating(); }
     }
     $('rScore').textContent = free ? G.points.toLocaleString('en-US') : `${G.score} of ${n}`;
     const pct = n ? Math.round((free ? G.points / (n * FREE_MAX) : G.score / n) * 100) : 0;

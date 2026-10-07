@@ -1,0 +1,40 @@
+/* World quizzes (see world-config.js), on top of area-quiz.css and photo-quiz.css (the dots for small places). */
+:root{
+  --script:"Noto Sans","Noto Sans Arabic","Noto Sans Hebrew","Noto Sans Georgian","Noto Sans Armenian","Noto Sans Ethiopic","Noto Sans Devanagari","Noto Sans Bengali","Noto Sans Gurmukhi","Noto Sans Gujarati","Noto Sans Oriya","Noto Sans Telugu","Noto Sans Kannada","Noto Sans Malayalam","Noto Sans Tamil","Noto Sans Sinhala","Noto Sans Thaana","Noto Serif Tibetan","Noto Sans Myanmar","Noto Sans Thai","Noto Sans Lao","Noto Sans Khmer","Noto Sans JP","Noto Sans KR","Noto Sans TC","Noto Sans SC",system-ui,sans-serif;
+}
+
+/* long codes (+1 876) and names (Left · Southern Africa) fit the panel */
+.dial .code{font-size:5rem}
+.bigname{font-size:2.5rem;line-height:1.1}
+
+/* a place found while more are to be found, when it is a dot */
+#regions .r.dot.found{--fill:var(--got)}
+
+/* pages whose items are groups of places (driving side, writing) show only the place under the pointer */
+@media (hover:hover){
+  .own-hover #regions .r:not(.dot):not(.out):hover{stroke:var(--ink);stroke-width:2;stroke-opacity:1}
+  .own-hover #regions .r.dot:not(.out):hover{stroke-width:15px}
+}
+
+/* flags: the whole flag on a plain ground, never cropped */
+.photo:has(img[src$=".svg"]){background:var(--panel);aspect-ratio:4/3}
+.ph.flag{background:var(--panel)}
+.ph.flag img{aspect-ratio:4/3;object-fit:contain}
+.lightbox img[src$=".svg"]{width:min(640px,100%);border-radius:0;outline:1px solid rgba(246,248,246,.35)}
+
+/* the sign card: a few words in the script or language asked */
+.card{border:1.5px solid var(--ink);border-radius:14px;padding:18px 18px 16px;background:color-mix(in srgb,var(--ink) 3%,transparent);min-height:7.2rem;display:flex;align-items:center}
+.sent{margin:0;font:500 1.9rem/1.5 var(--script);overflow-wrap:anywhere;width:100%}
+.sent.s-arab{line-height:1.9} .sent.l-urd{font-family:"Noto Nastaliq Urdu",var(--script);line-height:2.3}
+.sent.s-tibt{line-height:1.7} .sent.s-mymr,.sent.s-khmr{line-height:1.8}
+.sent.l-hant{font-family:"Noto Sans TC",var(--script)} .sent.l-hans{font-family:"Noto Sans SC",var(--script)}
+.card.pop .sent{animation:pop .35s ease-out}
+.writing .cd,.writing .chip,.writing #labels text,.writing .feedback{font-family:var(--script)}
+.writing #eDial .code{font:500 3rem/1.2 var(--script);letter-spacing:0}
+
+@media (max-width:760px){
+  .dial .code{font-size:3.2rem}
+  .bigname{font-size:1.8rem}
+  .card{min-height:0;padding:12px 14px}
+  .sent{font-size:1.5rem}
+}

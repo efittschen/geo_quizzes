@@ -1,0 +1,19 @@
+{
+  "suites": [
+    {
+      "name": "Beginner",
+      "title": "Which country",
+      "quizzes": ["world-countries", "world-driving-side", "world-languages", "world-bollards", "world-flags", "world-domains", "world-calling-codes"]
+    },
+    {
+      "name": "Intermediate",
+      "title": "Which region",
+      "quizzes": ["us-states", "russia-regions", "brazil-states", "canada-provinces", "australia-states", "south-asia-scripts", "india-districts", "indonesia-regions", "mexico-states", "argentina-provinces", "kazakhstan-regions"]
+    },
+    {
+      "name": "Hard",
+      "title": "Which area code",
+      "quizzes": ["us-codes", "russia-codes", "brazil-ddd", "canada-codes", "australia-prefixes", "india-std", "indonesia-codes", "mexico-codes", "argentina-codes", "kazakhstan-codes"]
+    }
+  ]
+}

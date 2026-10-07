@@ -1,0 +1,5 @@
+/* Colombia quizzes: departments are colored by natural region (Andina, Caribe, Pacífica, Orinoquía, Amazonía, Insular);
+   hint colors come from the shared palette in ../shared/area-quiz.css. */
+/* hints: natural region (tools/hints.mjs) */
+.r[data-g="AM"]{--hint:var(--h2)} .r[data-g="AN"]{--hint:var(--h1)} .r[data-g="CA"]{--hint:var(--h5)} .r[data-g="IN"]{--hint:var(--h6)} .r[data-g="OR"]{--hint:var(--h3)} .r[data-g="PA"]{--hint:var(--h4)}
+/* end hints: natural region */

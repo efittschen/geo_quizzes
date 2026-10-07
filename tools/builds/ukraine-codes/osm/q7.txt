@@ -1,0 +1,5 @@
+[out:json][timeout:120];
+(rel(id:2581952,3606547,2788849,2521434);rel[name="Зеленодольськ"](47.3,33.3,47.8,34.0);)->.r;
+.r out body;
+way(r.r);
+out skel geom;

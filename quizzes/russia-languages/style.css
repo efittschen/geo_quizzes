@@ -1,0 +1,6 @@
+/* Russia Languages: hint colors by language family (shared palette in ../shared/area-quiz.css); regions without a
+   sign language of their own keep the plain land color. */
+.r[data-g="turkic"]{--hint:var(--h1)} .r[data-g="uralic"]{--hint:var(--h2)} .r[data-g="mongolic"]{--hint:var(--h6)}
+.r[data-g="caucasian"]{--hint:var(--h9)} .r[data-g="iranian"]{--hint:var(--h11)}
+.bigname{font-size:2.8rem}
+.sent.letters{letter-spacing:.06em;word-spacing:.18em}

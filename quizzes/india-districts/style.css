@@ -1,0 +1,9 @@
+/* India Districts (also used by india-pin, india-cities): the Indic script fonts for the sign card,
+   and the hint color of each state (tools/hints.mjs) below. */
+:root{--script:'Noto Sans','Noto Sans Devanagari','Noto Sans Bengali','Noto Sans Gurmukhi','Noto Sans Gujarati','Noto Sans Oriya','Noto Sans Telugu','Noto Sans Kannada','Noto Sans Malayalam','Noto Sans Tamil','Noto Nastaliq Urdu','Noto Sans Meetei Mayek',var(--sans)}
+.sent:lang(ur){font-family:'Noto Nastaliq Urdu',var(--script);font-size:1.9rem;line-height:2.2}
+.sent{font-size:1.8rem}
+.dial .rest{letter-spacing:.08em}
+/* hints: state (tools/hints.mjs) */
+.r[data-g="AN"]{--hint:var(--h11)} .r[data-g="AP"]{--hint:var(--h5)} .r[data-g="AR"]{--hint:var(--h1)} .r[data-g="AS"]{--hint:var(--h2)} .r[data-g="BR"]{--hint:var(--h18)} .r[data-g="CG"]{--hint:var(--h3)} .r[data-g="CH"]{--hint:var(--h2)} .r[data-g="DD"]{--hint:var(--h3)} .r[data-g="DL"]{--hint:var(--h4)} .r[data-g="GA"]{--hint:var(--h5)} .r[data-g="GJ"]{--hint:var(--h14)} .r[data-g="HP"]{--hint:var(--h6)} .r[data-g="HR"]{--hint:var(--h7)} .r[data-g="JH"]{--hint:var(--h9)} .r[data-g="JK"]{--hint:var(--h19)} .r[data-g="KA"]{--hint:var(--h8)} .r[data-g="KL"]{--hint:var(--h20)} .r[data-g="LA"]{--hint:var(--h7)} .r[data-g="LD"]{--hint:var(--h12)} .r[data-g="MH"]{--hint:var(--h4)} .r[data-g="ML"]{--hint:var(--h9)} .r[data-g="MN"]{--hint:var(--h21)} .r[data-g="MP"]{--hint:var(--h10)} .r[data-g="MZ"]{--hint:var(--h22)} .r[data-g="NL"]{--hint:var(--h23)} .r[data-g="OD"]{--hint:var(--h15)} .r[data-g="PB"]{--hint:var(--h11)} .r[data-g="PY"]{--hint:var(--h24)} .r[data-g="RJ"]{--hint:var(--h12)} .r[data-g="SK"]{--hint:var(--h10)} .r[data-g="TG"]{--hint:var(--h16)} .r[data-g="TN"]{--hint:var(--h17)} .r[data-g="TR"]{--hint:var(--h6)} .r[data-g="UK"]{--hint:var(--h8)} .r[data-g="UP"]{--hint:var(--h1)} .r[data-g="WB"]{--hint:var(--h13)}
+/* end hints: state */

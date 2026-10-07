@@ -13,22 +13,22 @@
 // One review asks at most 50 cards, and at 200 cards reviewed in a day the due ones wait for the next day; both
 // limits are settings. Putting new cards on the stack has no limit: players arrive knowing a lot already.
 //
-// Everything is kept in this browser (localStorage), one entry per quiz page, so quizzes can come and go:
-//   geoquizzes.srs.deck.<quiz id>  { t: page title, c: { '<kind>|<item id>': card } }
+// Everything is kept in this browser, through store.js, which says how it is written there. Here it is:
+//   a deck, the cards of one quiz page (in the page's record, so quizzes can come and go):
+//     { t: page title, c: { '<kind>|<item id>': card } }
 //     card  { d: due (ms), i: interval in days, e: ease, l: last answered (ms), n: times not known,
 //             s: its learning step (2: new, the 1 minute step; 3: new, the 10 minute step; 1: relearning after
 //             a miss, 10 minutes; none once it is in review), x: 1 while its question is missing from the quiz }
-//   geoquizzes.srs.opts            { fast, limit }: seconds for "known" and for the time limit;
-//                                  { round, day }: the most cards one review asks, and the most reviewed in a day
-//   geoquizzes.srs.day             { d: the day (its start, ms), n: cards reviewed that day }
-//   geoquizzes.srs.run             a review over several quizzes (one quiz, a country's quizzes, or all of them):
-//                                  { back: the page it ends on, t: when it began (ms), total: its cards,
-//                                    left: { quiz id: [cards still to ask] },
-//                                    again: { quiz id: [cards that weren't known, asked again at the end] },
-//                                    res: the cards' first answers in order (0 not known, 1 unsure, 2 known) }
+//   the settings  { fast, limit }: seconds for "known" and for the time limit;
+//                 { round, day }: the most cards one review asks, and the most reviewed in a day
+//   the day       { d: the day (its start, ms), n: cards reviewed that day }
+//   the run       a review over several quizzes (one quiz, a country's quizzes, or all of them):
+//                 { back: the page it ends on, t: when it began (ms), total: its cards,
+//                   left: { quiz id: [cards still to ask] },
+//                   again: { quiz id: [cards that weren't known, asked again at the end] },
+//                   res: the cards' first answers in order (0 not known, 1 unsure, 2 known) }
 
 const SRS = (() => {
-  const PREFIX = "geoquizzes.srs.";
   const MISSED = 0, UNSURE = 1, KNOWN = 2;
   const DAY = 864e5, MINUTE = 6e4;
   const ROLLOVER = 4; // a day starts at 4 am, as in Anki
@@ -36,8 +36,6 @@ const SRS = (() => {
   const LEARN = [1, 10], RELEARN = [10]; // steps in minutes: for a new card, and after a miss
   const OPTS = { fast: 6, limit: 15, round: 50, day: 200 };
 
-  const read = k => { try { return JSON.parse(localStorage.getItem(PREFIX + k)); } catch (e) { return null; } };
-  const write = (k, v) => { try { localStorage.setItem(PREFIX + k, JSON.stringify(v)); } catch (e) {} };
 
   // Start (4 am) of the day ts falls in, or of the day n days later: by the calendar, so clock changes don't shift it.
   function dayStart(ts, n = 0) {
@@ -86,19 +84,11 @@ const SRS = (() => {
   }
 
   /* ---------- decks: the cards of one quiz page ---------- */
-  function deck(id) { const d = read("deck." + id); return d && d.c ? d : { t: "", c: {} }; }
-  function save(id, d) { write("deck." + id, d); }
-  function remove(id) { try { localStorage.removeItem(PREFIX + "deck." + id); } catch (e) {} }
-  function decks() {
-    const out = [];
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k.startsWith(PREFIX + "deck.")) { const id = k.slice(PREFIX.length + 5); out.push({ id, ...deck(id) }); }
-      }
-    } catch (e) {}
-    return out;
-  }
+  const cards = (list, as) => Object.fromEntries(Object.entries(list).map(([k, c]) => [k, as(c)]));
+  function deck(id) { const r = STORE.quiz(id); return { t: r.title || "", c: cards(r.cards || {}, STORE.cardIn) }; }
+  function save(id, d) { STORE.setQuiz(id, r => { if (d.t) r.title = d.t; r.cards = cards(d.c, STORE.cardOut); }); }
+  function remove(id) { STORE.setQuiz(id, r => { delete r.cards; }); }
+  const decks = () => STORE.quizIds().filter(id => STORE.quiz(id).cards).map(id => ({ id, ...deck(id) }));
   // Cards that can be asked (their question is still in the quiz), and the ones due now, longest due first.
   const all = d => Object.keys(d.c).filter(k => !d.c[k].x);
   const due = (d, now) => all(d).filter(k => d.c[k].d <= now).sort((a, b) => d.c[a].d - d.c[b].d);
@@ -115,9 +105,9 @@ const SRS = (() => {
       .sort((a, b) => a.at - b.at).slice(0, cap);
   }
   // Cards reviewed today (a day starts at 4 am), how many more the day's limit allows, and counting one.
-  const today = now => { const t = read("day"); return t && t.d === dayStart(now) ? t.n : 0; };
+  const today = now => { const t = STORE.review().day; return t && STORE.ms(t.date) === dayStart(now) ? t.reviewed : 0; };
   const dayLeft = now => Math.max(0, opts().day - today(now));
-  const reviewed = now => write("day", { d: dayStart(now), n: today(now) + 1 });
+  const reviewed = now => { const n = today(now) + 1; STORE.setReview(r => { r.day = { date: STORE.time(dayStart(now)), reviewed: n }; }); };
   // Put questions on the stack (those not on it yet), at a new card's first step: due in a minute. Returns how many.
   function add(id, title, keys, now) {
     const d = deck(id); let n = 0;
@@ -144,8 +134,8 @@ const SRS = (() => {
   // and every change of page has to load, so a page asks a few of its cards before the review moves on to a quiz
   // picked at random (see area-review.js). Cards that weren't known are asked again at the end, until they are.
   const GROUP = 3; // cards asked on a quiz's page before the review may move to another
-  const run = () => ({ back: "review.html", t: Infinity, total: 0, left: {}, again: {}, res: [], ...read("run") });
-  const setRun = r => write("run", r);
+  const run = () => ({ back: "review.html", t: Infinity, total: 0, left: {}, again: {}, res: [], ...STORE.review().run });
+  const setRun = r => STORE.setReview(v => { v.run = r; });
   const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
   // The run's cards still to ask, per quiz: [{ id, quiz, keys }]. Once every card has been asked, those that weren't
   // known. Quizzes that are not (or no longer) listed in data/quizzes.json are left out, and so are cards whose
@@ -204,15 +194,17 @@ const SRS = (() => {
     return stopUrl(root, nextStop(quizzes));
   }
 
+  const KEPT_AS = [["fast", "known"], ["limit", "limit"], ["round", "perReview"], ["day", "perDay"]]; // the settings' names in store.js
   function opts() {
-    const o = { ...OPTS, ...read("opts") };
+    const kept = STORE.settings(), o = { ...OPTS };
+    for (const [here, there] of KEPT_AS) if (kept[there] != null) o[here] = kept[there];
     if (!(o.fast >= 1)) o.fast = OPTS.fast;
     if (!(o.limit > o.fast)) o.limit = Math.max(OPTS.limit, o.fast * 2);
     if (!(o.round >= 1)) o.round = OPTS.round;
     if (!(o.day >= 1)) o.day = OPTS.day;
     return o;
   }
-  const setOpts = o => write("opts", o);
+  const setOpts = o => STORE.setSettings(s => { for (const [here, there] of KEPT_AS) if (o[here] != null) s[there] = o[here]; });
 
   // How long until ts: "now", "in 10 min", "tomorrow", "in 5 days".
   function until(ts, now) {

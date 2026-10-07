@@ -1,0 +1,4 @@
+/* Norway regions: municipalities colored by county (tools/hints.mjs), so neighbouring counties differ. */
+/* hints: county (tools/hints.mjs) */
+.r[data-g="03"]{--hint:var(--h9)} .r[data-g="11"]{--hint:var(--h6)} .r[data-g="15"]{--hint:var(--h7)} .r[data-g="18"]{--hint:var(--h10)} .r[data-g="31"]{--hint:var(--h14)} .r[data-g="32"]{--hint:var(--h5)} .r[data-g="33"]{--hint:var(--h1)} .r[data-g="34"]{--hint:var(--h2)} .r[data-g="39"]{--hint:var(--h11)} .r[data-g="40"]{--hint:var(--h3)} .r[data-g="42"]{--hint:var(--h12)} .r[data-g="46"]{--hint:var(--h4)} .r[data-g="50"]{--hint:var(--h8)} .r[data-g="55"]{--hint:var(--h13)} .r[data-g="56"]{--hint:var(--h15)}
+/* end hints: county */

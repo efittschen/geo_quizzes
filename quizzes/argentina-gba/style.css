@@ -1,0 +1,5 @@
+/* Greater Buenos Aires: each partido its own hint color from the shared palette in ../shared/area-quiz.css,
+   picked so neighbouring partidos differ. */
+/* hints: partido (tools/hints.mjs) */
+.r[data-g="06028"]{--hint:var(--h10)} .r[data-g="06035"]{--hint:var(--h20)} .r[data-g="06091"]{--hint:var(--h21)} .r[data-g="06260"]{--hint:var(--h11)} .r[data-g="06270"]{--hint:var(--h22)} .r[data-g="06274"]{--hint:var(--h16)} .r[data-g="06371"]{--hint:var(--h4)} .r[data-g="06408"]{--hint:var(--h12)} .r[data-g="06410"]{--hint:var(--h5)} .r[data-g="06412"]{--hint:var(--h17)} .r[data-g="06427"]{--hint:var(--h2)} .r[data-g="06434"]{--hint:var(--h18)} .r[data-g="06490"]{--hint:var(--h6)} .r[data-g="06515"]{--hint:var(--h19)} .r[data-g="06539"]{--hint:var(--h13)} .r[data-g="06560"]{--hint:var(--h14)} .r[data-g="06568"]{--hint:var(--h7)} .r[data-g="06658"]{--hint:var(--h3)} .r[data-g="06749"]{--hint:var(--h23)} .r[data-g="06756"]{--hint:var(--h15)} .r[data-g="06760"]{--hint:var(--h1)} .r[data-g="06805"]{--hint:var(--h8)} .r[data-g="06840"]{--hint:var(--h9)} .r[data-g="06861"]{--hint:var(--h24)}
+/* end hints: partido */

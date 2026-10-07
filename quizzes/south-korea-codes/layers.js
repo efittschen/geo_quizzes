@@ -1,0 +1,52 @@
+// South Korea Area Codes. Each map area is a si-do, or the part of one that dials
+// another code: Gwacheon and Gwangmyeong (02), Bucheon and Daebudo (032), Gyeryong (042), Gyeongsan (053) and Gunwi
+// (054, Daegu since 2023). Codes: MSIT 전기통신번호관리세칙 (Notice 2021-93) Art. 7(3) and Annex 1.
+
+const LAYERS = {
+  key: "krcodes",
+  size: [1000,955],
+  pad: 16,
+  maxZoom: 40,
+  labelScale: 0.3,
+  fly: {"pad":1.6,"min":0.0375},
+  street: {"bounds":[[33.1,124.6],[38.65,130.95]],"maxBounds":[[29,118],[43,137]]},
+  hintLabel: "Color each area code",
+  exploreKind: "codes",
+  kinds: [
+    {
+      key: "codes",
+      label: "Area codes",
+      noun: ["code","codes"],
+      prompt: "dial",
+      groups: [["02","Seoul",["02"]],["03x","Capital area & Gangwon",["031","032","033"]],["04x","Chungcheong",["041","042","043","044"]],["05x","Gyeongsang",["051","052","053","054","055"]],["06x","Jeolla & Jeju",["061","062","063","064"]]],
+      areas: "@code",
+      name: "{id}",
+      short: "{id}",
+      chip: "{id}",
+      chipTitle: {"x":{"02":"Seoul, Gwacheon, Gwangmyeong (Gyeonggi)","031":"Gyeonggi","032":"Incheon, Bucheon, Daebudo (Gyeonggi)","033":"Gangwon","041":"South Chungcheong","042":"Daejeon, Gyeryong (South Chungcheong)","043":"North Chungcheong","044":"Sejong","051":"Busan","052":"Ulsan","053":"Daegu, Gyeongsan (North Gyeongsang)","054":"North Gyeongsang, Gunwi (Daegu)","055":"South Gyeongsang","061":"South Jeolla","062":"Gwangju","063":"North Jeolla","064":"Jeju"}},
+      detail: ["Show region",{"x":{"02":"Sudogwon","031":"Sudogwon","032":"Sudogwon","033":"Gwandong","041":"Hoseo","042":"Hoseo","043":"Hoseo","044":"Hoseo","051":"Yeongnam","052":"Yeongnam","053":"Yeongnam","054":"Yeongnam","055":"Yeongnam","061":"Honam","062":"Honam","063":"Honam","064":"Jeju"}}],
+      about: {"x":{"02":["Seoul, Gwacheon, Gwangmyeong (Gyeonggi)","서울특별시 · Sudogwon"],"031":["Gyeonggi","경기도 · Sudogwon"],"032":["Incheon, Bucheon, Daebudo (Gyeonggi)","인천광역시 · Sudogwon"],"033":["Gangwon","강원특별자치도 · Gwandong"],"041":["South Chungcheong","충청남도 · Hoseo"],"042":["Daejeon, Gyeryong (South Chungcheong)","대전광역시 · Hoseo"],"043":["North Chungcheong","충청북도 · Hoseo"],"044":["Sejong","세종특별자치시 · Hoseo"],"051":["Busan","부산광역시 · Yeongnam"],"052":["Ulsan","울산광역시 · Yeongnam"],"053":["Daegu, Gyeongsan (North Gyeongsang)","대구광역시 · Yeongnam"],"054":["North Gyeongsang, Gunwi (Daegu)","경상북도 · Yeongnam"],"055":["South Gyeongsang","경상남도 · Yeongnam"],"061":["South Jeolla","전라남도 · Honam"],"062":["Gwangju","광주광역시 · Honam"],"063":["North Jeolla","전북특별자치도 · Honam"],"064":["Jeju","제주특별자치도 · Jeju"]}},
+      dial: {"t":[["{id}","hot"]]},
+      clicked: {"t":"{p}, {chipTitle}","x":{"SE":"02, Seoul","DG":"053, Daegu","IC":"032, Incheon","DJ":"042, Daejeon","GG-02":"02, Gwacheon, Gwangmyeong (Gyeonggi)","GG-032":"032, Bucheon, Daebudo (Gyeonggi)","CN-042":"042, Gyeryong (South Chungcheong)","GB":"054, North Gyeongsang","GB-053":"053, Gyeongsan (North Gyeongsang)","DG-054":"054, Gunwi (Daegu)"}},
+      presets: [["Big cities",["02","051","032","053","042","062","052"]]],
+    },
+    {
+      key: "digit1",
+      label: "First digit",
+      noun: ["zone","zones"],
+      prompt: "dial",
+      hints: false,
+      groups: [["Zones","",["2","3","4","5","6"]]],
+      areas: {"x":{"2":["SE","GG-02"],"3":["GG","IC","GG-032","GW"],"4":["CN","DJ","CN-042","CB","SJ"],"5":["BS","US","DG","GB-053","GB","DG-054","GN"],"6":["JN","GJ","JB","JJ"]}},
+      name: {"t":"0{id}x","x":{"2":"02"}},
+      short: "{name}",
+      chip: "{name}",
+      chipTitle: {"x":{"2":"Seoul","3":"Capital area & Gangwon","4":"Chungcheong","5":"Gyeongsang","6":"Jeolla & Jeju"}},
+      about: {"x":{"2":["Seoul","02"],"3":["Capital area & Gangwon","031, 032, 033"],"4":["Chungcheong","041, 042, 043, 044"],"5":["Gyeongsang","051, 052, 053, 054, 055"],"6":["Jeolla & Jeju","061, 062, 063, 064"]}},
+      dial: {"t":[["0","cold"],["{id}","hot"],["x","cold"]],"x":{"2":[["02","hot"]]}},
+      clicked: "{name} ({chipTitle})",
+    },
+  ],
+  g: "{@code}",
+  explore: {"x":{"SE":{"code":"02","title":"Seoul","sub":["서울특별시","Sudogwon region"]},"BS":{"code":"051","title":"Busan","sub":["부산광역시","Yeongnam region"]},"DG":{"code":"053","title":"Daegu","sub":["대구광역시","Yeongnam region"]},"IC":{"code":"032","title":"Incheon","sub":["인천광역시","Sudogwon region"]},"GJ":{"code":"062","title":"Gwangju","sub":["광주광역시","Honam region"]},"DJ":{"code":"042","title":"Daejeon","sub":["대전광역시","Hoseo region"]},"US":{"code":"052","title":"Ulsan","sub":["울산광역시","Yeongnam region"]},"SJ":{"code":"044","title":"Sejong","sub":["세종특별자치시","Hoseo region"]},"GG":{"code":"031","title":"Gyeonggi","sub":["경기도","Sudogwon region"]},"GG-02":{"code":"02","title":"Gwacheon, Gwangmyeong (Gyeonggi)","sub":["경기도","Sudogwon region"]},"GG-032":{"code":"032","title":"Bucheon, Daebudo (Gyeonggi)","sub":["경기도","Sudogwon region"]},"GW":{"code":"033","title":"Gangwon","sub":["강원특별자치도","Gwandong region"]},"CB":{"code":"043","title":"North Chungcheong","sub":["충청북도","Hoseo region"]},"CN":{"code":"041","title":"South Chungcheong","sub":["충청남도","Hoseo region"]},"CN-042":{"code":"042","title":"Gyeryong (South Chungcheong)","sub":["충청남도","Hoseo region"]},"JN":{"code":"061","title":"South Jeolla","sub":["전라남도","Honam region"]},"GB":{"code":"054","title":"North Gyeongsang","sub":["경상북도","Yeongnam region"]},"GB-053":{"code":"053","title":"Gyeongsan (North Gyeongsang)","sub":["경상북도","Yeongnam region"]},"DG-054":{"code":"054","title":"Gunwi (Daegu)","sub":["대구광역시","Yeongnam region"]},"GN":{"code":"055","title":"South Gyeongsang","sub":["경상남도","Yeongnam region"]},"JJ":{"code":"064","title":"Jeju","sub":["제주특별자치도","Jeju region"]},"JB":{"code":"063","title":"North Jeolla","sub":["전북특별자치도","Honam region"]}}},
+};

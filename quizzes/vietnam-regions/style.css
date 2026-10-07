@@ -1,0 +1,13 @@
+/* Vietnam quizzes: hint colors per grouping (tools/hints.mjs); data-g values differ between groupings. */
+/* hints: reg (tools/hints.mjs) */
+.r[data-g="CH"]{--hint:var(--h4)} .r[data-g="MD"]{--hint:var(--h7)} .r[data-g="NCC"]{--hint:var(--h1)} .r[data-g="NMM"]{--hint:var(--h5)} .r[data-g="RRD"]{--hint:var(--h6)} .r[data-g="SCC"]{--hint:var(--h2)} .r[data-g="SE"]{--hint:var(--h3)}
+/* end hints: reg */
+/* hints: macro (tools/hints.mjs) */
+.r[data-g="C"]{--hint:var(--h1)} .r[data-g="N"]{--hint:var(--h2)} .r[data-g="S"]{--hint:var(--h3)}
+/* end hints: macro */
+/* hints: dt1 (tools/hints.mjs) */
+.r[data-g="1"]{--hint:var(--h1)} .r[data-g="2"]{--hint:var(--h3)} .r[data-g="3"]{--hint:var(--h4)} .r[data-g="4"]{--hint:var(--h2)} .r[data-g="5"]{--hint:var(--h5)} .r[data-g="6"]{--hint:var(--h7)} .r[data-g="7"]{--hint:var(--h6)} .r[data-g="8"]{--hint:var(--h8)} .r[data-g="9"]{--hint:var(--h9)}
+/* end hints: dt1 */
+/* hints: tel2 (tools/hints.mjs) */
+.r[data-g="20"]{--hint:var(--h6)} .r[data-g="21"]{--hint:var(--h1)} .r[data-g="22"]{--hint:var(--h2)} .r[data-g="23"]{--hint:var(--h3)} .r[data-g="24"]{--hint:var(--h7)} .r[data-g="25"]{--hint:var(--h4)} .r[data-g="26"]{--hint:var(--h8)} .r[data-g="27"]{--hint:var(--h5)} .r[data-g="28"]{--hint:var(--h9)} .r[data-g="29"]{--hint:var(--h10)}
+/* end hints: tel2 */

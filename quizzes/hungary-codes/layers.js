@@ -1,0 +1,50 @@
+// Hungary Area Codes. Each map area is one geographic area code: the NMHH
+// settlement list gives every one of Hungary's 3,155 settlements its code, and the areas are the OpenStreetMap
+// settlement boundaries dissolved per code. Codes are 1 (Budapest) and 22–99 (54 in all; 55 is a test code).
+
+const LAYERS = {
+  key: "hucodes",
+  size: [1000,624],
+  pad: 16,
+  maxZoom: 40,
+  labelScale: 0.3,
+  fly: {"pad":1.6,"min":0.0375},
+  street: {"bounds":[[45.7,16.1],[48.6,22.9]],"maxBounds":[[43,12],[51,27]]},
+  hintLabel: "Color by first digit",
+  exploreKind: "codes",
+  kinds: [
+    {
+      key: "codes",
+      label: "Area codes",
+      noun: ["code","codes"],
+      prompt: "dial",
+      groups: [["1","",["1"]],["2x","",["22","23","24","25","26","27","28","29"]],["3x","",["32","33","34","35","36","37"]],["4x","",["42","44","45","46","47","48","49"]],["5x","",["52","53","54","56","57","59"]],["6x","",["62","63","66","68","69"]],["7x","",["72","73","74","75","76","77","78","79"]],["8x","",["82","83","84","85","87","88","89"]],["9x","",["92","93","94","95","96","99"]]],
+      areas: "@id",
+      name: "{id}",
+      short: "{id}",
+      chip: "{id}",
+      chipTitle: "{@name}",
+      about: {"t":["{@name}","{@n} settlements"],"x":{"1":["Budapest","1 settlement"]}},
+      clicked: "{@id} {@name}",
+      presets: [["Big cities",["1","52","62","46","72","96","42","76","22","94"]]],
+    },
+    {
+      key: "digit1",
+      label: "First digit",
+      noun: ["zone","zones"],
+      prompt: "dial",
+      hints: false,
+      groups: [["Zones","",["1","2","3","4","5","6","7","8","9"]]],
+      areas: "@digit",
+      name: {"t":"{@digit}x","x":{"1":"1"}},
+      short: "{name}",
+      chip: "{name}",
+      chipTitle: {"x":{"1":"1 Budapest","2":"22 Székesfehérvár, 23 Biatorbágy, 24 Szigetszentmiklós, 25 Dunaújváros, 26 Szentendre, 27 Vác, 28 Gödöllő, 29 Monor","3":"32 Salgótarján, 33 Esztergom, 34 Tatabánya, 35 Balassagyarmat, 36 Eger, 37 Gyöngyös","4":"42 Nyíregyháza, 44 Mátészalka, 45 Kisvárda, 46 Miskolc, 47 Szerencs, 48 Ózd, 49 Mezőkövesd","5":"52 Debrecen, 53 Cegléd, 54 Berettyóújfalu, 56 Szolnok, 57 Jászberény, 59 Karcag","6":"62 Szeged, 63 Szentes, 66 Békéscsaba, 68 Orosháza, 69 Mohács","7":"72 Pécs, 73 Szigetvár, 74 Szekszárd, 75 Paks, 76 Kecskemét, 77 Kiskunhalas, 78 Kiskőrös, 79 Baja","8":"82 Kaposvár, 83 Keszthely, 84 Siófok, 85 Marcali, 87 Tapolca, 88 Veszprém, 89 Pápa","9":"92 Zalaegerszeg, 93 Nagykanizsa, 94 Szombathely, 95 Sárvár, 96 Győr, 99 Sopron"}},
+      about: {"x":{"1":"Budapest","2":"Székesfehérvár, Biatorbágy, Szigetszentmiklós, Dunaújváros, Szentendre, Vác, Gödöllő, Monor","3":"Salgótarján, Esztergom, Tatabánya, Balassagyarmat, Eger, Gyöngyös","4":"Nyíregyháza, Mátészalka, Kisvárda, Miskolc, Szerencs, Ózd, Mezőkövesd","5":"Debrecen, Cegléd, Berettyóújfalu, Szolnok, Jászberény, Karcag","6":"Szeged, Szentes, Békéscsaba, Orosháza, Mohács","7":"Pécs, Szigetvár, Szekszárd, Paks, Kecskemét, Kiskunhalas, Kiskőrös, Baja","8":"Kaposvár, Keszthely, Siófok, Marcali, Tapolca, Veszprém, Pápa","9":"Zalaegerszeg, Nagykanizsa, Szombathely, Sárvár, Győr, Sopron"}},
+      dial: {"t":[["{id}","hot"],["x","cold"]],"x":{"1":[["1","hot"]]}},
+      clicked: "{name}",
+    },
+  ],
+  g: "{@digit}",
+  explore: {"t":{"code":"{a}","title":"{@name}","sub":"{codes.about1}"}},
+};

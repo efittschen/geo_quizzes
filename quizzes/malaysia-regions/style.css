@@ -1,0 +1,5 @@
+/* hints: states (tools/hints.mjs) */
+.r[data-g="JHR"]{--hint:var(--h5)} .r[data-g="KDH"]{--hint:var(--h6)} .r[data-g="KTN"]{--hint:var(--h7)} .r[data-g="KUL"]{--hint:var(--h11)} .r[data-g="LBN"]{--hint:var(--h16)} .r[data-g="MLK"]{--hint:var(--h8)} .r[data-g="NSN"]{--hint:var(--h4)} .r[data-g="PHG"]{--hint:var(--h1)} .r[data-g="PJY"]{--hint:var(--h12)} .r[data-g="PLS"]{--hint:var(--h13)} .r[data-g="PNG"]{--hint:var(--h9)} .r[data-g="PRK"]{--hint:var(--h2)} .r[data-g="SBH"]{--hint:var(--h14)} .r[data-g="SGR"]{--hint:var(--h3)} .r[data-g="SWK"]{--hint:var(--h15)} .r[data-g="TRG"]{--hint:var(--h10)}
+/* end hints: states */
+/* Jawi names on the sign card (shared/city-quiz.css) */
+.sent.jawi{font-family:'Noto Naskh Arabic',var(--script);font-size:2.2rem;line-height:1.9}

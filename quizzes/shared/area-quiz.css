@@ -75,6 +75,11 @@ body{overflow:hidden}
 .round .n{grid-column:2;grid-row:1;font:600 1rem/1.1 var(--cond);color:var(--muted);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .round .best{grid-column:2;grid-row:2;display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:.75rem;color:var(--muted);white-space:nowrap}
 .tier-t .star{margin-left:2px}
+/* a round offered in several languages: the languages to pick from, where a round's sub would be */
+.round .langs{grid-column:1;display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.round .langs button{appearance:none;padding:1px 9px;border:1.5px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font:500 .8rem/1.35 var(--sans);cursor:pointer}
+.round .langs button:hover{border-color:var(--ink);color:var(--ink)}
+.round .langs button[aria-pressed="true"]{border-color:var(--btn);background:var(--btn);color:var(--btnink)}
 .round.custom{border-style:dashed}
 .icon{appearance:none;flex:0 0 36px;display:grid;place-items:center;border:1.5px solid var(--line);border-radius:var(--radius);background:transparent;color:var(--muted);cursor:pointer}
 .icon:hover{border-color:var(--ink);color:var(--ink)}
@@ -87,10 +92,12 @@ body{overflow:hidden}
 .startbar{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;gap:10px;margin:-8px -26px 0;padding:12px 26px 16px;background:var(--panel);border-top:1px solid var(--line)}
 /* sticky stops at the panel's padding, so on the setup screen the bar itself provides the bottom space */
 .app:not(.playing) .panel{padding-bottom:0}
-/* the map choice: two or three buttons side by side, each at least as wide as its title */
-.startbar .seg{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(min-content,1fr)}
-.startbar .seg button{flex-direction:row;align-items:baseline;flex-wrap:wrap;gap:0 6px;padding:6px 8px}
-.startbar .seg button b{white-space:nowrap}
+/* the layers of a quiz as folders: tabs hanging under the list of rounds, the open one joined to the list above it */
+.folders{display:flex;gap:4px;margin:-13px 0 2px}
+.folders a{text-decoration:none}
+.folders button,.folders a{appearance:none;flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;padding:7px 5px 9px;border:1px solid var(--line);border-radius:0 0 var(--radius) var(--radius);background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--muted);font:600 1rem/1.1 var(--cond);text-align:center;cursor:pointer}
+.folders button:hover,.folders a:hover{color:var(--ink)}
+.folders button[aria-selected="true"]{background:var(--panel);color:var(--ink);border-color:var(--ink);border-top-color:var(--panel);box-shadow:inset 0 -3px 0 var(--ink)}
 .startbar .row{flex-wrap:nowrap}
 .startbar .primary{flex:1;min-width:0}
 .toast{margin:0;font-size:.85rem;color:var(--muted);min-height:0}
@@ -169,7 +176,12 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
 
 /* review (area-review.js): the clock runs down to the time limit, green while a right answer still counts as known,
    then yellow; the notch marks where known ends. A review has three results, and nothing to restart or retry. */
-#reviewWrap .round:disabled{opacity:.5;cursor:default;border-color:var(--line)}
+/* Due and All (shared/area-review.js): small, to the right of the title, on the setup screen only */
+.brand-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.brand-row h1{flex:1;min-width:0}
+.rv-go{flex:none;display:flex;gap:4px;margin-top:5px}
+.rv-go .ghost.small{padding:3px 10px;font-size:.82rem;white-space:nowrap}
+.playing .rv-go{display:none}
 .rv-timer{position:relative;flex:none;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
 .rv-timer i{display:block;height:100%;background:var(--ok);transform-origin:left}
 .rv-timer.slow i{background:var(--yellow)}
@@ -267,6 +279,12 @@ svg#map.grab{cursor:grabbing}
 .zoom button{appearance:none;border:0;background:transparent;width:40px;height:40px;font:600 1.25rem/1 var(--sans);cursor:pointer}
 .zoom button + button{border-top:1px solid var(--line)}
 .zoom button:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+/* which map to play on: a picker on the map itself (above the street map's own layers) */
+.maps{position:absolute;left:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:1100;display:flex;border-radius:var(--radius);overflow:hidden;background:var(--panel);border:1px solid var(--line)}
+.maps button{appearance:none;border:0;background:transparent;color:var(--ink);padding:0 14px;height:40px;font:600 .9rem/1 var(--sans);white-space:nowrap;cursor:pointer}
+.maps button + button{border-left:1px solid var(--line)}
+.maps button:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.maps button[aria-pressed="true"]{background:var(--btn);color:var(--btnink)}
 
 @media (max-width:760px){
   .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
@@ -284,8 +302,8 @@ svg#map.grab{cursor:grabbing}
   .stats b{font-size:1.2rem}
   .playing .panel{max-height:40vh}
   .startbar{margin:-2px -16px 0;padding:8px 16px 10px;gap:6px}
-  .startbar .seg button{padding:5px 8px}
-  .startbar .seg button small{display:none}
+  .folders{margin-top:-9px}
+  .folders button,.folders a{padding:5px 4px 7px;font-size:.95rem}
   .setup{gap:12px}
   .rounds{gap:10px}
   .round{padding:6px 10px}

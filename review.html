@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Review · Geo Quizzes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">🌍 Geo Quizzes</a>
+    <nav><a href="index.html">← Back to map</a></nav>
+  </header>
+
+  <main class="review-page">
+    <section>
+      <h1>Review</h1>
+      <div class="review-go" id="review-go"></div>
+    </section>
+
+    <section>
+      <h2>Stack</h2>
+      <div class="tree" id="decks" hidden>
+        <table class="decks">
+          <thead><tr><th>Quiz</th><th class="num">Due</th><th class="num">Learned</th><th class="next">Next</th><th></th></tr></thead>
+          <tbody id="deck-rows"></tbody>
+        </table>
+      </div>
+      <p id="empty" class="empty" hidden>Nothing learned yet</p>
+    </section>
+
+    <section>
+      <h2>Timer</h2>
+      <div class="timer-opts">
+        <label>Known within <input type="number" id="fast" min="1" max="120" step="1" inputmode="numeric"> s</label>
+        <label>Time limit <input type="number" id="limit" min="2" max="300" step="1" inputmode="numeric"> s</label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Limits</h2>
+      <div class="timer-opts">
+        <label>Cards per review <input type="number" id="round" min="1" step="1" inputmode="numeric"></label>
+        <label>Cards per day <input type="number" id="day" min="1" step="1" inputmode="numeric"></label>
+        <span id="today"></span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Your data</h2>
+      <div class="timer-opts">
+        <button type="button" class="ghost small" id="download">Download</button>
+        <button type="button" class="ghost small" id="upload">Upload</button>
+        <input type="file" id="upload-file" accept="application/json,.json" hidden>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/common.js"></script>
+  <script src="assets/js/srs.js"></script>
+  <script src="assets/js/review.js"></script>
+</body>
+</html>

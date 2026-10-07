@@ -1,0 +1,10 @@
+/* Argentina National Routes: provinces colored by the 1935 route-number range they belong to (Santa Fe in two);
+   hint colors come from the shared palette in ../shared/area-quiz.css, picked so neighbouring ranges differ. */
+/* hints: number range (tools/hints.mjs) */
+.r[data-g="I"]{--hint:var(--h6)} .r[data-g="II"]{--hint:var(--h3)} .r[data-g="II-V"]{--hint:var(--h4)} .r[data-g="III"]{--hint:var(--h7)} .r[data-g="IV"]{--hint:var(--h5)} .r[data-g="V"]{--hint:var(--h1)} .r[data-g="VI"]{--hint:var(--h2)} .r[data-g="VII"]{--hint:var(--h8)} .r[data-g="VIII"]{--hint:var(--h9)}
+/* end hints: number range */
+/* the prompt drawn like the black number strip of an Argentine kilometre marker: white "RN" and number on black */
+#dial.km{width:max-content;align-items:baseline;background:#15181B;border:3px solid #fff;outline:2px solid #15181B;border-radius:8px;padding:.1em .3em .14em}
+#dial.km .code .hot{color:#fff} #dial.km .code .cold{color:#fff;opacity:.8;font-size:.5em;letter-spacing:.02em}
+#dial.km .code{font-size:4rem}
+@media (max-width:760px){ #dial.km .code{font-size:2.8rem} }

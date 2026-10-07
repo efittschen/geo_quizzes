@@ -14,7 +14,7 @@ import { ROOT } from './lib/geo.mjs';
 
 const { values: o, positionals: pages } = parseArgs({ allowPositionals: true, options: { shots: { type: 'string' }, dark: { type: 'boolean', default: false } } });
 if (!pages.length) { console.error('usage: smoke <page.html>… [--shots dir] [--dark]'); process.exit(1); }
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp' };
 const server = http.createServer((req, res) => {
   const file = path.join(ROOT, decodeURIComponent(new URL(req.url, 'http://x').pathname));
   if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end('not found'); }
@@ -46,6 +46,12 @@ for (const p of pages) {
       await page.waitForTimeout(500);
       result.started = await page.locator('#play').isVisible();
       result.prompt = (await page.evaluate(() => ['bigname', 'sent', 'code'].map(id => { const e = document.getElementById(id); return e && e.offsetParent ? e.textContent.trim() : ''; }).filter(Boolean)[0] || '')) || '';
+      // picture quizzes: the question is a picture, which must have loaded
+      const photo = page.locator('#photoImg');
+      if (!result.prompt && await photo.count() && await photo.isVisible()) {
+        const src = await photo.evaluate(im => im.complete && im.naturalWidth ? im.getAttribute('src') : '');
+        if (src) result.prompt = 'picture ' + src.split('/').pop(); else errors.push('picture did not load');
+      }
       // click some area that is part of the round and check the game reacts
       const area = page.locator('#regions .r:not(.out)').first();
       if (await area.count()) { await area.click({ force: true }); await page.waitForTimeout(300); result.clicked = (await page.locator('#fb').textContent()).trim().length > 0; }
