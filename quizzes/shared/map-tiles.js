@@ -3,11 +3,15 @@
    whose map says how it is projected: city quizzes and town names (a country's cities.js), and the area quizzes with
    a projection in their data.js. The engines load this file when a player first asks for one of the two.
 
-     const tiles = mapTiles(stage, map)   map: { proj, kpu } and, to find its insets, a cities.js's land, list and
-                                          inset, or the map's areas: [{ d, lat, lng, x, y }]. null where the
+     const tiles = mapTiles(stage, map, ahead)   map: { proj, kpu } and, to find its insets, a cities.js's land, list
+                                          and inset, or the map's areas: [{ d, lat, lng, x, y }]. null where the
                                           projection is not one this file knows (d3's conic equal area, Albers USA).
+                                          ahead: how far beyond the stage's edges the pictures reach, in pixels
+                                          (default 192; 0 for a map that never moves)
      tiles.view(x, y, k)        the map point at the stage's top left corner and the pixels per map unit; call it
-                                whenever that changes: the pictures follow at once and are drawn again when it rests
+                                whenever that changes. The pictures follow at once. While the map is dragged they are
+                                drawn again as it goes, so its sides are there before the drag ends; after a zoom
+                                they are drawn again when it rests.
      tiles.streets().show(on)   the street map, a canvas at the back of the stage (the standard OpenStreetMap tiles,
                                 as on the street map of the other quizzes); its credit stands on the map meanwhile
      tiles.coverage(dir, meta).show(on)   Street View coverage (data/coverage and its meta.json, see the README), a
@@ -17,7 +21,7 @@
                                 stays drawn, and no coverage is laid on it. Frames: `inset` in cities.js (a path of
                                 boxes) or, for Albers USA, d3's own; else the land around the cities that are off the
                                 projection. Of an area map: the areas that are off the projection. */
-function mapTiles(stage, C) {
+function mapTiles(stage, C, AHEAD = 192) {
   if (!C.proj || !C.kpu || !/^(conicEqualArea|albersUsa)$/.test(C.proj.type)) return null;
   const OSM = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', RAD = Math.PI / 180;
 
@@ -92,12 +96,20 @@ function mapTiles(stage, C) {
       }
       return pics.get(url);
     };
-    let on = false, drawn = null, timer = 0, turn = 0;
+    let on = false, drawn = null, timer = 0, busy = false, stale = false, began = 0;
     // The picture as it is, moved and sized to the view asked for, until the new one is drawn.
     const place = () => { if (drawn && want) cv.style.transform = `translate(${(drawn.x - want.x) * want.k}px,${(drawn.y - want.y) * want.k}px) scale(${want.k / drawn.k})`; };
+    // One picture is drawn at a time; a move meanwhile has the next one drawn as soon as this one is done.
     async function render() {
-      const v = want, W = stage.clientWidth, H = stage.clientHeight, me = ++turn;
-      if (!on || !v || !W || !H) return;
+      if (busy) { stale = true; return; }
+      if (!on || !want || !stage.clientWidth || !stage.clientHeight) return;
+      busy = true; stale = false; began = performance.now();
+      try { await draw(); } finally { busy = false; if (stale && on) soon(); }
+    }
+    const soon = () => { clearTimeout(timer); timer = setTimeout(render, !drawn ? 0 : want.k === drawn.k ? Math.max(0, 150 - (performance.now() - began)) : 140); };
+    async function draw() {
+      // The picture reaches AHEAD pixels beyond the stage on every side: v is the map point at its top left corner.
+      const W = stage.clientWidth + 2 * AHEAD, H = stage.clientHeight + 2 * AHEAD, v = { x: want.x - AHEAD / want.k, y: want.y - AHEAD / want.k, k: want.k };
       const q = Math.min(window.devicePixelRatio || 1, 2), mid = invert(v.x + W / 2 / v.k, v.y + H / 2 / v.k) || [0, 0];
       // The zoom level whose tiles are about as fine as the screen: Web Mercator has 156.543 km to a pixel at level 0.
       let z = Math.max(L.minZ, Math.min(MAX_Z, Math.round(Math.log2(156.543 * Math.cos(mid[0] * RAD) * v.k * (q > 1.4 ? 2 : 1) / C.kpu * 256 / SIZE))));
@@ -121,7 +133,7 @@ function mapTiles(stage, C) {
       }
       const got = new Map();
       await Promise.all([...need].map(([key, [tx, ty]]) => tile(z, tx, ty).then(img => got.set(key, img))));
-      if (me !== turn || !on) return;   // the view has moved on
+      if (!on) return;
       const out = document.createElement('canvas'), o = out.getContext('2d');
       out.width = Math.round(W * q); out.height = Math.round(H * q);
       const tri = (a, b, c, A, B, D) => {   // the tiles' triangle a b c onto the stage's A B D
@@ -152,7 +164,7 @@ function mapTiles(stage, C) {
     }
     const me = {
       show(yes) { on = yes; cv.hidden = !yes; L.shown(yes); if (yes) render(); },
-      moved() { if (!on) return; place(); clearTimeout(timer); timer = setTimeout(render, drawn ? 140 : 0); },
+      moved() { if (!on) return; place(); soon(); },
     };
     layers.push(me);
     return me;

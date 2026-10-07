@@ -353,12 +353,21 @@
     const fits = Math.min(size.x / (se.x - nw.x), size.y / (se.y - nw.y)) >= 0.8;
     lmap.setView(b.getCenter(), fits ? z + 1 : z);
   }
+  // The street map's layers load `ahead` pixels beyond the edge of the map, and look for new tiles while it is dragged
+  // (on a phone too, and twice as often as Leaflet's default): so a move finds its sides there.
+  const loadsAhead = Layer => Layer.extend({
+    options: { updateInterval: 100, updateWhenIdle: false },
+    _getTiledPixelBounds(center) {
+      const b = Layer.prototype._getTiledPixelBounds.call(this, center), pad = L.point(this.options.ahead, this.options.ahead);
+      return L.bounds(b.min.subtract(pad), b.max.add(pad));
+    },
+  });
   function initStreet() {
     if (lmap) return;
     lmap = L.map('street', { minZoom: 2, maxBounds: Q.street.maxBounds });
     lmap.attributionControl.setPrefix(false); // credits name the map data only, not the Leaflet library
     fitHome();
-    L.tileLayer(TILE_URL, { maxZoom: 19, attribution: TILE_ATTRIBUTION }).addTo(lmap);
+    new (loadsAhead(L.TileLayer))(TILE_URL, { maxZoom: 19, attribution: TILE_ATTRIBUTION, ahead: 256 }).addTo(lmap); // one ring of tiles: OpenStreetMap asks not to fetch much ahead
     // The areas get a pane of their own, under pins and labels: the overlay tints the map with it as a whole.
     lmap.createPane('areas').style.zIndex = 350;
     for (const a of AREAS) {
@@ -986,10 +995,10 @@
       if (!coverLayer) {
         lmap.createPane('coverage').style.zIndex = 300; // over the street map's tiles, under the areas
         const have = Object.fromEntries(Object.entries(meta.tiles).map(([z, l]) => [z, new Set(l)]));
-        coverLayer = new (L.TileLayer.extend({ _isValidTile(c) { // only the tiles that exist are asked for
+        coverLayer = new (loadsAhead(L.TileLayer).extend({ _isValidTile(c) { // only the tiles that exist are asked for
           if (!L.TileLayer.prototype._isValidTile.call(this, c)) return false;
           const z = c.z - 2, n = 2 ** z; return !!have[z] && have[z].has(`${((c.x % n) + n) % n}/${c.y}`);
-        } }))(COVER + '/{z}/{x}/{y}.png', { pane: 'coverage', tileSize: 1024, zoomOffset: -2, minNativeZoom: 2, maxNativeZoom: meta.zoom,
+        } }))(COVER + '/{z}/{x}/{y}.png', { pane: 'coverage', tileSize: 1024, zoomOffset: -2, minNativeZoom: 2, maxNativeZoom: meta.zoom, ahead: 512,
           attribution: 'Coverage: <a href="https://github.com/slashP/Vali">Vali</a> location pool' });
       }
       if (coverOn && onStreet()) coverLayer.addTo(lmap); else coverLayer.remove();

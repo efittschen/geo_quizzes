@@ -353,7 +353,7 @@
     if (waiting) return waiting.push(then);
     waiting = [then];
     const s = document.createElement('script'); s.src = HERE + 'map-tiles.js';
-    s.onload = () => { tiles = mapTiles(stage, CITIES); insetBox = new Path2D(tiles.insets.box); insetLand = new Path2D(tiles.insets.land); for (const f of waiting) f(); };
+    s.onload = () => { tiles = mapTiles(stage, CITIES, 0); insetBox = new Path2D(tiles.insets.box); insetLand = new Path2D(tiles.insets.land); for (const f of waiting) f(); };
     document.head.append(s);
   }
   function useBack(m) {
