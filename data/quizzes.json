@@ -525,7 +525,8 @@
       "country": "288",
       "title": "Languages",
       "levels": 2,
-      "url": "quizzes/ghana-languages/index.html"
+      "url": "quizzes/ghana-languages/index.html",
+      "hidden": true
     },
     {
       "id": "ghana-cities",
@@ -596,7 +597,8 @@
       "country": "348",
       "title": "Minority Signs",
       "levels": 1,
-      "url": "quizzes/hungary-signs/index.html"
+      "url": "quizzes/hungary-signs/index.html",
+      "hidden": true
     },
     {
       "id": "hungary-roads",
@@ -611,7 +613,8 @@
       "country": "348",
       "title": "Budapest Districts",
       "levels": 2,
-      "url": "quizzes/hungary-districts/index.html"
+      "url": "quizzes/hungary-districts/index.html",
+      "hidden": true
     },
     {
       "id": "hungary-cities",
@@ -698,7 +701,8 @@
       "country": "040",
       "title": "Sign Languages",
       "levels": 1,
-      "url": "quizzes/austria-languages/index.html"
+      "url": "quizzes/austria-languages/index.html",
+      "hidden": true
     },
     {
       "id": "austria-roads",
@@ -713,7 +717,8 @@
       "country": "040",
       "title": "Vienna Districts",
       "levels": 2,
-      "url": "quizzes/austria-vienna/index.html"
+      "url": "quizzes/austria-vienna/index.html",
+      "hidden": true
     },
     {
       "id": "austria-cities",
@@ -832,7 +837,8 @@
       "country": "144",
       "title": "Languages",
       "levels": 1,
-      "url": "quizzes/sri-lanka-languages/index.html"
+      "url": "quizzes/sri-lanka-languages/index.html",
+      "hidden": true
     },
     {
       "id": "sri-lanka-cities",
@@ -943,7 +949,8 @@
       "country": "250",
       "title": "Regional Languages",
       "levels": 1,
-      "url": "quizzes/france-languages/index.html"
+      "url": "quizzes/france-languages/index.html",
+      "hidden": true
     },
     {
       "id": "france-cities",
@@ -1046,7 +1053,8 @@
       "country": "643",
       "title": "Sign Languages",
       "levels": 2,
-      "url": "quizzes/russia-languages/index.html"
+      "url": "quizzes/russia-languages/index.html",
+      "hidden": true
     },
     {
       "id": "russia-highways",
@@ -1133,14 +1141,16 @@
       "country": "032",
       "title": "Buenos Aires Partidos",
       "levels": 4,
-      "url": "quizzes/argentina-partidos/index.html"
+      "url": "quizzes/argentina-partidos/index.html",
+      "hidden": true
     },
     {
       "id": "argentina-gba",
       "country": "032",
       "title": "Greater Buenos Aires",
       "levels": 2,
-      "url": "quizzes/argentina-gba/index.html"
+      "url": "quizzes/argentina-gba/index.html",
+      "hidden": true
     },
     {
       "id": "argentina-cities",
@@ -1171,7 +1181,8 @@
       "country": "710",
       "title": "Languages",
       "levels": 2,
-      "url": "quizzes/south-africa-languages/index.html"
+      "url": "quizzes/south-africa-languages/index.html",
+      "hidden": true
     },
     {
       "id": "south-africa-cities",
@@ -1322,7 +1333,8 @@
       "country": "724",
       "title": "Sign Languages",
       "levels": 1,
-      "url": "quizzes/spain-languages/index.html"
+      "url": "quizzes/spain-languages/index.html",
+      "hidden": true
     },
     {
       "id": "spain-roads",
@@ -1409,7 +1421,8 @@
       "country": "124",
       "title": "Sign Languages",
       "levels": 2,
-      "url": "quizzes/canada-signs/index.html"
+      "url": "quizzes/canada-signs/index.html",
+      "hidden": true
     },
     {
       "id": "canada-routes",
@@ -1424,7 +1437,8 @@
       "country": "124",
       "title": "Ontario Counties",
       "levels": 3,
-      "url": "quizzes/canada-counties/index.html"
+      "url": "quizzes/canada-counties/index.html",
+      "hidden": true
     },
     {
       "id": "canada-cities",
@@ -1447,7 +1461,8 @@
       "country": "566",
       "title": "Languages",
       "levels": 1,
-      "url": "quizzes/nigeria-languages/index.html"
+      "url": "quizzes/nigeria-languages/index.html",
+      "hidden": true
     },
     {
       "id": "nigeria-cities",
@@ -1574,7 +1589,8 @@
       "country": "578",
       "title": "Languages",
       "levels": 2,
-      "url": "quizzes/norway-languages/index.html"
+      "url": "quizzes/norway-languages/index.html",
+      "hidden": true
     },
     {
       "id": "norway-cities",
@@ -1677,7 +1693,8 @@
       "country": "380",
       "title": "Sign Languages",
       "levels": 1,
-      "url": "quizzes/italy-languages/index.html"
+      "url": "quizzes/italy-languages/index.html",
+      "hidden": true
     },
     {
       "id": "italy-roads",
@@ -1740,7 +1757,8 @@
       "country": "276",
       "title": "Sign Languages",
       "levels": 1,
-      "url": "quizzes/germany-languages/index.html"
+      "url": "quizzes/germany-languages/index.html",
+      "hidden": true
     },
     {
       "id": "germany-cities",
@@ -1939,7 +1957,8 @@
       "country": "246",
       "title": "Sign Languages",
       "levels": 3,
-      "url": "quizzes/finland-languages/index.html"
+      "url": "quizzes/finland-languages/index.html",
+      "hidden": true
     },
     {
       "id": "finland-roads",
@@ -1994,7 +2013,8 @@
       "country": "642",
       "title": "Sign Languages",
       "levels": 2,
-      "url": "quizzes/romania-languages/index.html"
+      "url": "quizzes/romania-languages/index.html",
+      "hidden": true
     },
     {
       "id": "romania-roads",
@@ -2049,7 +2069,8 @@
       "country": "752",
       "title": "Minority Languages",
       "levels": 1,
-      "url": "quizzes/sweden-languages/index.html"
+      "url": "quizzes/sweden-languages/index.html",
+      "hidden": true
     },
     {
       "id": "sweden-cities",
@@ -2096,7 +2117,8 @@
       "country": "616",
       "title": "Sign Languages",
       "levels": 1,
-      "url": "quizzes/poland-languages/index.html"
+      "url": "quizzes/poland-languages/index.html",
+      "hidden": true
     },
     {
       "id": "poland-roads",
@@ -2223,14 +2245,16 @@
       "country": "826",
       "title": "Sign Languages",
       "levels": 2,
-      "url": "quizzes/united-kingdom-languages/index.html"
+      "url": "quizzes/united-kingdom-languages/index.html",
+      "hidden": true
     },
     {
       "id": "united-kingdom-london",
       "country": "826",
       "title": "London Postcodes",
       "levels": 4,
-      "url": "quizzes/united-kingdom-london/index.html"
+      "url": "quizzes/united-kingdom-london/index.html",
+      "hidden": true
     },
     {
       "id": "world-countries",
