@@ -1,10 +1,10 @@
 /* Painting quiz: a place name is shown with one part of it marked; the player paints, with one broad brush, the
-   region where names with that part are found. Then every place with the part lights up (the one asked in green
-   for a while). The score says whether the player knew where to look: the share of the part's places covered
-   minus the share of all places painted (painting at random gives nothing, the right region nearly everything),
-   as a percentage of what painting the part's 80% area gets (the smallest area holding 80% of its smoothed places,
-   worked out by tools/builds/town-names/ratio.py: part.cover and part.painted; it is never shown). PASS or more is
-   accepted.
+   region where names with that part are found. Then the answer lights up, whether the drawing was accepted or not:
+   the part's 80% area and every place with the part (the one asked in green for a while). The score says whether
+   the player knew where to look: the share of the part's places covered minus the share of all places painted
+   (painting at random gives nothing, the right region nearly everything), as a percentage of what painting the
+   part's 80% area gets (the smallest area holding 80% of its smoothed places, worked out by
+   tools/builds/town-names/ratio.py: part.cover and part.painted). PASS or more is accepted.
 
    Rounds, and size alone sets a round's level, as everywhere: Common (the 9 parts with the most places, in a
    country with 10 or more), one per side of the country (north, east, south, west: every part on it, when that is
@@ -13,6 +13,10 @@
 
    Explore shows a round without the quiz: all its parts on the map and in a list, one at a time with its places.
 
+   The map behind is the drawn one or, by the picker on the map, the street map in the same projection
+   (map-tiles.js): with the region borders on it (overlay) or alone. A switch beside the picker lays Street View
+   coverage on top of any of them (the layer of the Coverage page).
+
    Data: NAMES (names.js, made by tools/townnames.mjs) on the map of the country's city quiz (CITIES, its cities.js).
    With ?trace in the address the places show from the start, the parts come in their listed order, and every
    drawing is sent to the server it was loaded from (tools/draw-server.mjs keeps them). */
@@ -20,10 +24,12 @@
   const N = NAMES, $ = id => document.getElementById(id);
   const app = $('app'), stage = $('stage'), cv = $('paint'), ctx = cv.getContext('2d');
   const land = new Path2D(CITIES.land), lines = new Path2D(CITIES.lines), around = new Path2D(CITIES.ctx);
-  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const css = n => getComputedStyle(stage).getPropertyValue(n).trim();   // (the stage keeps the light colors on the street map)
+  const HERE = document.currentScript.src.replace(/[^/]*$/, '');
   const layer = document.createElement('canvas'), reveal = document.createElement('canvas');   // the paint; the answer
   const r = N.brush / N.cell, GLOW = 6000, PASS = 50, TRACE = new URLSearchParams(location.search).has('trace');
   const pct = v => (v < 0.0995 ? (v * 100).toFixed(1) : Math.round(v * 100)) + '%';
+  let back = 'quiz', tiles = null, insetBox = null, insetLand = null;   // the map behind, and coverage on top: see useBack, useCover
   let view = { k: 1, x: 0, y: 0, W: 0, H: 0, d: 1 }, part = null, asked = 0, mask = null, strokes = [], shown = false, since = 0, down = false, last = null, frame = 0;
 
   /* ---------- the map ---------- */
@@ -32,6 +38,7 @@
     const k = Math.min((W - 2 * pad) / N.w, (H - 2 * pad) / N.h);
     view = { k, x: (W - N.w * k) / 2, y: (H - N.h * k) / 2, W, H, d };
     for (const c of [cv, layer, reveal, preview]) { c.width = Math.round(W * d); c.height = Math.round(H * d); }
+    if (tiles) tiles.view(-view.x / k, -view.y / k, k);
     repaint(); if (part && (shown || TRACE)) drawReveal();
     if (previewOf) drawPreview(previewOf);
     draw();
@@ -44,11 +51,15 @@
   }
   function draw() {
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
-    const m = mapped(cv), px = 1 / view.k;
-    m.fillStyle = css('--ctx'); m.fill(around);
-    m.fillStyle = css('--land'); m.fill(land);
-    m.strokeStyle = css('--edge'); m.lineWidth = 0.8 * px; m.stroke(lines);
-    m.strokeStyle = css('--state'); m.lineWidth = 1.2 * px; m.globalAlpha = 0.75; m.stroke(land); m.globalAlpha = 1;
+    const m = mapped(cv), px = 1 / view.k, streets = tiles && back !== 'quiz';
+    if (streets) {   // the street map shows through; an inset has no tiles and stays drawn
+      m.fillStyle = css('--sea'); m.fill(insetBox); m.fillStyle = css('--land'); m.fill(insetLand);
+      m.strokeStyle = css('--edge'); m.lineWidth = 0.8 * px; m.stroke(insetBox); m.stroke(insetLand);
+    } else { m.fillStyle = css('--ctx'); m.fill(around); m.fillStyle = css('--land'); m.fill(land); }
+    if (!streets || back === 'overlay') {
+      m.strokeStyle = css(streets ? '--state' : '--edge'); m.lineWidth = 0.8 * px; m.globalAlpha = streets ? 0.6 : 1; m.stroke(lines);
+      m.strokeStyle = css('--state'); m.lineWidth = 1.2 * px; m.globalAlpha = 0.75; m.stroke(land); m.globalAlpha = 1;
+    }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     if (!part) {
       if (!previewOf) return;
@@ -66,6 +77,7 @@
       return;
     }
     ctx.globalAlpha = 0.5; ctx.drawImage(layer, 0, 0); ctx.globalAlpha = 1;
+    if (shown) shape(ctx, G.ids[G.at], 0.5, 1);   // the answer: the part's 80% area, under its places
     if (shown || TRACE) ctx.drawImage(reveal, 0, 0);
     if (!shown) return;
     // The place that was asked: green, with a ring that pulses for a while.
@@ -198,9 +210,11 @@
     const has = (x, y) => { const i = Math.round(x / BLOB) - ox, j = Math.round(y / BLOB) - oy; return i >= 0 && j >= 0 && i < w && j < h && g[j * w + i] >= 0.5; };
     return p.blob = { path, has };
   }
+  // A part's colour: the one it has in the round's preview, else one of the palette (a part the preview leaves out).
+  const colourOf = i => tint.get(i) || css('--h' + (i % 24 + 1));
   // A part's shape on a canvas: its 80% area (or blob), filled, with a darker edge.
   function shape(out, i, fill, edge) {
-    const blob = blobOf(N.parts[i]), colour = tint.get(i), s = view.d * view.k;
+    const blob = blobOf(N.parts[i]), colour = colourOf(i), s = view.d * view.k;
     out.save(); out.setTransform(s, 0, 0, s, view.d * view.x, view.d * view.y);
     if (blob.clip) out.clip(land);   // an 80% area can reach over the sea: drawn on the land only
     out.globalAlpha = fill; out.fillStyle = colour; out.fill(blob.path, 'evenodd');
@@ -325,6 +339,37 @@
   const starHtml = p => { const svg = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR}"/></svg>`; return `<span class="star${p >= 1 ? ' done' : p > 0 ? ' part' : ''}" role="img" aria-label="${p >= 1 ? 'Level done' : `${Math.round(p * 100)}% done`}">${svg}<span class="fill" style="width:${Math.round(Math.min(p, 1) * 100)}%">${svg}</span></span>`; };
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
+  /* ---------- the map behind, and coverage on top ---------- */
+  const BACKS = [['quiz', 'Quiz map', 'drawn'], ['overlay', 'Overlay', 'borders on streets'], ['street', 'Street map', 'no borders']];
+  const mapBar = el('div', 'mapbar'), backSeg = el('div', 'maps'), coverSeg = el('div', 'maps'), coverBtn = el('button', null, 'Coverage');
+  backSeg.setAttribute('role', 'group'); backSeg.setAttribute('aria-label', 'Map');
+  backSeg.replaceChildren(...BACKS.map(([m, t, sub]) => { const b = el('button', null, t); b.type = 'button'; b.dataset.back = m; b.title = sub; b.onclick = () => useBack(m); return b; }));
+  coverBtn.type = 'button'; coverBtn.title = 'Street View coverage'; coverBtn.onclick = () => useCover(!saved.cover);
+  coverSeg.append(coverBtn); mapBar.append(backSeg, coverSeg); stage.append(mapBar);
+  // The tiles are drawn by map-tiles.js, loaded when first asked for.
+  let waiting = null;
+  function withTiles(then) {
+    if (tiles) return then();
+    if (waiting) return waiting.push(then);
+    waiting = [then];
+    const s = document.createElement('script'); s.src = HERE + 'map-tiles.js';
+    s.onload = () => { tiles = mapTiles(stage, CITIES); insetBox = new Path2D(tiles.insets.box); insetLand = new Path2D(tiles.insets.land); for (const f of waiting) f(); };
+    document.head.append(s);
+  }
+  function useBack(m) {
+    back = m; if (saved.map !== m) { saved.map = m; keep(); }
+    for (const b of backSeg.children) b.setAttribute('aria-pressed', b.dataset.back === m);
+    if (m !== 'quiz' || tiles) withTiles(() => { tiles.streets().show(back !== 'quiz'); fit(); });
+  }
+  // Street View coverage over the map: the layer of the Coverage page (data/coverage, see the README).
+  const COVER = HERE + '../../data/coverage';
+  let coverMeta = null;
+  function useCover(on) {
+    if (!!saved.cover !== on) { saved.cover = on; keep(); }
+    coverBtn.setAttribute('aria-pressed', on);
+    if (on || coverMeta) (coverMeta ||= fetch(COVER + '/meta.json').then(r => r.json())).then(meta => withTiles(() => { tiles.coverage(COVER, meta).show(!!saved.cover); fit(); }), () => {});
+  }
+
   let choice = ROUNDS.some(q => q.id === saved.choice) ? saved.choice : ROUNDS[0].id;
   function buildRounds() {
     const wrap = $('rounds'), levels = levelProgress(); wrap.replaceChildren();
@@ -350,7 +395,7 @@
 
   /* ---------- a round ---------- */
   let G = null;   // { round, ids, at, results: [{ i, score, ok }], counts }
-  const screen = name => { for (const id of ['setup', 'play', 'done', 'explore']) $(id).hidden = id !== name; $('startbar').hidden = name !== 'setup'; app.classList.toggle('playing', name === 'play'); };
+  const screen = name => { for (const id of ['setup', 'play', 'done', 'explore']) $(id).hidden = id !== name; $('startbar').hidden = mapBar.hidden = name !== 'setup'; app.classList.toggle('playing', name === 'play'); };
   // The name with the part cut out of it: [before, part, after].
   function split(name, p) {
     const s = p.label.replace(/^-|-$/g, ''), low = name.toLowerCase().replace(/ё/g, 'е'), edge = '[\\s\\-\\/]', esc = s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -394,6 +439,7 @@
     }
     shown = true; since = performance.now();
     $('clearBtn').hidden = true; $('doneBtn').textContent = G.at + 1 < G.ids.length ? 'Next' : 'Finish'; $('key').hidden = false;
+    $('keyZone').style.background = colourOf(G.ids[G.at]);
     ticks(); drawReveal(); cancelAnimationFrame(frame); draw();
   }
   function finish() {
@@ -452,4 +498,6 @@
   new ResizeObserver(fit).observe(stage);
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fit);
   menu();
+  useBack(BACKS.some(([m]) => m === saved.map) ? saved.map : 'quiz');
+  useCover(!!saved.cover);
 })();

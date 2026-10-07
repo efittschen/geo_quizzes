@@ -1,6 +1,7 @@
 // The page of every quiz: the panel (setup, play, result, explore) and the map. A page says only what is its own:
 // in <body>, its back link, title and credits (<a class="back">, <h1>, <p class="note">), then its scripts, this one
-// first, so the panel is on screen while the data loads. On <body>:
+// first, so the panel is on screen while the data loads. The credits go to the bottom right corner of the map, as a
+// © that opens them. On <body>:
 //   data-dial="+49 (#)··· ····"   the frame of a phone-number question: country code, brackets around the code (#),
 //                                 and the rest of the number as dots; without it the code stands alone
 //   data-sign="shield"            a class for that frame, where a page's own stylesheet draws it as a road sign
@@ -160,6 +161,7 @@ document.write(`<script src="${new URL('../../assets/js/store.js', document.curr
       <div class="feedback" id="fb" role="status"></div>
       <ul class="key" id="key" aria-label="Map colors" hidden>
         <li><i class="mine"></i>Painted</li>
+        <li><i class="zone" id="keyZone"></i>80% area</li>
         <li><i class="all"></i>Places</li>
         <li><i class="asked"></i>Asked</li>
       </ul>
@@ -221,7 +223,18 @@ document.write(`<script src="${new URL('../../assets/js/store.js', document.curr
   app.className = 'app'; app.id = 'app';
   app.innerHTML = body.dataset.page === 'paint' ? PAINT : AREA;
   app.querySelector('.brand').append(...[back, h1].filter(Boolean));
-  if (note) app.querySelector('.startbar').before(note);
+  // The map's corner, bottom right: its zoom buttons and, under them, the credits. The page's list of them is a ©
+  // that opens on a click or when pointed at. Only OpenStreetMap asks to be named on the map itself: "© OpenStreetMap"
+  // stands beside the © where the page names it for more than the street map (which carries its own line).
+  const corner = document.createElement('div'), credits = document.createElement('div'), zoom = app.querySelector('#zoomCtl');
+  corner.className = 'corner'; credits.className = 'credits';
+  if (zoom) corner.append(zoom);
+  if (note) {
+    if (note.textContent.split(' · ').some(part => /OpenStreetMap/.test(part) && !/^\s*Street map/i.test(part))) credits.insertAdjacentHTML('beforeend', '<span class="osm">&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a></span>');
+    note.tabIndex = 0; note.setAttribute('aria-label', 'Credits'); credits.append(note);
+  }
+  corner.append(credits);
+  app.querySelector('.stage').append(corner);
   app.querySelector('#map, #paint').setAttribute('aria-label', `${title} map`);
   // the frame of a phone-number question
   const dial = app.querySelector('#dial');

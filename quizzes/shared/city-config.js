@@ -150,6 +150,7 @@ const QUIZ = (() => {
     base: { land: C.land, lines: C.lines },
     dots: true,
     free,
+    streets: C,
     size: [C.w, C.h], pad: 16, maxZoom: 40, labelScale: 0.25, fly: { pad: 1.6, min: 1.5 / 40 },
     hintLabel: 'Color by region',
     exploreKind: 'en',

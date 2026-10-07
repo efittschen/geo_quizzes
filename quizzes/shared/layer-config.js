@@ -157,6 +157,7 @@ const layerLib = (() => {
       borders: at(L.borders || []),
       ...(L.context === false ? {} : { context: typeof L.context === 'object' ? L.context.d : resolve(L.context || 'DATA.ctx') }),
       size: L.size, pad: L.pad, maxZoom: L.maxZoom, labelScale: L.labelScale, fly: L.fly,
+      ...(typeof DATA === 'object' && DATA.proj ? { proj: DATA.proj, kpu: DATA.kpu } : {}), // how the map is projected, where its data.js says
       ...(L.geo === false ? {} : { geo: resolve(L.geo || 'GEO'), street: L.street }),
       hintLabel: L.hintLabel, exploreKind: L.exploreKind,
       ...(L.hintsDefault === undefined ? {} : { hintsDefault: L.hintsDefault }),

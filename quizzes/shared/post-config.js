@@ -85,6 +85,7 @@ const QUIZ = (() => {
     areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, g: LETTERS ? r.id : ((P.area[r.id] || [''])[0][0] || '') })),
     borders: O.borders || [],
     context: DATA.ctx,
+    proj: DATA.proj, kpu: DATA.kpu,
     size: [DATA.w, DATA.h], pad: 16, maxZoom: zoom, labelScale: O.labelScale || 0.25, fly: { pad: 1.6, min: 1.5 / zoom },
     geo: GEO,
     street: { bounds: [[s, w], [n, e]], maxBounds: [[s - 8, w - 12], [n + 8, e + 12]] },

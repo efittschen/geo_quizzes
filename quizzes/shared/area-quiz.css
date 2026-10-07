@@ -3,8 +3,9 @@
 :root{padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px)}
 /* Hint colors: a shared palette of blues, violets, pinks, cyans and greys that stays clear of the answer
    colors (green, yellow, orange, red). Quizzes pick from it per area: .r[data-g="1"]{--hint:var(--h3)}
-   The street map's tiles are light in either theme, so the areas drawn on it (overlay) keep the light palette. */
-:root,#street{
+   The street map's tiles are light in either theme, so the areas drawn on it (overlay) keep the light palette,
+   and so does a drawn map with the street map behind it (.stage.streets). */
+:root,#street,.stage.streets{
   --h1:#A7D9F6; --h2:#E5A8CD; --h3:#A5B0EB; --h4:#A3B9BA; --h5:#E5D0FE; --h6:#77CFD1; --h7:#C8C5D6; --h8:#7CBEE2;
   --h9:#CABDFA; --h10:#C7A5DC; --h11:#CABAAE; --h12:#C3EFEC; --h13:#A5C9FF; --h14:#B5AFCF; --h15:#CCDBF9; --h16:#A7C1DA;
   --h17:#D6B2C0; --h18:#C5CEFC; --h19:#97E9FF; --h20:#DDCBD6; --h21:#C3D4E0; --h22:#E4C1FA; --h23:#D0B1D9; --h24:#B6B9E7;
@@ -75,11 +76,15 @@ body{overflow:hidden}
 .round .n{grid-column:2;grid-row:1;font:600 1rem/1.1 var(--cond);color:var(--muted);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .round .best{grid-column:2;grid-row:2;display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:.75rem;color:var(--muted);white-space:nowrap}
 .tier-t .star{margin-left:2px}
-/* a round offered in several languages: the languages to pick from, where a round's sub would be */
-.round .langs{grid-column:1;display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
-.round .langs button{appearance:none;padding:1px 9px;border:1.5px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font:500 .8rem/1.35 var(--sans);cursor:pointer}
-.round .langs button:hover{border-color:var(--ink);color:var(--ink)}
-.round .langs button[aria-pressed="true"]{border-color:var(--btn);background:var(--btn);color:var(--btnink)}
+/* the switches in the box of the round picked, where its sub would be, next to each other (its languages; city
+   quizzes: Map or Dots): each one pill in halves, of which one is on */
+.round .switches{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;margin-top:4px}
+.round .switches .best{margin-left:auto}
+.round .langs{display:inline-flex;border:1.5px solid var(--btn);border-radius:999px;overflow:hidden}
+.round .langs button{appearance:none;padding:1px 10px;border:0;border-radius:0;background:transparent;color:var(--muted);font:500 .8rem/1.35 var(--sans);text-align:center;white-space:nowrap;cursor:pointer}
+.round .langs button + button{border-left:1.5px solid var(--btn)}
+.round .langs button:hover{color:var(--ink)}
+.round .langs button[aria-pressed="true"]{background:var(--btn);color:var(--btnink)}
 .round.custom{border-style:dashed}
 .icon{appearance:none;flex:0 0 36px;display:grid;place-items:center;border:1.5px solid var(--line);border-radius:var(--radius);background:transparent;color:var(--muted);cursor:pointer}
 .icon:hover{border-color:var(--ink);color:var(--ink)}
@@ -89,7 +94,7 @@ body{overflow:hidden}
 .save input{flex:1 1 9em;min-width:0;padding:6px 12px;border:1.5px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);font:inherit;font-size:.92rem}
 .save input:focus{border-color:var(--ink);outline:none}
 /* the start bar stays at the bottom of the panel however long the setup gets */
-.startbar{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;gap:10px;margin:-8px -26px 0;padding:12px 26px 16px;background:var(--panel);border-top:1px solid var(--line)}
+.startbar{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;gap:10px;margin:auto -26px 0;padding:12px 26px 16px;background:var(--panel);border-top:1px solid var(--line)}
 /* sticky stops at the panel's padding, so on the setup screen the bar itself provides the bottom space */
 .app:not(.playing) .panel{padding-bottom:0}
 /* the layers of a quiz as folders: tabs hanging under the list of rounds, the open one joined to the list above it */
@@ -198,7 +203,23 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
 .info .dial .code{font-size:5rem}
 .info .dial .p{font-size:3.4rem}
 .info .dial.multi .code{font-size:3rem} .info .dial.multi .p{font-size:2.2rem}
-.note{font-size:.85rem;color:var(--muted);margin:auto 0 0}
+/* the map's corner, bottom right: the zoom buttons and, under them, the credits. The page's list (.note) is a © that
+   opens on a click or when pointed at; "© OpenStreetMap" stands beside it where the map is drawn from its data or
+   shows its tiles. The street map carries its own line, which the corner stays above. */
+.corner{position:absolute;right:0;bottom:0;z-index:1100;display:flex;flex-direction:column;align-items:flex-end;gap:8px;width:min(62%,36rem);padding-bottom:env(safe-area-inset-bottom,0px);pointer-events:none}
+.corner .zoom{position:static;margin-right:14px;pointer-events:auto}
+.credits{display:flex;align-items:flex-end}
+.credits > *{pointer-events:auto}
+.credits .osm,.note{margin:0;font-size:.7rem;line-height:1.35;color:var(--muted);background:color-mix(in srgb,var(--panel) 85%,transparent)}
+.credits .osm{padding:2px 8px;white-space:nowrap}
+.credits > :first-child{border-top-left-radius:6px}
+.credits a{color:inherit}
+.note{position:relative;width:1.7rem;height:1.45rem;overflow:hidden;white-space:nowrap;text-indent:-300vw;cursor:pointer}
+.note::before{content:'©';position:absolute;inset:0;text-indent:0;text-align:center;font-size:.85rem;line-height:1.45rem}
+.note:hover,.note:focus,.note:focus-within{position:absolute;right:0;bottom:env(safe-area-inset-bottom,0px);z-index:1;width:max-content;max-width:100%;height:auto;padding:3px 8px;white-space:normal;text-indent:0;text-align:right;background:var(--panel);border-top-left-radius:6px;cursor:auto;outline:0}
+.note:hover::before,.note:focus::before,.note:focus-within::before{content:none}
+.stage:has(#street:not([hidden])) .corner{bottom:20px}
+.stage:has(#street:not([hidden])) .credits .osm{display:none}
 
 /* street map (hard mode) */
 #street{position:absolute;inset:0;background:var(--sea)}
@@ -274,6 +295,25 @@ svg#map.grab{cursor:grabbing}
 @keyframes pulse{from{stroke-width:2}to{stroke-width:5}}
 #labels text{font-family:var(--cond);font-weight:700;fill:var(--ink);stroke:var(--halo);stroke-width:3px;paint-order:stroke;text-anchor:middle;dominant-baseline:central;pointer-events:none}
 #labels text.off{display:none}
+/* the street map behind a drawn map (map-tiles.js: city quizzes, town names). Its tiles are light in either
+   theme, so the stage keeps the light colors. The land and the neighbours make way for it; the overlay keeps the
+   borders, the street map alone nothing. An inset has no tiles: its frame and land stay drawn. */
+.stage.streets{--sea:#D6E2E7;--panel:#F6F8F6;--card:#FFFFFF;--ink:#15283A;--muted:#5A6B78;--line:#C9D3D8;--land:#EDF0E4;--edge:rgba(21,40,58,.32);--state:#15283A;
+  --got:#62B686;--t2:#F2CF5B;--t3:#EE9A4D;--miss:#E8877E;--halo:rgba(246,248,246,.9);--btn:#15283A;--btnink:#F6F8F6;color:var(--ink)}
+canvas.tiles{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none}
+/* Street View coverage laid over a map: blended into it, so what is under it stays readable */
+#coverage,.leaflet-coverage-pane{mix-blend-mode:multiply;opacity:.5}
+/* (on the dark quiz map it is lightened into it instead; the street map is light in either theme) */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .stage:not(.streets) #coverage{mix-blend-mode:screen;opacity:.85}}
+:root[data-theme="dark"] .stage:not(.streets) #coverage{mix-blend-mode:screen;opacity:.85}
+.stage.streets svg#map{position:relative}
+#ctx path.inset-box,#ctx path.inset-land{display:none}
+svg.streets #ctx path{fill:none;stroke:none}
+svg.streets #ctx path.land{stroke:var(--state);stroke-width:1.2;stroke-opacity:.55}
+svg.streets #ctx path.lines{stroke:var(--state);stroke-width:.9;stroke-opacity:.6}
+svg.streets.plain #ctx path.land,svg.streets.plain #ctx path.lines{stroke:none}
+svg.streets #ctx path.inset-box{display:inline;fill:var(--sea);stroke:var(--edge)}
+svg.streets #ctx path.inset-land{display:inline;fill:var(--land);stroke:var(--edge)}
 
 .zoom{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;border-radius:var(--radius);overflow:hidden;background:var(--panel);border:1px solid var(--line)}
 .zoom button{appearance:none;border:0;background:transparent;width:40px;height:40px;font:600 1.25rem/1 var(--sans);cursor:pointer}
@@ -285,6 +325,10 @@ svg#map.grab{cursor:grabbing}
 .maps button + button{border-left:1px solid var(--line)}
 .maps button:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
 .maps button[aria-pressed="true"]{background:var(--btn);color:var(--btnink)}
+.maps button:disabled{opacity:.45;cursor:default}
+/* the pickers on the map in one bar: the maps and, beside them, the switch for the coverage */
+.mapbar{position:absolute;left:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:1100;display:flex;flex-wrap:wrap-reverse;gap:8px;max-width:calc(100% - 28px)}
+.mapbar .maps{position:static}
 
 @media (max-width:760px){
   .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
@@ -307,7 +351,8 @@ svg#map.grab{cursor:grabbing}
   .setup{gap:12px}
   .rounds{gap:10px}
   .round{padding:6px 10px}
-  .note{display:none}
+  .corner{width:calc(100% - 16px)}
+  .note{width:1.9rem;height:1.7rem} .note::before{line-height:1.7rem}
 }
 @media (prefers-reduced-motion: reduce){
   *{animation:none!important;transition:none!important}

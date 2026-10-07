@@ -26,6 +26,10 @@
 //   free         city quizzes: { span, measure(point, id) -> [km shown, km scored] } also offers playing on the map
 //                itself: the dots stay hidden, a click anywhere answers, and points fall with the distance to the
 //                city (GeoGuessr's 5000 · e^(−10 · d / D), D = span, the map's diagonal in km)
+//   streets      city quizzes: the cities.js the map is drawn from (its projection, land and insets). Offers the street
+//                map behind the quiz map, with the region borders on it (overlay) or alone: ./map-tiles.js
+//   proj, kpu    how the quiz map is projected and its km per map unit (from its data.js): Street View coverage can
+//                then be laid on the quiz map too, not only on the street map (see useCover)
 //   hintsDefault whether "color areas" starts ticked (default true)
 //   lettersLabel optional option text: show every area's label while playing
 //   (per kind)   merge: false keeps every area drawn separately even when the kind's items group them;
@@ -61,6 +65,7 @@
   if (document.body.dataset.key) Q.key = document.body.dataset.key;
   // Explore labels by the page's own first kind if the configured one isn't on this page.
   if (!Q.kinds.some(k => k.key === Q.exploreKind)) Q.exploreKind = Q.kinds[0].key;
+  const HERE = document.currentScript.src.replace(/[^/]*$/, ''); // where the shared scripts are
   const MAX_TRIES = 3;
   const RESULT_CLASS = ['got', 't2', 't3', 'miss']; // index = wrong clicks before the right one
   // Standard OpenStreetMap tiles: free for light use with attribution, no API key needed.
@@ -122,6 +127,7 @@
   const gPins = document.createElementNS(NS, 'g'); gPins.id = 'pins'; svg.appendChild(gPins);
   const gFree = document.createElementNS(NS, 'g'); gFree.id = 'free'; svg.insertBefore(gFree, gR); // map play: the last guess, under the dots
   let streetPin = null;
+  let tiles = null; // map tiles in the quiz map's own projection (map-tiles.js), once asked for: see withTiles
 
   /* ---------- what can be asked ----------
      Each kind: key, label, sub, noun [one, many], pickTitle, groups [{ title, sub, ids }],
@@ -251,7 +257,10 @@
     if (w / h < a) w = h * a; else h = w / a;
     base = { x: (HOME[0] + HOME[2]) / 2 - w / 2, y: (HOME[1] + HOME[3]) / 2 - h / 2, w, h };
   }
-  function apply() { svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`); sizeLabels(); syncDetail(); }
+  function apply() {
+    svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`); sizeLabels(); syncDetail();
+    if (tiles) { const r = svg.getBoundingClientRect(), s = Math.min(r.width / vb.w, r.height / vb.h); if (s) tiles.view(vb.x - (r.width / s - vb.w) / 2, vb.y - (r.height / s - vb.h) / 2, s); }
+  }
   function scale() { const r = svg.getBoundingClientRect(); return Math.min(r.width / vb.w, r.height / vb.h) || 1; }
   function toSvg(cx, cy, v) {
     const r = svg.getBoundingClientRect(); const s = Math.min(r.width / v.w, r.height / v.h);
@@ -394,7 +403,7 @@
     svg.classList.toggle('free', style === 'free');
     if (onStreet()) { initStreet(); lmap.invalidateSize(); fitHome(); }
     else resetView();
-    syncHints();
+    syncHints(); syncCover();
   }
   function activeKind() { return view === 'explore' ? Q.exploreKind : view === 'setup' ? choiceKind() : G.kind; }
   // The item under the pointer: outlined on the quiz map, tinted on the overlay.
@@ -882,6 +891,7 @@
     $('app').classList.toggle('playing', id !== 'setup');
     $('startbar').hidden = id !== 'setup';
     $('mapSeg').hidden = id !== 'setup' || $('mapSeg').childElementCount < 2;
+    mapBar.hidden = id !== 'setup';
     mapClass('picking', id === 'setup');
     // Hint colors fade while playing and on the results, so the answer colors stand out.
     mapClass('fade', id === 'play' || id === 'done');
@@ -903,17 +913,88 @@
 
   let pickKind = KINDS[load('kind')] ? load('kind') : Q.kinds[0].key;
   // The maps to play on: the quiz map, the street map, or the overlay (the street map with the quiz map's outlines
-  // and colors on it). City quizzes (Q.free) choose between clicking anywhere on the map (the default) and clicking
-  // the dots instead. The choice is a small picker on the map itself, shown on the setup screen.
+  // and colors on it): a small picker on the map itself, shown on the setup screen. City quizzes (Q.free) choose
+  // between clicking anywhere on the map (the default) and clicking the dots instead: that is asked in the box of
+  // the round picked, under its name (playRow), not on the map.
   const FREE = !!Q.free;
+  const SWITCHES = FREE || ROUNDS.some(r => r.of); // rounds with a switch in their box: Map or Dots, a language
   const MAPS = FREE ? [['free', 'Map', 'by distance'], ['quiz', 'Dots', '3 tries']]
     : [['quiz', 'Quiz map', 'with borders'], ['overlay', 'Overlay', 'borders on streets'], ['street', 'Street map', 'hard, no borders']].slice(0, Q.geo ? 3 : 1);
   let chosenMap = MAPS.some(([m]) => m === load('map')) ? load('map') : MAPS[0][0];
-  $('mapSeg').hidden = MAPS.length < 2; // nothing to choose between
-  $('mapSeg').replaceChildren(...MAPS.map(([m, t, sub]) => {
+  $('mapSeg').hidden = FREE || MAPS.length < 2; // nothing to choose between
+  $('mapSeg').replaceChildren(...(FREE ? [] : MAPS).map(([m, t, sub]) => {
     const b = document.createElement('button'); b.type = 'button'; b.dataset.map = m; b.textContent = t; b.title = sub;
     return b;
   }));
+  // The quiz map can carry map tiles redrawn in its own projection (map-tiles.js, loaded when first asked for), where
+  // the page says how it is projected: the city quizzes (Q.streets, their cities.js) and the area quizzes with a
+  // projection in their data.js (Q.proj).
+  const TILED = Q.streets || (Q.proj && Q.kpu && /^(conicEqualArea|albersUsa)$/.test(Q.proj.type)
+    ? { proj: Q.proj, kpu: Q.kpu, areas: Q.areas.filter(a => Q.geo && Q.geo[a.id]).map(a => ({ d: a.d, lat: Q.geo[a.id].lab[0], lng: Q.geo[a.id].lab[1], x: a.lx, y: a.ly })) } : null);
+  let waiting = null; // what to do once the script is there
+  function withTiles(then) {
+    if (tiles) return then();
+    if (waiting) return waiting.push(then);
+    waiting = [then];
+    const s = document.createElement('script'); s.src = HERE + 'map-tiles.js';
+    s.onload = () => {
+      tiles = mapTiles($('stage'), TILED);
+      if (Q.streets) for (const cls of ['box', 'land']) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', tiles.insets[cls]); p.setAttribute('class', 'inset-' + cls); $('ctx').insertBefore(p, $('ctx').querySelector('.lines')); }
+      for (const f of waiting) f();
+    };
+    document.head.append(s);
+  }
+  // The pickers on the map, in one bar: the maps, and beside them the switch for the coverage.
+  const mapBar = document.createElement('div'); mapBar.className = 'mapbar';
+  $('mapSeg').before(mapBar); mapBar.append($('mapSeg'));
+  // City quizzes can have the street map behind the quiz map: the overlay keeps the region borders on it, the street
+  // map shows the streets alone. Their picker takes the place of the map picker, which they don't have.
+  const BACKS = Q.streets ? [['quiz', 'Quiz map', 'drawn'], ['overlay', 'Overlay', 'borders on streets'], ['street', 'Street map', 'no borders']] : [];
+  let chosenBack = BACKS.some(([m]) => m === load('back')) ? load('back') : 'quiz';
+  const backSeg = document.createElement('div');
+  backSeg.className = 'maps'; backSeg.hidden = !BACKS.length; backSeg.setAttribute('role', 'group'); backSeg.setAttribute('aria-label', 'Background');
+  backSeg.replaceChildren(...BACKS.map(([m, t, sub]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.dataset.back = m; b.textContent = t; b.title = sub;
+    b.onclick = () => useBack(m);
+    return b;
+  }));
+  mapBar.append(backSeg);
+  function useBack(back) {
+    chosenBack = back; store('back', back);
+    for (const b of backSeg.children) b.setAttribute('aria-pressed', b.dataset.back === back);
+    svg.classList.toggle('streets', back !== 'quiz'); svg.classList.toggle('plain', back === 'street');
+    if (back !== 'quiz' || tiles) withTiles(() => { tiles.streets().show(chosenBack !== 'quiz'); apply(); });
+  }
+  if (BACKS.length) useBack(chosenBack);
+  // Street View coverage on top of the map, whatever the map: a switch of its own beside the map picker. It is the
+  // layer of the Coverage page (data/coverage, see the README): on the street map and the overlay a layer of that
+  // map, on the quiz map redrawn in the quiz map's projection, where that is known (TILED).
+  const COVER = HERE + '../../data/coverage';
+  let coverOn = !!load('cover'), coverMeta = null, coverLayer = null, covered = false;
+  const coverSeg = document.createElement('div'), coverBtn = document.createElement('button');
+  coverSeg.className = 'maps'; coverSeg.hidden = !(TILED || Q.geo); coverBtn.type = 'button'; coverBtn.textContent = 'Coverage'; coverBtn.title = 'Street View coverage';
+  coverBtn.onclick = () => { coverOn = !coverOn; store('cover', coverOn || null); syncCover(); };
+  coverSeg.append(coverBtn); mapBar.append(coverSeg);
+  function syncCover() {
+    const here = onStreet() ? !!Q.geo : !!TILED; // can the map in use show it
+    coverBtn.disabled = !here; coverBtn.setAttribute('aria-pressed', coverOn && here);
+    if (!coverOn && !covered) return;
+    covered = true;
+    (coverMeta ||= fetch(COVER + '/meta.json').then(r => r.json())).then(meta => {
+      if (TILED) withTiles(() => { tiles.coverage(COVER, meta).show(coverOn && !onStreet()); apply(); });
+      if (!lmap) return;
+      if (!coverLayer) {
+        lmap.createPane('coverage').style.zIndex = 300; // over the street map's tiles, under the areas
+        const have = Object.fromEntries(Object.entries(meta.tiles).map(([z, l]) => [z, new Set(l)]));
+        coverLayer = new (L.TileLayer.extend({ _isValidTile(c) { // only the tiles that exist are asked for
+          if (!L.TileLayer.prototype._isValidTile.call(this, c)) return false;
+          const z = c.z - 2, n = 2 ** z; return !!have[z] && have[z].has(`${((c.x % n) + n) % n}/${c.y}`);
+        } }))(COVER + '/{z}/{x}/{y}.png', { pane: 'coverage', tileSize: 1024, zoomOffset: -2, minNativeZoom: 2, maxNativeZoom: meta.zoom,
+          attribution: 'Coverage: <a href="https://github.com/slashP/Vali">Vali</a> location pool' });
+      }
+      if (coverOn && onStreet()) coverLayer.addTo(lmap); else coverLayer.remove();
+    }, () => {});
+  }
   const SEL = {};
   for (const k in KINDS) {
     const saved = load('sel.' + k);
@@ -975,6 +1056,7 @@
   function choose(key) {
     choice = key; store('choice', key === 'shared' ? '' : key);
     if (roundOf(key)) lastIn[folderOf(roundOf(key).kind)] = key;
+    if (SWITCHES) buildRounds(); // the box picked shows its switches
     if (key === 'custom') buildPicker(); else syncSetup();
     frameRound();
     if (key === 'custom') $('customWrap').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -1042,23 +1124,37 @@
     b.onclick = () => choose(key);
     return b;
   }
-  // A round offered in several languages is one box: the languages are buttons where a round's sub would be. The box
-  // shows (and a click on it chooses) the round in the language picked last, or in its first one.
+  // A round offered in several languages is one box. It shows (and a click on it chooses) the round in the language
+  // picked last, or in its first one; once it is the round picked, its languages are a switch under its name.
   function roundBox(variants) {
     const keyOf = v => 'r:' + v.id, langOf = v => KINDS[v.kind].lang || KINDS[v.kind].label;
-    if (variants.length < 2) { const r = variants[0]; return roundBtn(keyOf(r), r.label, r.sub, r.kind, roundIds(r), r.random); }
+    if (variants.length < 2) { const r = variants[0]; return answerable(roundBtn(keyOf(r), r.label, r.sub, r.kind, roundIds(r), r.random)); }
     const on = variants.find(v => keyOf(v) === choice) || variants.find(v => langOf(v) === load('lang')) || variants[0];
-    const b = roundBtn(keyOf(on), on.label, '', on.kind, roundIds(on), on.random), box = document.createElement('div');
-    box.className = 'round'; box.dataset.choice = keyOf(on); box.setAttribute('role', 'group'); box.setAttribute('aria-label', on.label);
-    const langs = document.createElement('span'); langs.className = 'langs';
-    langs.append(...variants.map(v => {
-      const l = document.createElement('button'); l.type = 'button'; l.textContent = langOf(v); l.setAttribute('aria-pressed', v === on);
-      l.onclick = e => { e.stopPropagation(); store('lang', langOf(v)); choice = keyOf(v); store('choice', choice); buildRounds(); frameRound(); };
+    const langs = () => options(variants.map(v => [langOf(v), '', v === on, () => { store('lang', langOf(v)); choice = keyOf(v); store('choice', choice); buildRounds(); frameRound(); }]));
+    return answerable(roundBtn(keyOf(on), on.label, '', on.kind, roundIds(on), on.random), ...(keyOf(on) === choice ? [langs()] : []));
+  }
+  // A switch in a round's box, where its sub would be: one of its options is on. [label, title, on, onclick] each.
+  function options(list) {
+    const row = document.createElement('span'); row.className = 'langs';
+    row.append(...list.map(([label, title, on, click]) => {
+      const l = document.createElement('button'); l.type = 'button'; l.textContent = label; if (title) l.title = title; l.setAttribute('aria-pressed', on);
+      l.onclick = e => { e.stopPropagation(); click(); };
       return l;
     }));
-    const [title, ...rest] = b.childNodes;
-    box.append(title, ...rest.filter(n => !n.classList.contains('best')), langs, ...rest.filter(n => n.classList.contains('best')));
-    box.onclick = () => choose(keyOf(on));
+    return row;
+  }
+  // City quizzes: how to answer, on the map by distance or on the dots. Asked in the box of the round picked.
+  const playRow = () => options(MAPS.map(([m, t, sub]) => [t, sub, m === chosenMap, () => { chosenMap = m; if (view === 'setup') useMap(chosenMap); buildRounds(); }]));
+  // The box of the round picked, with its switches (its languages; how to answer). A box with buttons in it is a
+  // group, not a button itself.
+  function answerable(b, ...rows) {
+    if (FREE && b.dataset.choice === choice) rows.push(playRow());
+    if (!rows.length) return b;
+    const box = document.createElement('div'), kids = [...b.childNodes], best = n => n.classList && n.classList.contains('best'), side = document.createElement('span');
+    box.className = b.className; box.dataset.choice = b.dataset.choice; box.setAttribute('role', 'group'); box.setAttribute('aria-label', kids[0].textContent);
+    side.className = 'switches'; side.append(...rows, ...kids.filter(best)); // next to each other, the best result after them
+    box.append(...kids.filter(n => !best(n)), side);
+    box.onclick = b.onclick;
     return box;
   }
   const withIcons = (btn, ...icons) => { const d = document.createElement('div'); d.className = 'round-row'; d.append(btn, ...icons); return d; };
@@ -1082,12 +1178,12 @@
       if (tier >= 0 && levels[tier] !== undefined) h.insertAdjacentHTML('beforeend', starHtml(levels[tier]));
       const d = document.createElement('div'); d.className = 'tier'; d.dataset.tier = tier; d.append(h, ...rows); wrap.append(d);
     };
-    if (SHARED && inOpen(SHARED.kind)) section(-1, 'Shared with you', [withIcons(roundBtn('shared', SHARED.name, kindNote(SHARED.kind), SHARED.kind, SHARED.ids),
+    if (SHARED && inOpen(SHARED.kind)) section(-1, 'Shared with you', [withIcons(answerable(roundBtn('shared', SHARED.name, kindNote(SHARED.kind), SHARED.kind, SHARED.ids)),
       iconBtn('save', 'Save to your quizzes', () => saveQuiz(SHARED.name, SHARED.kind, SHARED.ids)))]);
     const byTier = TIERS.map(() => []);
     for (const r of ROUNDS) if (!r.of && inOpen(r.kind)) byTier[tierOf(roundIds(r).length)].push(roundBox(ROUNDS.filter(v => v === r || v.of === r)));
     TIERS.forEach(([, name], i) => section(i, name, byTier[i]));
-    section(-1, 'Your quizzes', SAVED.map((s, i) => inOpen(s.kind) && withIcons(roundBtn('s:' + i, s.name, kindNote(s.kind), s.kind, s.ids),
+    section(-1, 'Your quizzes', SAVED.map((s, i) => inOpen(s.kind) && withIcons(answerable(roundBtn('s:' + i, s.name, kindNote(s.kind), s.kind, s.ids)),
       iconBtn('link', 'Copy a link to this quiz', () => copyLink(s.kind, s.ids, s.name)),
       iconBtn('del', 'Delete this quiz', () => deleteQuiz(i)))).filter(Boolean));
     const custom = document.createElement('button'); custom.type = 'button'; custom.className = 'round custom'; custom.dataset.choice = 'custom';
@@ -1095,7 +1191,7 @@
     const cn = document.createElement('span'); cn.className = 'n'; cn.id = 'customCount';
     const cs = document.createElement('small'); cs.textContent = 'Pick your own';
     custom.append(ct, cn, cs); custom.onclick = () => { if (many && folderOf(pickKind) !== open) pickKind = open; choose('custom'); };
-    wrap.append(custom);
+    wrap.append(answerable(custom));
     // a custom quiz is of the open folder's kind, in any of its languages
     for (const b of $('kindSeg').children) b.hidden = !inOpen(b.dataset.kind);
     $('kindSeg').parentElement.hidden = [...$('kindSeg').children].filter(b => !b.hidden).length < 2;
