@@ -198,20 +198,30 @@ function renderMap(world, quizzesByCode, roads) {
 
   // While the pointer is on a country, the roads there with Google Street View coverage are drawn on it: a picture
   // in the map's own projection (data/coverage/home/, made by tools/coverage.mjs countries), which comes in several
-  // scales (pixels per map unit); the one that fits the zoom and the screen is shown.
-  const roadImage = g.append("image").attr("class", "roads").attr("preserveAspectRatio", "none").attr("display", "none");
+  // scales (pixels per map unit); the one that fits the zoom and the screen is shown. Each country has a picture element
+  // of its own, made when it is first pointed at: a browser may go on showing an element's last picture until the next
+  // one is ready (Firefox does), and in one shared element that was another country's roads, stretched to this
+  // country's box for a moment.
+  const roadImages = new Map();
+  const roadImage = (r) => {
+    if (!roadImages.has(r[0])) roadImages.set(r[0], g.append("image").attr("class", "roads").attr("preserveAspectRatio", "none").attr("x", r[1]).attr("y", r[2]).attr("width", r[3]).attr("height", r[4]).attr("display", "none"));
+    return roadImages.get(r[0]);
+  };
   const roadsOf = (d) => roads && (roads.ids[d.id] ?? roads.names[d.properties.name]);
   const roadUrl = (r, k) => {
     const need = (k * svg.node().clientWidth / WIDTH) * devicePixelRatio;
     return `data/coverage/home/${r[0]}_${roads.scales.find((s) => s >= need) ?? roads.scales.at(-1)}.png`;
   };
   let pointed = null;
+  let shown = null;
   let zoomed = 1;
   function showRoads(d) {
     pointed = d;
     const r = d && roadsOf(d);
-    if (!r) return roadImage.attr("display", "none");
-    roadImage.attr("href", roadUrl(r, zoomed)).attr("x", r[1]).attr("y", r[2]).attr("width", r[3]).attr("height", r[4]).attr("display", null);
+    const image = r ? roadImage(r) : null;
+    if (shown && shown !== image) shown.attr("display", "none");
+    shown = image;
+    if (image) image.attr("href", roadUrl(r, zoomed)).attr("display", null);
   }
   // The pictures for the starting zoom are fetched ahead, so the roads are there the moment a country is pointed at.
   if (roads) setTimeout(() => [...Object.values(roads.ids), ...Object.values(roads.names)].forEach((r) => (new Image().src = roadUrl(r, 1))), 300);
