@@ -26,9 +26,12 @@
 //                 Not for a second language of a country (Swedish in Finland, Māori in New Zealand): there the
 //                 English name is the one on the signs.
 //     top         sizes of the "Top N" rounds; a round with every city is added at the end
+//     list        another list of cities on the country's map: { order, list }, from a file of the page's own. The
+//                 page then loads the country's cities.js for the map and the regions, and this list replaces
+//                 its cities (us-cities-coverage: the cities picked by Street View coverage).
 
 const QUIZ = (() => {
-  const C = CITIES, O = typeof CITY_OPTS === 'object' ? CITY_OPTS : {};
+  const O = typeof CITY_OPTS === 'object' ? CITY_OPTS : {}, C = O.list ? { ...CITIES, ...O.list } : CITIES;
   const BY = Object.fromEntries(C.list.map(c => [c.id, c]));
   const ALL = C.list.map(c => c.id); // list order: largest first, or CITIES.order
   const BY_POP = ALL.slice().sort((a, b) => BY[b].pop - BY[a].pop);

@@ -63,11 +63,12 @@ function openCoverage(name, box, key) {
 
 // placeOf(quiz): on a suite's page, the country of each quiz. It leads there, with the quiz's title under it
 // ("Brazil", "States"); a quiz about the world or a continent keeps its title on top ("Flags", "World").
-// inside(quiz): a quiz shown within this one's entry (the town names within the cities), as a smaller entry under it.
+// inside(quiz): the quizzes shown within this one's entry (the cities by coverage and the town names within the
+// cities), as smaller entries under it.
 // group(quiz): the heading a quiz stands under ("Basics"); a heading is put before the first quiz of each group.
-function renderQuizzes(quizzes, placeOf, inside = () => null, group = null) {
+function renderQuizzes(quizzes, placeOf, inside = () => [], group = null) {
   const list = $("quiz-cards");
-  const within = new Set(quizzes.map(inside).filter(Boolean));
+  const within = new Set(quizzes.flatMap(inside));
   let heading = null;
   for (const quiz of quizzes) {
     if (within.has(quiz)) continue;
@@ -100,9 +101,9 @@ function renderQuizzes(quizzes, placeOf, inside = () => null, group = null) {
     row.title = RATING_HELP;
     a.appendChild(row);
     li.appendChild(a);
-    const more = inside(quiz);
-    if (more) {
-      a.classList.add("has-inside");
+    let above = a;
+    for (const more of inside(quiz)) {
+      above.classList.add("has-inside");
       const b = document.createElement("a");
       b.className = "quiz-card inside";
       b.href = quizUrl(more);
@@ -112,6 +113,7 @@ function renderQuizzes(quizzes, placeOf, inside = () => null, group = null) {
       if (!loadRating(more.id)?.played) stars.classList.add("unplayed");
       b.append(name, stars);
       li.appendChild(b);
+      above = b;
     }
     list.appendChild(li);
   }
@@ -193,7 +195,7 @@ async function init() {
       : "";
     drawShape(feature, roads && (roads.ids[code] ?? roads.names[name]));
     const ordered = inOrder(quizzes);
-    if (quizzes.length) renderQuizzes(ordered, null, (q) => (q.role === "cities" ? ordered.find((x) => x.role === "names") : null), quizGroup);
+    if (quizzes.length) renderQuizzes(ordered, null, (q) => (q.role === "cities" ? ordered.filter((x) => x.role === "cities-coverage" || x.role === "names") : []), quizGroup);
     else showEmpty(`No quizzes for ${name} yet.`);
     renderReview(index, quizzes, countryUrl(code));
     showReviewDue(index);
