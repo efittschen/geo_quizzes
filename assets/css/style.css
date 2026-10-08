@@ -141,6 +141,11 @@ main > .map-wrap:first-child{margin-top:24px}
 .timer-opts #max{width:6.4em}
 .timer-opts select{margin:0 4px;padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit}
 .timer-opts input{width:4.6em;margin:0 4px;padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;background:transparent;color:var(--ink);font:inherit}
+.timer-opts input[type=url]{width:26em;max-width:100%;margin:0}
+.timer-opts input[readonly]{color:var(--muted)}
+.steps{margin-top:12px;color:var(--muted);font-size:.92rem}
+.steps summary{width:fit-content;cursor:pointer}
+.steps ol{margin:8px 0 0;padding-left:1.5em;line-height:1.8}
 
 /* Multiple-choice quiz page */
 .quiz-page{max-width:720px}

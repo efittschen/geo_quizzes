@@ -75,9 +75,31 @@
         <input type="file" id="upload-file" accept="application/json,.json" hidden>
       </div>
     </section>
+
+    <section>
+      <h2>Online copy</h2>
+      <div class="timer-opts">
+        <input type="url" id="sync-url" placeholder="Web app link" aria-label="Web app link" autocomplete="off" spellcheck="false">
+        <button type="button" class="ghost small" id="sync-on">Connect</button>
+        <button type="button" class="ghost small" id="sync-off" hidden>Disconnect</button>
+        <span id="sync-state"></span>
+      </div>
+      <details class="steps" id="sync-steps">
+        <summary>Setup</summary>
+        <ol>
+          <li><a href="https://sheets.new" target="_blank" rel="noopener">New Google Sheet</a></li>
+          <li>Extensions → Apps Script</li>
+          <li>Paste the script <button type="button" class="linkbtn" id="sync-script">Copy</button></li>
+          <li>Deploy → New deployment → Web app · Execute as: Me · Who has access: Anyone</li>
+          <li>Authorize access → Advanced → Go to … (unsafe) → Allow</li>
+          <li>Web app link → above, on every device</li>
+        </ol>
+      </details>
+    </section>
   </main>
 
   <script src="assets/js/store.js"></script>
+  <script src="assets/js/sync.js"></script>
   <script src="assets/js/common.js"></script>
   <script src="assets/js/srs.js"></script>
   <script src="assets/js/review.js"></script>

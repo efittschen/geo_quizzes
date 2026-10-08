@@ -18,11 +18,16 @@
 //     custom   the player's own quizzes: [{ name, kind, ids }]
 //     last     what was chosen last on the setup screen: { choice, kind, lang, map, topN, opts, sel: { <layer>: [ids] } }
 //     paint    a town-name quiz's results: { best: { <round>: places right }, choice }
+//     changed  when `stars` and `custom` last changed here: { stars, custom } (times), and
+//     cleared  when the stack was last removed: what a merge with the online copy goes by (see sync.js)
 //   geoquizzes.settings         { easy, known, limit: the review clock's three times in seconds; perReview, perDay: the most
 //                                 cards in one review and in one day; the review schedule (see srs.js): scheduler
 //                                 ("fsrs" or "sm2"), retention, steps, missStep, kept, firstInterval, ease, unsure, longest;
-//                                 open: the folders open in "All quizzes" }
+//                                 open: the folders open in "All quizzes"; changed: when any but `open` last
+//                                 changed here (a time, for the online copy) }
 //   geoquizzes.review           { day: { date, reviewed }: cards reviewed today; run: a review in progress (srs.js) }
+//   geoquizzes.sync             the online copy, if the player named one (see sync.js): its link and what was seen
+//                                 of it. It belongs to this browser: no data file holds it, and none replaces it.
 //
 // The data file of the review page ("Your data") is these entries as they are:
 //   { app: "geo-quizzes", version: 2, saved, settings, review, quizzes: { <quiz id>: record }, older }
@@ -32,17 +37,22 @@
 // carried over when this file loads; those of the second by their quiz page when it next opens (`adopt`), since only
 // the page knows its short name. Until then they are the `older` part of a data file, so nothing is left behind.
 const STORE = (() => {
-  const P = 'geoquizzes.', QUIZ = P + 'quiz.', SETTINGS = P + 'settings', REVIEW = P + 'review';
+  const P = 'geoquizzes.', QUIZ = P + 'quiz.', SETTINGS = P + 'settings', REVIEW = P + 'review', SYNC = P + 'sync';
   const keys = () => { const out = []; try { for (let i = 0; i < localStorage.length; i++) out.push(localStorage.key(i)); } catch (e) {} return out; };
   const parse = key => { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } };
   const drop = key => { try { localStorage.removeItem(key); } catch (e) {} };
   const get = key => { const v = parse(key); return v && typeof v === 'object' ? v : {}; };
   const put = (key, v) => { try { if (Object.keys(v).length) localStorage.setItem(key, JSON.stringify(v)); else localStorage.removeItem(key); } catch (e) {} };
   // An entry is read, changed and written in one go, so two tabs on the same quiz do not undo each other's parts.
-  const change = (key, f) => { const v = get(key); f(v); put(key, v); };
+  // Every change is told to whoever listens: sync.js, which sends it to the online copy.
+  let heard = null;
+  const told = () => { if (heard) heard(); };
+  const change = (key, f) => { const v = get(key); f(v); put(key, v); if (key !== SYNC) told(); };
+  const now = () => time(Date.now());
 
   // A record is written with its parts in one order, and a best result's too, so the entries read alike.
-  const PARTS = ['title', 'stars', 'cards', 'best', 'custom', 'last', 'paint'];
+  const PARTS = ['title', 'stars', 'cards', 'best', 'custom', 'last', 'paint', 'changed', 'cleared'];
+  const WHOLE = ['stars', 'custom']; // the parts a merge takes as a whole, from where they changed last
   function tidy(r) {
     const out = {};
     for (const k of PARTS) if (k in r) out[k] = r[k];
@@ -50,9 +60,18 @@ const STORE = (() => {
     if (out.best) for (const [k, b] of Object.entries(out.best)) out.best[k] = { ...(b.name ? { name: b.name } : {}), of: b.of, score: b.score, ms: b.ms, ...(b.points != null ? { points: b.points } : {}) };
     return out;
   }
-  const quiz = id => get(QUIZ + id), setQuiz = (id, f) => { const r = quiz(id); f(r); put(QUIZ + id, tidy(r)); };
+  const quiz = id => get(QUIZ + id);
+  // A change to a record notes what a merge goes by: when a part taken as a whole changed, when the stack went.
+  function setQuiz(id, f) {
+    const r = quiz(id), was = WHOLE.map(k => JSON.stringify(r[k])), stack = !!r.cards;
+    f(r);
+    WHOLE.forEach((k, i) => { if (JSON.stringify(r[k]) !== was[i]) (r.changed ||= {})[k] = now(); });
+    if (stack && !r.cards) r.cleared = now();
+    put(QUIZ + id, tidy(r)); told();
+  }
   const quizIds = () => keys().filter(k => k.startsWith(QUIZ)).map(k => k.slice(QUIZ.length)).sort();
-  const settings = () => get(SETTINGS), setSettings = f => change(SETTINGS, f);
+  const settings = () => get(SETTINGS);
+  const setSettings = f => change(SETTINGS, s => { const was = JSON.stringify({ ...s, open: 0 }); f(s); if (JSON.stringify({ ...s, open: 0 }) !== was) s.changed = now(); });
   const review = () => get(REVIEW), setReview = f => change(REVIEW, f);
 
   // A set of items as "<their number>-<fingerprint>": the fingerprint is a short hash (FNV-1a) of the sorted list.
@@ -76,11 +95,11 @@ const STORE = (() => {
   /* ---------- entries of the layout before ---------- */
   const OLD_NAMES = ['choice', 'kind', 'lang', 'map', 'topN', 'opts'];
   const OLD = /^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)?\.(?:choice|kind|lang|map|opts|saved|topN|sel|sel\..+|best\..+)$/;
-  const isOld = key => OLD.test(key) || (key.startsWith(P) && !key.startsWith(QUIZ) && key !== SETTINGS && key !== REVIEW);
+  const isOld = key => OLD.test(key) || (key.startsWith(P) && !key.startsWith(QUIZ) && key !== SETTINGS && key !== REVIEW && key !== SYNC);
   // Those under "geoquizzes.": stars, cards, drawings, settings, the review's state.
   function carryOver() {
     for (const key of keys()) {
-      if (!key.startsWith(P) || key.startsWith(QUIZ) || key === SETTINGS || key === REVIEW) continue;
+      if (!key.startsWith(P) || key.startsWith(QUIZ) || key === SETTINGS || key === REVIEW || key === SYNC) continue;
       const name = key.slice(P.length), v = parse(key) || {};
       if (name.startsWith('rating.')) { if (Array.isArray(v.levels)) setQuiz(name.slice(7), r => { r.stars = v.levels; }); }
       else if (name.startsWith('srs.deck.')) setQuiz(name.slice(9), r => { if (v.t) r.title = v.t; r.cards = Object.fromEntries(Object.entries(v.c || {}).map(([k, c]) => [k, cardOut(c)])); });
@@ -132,7 +151,7 @@ const STORE = (() => {
   function restore(f) {
     const first = f?.app === 'geo-quizzes' && f.version === 1 && f.data && typeof f.data === 'object'; // the file format before
     if (!first && !(f?.app === 'geo-quizzes' && f.quizzes && typeof f.quizzes === 'object')) return false;
-    for (const key of keys()) if (key.startsWith(P) || OLD.test(key)) drop(key);
+    for (const key of keys()) if ((key.startsWith(P) && key !== SYNC) || OLD.test(key)) drop(key);
     const raw = (entries, text) => { for (const [key, v] of Object.entries(entries || {})) if (isOld(key)) { try { localStorage.setItem(key, text ? v : JSON.stringify(v)); } catch (e) {} } };
     if (first) { raw(f.data, false); raw(f.raw, true); }
     else {
@@ -142,9 +161,20 @@ const STORE = (() => {
       for (const [id, record] of Object.entries(f.quizzes)) if (record && typeof record === 'object') put(QUIZ + id, tidy(record));
     }
     carryOver();
+    change(SYNC, s => { for (const k in s) if (k !== 'url') delete s[k]; }); // the online copy is compared anew
     return true;
   }
 
+  /* ---------- the online copy ---------- */
+  // What sync.js works with: its own entry; the entries it copies, by the name they have after "geoquizzes."
+  // ("settings", "review", "quiz.<quiz id>"); one of them put in place as it is, which is not told as a change;
+  // and `listen`, to be told of every other change.
+  const sync = () => get(SYNC), setSync = f => change(SYNC, f);
+  const names = () => ['settings', 'review', ...quizIds().map(id => 'quiz.' + id)];
+  const entry = name => get(P + name);
+  const place = (name, v) => put(P + name, name.startsWith('quiz.') ? tidy(v) : v);
+  const listen = f => { heard = f; };
+
   carryOver();
-  return { quiz, setQuiz, quizIds, settings, setSettings, review, setReview, print, time, ms, cardOut, cardIn, bestOut, bestIn, adopt, file, restore };
+  return { quiz, setQuiz, quizIds, settings, setSettings, review, setReview, print, time, ms, cardOut, cardIn, bestOut, bestIn, adopt, file, restore, sync, setSync, names, entry, place, listen };
 })();

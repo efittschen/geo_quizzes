@@ -1,6 +1,7 @@
 // Review page: what is on the stack (see srs.js), by country and quiz, each with buttons to review it (the whole
 // world at the top), the settings: the clock's times, the limits per review and per day and the schedule, and "Your data":
-// what this browser keeps, as a file to download or put back. Only quizzes listed in data/quizzes.json are shown; the stack of a quiz
+// what this browser keeps, as a file to download or put back, and "Online copy": a place of the player's own where their
+// browsers meet (see sync.js). Only quizzes listed in data/quizzes.json are shown; the stack of a quiz
 // that left the list is kept.
 
 const $ = (id) => document.getElementById(id);
@@ -105,6 +106,7 @@ function initSettings(onChange) {
   for (const key of ["algo", "steps", ...NUMBERS]) $(key).addEventListener("change", save);
   $("defaults").addEventListener("click", () => { SRS.resetOpts(SCHEDULE); show(); });
   show();
+  return show;
 }
 
 // "Your data": everything the site keeps in this browser as one file to download, and the way back: a file put in
@@ -133,10 +135,47 @@ function initData() {
   });
 }
 
+// "Online copy" (see sync.js): the web app link of the player's own script, which every change is then also sent to
+// and read from, how that goes, and the script itself, to copy while setting it up (the steps under "Setup").
+// onFresh: entries here changed from the online copy.
+function initOnline(onFresh) {
+  const show = () => {
+    const { url, at, fault, busy } = SYNC.state();
+    $("sync-url").readOnly = !!url;
+    if (url) $("sync-url").value = url;
+    $("sync-on").hidden = !!url;
+    $("sync-off").hidden = !url;
+    const time = at ? new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+    $("sync-state").textContent = !url ? "" : busy ? "Syncing" : fault ?? (time && `Synced ${time}`);
+  };
+  $("sync-on").addEventListener("click", async () => {
+    const fault = await SYNC.connect($("sync-url").value);
+    show();
+    if (fault) $("sync-state").textContent = fault;
+  });
+  $("sync-url").addEventListener("keydown", (event) => { if (event.key === "Enter" && !SYNC.state().url) $("sync-on").click(); });
+  $("sync-off").addEventListener("click", () => {
+    SYNC.disconnect();
+    $("sync-url").value = "";
+  });
+  // The script is fetched when the steps are opened, so that a click copies it at once.
+  let script = null;
+  const load = () => (script ||= fetch("assets/js/online-copy.gs").then((r) => r.text()));
+  $("sync-steps").addEventListener("toggle", load);
+  $("sync-script").addEventListener("click", async () => {
+    await navigator.clipboard.writeText(await load());
+    $("sync-script").textContent = "Copied";
+  });
+  window.addEventListener("geoquizzes:sync", show);
+  window.addEventListener("geoquizzes:fresh", (event) => { event.preventDefault(); onFresh(); });
+  show();
+}
+
 async function init() {
   let refresh = () => {};
-  initSettings(() => refresh());
+  const showSettings = initSettings(() => refresh());
   initData();
+  initOnline(() => { showSettings(); refresh(); });
   try {
     const json = async (url) => (await fetch(url)).json();
     // Country names come with the world map; without it the quizzes are still listed, under their own titles.

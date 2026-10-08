@@ -13,6 +13,10 @@
 // What the site keeps in the browser goes through assets/js/store.js, which every script after this one relies on:
 // it is loaded from here, in place and before them, so a page does not have to name it.
 document.write(`<script src="${new URL('../../assets/js/store.js', document.currentScript.src).href}"><\/script>`);
+// With it sync.js, the online copy of a player who named one. What it takes in shows when the page is loaded again,
+// which it does by itself as long as the page wasn't touched; not during a round.
+document.write(`<script src="${new URL('../../assets/js/sync.js', document.currentScript.src).href}"><\/script>`);
+window.addEventListener('geoquizzes:fresh', e => { if (document.getElementById('setup')?.hidden) e.preventDefault(); });
 // Likewise mercator.js, which redraws a page's map in Web Mercator: the scripts that build on a map call it first.
 document.write(`<script src="${new URL('mercator.js', document.currentScript.src).href}"><\/script>`);
 (() => {

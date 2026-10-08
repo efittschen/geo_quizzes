@@ -17,6 +17,8 @@ assets/css/style.css    Home, country and multiple-choice quiz pages
 assets/js/map.js        Map rendering (D3 + TopoJSON, loaded from CDN)
 assets/js/quiz.js       Quiz logic
 assets/js/store.js      What the site keeps in the browser: one record per quiz, the settings, the data file (see "Saved data")
+assets/js/sync.js       The online copy: a player's browsers kept the same through a Google Sheet of their own (see "Online copy")
+assets/js/online-copy.gs  The script a player puts on that sheet
 assets/js/srs.js        Review: the schedule and the stack of learned questions
 data/quizzes.json       List of all quizzes and which country each belongs to
 data/suites.json        The suites: short lists of quizzes to play in order (see "Suites")
@@ -274,12 +276,33 @@ What a player has done lives in the browser it was done in (`localStorage`), all
 - `geoquizzes.quiz.<quiz id>`: one record per quiz page, named by its folder as in `data/quizzes.json`. It holds the page's `stars`, its review `cards`, the `best` result of every round played, the player's `custom` quizzes, what was chosen `last` on the setup screen, and a town-name quiz's `paint` results.
 - `geoquizzes.settings`: the review's two times and two limits, and the folders open in "All quizzes".
 - `geoquizzes.review`: the cards reviewed today and a review in progress.
+- `geoquizzes.sync`: the link of the player's online copy, if they named one, and what was last seen of it (see "Online copy"). It belongs to the browser: no data file holds it.
 
 Times are written as dates, fields have whole words for names, and a best result is filed under its layer, its map and a short fingerprint of the round's exact items, so it counts for any round or custom quiz that asks just those items and no longer once a round's items change. `stars` is worked out by the quiz page from `best`; it is kept so the home and country pages can show stars without loading every quiz.
 
 "Your data" on the review page moves all of this: **Download** saves one file, `{ app, version, saved, settings, review, quizzes: { <quiz id>: record } }`, the entries as they are, and **Upload** puts such a file in place of what the browser has, after asking once. So a player can change browser or device and carry on. Entries of other pages on the same address are neither read nor touched.
 
 Before this layout the same things lay in many small entries, a quiz's results under a short name of its own (`idregions.best.…`). They are carried over without anyone doing anything: stars, cards and settings when any page of the site loads, a quiz's results and choices when its page next opens, since only the page knows its short name (`key` in its config, still needed for that). Until then they travel in a data file as its `older` part. A quiz page gets the store through `quizzes/shared/quiz-page.js`, which loads it ahead of the page's other scripts.
+
+### Online copy
+
+A player who uses the site on more than one device can name a place on the internet where their browsers meet: a Google Sheet of their own. Nothing changes for anyone who doesn't: everything is kept in the browser as before, and no request leaves it. With a link set, every change is kept in the browser and also sent to the sheet a moment later, and a page that opens (or is looked at again) first asks the sheet what changed elsewhere.
+
+The sheet lies in the player's Google account. The site has no server and no account of its own, so nobody else holds or sees anyone's progress, the site's owner included. The link is the key: whoever has it can read and change that copy.
+
+A web page cannot write into a Google file through its share link, even one that anyone may edit: Google takes writes only from a signed-in program. So the sheet gets a small script (`assets/js/online-copy.gs`) that the player publishes once as a web app; its link is what the site talks to. The steps are on the review page under "Online copy" → Setup:
+
+1. A new Google Sheet, then Extensions → Apps Script.
+2. Paste the script (the Copy button there gives it) in place of what the editor shows.
+3. Deploy → New deployment → Web app, "Execute as": Me, "Who has access": Anyone.
+4. Authorize access. Google warns that the app is not verified, since it is the player's own script and not a published one: Advanced → Go to … (unsafe) → Allow. The script asks only for the sheet it sits on.
+5. The web app link (it ends in `/exec`) goes into "Online copy" on the review page, on every device.
+
+The script only stores and hands out. It keeps one row per entry of `store.js` ("settings", "review", "quiz.<quiz id>") with the entry as text, cut into cells of 45,000 characters, and counts the changes it takes (its revision). A browser asks for the rows changed after the revision it saw last, and sends its own changed entries along with that revision; they are taken only if none of them changed on the sheet in between, otherwise the browser gets those back, merges and sends again. What is sent goes as plain text, the one kind of request a page may send to another site without asking first, which a Google script could not answer.
+
+The merge (`assets/js/sync.js`, whose first lines list it) loses nothing that either side learned: each card comes from where it was answered last, each round keeps its better result, and what is replaced as a whole (the stars, the player's own quizzes, the settings) comes from where it changed last. For that a record notes when its stars and own quizzes changed (`changed`) and when its stack was removed (`cleared`), so a removed stack or a deleted quiz stays gone on the other device. What belongs to one browser is not sent: what was chosen last on a setup screen, the open folders, a review in progress. An uploaded data file is merged with the online copy like everything else.
+
+Changes are sent two seconds after they are made, and the two talk at most every 20 seconds, so a review sends a few times and not once per card; a page that is hidden or left sends at once, and whatever did not get out is sent by the next page. A page that takes in changes shows them by loading again, if it hasn't been touched yet and no round is on; the review page shows them in place.
 
 ## Coverage
 
