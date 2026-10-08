@@ -1,0 +1,13 @@
+{
+  "name": "Geo Quizzes",
+  "short_name": "Geo Quizzes",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#15283A",
+  "theme_color": "#15283A",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

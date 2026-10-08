@@ -19,6 +19,10 @@ document.write(`<script src="${new URL('../../assets/js/sync.js', document.curre
 window.addEventListener('geoquizzes:fresh', e => { if (document.getElementById('setup')?.hidden) e.preventDefault(); });
 // Likewise mercator.js, which redraws a page's map in Web Mercator: the scripts that build on a map call it first.
 document.write(`<script src="${new URL('mercator.js', document.currentScript.src).href}"><\/script>`);
+// And the two links that make the site an app on a phone's home screen (manifest.webmanifest and the icon for
+// iPhones), which the pages in the root carry in their <head>.
+for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-icon', 'assets/icons/apple-touch-icon.png']])
+  document.head.append(Object.assign(document.createElement('link'), { rel, href: new URL('../../' + file, document.currentScript.src).href }));
 (() => {
   const body = document.body, own = sel => body.querySelector(':scope > ' + sel);
   const back = own('a.back'), h1 = own('h1'), note = own('p.note'), title = h1 ? h1.textContent : document.title;

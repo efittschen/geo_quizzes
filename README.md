@@ -25,6 +25,8 @@ data/suites.json        The suites: short lists of quizzes to play in order (see
 data/coverage/          Street View coverage: map tiles and meta.json for the Coverage page, home/ for the home map (made by tools/coverage.mjs)
 data/quizzes/<id>.json  One file per multiple-choice quiz
 quizzes/<name>/         Quizzes with their own custom page
+manifest.webmanifest    Name, colors and icon of the site as an app on a phone's home screen (see "On a phone")
+assets/icons/           That icon (made by tools/icon.mjs)
 ```
 
 ## Run locally
@@ -320,6 +322,12 @@ The Coverage page keeps panning and zooming light: each street-map tile is turne
 
 The home map has a "Street coverage" button in its corner that opens the page.
 
+## On a phone
+
+The site can be put on a phone's home screen, where it opens in a window of its own, without the browser's bars: in Chrome or Firefox on Android through the browser's menu (**Add to Home screen** or **Install app**), on an iPhone through Safari's share button (**Add to Home Screen**). `manifest.webmanifest` says what the phone needs for that: the name, the page to open (`index.html`), the colors of the start screen and the icon. Its addresses are relative, so they hold in the subfolder GitHub Pages serves the site from. Every page links to it and to the icon for iPhones (`apple-touch-icon`): the pages in the root in their `<head>`, the quiz pages through `quizzes/shared/quiz-page.js`.
+
+The site still needs a connection: nothing is kept for use offline. On an iPhone the app on the home screen keeps its saved data apart from Safari's, so what was played in Safari before is not there; the online copy or the data file brings it over (see "Saved data").
+
 ## Tools (build time only)
 
 `tools/` holds the Node scripts that make the quiz data. The site itself never loads them. Run `npm install` in `tools/` once. Downloads are cached in `tools/cache/`, which is not committed. Usage is at the top of each file:
@@ -334,6 +342,7 @@ The home map has a "Street coverage" button in its corner that opens the page.
 - `townnames.mjs`: GeoNames places + a `cities.js` map → `names.js` for a town-name quiz: the name parts that mark a region, their places and the best drawing for each.
 - `learnablemeta.mjs`: every map on learnablemeta.com/maps → `maps.json` + one file per map with its metas (name, note, pictures), in `tools/cache/learnablemeta/`. A second run downloads only the maps that changed.
 - `coverage.mjs`: the Vali location pool → `data/coverage/`: the Street View coverage layer of `coverage.html` and the roads the home map draws on a country (needs `bzip2`).
+- `icon.mjs`: the home map's land as a globe with a pin → `assets/icons/`, the icon of the site on a phone's home screen.
 - `smoke.mjs`: opens pages in headless Chromium, reports errors, plays a click and saves screenshots.
 
 `tools/builds/` holds the scripts of one-off builds (New Zealand calling areas, Ukraine local code areas, the Senegal and Bolivia number counts, and the command of every postcode quiz). See `tools/builds/README.md`.
