@@ -1,8 +1,8 @@
 // Norway Regions. Each map area is one of the 357 municipalities (kommuner, 2026),
 // grouped into the 15 counties (fylker, since 2024) and SSB's 6 parts of the country (landsdeler). Extra modes on the
 // same areas: each municipality's language decision (Nynorsk, Bokmål or neutral), the Sámi language area, and the
-// official Sámi and Kven municipality names. Pages on this config (data-kinds): this one (parts, counties,
-// municipalities) and ../norway-languages.
+// official Sámi and Kven municipality names. Pages on this config (data-kinds): this one (counties,
+// municipalities; the parts only group them) and ../norway-languages.
 //
 // Sources: municipalities, names and borders: Kartverket "Administrative enheter kommuner" (1.1.2026, CC BY 4.0);
 // counties and landsdeler: SSB KLASS 104 and 106 (2026); language decisions: Språkvedtaksforskrifta (FOR-2019-12-20-2114,
@@ -23,6 +23,7 @@ const LAYERS = {
     {
       key: "parts",
       label: "Parts of Norway",
+      groupsOnly: true,
       noun: ["part","parts"],
       prompt: "name",
       hints: false,

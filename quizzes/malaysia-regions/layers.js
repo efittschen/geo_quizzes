@@ -1,5 +1,5 @@
 // Malaysia on the map of the 13 states and 3 federal territories (data.js, DOSM).
-// One config serves three pages (<body data-kinds>): States (regions, states, Jawi names), Postcodes (state ranges,
+// One config serves three pages (<body data-kinds>): States (states, Jawi names; the regions only group them), Postcodes (state ranges,
 // two-digit prefixes) and State Clues (road letters, Jawi signs, bin companies, power companies).
 //
 // Sources: postcodes: data.gov.my "Postcode" (MCMC, CC BY 4.0), every 2-digit prefix with its state; 34950 Bandar
@@ -25,6 +25,7 @@ const LAYERS = {
     {
       key: "regions",
       label: "Regions",
+      groupsOnly: true,
       noun: ["region","regions"],
       prompt: "name",
       hints: false,

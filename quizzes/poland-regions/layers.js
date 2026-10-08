@@ -16,6 +16,7 @@ const LAYERS = {
     {
       key: "macro",
       label: "Macroregions",
+      groupsOnly: true,
       noun: ["macroregion","macroregions"],
       prompt: "name",
       groups: [["Macroregions","",["PL6","PL4","PL5","PL2","PL7","PL9","PL8"]]],

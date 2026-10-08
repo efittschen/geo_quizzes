@@ -2,7 +2,7 @@
 // grouped into the 19 regions (maakunnat) and Statistics Finland's 5 major regions (suuralueet). Extra modes on the same
 // areas: the languages on signs (each municipality's language status, plus the Sámi homeland), the Swedish names of the
 // bilingual and Swedish-speaking municipalities, the Sámi names in the homeland, and the regional road zones.
-// Pages on this config (data-kinds): this one (major regions, regions, municipalities), ../finland-languages and
+// Pages on this config (data-kinds): this one (regions, municipalities; the major regions only group them), ../finland-languages and
 // ../finland-roads; ../finland-codes reuses data.js and geo.js.
 //
 // Sources: municipalities, names, borders: Statistics Finland kunta1000k_2026 (CC BY 4.0); regions, major regions and
@@ -29,6 +29,7 @@ const LAYERS = {
     {
       key: "parts",
       label: "Major regions",
+      groupsOnly: true,
       noun: ["major region","major regions"],
       prompt: "name",
       hints: false,

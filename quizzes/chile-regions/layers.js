@@ -1,6 +1,6 @@
 // Chile Regions. Map areas are provinces (data.js), with Marga Marga and Ranco
 // split where an old phone code splits them and Juan Fernández on its own; ../chile-codes reuses the same areas.
-// Kinds: the five natural zones, the 16 regions, and the road letters of Decreto MOP 301/2011 (A–Y and IPA).
+// Kinds: the five natural zones (on no page), the 16 regions, and the road letters of Decreto MOP 301/2011 (A–Y and IPA).
 // Natural zones: CORFO's natural regions as listed by region in en.wikipedia "Natural regions of Chile"; the
 // regions it splits (Atacama at the Copiapó, Valparaíso at the Aconcagua, Biobío at the Biobío, Los Lagos at the
 // Chacao channel) are split here by province, so the zones are approximate. Rapa Nui and Juan Fernández (insular

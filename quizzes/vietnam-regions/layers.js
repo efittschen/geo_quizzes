@@ -45,6 +45,7 @@ const LAYERS = {
     {
       key: "macro",
       label: "North, Central, South",
+      groupsOnly: true,
       noun: ["part","parts"],
       prompt: "name",
       hints: false,

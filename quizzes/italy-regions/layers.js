@@ -1,5 +1,5 @@
 // Italy Regions, shared by three pages (data-kinds on <body>):
-//   italy-regions    macro-areas (ripartizioni), regions, provinces by name and by two-letter code (sigla)
+//   italy-regions    regions, provinces by name and by two-letter code (sigla), in rounds by macro-area (ripartizioni)
 //   italy-languages  minority languages on bilingual place-name and road signs
 //   italy-roads      the regional bands of the 1928 strade statali numbers (SS 20–134)
 // Map areas (data.js): ISTAT's 110 provinces, metropolitan cities, free consortia and statistical units (1 Jan 2026,
@@ -29,6 +29,7 @@ const LAYERS = {
     {
       key: "macro",
       label: "Macro-areas",
+      groupsOnly: true,
       noun: ["area","areas"],
       prompt: "name",
       groups: [["Ripartizioni","",["1","2","3","4","5"]]],

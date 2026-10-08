@@ -24,6 +24,7 @@ const LAYERS = {
     {
       key: "zones",
       label: "Zones",
+      groupsOnly: true,
       noun: ["zone","zones"],
       prompt: "name",
       groups: [["North","",["NW","NE","NC"]],["South","",["SW","SE","SS"]]],

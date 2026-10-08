@@ -1,6 +1,6 @@
 // Ukraine Regions, on the map of ../ukraine-codes (24 oblasts, the Autonomous
 // Republic of Crimea, Kyiv and Sevastopol; names and codes in ../ukraine-codes/names.js). Kinds, coarse to fine:
-// macro-regions (KIIS, unofficial), oblasts in English and oblasts in Ukrainian (Cyrillic). ../ukraine-roads uses the
+// macro-regions (KIIS, unofficial; they only group the oblasts), oblasts in English and oblasts in Ukrainian (Cyrillic). ../ukraine-roads uses the
 // same config for the region index in territorial road numbers (T-xx-yy, CMU Resolution 1318/2023).
 
 const LAYERS = {
@@ -17,6 +17,7 @@ const LAYERS = {
     {
       key: "macro",
       label: "Macro-regions",
+      groupsOnly: true,
       noun: ["region","regions"],
       prompt: "name",
       groups: [["Macro-regions","",["W","C","S","E","CR"]]],

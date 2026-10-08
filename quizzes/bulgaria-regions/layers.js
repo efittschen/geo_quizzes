@@ -50,6 +50,7 @@ const LAYERS = {
     {
       key: "nuts",
       label: "Planning regions",
+      groupsOnly: true,
       noun: ["region","regions"],
       prompt: "name",
       hints: false,

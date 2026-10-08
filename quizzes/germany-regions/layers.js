@@ -1,5 +1,5 @@
-// Germany States and Kreise, used by this page (East/West, states, the 401
-// Kreise), ../germany-roads (state road prefixes) and ../germany-languages (sign languages). Each map area is a Kreis (BKG VG250) or, where a
+// Germany States and Kreise, used by this page (states and the 401
+// Kreise, in rounds by East/West), ../germany-roads (state road prefixes) and ../germany-languages (sign languages). Each map area is a Kreis (BKG VG250) or, where a
 // mode splits one, a part of it built from whole municipalities:
 //   11000e / 11000w  East / West Berlin: today's Bezirke Pankow, Lichtenberg, Marzahn-Hellersdorf, Treptow-Köpenick and
 //                    Ortsteile Mitte and Friedrichshain (de.wikipedia Ost-Berlin; OSM boundaries) / the rest of Berlin
@@ -24,6 +24,7 @@ const LAYERS = {
     {
       key: "ew",
       label: "East & West",
+      groupsOnly: true,
       noun: ["side","sides"],
       prompt: "name",
       dim: false,

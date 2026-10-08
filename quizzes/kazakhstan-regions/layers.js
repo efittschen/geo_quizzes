@@ -1,6 +1,6 @@
 // Kazakhstan Regions. The map is the 20 first-level units since June 2022
 // (17 regions and the cities of Astana, Almaty and Shymkent; OpenStreetMap). Kinds: English names, Kazakh (Cyrillic)
-// names and five macro-regions.
+// names and five macro-regions, which only group the regions.
 //   kk     official Kazakh name (OpenStreetMap name, matches the Wikidata Kazakh label)
 //   plate  region number (01–20, as on number plates); only orders the regions here
 //   cap    administrative centre;  tel  its landline code (ITU-T numbering plan of Kazakhstan, 2022)
@@ -56,6 +56,7 @@ const LAYERS = {
     {
       key: "macro",
       label: "Macro-regions",
+      groupsOnly: true,
       noun: ["area","areas"],
       prompt: "name",
       hints: false,

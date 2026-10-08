@@ -52,6 +52,7 @@ const LAYERS = {
     {
       key: "regions6",
       label: "6 regions",
+      groupsOnly: true,
       noun: ["region","regions"],
       prompt: "name",
       hints: false,
@@ -67,6 +68,7 @@ const LAYERS = {
     {
       key: "regions4",
       label: "4 regions",
+      groupsOnly: true,
       noun: ["region","regions"],
       prompt: "name",
       hints: false,

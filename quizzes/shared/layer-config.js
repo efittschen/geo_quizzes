@@ -22,6 +22,7 @@
 //     areas      the areas of each item: '@code' (those whose field `code` is the item's id), '@codes[]' (whose list
 //                holds it), '@code^' (whose value starts with it), or a table
 //     of, lang   the same items in another language or under another label (see area-quiz.js)
+//     groupsOnly the layer is not asked: it only cuts the layers below it into rounds (see area-quiz.js)
 //     pool       tables drawn at random: { dial: { t: pattern, e: { item: [entries] } }, w: { item: [weights] } }
 //                shows one of an item's entries each time it is asked (an example number of an area code, a town's
 //                sign); an entry is the list of what fills the pattern's {0}, {1}…, or the value itself without t
@@ -129,7 +130,7 @@ const layerLib = (() => {
   }
   const quizVars = (M, a) => Object.assign({ a }, M.FV[a], ...Object.values(M.kinds).map(K => areaVars(M, K, a, K.key + '.')));
 
-  const SWITCHES = ['prompt', 'hints', 'clickAll', 'merge', 'dim', 'labelPerArea', 'areaRank', 'flashArea', 'hintLabel', 'of', 'lang', 'sub', 'pickTitle'];
+  const SWITCHES = ['prompt', 'hints', 'clickAll', 'merge', 'dim', 'labelPerArea', 'areaRank', 'flashArea', 'hintLabel', 'of', 'lang', 'sub', 'pickTitle', 'groupsOnly'];
   function quiz(L, resolve) {
     const M = model(L, resolve);
     const at = v => typeof v !== 'string' ? v : /^\[.*\]$/.test(v) ? [resolve(v.slice(1, -1))] : resolve(v);

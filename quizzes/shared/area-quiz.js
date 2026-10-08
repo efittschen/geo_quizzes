@@ -62,6 +62,9 @@
   const Q = { ...QUIZ };
   const pageKinds = document.body.dataset.kinds;
   if (pageKinds) Q.kinds = Q.kinds.filter(k => pageKinds.split(/\s+/).includes(k.key));
+  // A layer that only groups the layers below it into rounds (groupsOnly) is not asked itself: see standardRounds.
+  const GROUPING = Q.kinds.filter(k => k.groupsOnly);
+  Q.kinds = Q.kinds.filter(k => !k.groupsOnly);
   if (document.body.dataset.key) Q.key = document.body.dataset.key;
   // Explore labels by the page's own first kind if the configured one isn't on this page.
   if (!Q.kinds.some(k => k.key === Q.exploreKind)) Q.exploreKind = Q.kinds[0].key;
@@ -151,8 +154,7 @@
      them all.
      dial(id) -> [[text, 'hot' | 'cold'], …] shows the dial code in parts (e.g. only the prefix bold); pin(id) ->
      { x, y, ll, label } marks a place (e.g. the town the code belongs to) after the question is answered. */
-  const KINDS = {};
-  for (const k of Q.kinds) {
+  const kindOf = k => {
     const ids = k.groups.flatMap(g => g.ids);
     const areas = Object.fromEntries(ids.map(id => [id, k.areasOf(id)]));
     const at = {}; // areaId -> items that include it
@@ -160,9 +162,10 @@
     const size = id => areas[id].reduce((s, a) => s + (AREA[a].a || 0) / at[a].length, 0);
     const rankings = [...(k.areaRank === false ? [] : [{ label: 'largest area', order: ids.slice().sort((a, b) => size(b) - size(a)) }]), ...(k.rankings || [])];
     const many = k.noun[1], count = new Set(ids).size;
-    KINDS[k.key] = { ...k, ids, areas, at, rankings, primary: k.primary || (a => (at[a] || [])[0]),
+    return { ...k, ids, areas, at, rankings, primary: k.primary || (a => (at[a] || [])[0]),
       sub: k.sub ?? `${count.toLocaleString('en-US')} ${count === 1 ? k.noun[0] : many}`, pickTitle: k.pickTitle ?? `${many[0].toUpperCase()}${many.slice(1)} to practice` };
-  }
+  };
+  const KINDS = Object.fromEntries(Q.kinds.map(k => [k.key, kindOf(k)]));
 
   /* ---------- rounds: ready-made quizzes, grouped by how many items they ask ---------- */
   const TIERS = [[10, 'Beginner'], [30, 'Intermediate'], [60, 'Hard'], [Infinity, 'Expert']];
@@ -185,8 +188,10 @@
   //   and ends with all of it. Names: one round per unit ("Bavaria"), of 3 items or more. Codes: by the coarsest
   //   layer of codes above (the first digit), neighbours joined while a round stays under 30 ("Two digits · 02x–04x").
   //   Its quick selections (Big cities) are rounds too. No round has a note; kinds in another language have none.
+  //   A layer marked groupsOnly has no round of its own and only cuts the layers below it: units named after where
+  //   they are ("North-West"), which ask nothing.
   function standardRounds() {
-    const layers = Q.kinds.filter(k => !KINDS[k.of]).map(k => KINDS[k.key]).map(K => ({ K, ids: uniq(K.ids), code: !['name', 'text', 'photo'].includes(K.prompt) }));
+    const layers = [...Q.kinds.filter(k => !KINDS[k.of]).map(k => KINDS[k.key]), ...GROUPING.map(kindOf)].map(K => ({ K, ids: uniq(K.ids), code: !['name', 'text', 'photo'].includes(K.prompt) }));
     layers.sort((a, b) => a.ids.length - b.ids.length);
     // the units of a coarser layer that hold this layer's items: [[title, ids]…], or null if they don't hold nearly all
     const cutBy = (L, P) => {
@@ -199,6 +204,7 @@
     const rounds = [];
     for (const [i, L] of layers.entries()) {
       const { K, ids } = L, kind = K.key, n = ids.length;
+      if (K.groupsOnly) continue;
       if (n < 10) { rounds.push({ kind, label: K.label }); continue; }
       // (two cuts can name a unit alike, "North" of 4 regions and of 6: the later one says which cut it is)
       // A round of a small part of the map frames that part (from its areas' middles and sizes).

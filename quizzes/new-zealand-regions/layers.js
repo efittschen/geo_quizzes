@@ -19,6 +19,7 @@ const LAYERS = {
     {
       key: "islands",
       label: "Islands",
+      groupsOnly: true,
       noun: ["island","islands"],
       prompt: "name",
       hints: false,
