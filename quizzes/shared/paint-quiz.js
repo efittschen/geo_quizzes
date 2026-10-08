@@ -21,11 +21,14 @@
    With ?trace in the address the places show from the start, the parts come in their listed order, and every
    drawing is sent to the server it was loaded from (tools/draw-server.mjs keeps them). */
 (() => {
+  if (typeof MERCATOR === 'object') MERCATOR.names(NAMES, MERCATOR.cities(CITIES)); // map and names in Web Mercator (mercator.js)
   const N = NAMES, $ = id => document.getElementById(id);
   const app = $('app'), stage = $('stage'), cv = $('paint'), ctx = cv.getContext('2d');
   const land = new Path2D(CITIES.land), lines = new Path2D(CITIES.lines), around = new Path2D(CITIES.ctx);
   const css = n => getComputedStyle(stage).getPropertyValue(n).trim();   // (the stage keeps the light colors on the street map)
   const HERE = document.currentScript.src.replace(/[^/]*$/, '');
+  let world = null; // the world's land, once world.js has come
+  if (CITIES.world) { const s = document.createElement('script'); s.src = HERE + 'world.js'; s.onload = () => { world = new Path2D(WORLD.reg.filter(r => r.a).map(r => r.d).join('')); draw(); const note = stage.querySelector('.note'); if (note && !/Natural Earth/.test(note.textContent)) note.append(' · World: Natural Earth'); }; document.head.append(s); }
   const layer = document.createElement('canvas'), reveal = document.createElement('canvas');   // the paint; the answer
   const r = N.brush / N.cell, GLOW = 6000, PASS = 50, TRACE = new URLSearchParams(location.search).has('trace');
   const pct = v => (v < 0.0995 ? (v * 100).toFixed(1) : Math.round(v * 100)) + '%';
@@ -55,7 +58,12 @@
     if (streets) {   // the street map shows through; an inset has no tiles and stays drawn
       m.fillStyle = css('--sea'); m.fill(insetBox); m.fillStyle = css('--land'); m.fill(insetLand);
       m.strokeStyle = css('--edge'); m.lineWidth = 0.8 * px; m.stroke(insetBox); m.stroke(insetLand);
-    } else { m.fillStyle = css('--ctx'); m.fill(around); m.fillStyle = css('--land'); m.fill(land); }
+    } else {
+      m.fillStyle = css('--ctx'); m.fill(around);
+      // (a Mercator map lies on the plain map of the world, see mercator.js)
+      if (world) for (const [s, dx, dy] of MERCATOR.world(WORLD, CITIES.proj, N.w)) { m.save(); m.translate(dx, dy); m.scale(s, s); m.fill(world); m.restore(); }
+      m.fillStyle = css('--land'); m.fill(land);
+    }
     if (!streets || back === 'overlay') {
       m.strokeStyle = css(streets ? '--state' : '--edge'); m.lineWidth = 0.8 * px; m.globalAlpha = streets ? 0.6 : 1; m.stroke(lines);
       m.strokeStyle = css('--state'); m.lineWidth = 1.2 * px; m.globalAlpha = 0.75; m.stroke(land); m.globalAlpha = 1;

@@ -31,6 +31,7 @@
 //                 its cities (us-cities-coverage: the cities picked by Street View coverage).
 
 const QUIZ = (() => {
+  if (typeof MERCATOR === 'object') MERCATOR.cities(CITIES); // the map in Web Mercator, every part at its real place (mercator.js)
   const O = typeof CITY_OPTS === 'object' ? CITY_OPTS : {}, C = O.list ? { ...CITIES, ...O.list } : CITIES;
   const BY = Object.fromEntries(C.list.map(c => [c.id, c]));
   const ALL = C.list.map(c => c.id); // list order: largest first, or CITIES.order
@@ -105,17 +106,21 @@ const QUIZ = (() => {
     const h = Math.sin(dl / 2) ** 2 + Math.cos(a.lat * RAD) * Math.cos(b.lat * RAD) * Math.sin(dn / 2) ** 2;
     return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
   };
-  // The map's projection, as d3's geoConicEqualArea: Albers USA maps use its lower-48 part (Alaska and Hawaii are insets).
-  const PR = C.proj.type === 'albersUsa' ? { parallels: [29.5, 45.5], rotate: [96, 0], center: [-0.6, 38.7], scale: C.proj.scale, translate: C.proj.translate } : C.proj;
+  // The map's projection. Web Mercator, where mercator.js has redrawn the map: { k, lng0, y0 } (see there); a city's
+  // dot is then placed here, from its latitude and longitude.
+  const MERC = C.proj.type === 'mercator', my = lat => Math.log(Math.tan(Math.PI / 4 + lat * RAD / 2)) / RAD;
+  // Else d3's geoConicEqualArea: Albers USA maps use its lower-48 part (Alaska and Hawaii are insets).
+  const PR = C.proj.type === 'albersUsa' ? { parallels: [29.5, 45.5], rotate: [96, 0], center: [-0.6, 38.7], scale: C.proj.scale, translate: C.proj.translate } : MERC ? { parallels: [0, 0], rotate: [0, 0] } : C.proj;
   const sy0 = Math.sin(PR.parallels[0] * RAD), cn = (sy0 + Math.sin(PR.parallels[1] * RAD)) / 2, cc = 1 + sy0 * (2 * cn - sy0), r0 = Math.sqrt(cc) / cn;
   const raw = (l, f) => { const r = Math.sqrt(cc - 2 * cn * Math.sin(f)) / cn; return [r * Math.sin(l * cn), r0 - r * Math.cos(l * cn)]; };
   const CEN = PR.center || [0, 33.6442]; // d3.geoConicEqualArea's own default centre, which tools/lib/geo.mjs keeps
   const [pcx, pcy] = raw(CEN[0] * RAD, CEN[1] * RAD);
-  const forward = (lng, lat) => {
+  const forward = MERC ? (lng, lat) => [((lng < C.proj.lng0 - 90 ? lng + 360 : lng) - C.proj.lng0) * C.proj.k, (C.proj.y0 - my(lat)) * C.proj.k] : (lng, lat) => {
     const l = ((lng + PR.rotate[0] + 540) % 360 - 180) * RAD, [x, y] = raw(l, lat * RAD);
     return [PR.translate[0] + PR.scale * (x - pcx), PR.translate[1] - PR.scale * (y - pcy)];
   };
-  const invert = (X, Y) => {
+  if (MERC) for (const c of C.list) [c.x, c.y] = forward(c.lng, c.lat).map(v => Math.round(v * 10) / 10);
+  const invert = MERC ? (X, Y) => ({ lat: (2 * Math.atan(Math.exp((C.proj.y0 - Y / C.proj.k) * RAD)) - Math.PI / 2) / RAD, lng: C.proj.lng0 + X / C.proj.k }) : (X, Y) => {
     const x = (X - PR.translate[0]) / PR.scale + pcx, y = (PR.translate[1] - Y) / PR.scale + pcy, ry = r0 - y;
     let l = Math.atan2(x, Math.abs(ry)) * Math.sign(ry);
     if (ry * cn < 0) l -= Math.PI * Math.sign(x) * Math.sign(ry);
@@ -140,7 +145,7 @@ const QUIZ = (() => {
     return { f, lat, lng: near.lng + (p.x - near.x) * k / (111.32 * Math.cos(lat * RAD)) };
   };
   const free = {
-    span: Math.hypot(C.w, C.h) * C.kpu, // the map's diagonal in km: the D of the points formula
+    span: C.span || Math.hypot(C.w, C.h) * C.kpu, // the map's diagonal in km: the D of the points formula (of the map as it was drawn before mercator.js: the points stay what they were)
     frameOf: id => FRAME[id], // 0 = on the map itself, 1… = an inset
     // [km shown, km scored] for a click at map point p when city id is asked
     measure(p, id) {
@@ -159,7 +164,7 @@ const QUIZ = (() => {
     key: O.key || C.iso3.toLowerCase() + 'cities',
     areas: C.list.map(c => ({ id: c.id, d: `M${c.x},${c.y}l0,0`, lx: c.x, ly: c.y, a: 1, g: c.adm })),
     borders: [],
-    context: C.ctx,
+    context: C.ctx, world: !!C.world, proj: C.proj, // (world: the map lies on the plain map of the world, by its projection: see mercator.js)
     base: { land: C.land, lines: C.lines },
     dots: true,
     free,

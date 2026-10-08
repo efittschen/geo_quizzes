@@ -22,18 +22,20 @@
                                 boxes) or, for Albers USA, d3's own; else the land around the cities that are off the
                                 projection. Of an area map: the areas that are off the projection. */
 function mapTiles(stage, C, AHEAD = 192) {
-  if (!C.proj || !C.kpu || !/^(conicEqualArea|albersUsa)$/.test(C.proj.type)) return null;
+  if (!C.proj || !C.kpu || !/^(conicEqualArea|albersUsa|mercator)$/.test(C.proj.type)) return null;
   const OSM = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', RAD = Math.PI / 180;
 
   /* ---------- the map's projection (d3's geoConicEqualArea; of Albers USA its lower 48), as in city-config.js ---------- */
-  const usa = C.proj.type === 'albersUsa';
-  const PR = usa ? { parallels: [29.5, 45.5], rotate: [96, 0], center: [-0.6, 38.7], scale: C.proj.scale, translate: C.proj.translate } : C.proj;
+  const usa = C.proj.type === 'albersUsa', merc = C.proj.type === 'mercator';   // (a Mercator map, mercator.js: the tiles' own projection, so they lie under it unbent)
+  const PR = usa ? { parallels: [29.5, 45.5], rotate: [96, 0], center: [-0.6, 38.7], scale: C.proj.scale, translate: C.proj.translate } : merc ? { parallels: [0, 0], rotate: [0, 0] } : C.proj;
   const sy0 = Math.sin(PR.parallels[0] * RAD), cn = (sy0 + Math.sin(PR.parallels[1] * RAD)) / 2, cc = 1 + sy0 * (2 * cn - sy0), r0 = Math.sqrt(cc) / cn;
   const raw = (l, f) => { const r = Math.sqrt(cc - 2 * cn * Math.sin(f)) / cn; return [r * Math.sin(l * cn), r0 - r * Math.cos(l * cn)]; };
   const CEN = PR.center || [0, 33.6442], [pcx, pcy] = raw(CEN[0] * RAD, CEN[1] * RAD);
-  const forward = (lng, lat) => { const [x, y] = raw(((lng + PR.rotate[0] + 540) % 360 - 180) * RAD, lat * RAD); return [PR.translate[0] + PR.scale * (x - pcx), PR.translate[1] - PR.scale * (y - pcy)]; };
+  const my = lat => Math.log(Math.tan(Math.PI / 4 + lat * RAD / 2)) / RAD;
+  const forward = merc ? (lng, lat) => [((lng < C.proj.lng0 - 90 ? lng + 360 : lng) - C.proj.lng0) * C.proj.k, (C.proj.y0 - my(lat)) * C.proj.k]
+    : (lng, lat) => { const [x, y] = raw(((lng + PR.rotate[0] + 540) % 360 - 180) * RAD, lat * RAD); return [PR.translate[0] + PR.scale * (x - pcx), PR.translate[1] - PR.scale * (y - pcy)]; };
   // [lat, lng] of a map point; lng runs on past 180 (Chukotka follows Siberia), null off the projection.
-  const invert = (X, Y) => {
+  const invert = merc ? (X, Y) => [(2 * Math.atan(Math.exp((C.proj.y0 - Y / C.proj.k) * RAD)) - Math.PI / 2) / RAD, C.proj.lng0 + X / C.proj.k] : (X, Y) => {
     const x = (X - PR.translate[0]) / PR.scale + pcx, y = (PR.translate[1] - Y) / PR.scale + pcy, ry = r0 - y;
     let l = Math.atan2(x, Math.abs(ry)) * Math.sign(ry);
     if (ry * cn < 0) l -= Math.PI * Math.sign(x) * Math.sign(ry);
@@ -112,7 +114,8 @@ function mapTiles(stage, C, AHEAD = 192) {
       const W = stage.clientWidth + 2 * AHEAD, H = stage.clientHeight + 2 * AHEAD, v = { x: want.x - AHEAD / want.k, y: want.y - AHEAD / want.k, k: want.k };
       const q = Math.min(window.devicePixelRatio || 1, 2), mid = invert(v.x + W / 2 / v.k, v.y + H / 2 / v.k) || [0, 0];
       // The zoom level whose tiles are about as fine as the screen: Web Mercator has 156.543 km to a pixel at level 0.
-      let z = Math.max(L.minZ, Math.min(MAX_Z, Math.round(Math.log2(156.543 * Math.cos(mid[0] * RAD) * v.k * (q > 1.4 ? 2 : 1) / C.kpu * 256 / SIZE))));
+      const kpu = merc ? 111.32 * Math.cos(mid[0] * RAD) / C.proj.k : C.kpu;   // km to a map unit there
+      let z = Math.max(L.minZ, Math.min(MAX_Z, Math.round(Math.log2(156.543 * Math.cos(mid[0] * RAD) * v.k * (q > 1.4 ? 2 : 1) / kpu * 256 / SIZE))));
       // A mesh over the stage: where each of its points lies on the tiles. Between them the tiles are laid on flat.
       const STEP = 48, nx = Math.ceil(W / STEP), ny = Math.ceil(H / STEP);
       let node, need;

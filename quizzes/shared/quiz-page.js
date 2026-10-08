@@ -13,6 +13,8 @@
 // What the site keeps in the browser goes through assets/js/store.js, which every script after this one relies on:
 // it is loaded from here, in place and before them, so a page does not have to name it.
 document.write(`<script src="${new URL('../../assets/js/store.js', document.currentScript.src).href}"><\/script>`);
+// Likewise mercator.js, which redraws a page's map in Web Mercator: the scripts that build on a map call it first.
+document.write(`<script src="${new URL('mercator.js', document.currentScript.src).href}"><\/script>`);
 (() => {
   const body = document.body, own = sel => body.querySelector(':scope > ' + sel);
   const back = own('a.back'), h1 = own('h1'), note = own('p.note'), title = h1 ? h1.textContent : document.title;

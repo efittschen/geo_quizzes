@@ -60,6 +60,7 @@
 
 (() => {
   const Q = { ...QUIZ };
+  if (typeof MERCATOR === 'object') MERCATOR.quiz(Q); // the quiz map in Web Mercator, every part at its real place (mercator.js)
   const pageKinds = document.body.dataset.kinds;
   if (pageKinds) Q.kinds = Q.kinds.filter(k => pageKinds.split(/\s+/).includes(k.key));
   // A layer that only groups the layers below it into rounds (groupsOnly) is not asked itself: see standardRounds.
@@ -122,6 +123,19 @@
   const raiseTops = () => { for (const a of Q.areas) if (a.top) gR.appendChild(EL[a.id]); };
   raiseTops();
   if (Q.context) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', Q.context); $('ctx').appendChild(p); }
+  // A quiz map in Web Mercator lies on the plain map of the world (Q.world, see mercator.js; world.js is fetched
+  // unless it is the page's own map): the neighbours, and what lies between a country's far-off parts.
+  if (Q.world && typeof MERCATOR === 'object') {
+    const lay = () => {
+      const p = document.createElementNS(NS, 'path'); p.setAttribute('d', WORLD.reg.filter(r => r.a).map(r => r.d).join(''));
+      for (const [s, dx, dy] of MERCATOR.world(WORLD, Q.proj, Q.size[0])) { // (a second time for a map over the 180th meridian)
+        const g = document.createElementNS(NS, 'g'); g.setAttribute('transform', `translate(${dx},${dy}) scale(${s})`);
+        g.append(p.cloneNode()); $('ctx').prepend(g);
+      }
+      const note = $('stage').querySelector('.note'); if (note && !/Natural Earth/.test(note.textContent)) note.append(' · World: Natural Earth');
+    };
+    if (typeof WORLD === 'object') lay(); else { const s = document.createElement('script'); s.src = HERE + 'world.js'; s.onload = lay; document.head.append(s); }
+  }
   // City quizzes: the country's land and its region borders under the clickable dots (Q.base = { land, lines }).
   if (Q.base) for (const cls of ['land', 'lines']) if (Q.base[cls]) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', Q.base[cls]); p.setAttribute('class', cls); $('ctx').appendChild(p); }
   if (Q.dots) svg.classList.add('dots');
@@ -159,7 +173,7 @@
     const areas = Object.fromEntries(ids.map(id => [id, k.areasOf(id)]));
     const at = {}; // areaId -> items that include it
     for (const id of ids) for (const a of areas[id]) (at[a] ??= []).push(id);
-    const size = id => areas[id].reduce((s, a) => s + (AREA[a].a || 0) / at[a].length, 0);
+    const size = id => areas[id].reduce((s, a) => s + (AREA[a].size ?? AREA[a].a ?? 0) / at[a].length, 0); // (size: an area's on an equal-area map, where the quiz map is Mercator)
     const rankings = [...(k.areaRank === false ? [] : [{ label: 'largest area', order: ids.slice().sort((a, b) => size(b) - size(a)) }]), ...(k.rankings || [])];
     const many = k.noun[1], count = new Set(ids).size;
     return { ...k, ids, areas, at, rankings, primary: k.primary || (a => (at[a] || [])[0]),
@@ -274,7 +288,7 @@
     return { x: v.x + (cx - r.left - ox) / s, y: v.y + (cy - r.top - oy) / s };
   }
   function clampV(v) {
-    const minW = base.w / Q.maxZoom, maxW = base.w * 1.15;
+    const minW = base.w / Q.maxZoom, maxW = base.w * (Q.world ? 3 : 1.15); // (a map lying on the world's shows more of it when zoomed out)
     const k = Math.min(Math.max(v.w, minW), maxW) / v.w;
     if (k !== 1) { const cx = v.x + v.w / 2, cy = v.y + v.h / 2; v.w *= k; v.h *= k; v.x = cx - v.w / 2; v.y = cy - v.h / 2; }
     const mx = v.w * .5, my = v.h * .5;
@@ -408,7 +422,17 @@
   // Classes the stylesheet reads on either map (hints, fade, merged, picking).
   const mapClass = (cls, on) => { svg.classList.toggle(cls, on); $('street').classList.toggle(cls, on); };
 
-  function useMap(style) {
+  // The middle of what the map in use shows, and its size as the street map's zoom level (256 · 2^zoom pixels around
+  // the globe): the quiz map is Web Mercator like the street map (mercator.js), so one says it for the other.
+  function placeInView() {
+    if (onStreet() && lmap) { const c = lmap.getCenter(); return { lat: c.lat, lng: c.lng, zoom: lmap.getZoom() }; }
+    const P = Q.proj;
+    return { lat: MERCATOR.latOf(P.y0 - (vb.y + vb.h / 2) / P.k), lng: P.lng0 + (vb.x + vb.w / 2) / P.k, zoom: Math.log2(scale() * P.k * 360 / 256) };
+  }
+  // keep: the picker changed the map (no round is starting), so the new map shows the place the old one showed, at
+  // the same size: only the look changes. Else each map starts from its whole.
+  function useMap(style, keep) {
+    const was = keep && typeof MERCATOR === 'object' && Q.proj && Q.proj.type === 'mercator' ? placeInView() : null;
     clearLabels(); hover(null);
     mapStyle = style;
     $('street').hidden = !onStreet();
@@ -416,8 +440,16 @@
     svg.style.display = onStreet() ? 'none' : '';
     $('zoomCtl').hidden = onStreet();
     svg.classList.toggle('free', style === 'free');
-    if (onStreet()) { initStreet(); lmap.invalidateSize(); fitHome(); }
-    else resetView();
+    if (onStreet()) {
+      initStreet(); lmap.invalidateSize();
+      // (the street map keeps to whole zoom levels on its own: not for this one step)
+      if (was) { const snap = lmap.options.zoomSnap; lmap.options.zoomSnap = 0; lmap.setView([was.lat, was.lng], was.zoom, { animate: false }); lmap.options.zoomSnap = snap; }
+      else fitHome();
+    } else if (was) {
+      fit();
+      const P = Q.proj, r = svg.getBoundingClientRect(), s = 256 * 2 ** was.zoom / 360 / P.k, w = r.width / s, h = r.height / s;
+      vb = clampV({ x: (was.lng - P.lng0) * P.k - w / 2, y: (P.y0 - MERCATOR.my(was.lat)) * P.k - h / 2, w, h }); apply();
+    } else resetView();
     syncHints(); syncCover();
   }
   function activeKind() { return view === 'explore' ? Q.exploreKind : view === 'setup' ? choiceKind() : G.kind; }
@@ -944,7 +976,7 @@
   // The quiz map can carry map tiles redrawn in its own projection (map-tiles.js, loaded when first asked for), where
   // the page says how it is projected: the city quizzes (Q.streets, their cities.js) and the area quizzes with a
   // projection in their data.js (Q.proj).
-  const TILED = Q.streets || (Q.proj && Q.kpu && /^(conicEqualArea|albersUsa)$/.test(Q.proj.type)
+  const TILED = Q.streets || (Q.proj && Q.kpu && /^(conicEqualArea|albersUsa|mercator)$/.test(Q.proj.type)
     ? { proj: Q.proj, kpu: Q.kpu, areas: Q.areas.filter(a => Q.geo && Q.geo[a.id]).map(a => ({ d: a.d, lat: Q.geo[a.id].lab[0], lng: Q.geo[a.id].lab[1], x: a.lx, y: a.ly })) } : null);
   let waiting = null; // what to do once the script is there
   function withTiles(then) {
@@ -1159,7 +1191,7 @@
     return row;
   }
   // City quizzes: how to answer, on the map by distance or on the dots. Asked in the box of the round picked.
-  const playRow = () => options(MAPS.map(([m, t, sub]) => [t, sub, m === chosenMap, () => { chosenMap = m; if (view === 'setup') useMap(chosenMap); buildRounds(); }]));
+  const playRow = () => options(MAPS.map(([m, t, sub]) => [t, sub, m === chosenMap, () => { chosenMap = m; if (view === 'setup') useMap(chosenMap, true); buildRounds(); }]));
   // The box of the round picked, with its switches (its languages; how to answer). A box with buttons in it is a
   // group, not a button itself.
   function answerable(b, ...rows) {
@@ -1334,7 +1366,7 @@
   $('selAll').onclick = () => { KINDS[pickKind].ids.forEach(id => SEL[pickKind].add(id)); syncPicker(); };
   $('selNone').onclick = () => { SEL[pickKind].clear(); syncPicker(); };
   // The preview switches with the map choice; best scores are kept per map, so the rounds list follows too.
-  for (const b of $('mapSeg').querySelectorAll('button')) b.onclick = () => { chosenMap = b.dataset.map; if (view === 'setup') useMap(chosenMap); buildRounds(); };
+  for (const b of $('mapSeg').querySelectorAll('button')) b.onclick = () => { chosenMap = b.dataset.map; if (view === 'setup') useMap(chosenMap, true); buildRounds(); };
   $('saveBtn').onclick = () => {
     const cur = current(); if (!cur.ids.length) return;
     saveQuiz($('saveName').value, cur.kind, cur.ids); $('saveName').value = '';

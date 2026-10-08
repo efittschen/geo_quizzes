@@ -238,6 +238,7 @@ const QUIZ = (() => {
     // every other place, and the real outline of each dot
     context: WORLD.reg.filter(r => !inQuiz.has(r.id) || r.dot).map(r => r.d).join(''),
     size: [WORLD.w, WORLD.h], pad: 12, flyAnswer: true,
+    ...(WORLD.proj ? { proj: WORLD.proj, kpu: WORLD.kpu } : {}), // Web Mercator (tools/worldmap.mjs): Street View coverage can be laid on it
     maxZoom: 60, labelScale: .38, fly: { pad: 2.4, min: .045 },
     hintLabel: '', hintsDefault: false,
     exploreKind: Q.kinds[0].key, explore: Q.explore || EXPLORE[TYPE],
