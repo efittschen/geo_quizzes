@@ -1,5 +1,5 @@
 // Review page: what is on the stack (see srs.js), by country and quiz, each with buttons to review it (the whole
-// world at the top), the settings: the clock's two times and the limits per review and per day, and "Your data":
+// world at the top), the settings: the clock's times, the limits per review and per day and the schedule, and "Your data":
 // what this browser keeps, as a file to download or put back. Only quizzes listed in data/quizzes.json are shown; the stack of a quiz
 // that left the list is kept.
 
@@ -76,20 +76,34 @@ function render(index, nameByCode) {
   $("empty").hidden = decks.length > 0;
 }
 
-// The settings: the two times of the clock and the two limits (see srs.js). onChange: the limits change the buttons.
+// The settings (see srs.js): the three times of the clock, the two limits, and the schedule: which scheduler (FSRS or
+// SM-2), and its options, with the names they have in Anki; only those of the chosen scheduler show.
+// onChange: the limits change the buttons.
 function initSettings(onChange) {
+  const NUMBERS = ["easy", "fast", "limit", "round", "day", "retain", "restep", "keep", "first", "ease", "hard", "max"];
+  const SCHEDULE = ["algo", "steps", ...NUMBERS.slice(5)];
   const show = () => {
     const o = SRS.opts();
-    for (const key of ["fast", "limit", "round", "day"]) $(key).value = o[key];
+    for (const key of NUMBERS) $(key).value = o[key];
+    $("algo").value = o.algo;
+    $("steps").value = o.steps.join(" "); // minutes, one step after the other: "1 10"
+    for (const label of document.querySelectorAll("[data-algo]")) label.hidden = label.dataset.algo !== o.algo;
   };
   const save = () => {
-    const number = (id) => Math.max(1, Math.round(+$(id).value) || 0);
-    const fast = number("fast");
-    SRS.setOpts({ fast, limit: Math.max(fast + 1, number("limit")), round: number("round"), day: number("day") });
+    const number = (id, min = 1, max = Infinity) => Math.min(max, Math.max(min, Math.round(+$(id).value) || 0));
+    const easy = number("easy", 0), fast = Math.max(easy + 1, number("fast")); // easy 0: no answer is "easy"
+    SRS.setOpts({
+      easy, fast, limit: Math.max(fast + 1, number("limit")), round: number("round"), day: number("day"),
+      algo: $("algo").value, retain: number("retain", 70, 97),
+      steps: $("steps").value.split(/[\s,;]+/).map(Number).filter((m) => m > 0),
+      restep: number("restep", 0), keep: number("keep", 0, 100), first: number("first"),
+      ease: number("ease", 130), hard: number("hard", 50), max: number("max"),
+    });
     show();
     onChange();
   };
-  for (const key of ["fast", "limit", "round", "day"]) $(key).addEventListener("change", save);
+  for (const key of ["algo", "steps", ...NUMBERS]) $(key).addEventListener("change", save);
+  $("defaults").addEventListener("click", () => { SRS.resetOpts(SCHEDULE); show(); });
   show();
 }
 

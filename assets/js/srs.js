@@ -1,14 +1,20 @@
 // Spaced repetition for the map quizzes ("Review"). Every question of a quiz is a card. A round played perfectly puts
-// its questions on the stack; from then on they come back for review on Anki's schedule (its SM-2 scheduler with the
-// default settings, without the random spread of intervals, so questions learned together stay due together):
-// a new card after 1 minute, then after 10 minutes, then the next day, and from there after ever longer intervals.
-// A review asks the cards that are due, or all of them ("refresh everything"): a card asked before it is due is
-// rescheduled by Anki's rule for early reviews, so a right answer never shortens its interval, and a card in a
-// learning step moves on only once that step's time has passed.
-// Answers are graded by the clock instead of by buttons (see quizzes/shared/area-review.js):
-//   known      right on the first click, within the "known" time   → Anki's Good
-//   unsure     right on the first click, but slower                → Hard
-//   not known  a wrong click, or no answer before the time limit   → Again
+// its questions on the stack; from then on they come back for review: a new card after 1 minute, then after 10
+// minutes, and from there after ever longer intervals, without the random spread Anki gives them, so questions
+// learned together stay due together.
+// Those intervals come from FSRS, the scheduler Anki now recommends, as it is, with nothing added: it keeps a model
+// of how well each card is remembered, and schedules it for when the chance of recalling it has fallen to the
+// target retention (90%). A card that is missed comes back after a few days, not at the start. Anki's older
+// scheduler, SM-2, is the other choice in the settings: fixed factors (good × the card's ease, hard × 1.2).
+// Both take a card through the steps the way Anki does: again goes back to the first step, hard repeats the step,
+// good moves on, easy ends them. Every answer counts, whenever it is given: there is no waiting for a step to be
+// due, and a card asked again after a miss is answered for real.
+// A review asks the cards that are due, or all of them ("refresh everything").
+// Answers are rated by the clock instead of by buttons (see quizzes/shared/area-review.js), with Anki's four ratings:
+//   again  (not known)  a wrong click, or no answer before the time limit
+//   hard   (unsure)     right on the first click, but slower than the "known" time
+//   good   (known)      right on the first click within the "known" time
+//   easy   (instantly)  right on the first click within the "easy" time
 // Ordinary rounds count too, for cards on the stack: a wrong click is not known, a quick first-try answer known.
 // One review asks at most 50 cards, and at 200 cards reviewed in a day the due ones wait for the next day; both
 // limits are settings. Putting new cards on the stack has no limit: players arrive knowing a lot already.
@@ -16,25 +22,30 @@
 // Everything is kept in this browser, through store.js, which says how it is written there. Here it is:
 //   a deck, the cards of one quiz page (in the page's record, so quizzes can come and go):
 //     { t: page title, c: { '<kind>|<item id>': card } }
-//     card  { d: due (ms), i: interval in days, e: ease, l: last answered (ms), n: times not known,
-//             s: its learning step (2: new, the 1 minute step; 3: new, the 10 minute step; 1: relearning after
-//             a miss, 10 minutes; none once it is in review), x: 1 while its question is missing from the quiz }
-//   the settings  { fast, limit }: seconds for "known" and for the time limit;
-//                 { round, day }: the most cards one review asks, and the most reviewed in a day
+//     card  { d: due (ms), i: interval in days, e: ease (SM-2), st, df: stability in days and difficulty (FSRS; a
+//             card without them gets them from i and e), l: last answered (ms), n: times it was missed in review,
+//             s: its learning step (2, 3…: a new card's first, second… step; 1: the step after a miss, if the
+//             settings have one; none once it is in review), x: 1 while its question is missing from the quiz }
+//   the settings  { easy, fast, limit }: seconds for "easy", for "known" and for the time limit;
+//                 { round, day }: the most cards one review asks, and the most reviewed in a day;
+//                 the schedule, named as in Anki's options: { algo: "fsrs" or "sm2", retain: FSRS's target
+//                 retention in %, steps: a new card's learning steps in minutes,
+//                 restep: the relearning step after a miss in minutes (0: none), max: the longest interval in days,
+//                 and for SM-2 only: keep: the new interval after a miss in % of the old one, first: the graduating
+//                 interval in days, ease: the starting ease in %, hard: the interval after an unsure answer in % }
 //   the day       { d: the day (its start, ms), n: cards reviewed that day }
 //   the run       a review over several quizzes (one quiz, a country's quizzes, or all of them):
 //                 { back: the page it ends on, t: when it began (ms), total: its cards,
 //                   left: { quiz id: [cards still to ask] },
 //                   again: { quiz id: [cards that weren't known, asked again at the end] },
-//                   res: the cards' first answers in order (0 not known, 1 unsure, 2 known) }
+//                   res: the cards' first answers in order (0 not known, 1 unsure, 2 known, 3 instantly) }
 
 const SRS = (() => {
-  const MISSED = 0, UNSURE = 1, KNOWN = 2;
+  const MISSED = 0, UNSURE = 1, KNOWN = 2, INSTANT = 3; // the answers; as ratings (1 to 4): again, hard, good, easy
   const DAY = 864e5, MINUTE = 6e4;
   const ROLLOVER = 4; // a day starts at 4 am, as in Anki
-  const EASE = 2.5, MIN_EASE = 1.3, HARD = 1.2, MAX_DAYS = 36500;
-  const LEARN = [1, 10], RELEARN = [10]; // steps in minutes: for a new card, and after a miss
-  const OPTS = { fast: 6, limit: 15, round: 50, day: 200 };
+  const MIN_EASE = 1.3, EASY_BONUS = 1.3, EASY_DAYS = 4; // SM-2, as in Anki: the least ease, and what easy adds
+  const OPTS = { easy: 2, fast: 6, limit: 15, round: 50, day: 200, algo: "fsrs", retain: 90, steps: [1, 10], restep: 10, keep: 50, first: 1, ease: 250, hard: 120, max: 36500 };
 
 
   // Start (4 am) of the day ts falls in, or of the day n days later: by the calendar, so clock changes don't shift it.
@@ -48,37 +59,87 @@ const SRS = (() => {
   const days = (from, to) => Math.round((dayStart(to) - dayStart(from)) / DAY);
 
   /* ---------- the schedule ---------- */
-  const fresh = now => ({ d: now + LEARN[0] * MINUTE, i: 1, e: EASE, l: now, n: 0, s: 2 });
+  // FSRS-6, the Free Spaced Repetition Scheduler, with its default parameters: the formulas of the reference
+  // implementation (open-spaced-repetition/py-fsrs 6.3.2). It keeps two numbers per card: its stability st, the
+  // days after which the chance of recalling it has fallen to 90%, and its difficulty df, from 1 to 10. From the
+  // days since the last answer it works out that chance (the retrievability), from the answer the new stability and
+  // difficulty, and from the stability the interval after which the chance is the target retention.
+  const W = [0.212, 1.2931, 2.3065, 8.2956, 6.4133, 0.8334, 3.0194, 0.001, 1.8722, 0.1666, 0.796, 1.4835, 0.0614, 0.2629, 1.6483, 0.6014, 1.8729, 0.5425, 0.0912, 0.0658, 0.1542];
+  const DECAY = -W[20], FACTOR = 0.9 ** (1 / DECAY) - 1, MIN_STABILITY = 0.001;
+  const AGAIN = 1, HARD = 2, GOOD = 3, EASY = 4; // its ratings
+  const within = (x, min, max) => Math.min(max, Math.max(min, x));
+  const firstDifficulty = r => W[4] - Math.exp(W[5] * (r - 1)) + 1;
+  const retrievability = (t, st) => (1 + FACTOR * t / st) ** DECAY;
+  const fsrsInterval = (st, o) => within(Math.round(st / FACTOR * ((o.retain / 100) ** (1 / DECAY) - 1)), 1, o.max);
+  // The memory of a card after an answer. Asked again the same day, its stability changes by the short-term rule.
+  function remember(card, g, now) {
+    const r = g + 1, t = days(card.l, now), st = card.st, df = card.df, recalled = retrievability(t, st);
+    const sameDay = Math.exp(W[17] * (r - 3 + W[18])) * st ** -W[19]; // a right answer never lowers the stability
+    if (t < 1) card.st = st * (r === AGAIN ? sameDay : Math.max(1, sameDay));
+    else if (r === AGAIN) card.st = Math.min(W[11] * df ** -W[12] * ((st + 1) ** W[13] - 1) * Math.exp((1 - recalled) * W[14]), st / Math.exp(W[17] * W[18]));
+    else card.st = st * (1 + Math.exp(W[8]) * (11 - df) * st ** -W[9] * (Math.exp((1 - recalled) * W[10]) - 1) * (r === HARD ? W[15] : 1) * (r === EASY ? W[16] : 1));
+    card.st = Math.max(MIN_STABILITY, card.st);
+    card.df = within(W[7] * firstDifficulty(EASY) + (1 - W[7]) * (df + (10 - df) * -W[6] * (r - 3) / 9), 1, 10);
+  }
+  // A card without that memory gets one: a card in review that SM-2 scheduled, by FSRS's own conversion (the
+  // stability its interval stands for at 90%, the difficulty its ease stands for); any other as a new card whose
+  // first answer was known, which is how cards get on the stack.
+  const learned = card => Object.assign(card, { st: W[GOOD - 1], df: within(firstDifficulty(GOOD), 1, 10) });
+  function recollect(card) {
+    if (card.st != null && card.df != null) return;
+    if (card.s || !(card.i >= 1) || !(card.e > 1)) { learned(card); return; }
+    card.st = Math.max(card.i, MIN_STABILITY);
+    card.df = within(11 - (card.e - 1) / (Math.exp(W[8]) * card.st ** -W[9] * (Math.exp(0.1 * W[10]) - 1)), 1, 10);
+  }
+
+  // A new card: on its first learning step, or in review at once if the settings have no steps.
+  function fresh(now) {
+    const o = opts(), card = { i: o.first, e: o.ease / 100, l: now, n: 0 };
+    if (o.algo === "fsrs") { learned(card); card.i = fsrsInterval(card.st, o); }
+    return o.steps.length ? { ...card, d: now + o.steps[0] * MINUTE, s: 2 } : { ...card, d: dayStart(now, card.i) };
+  }
+  // An answer to a card, by the scheduler of the settings: FSRS, or SM-2 (Anki's older one), each as it is in Anki.
+  // Both take a card through its steps the same way (s: 2, 3… a new card's; 1: the one after a miss): not known goes
+  // back to the first step, unsure repeats the step (the first one after the mean of it and the second, or 1.5 × it
+  // if it is the only one), known moves on to the next step, or after the last one into review with the card's
+  // interval, and instantly goes into review at once.
   function grade(card, g, now) {
+    const o = opts(), fsrs = o.algo === "fsrs";
+    if (fsrs) { recollect(card); remember(card, g, now); }
+    const intoReview = () => { delete card.s; if (fsrs) card.i = fsrsInterval(card.st, o); card.d = dayStart(now, card.i); };
     if (card.s) {
-      // Learning steps (s: 1 relearning; 2, 3… a new card's). Known moves on to the next step, or after the last one
-      // into review with the card's interval; unsure repeats the step (after the mean of it and the next one, or
-      // 1.5 × the last); not known goes back to the first step. Right answers before the step is due change nothing.
-      const steps = card.s === 1 ? RELEARN : LEARN, at = card.s === 1 ? 0 : card.s - 2;
-      if (g === MISSED) { if (card.s > 1) card.s = 2; card.d = now + steps[0] * MINUTE; }
-      else if (card.d <= now) {
-        if (g === UNSURE) card.d = now + (steps[at] + Math.max(steps[at], steps[at + 1] ?? steps[at] * 2)) / 2 * MINUTE;
-        else if (at + 1 < steps.length) { card.s++; card.d = now + steps[at + 1] * MINUTE; }
-        else { delete card.s; card.d = dayStart(now, card.i); }
-      }
+      const after = card.s === 1, steps = (after ? [o.restep] : o.steps).filter(m => m > 0), at = after ? 0 : card.s - 2;
+      if (!steps.length || (at >= steps.length && g !== MISSED) || g === INSTANT || (g === KNOWN && at + 1 >= steps.length)) {
+        if (!fsrs && !after && g === INSTANT) card.i = Math.max(card.i, EASY_DAYS);
+        intoReview();
+      } else if (g === MISSED) { if (!after) card.s = 2; card.d = now + steps[0] * MINUTE; }
+      else if (g === UNSURE) card.d = now + (at > 0 ? steps[at] : steps.length > 1 ? (steps[0] + steps[1]) / 2 : steps[0] * 1.5) * MINUTE;
+      else { card.s = at + 3; card.d = now + steps[at + 1] * MINUTE; }
     } else if (g === MISSED) {
-      // A lapse: the interval starts over at a day, the ease drops, and the card is relearned first.
-      Object.assign(card, { n: (card.n || 0) + 1, e: Math.max(MIN_EASE, card.e - 0.2), i: 1, s: 1, d: now + RELEARN[0] * MINUTE });
-    } else {
-      const ivl = card.i, ease = card.e;
-      if (g === UNSURE) card.e = Math.max(MIN_EASE, ease - 0.15);
+      // A lapse. FSRS has lowered the stability by its rule for a forgotten card; SM-2 keeps a share of the interval
+      // (none, in Anki) and lowers the ease. The card is learned again first if the settings have a step for that.
+      card.n = (card.n || 0) + 1;
+      if (!fsrs) Object.assign(card, { e: Math.max(MIN_EASE, card.e - 0.2), i: Math.max(1, Math.floor(card.i * o.keep / 100)) });
+      if (o.restep) { card.s = 1; card.d = now + o.restep * MINUTE; if (fsrs) card.i = fsrsInterval(card.st, o); } else intoReview();
+    } else if (fsrs) intoReview();
+    else {
+      const ivl = card.i, ease = card.e, hard = o.hard / 100;
+      card.e = Math.max(MIN_EASE, ease + [0, -0.15, 0, 0.15][g]);
       if (card.d > now) {
         // Reviewed before it was due: only the days that really passed count, and known never shortens the interval.
         const passed = Math.max(0, ivl - days(now, card.d));
-        card.i = Math.floor(Math.max(1, g === UNSURE ? Math.max(ivl * HARD / 2, passed * HARD) : Math.max(ivl, passed * ease)));
+        card.i = Math.floor(Math.max(1, g === UNSURE ? Math.max(ivl * hard / 2, passed * hard) : Math.max(ivl, passed * ease) * (g === INSTANT ? (EASY_BONUS + 1) / 2 : 1)));
       } else {
-        // Unsure: 1.2 × the interval. Known: the interval (plus half the days overdue) × ease. Each a day more at least.
-        const hard = Math.max(ivl + 1, Math.floor(ivl * HARD));
-        card.i = g === UNSURE ? hard : Math.max(hard + 1, Math.floor((ivl + Math.floor(days(card.d, now) / 2)) * ease));
+        // Unsure: 1.2 × the interval. Known: the interval (plus half the days overdue) × ease. Instantly: the interval
+        // (plus the days overdue) × ease × 1.3. Each a day more at least than the one before.
+        const late = days(card.d, now), slow = Math.max(hard > 1 ? ivl + 1 : 1, Math.floor(ivl * hard));
+        const good = Math.max(slow + 1, Math.floor((ivl + Math.floor(late / 2)) * ease));
+        card.i = g === UNSURE ? slow : g === KNOWN ? good : Math.max(good + 1, Math.floor((ivl + late) * ease * EASY_BONUS));
       }
-      card.i = Math.min(card.i, MAX_DAYS);
+      card.i = Math.min(card.i, o.max);
       card.d = dayStart(now, card.i);
     }
+    if (!fsrs) { delete card.st; delete card.df; } // SM-2 doesn't keep them up: FSRS would work them out anew
     card.l = now;
     return card;
   }
@@ -176,8 +237,8 @@ const SRS = (() => {
     setRun(r);
     return first;
   }
-  // [not known, unsure, known] among answers (a run's res).
-  const tally = res => [MISSED, UNSURE, KNOWN].map(g => res.filter(x => x === g).length);
+  // [not known, unsure, known] among answers (a run's res); instantly is known too.
+  const tally = res => [MISSED, UNSURE, KNOWN].map(g => res.filter(x => Math.min(x, KNOWN) === g).length);
   // The address of a quiz in review mode (…?review), or of the page the run ends on (…?done). root: the site.
   function stopUrl(root, stop) {
     const u = new URL(stop ? stop.quiz.url : run().back, root);
@@ -194,17 +255,24 @@ const SRS = (() => {
     return stopUrl(root, nextStop(quizzes));
   }
 
-  const KEPT_AS = [["fast", "known"], ["limit", "limit"], ["round", "perReview"], ["day", "perDay"]]; // the settings' names in store.js
+  // The settings' names in store.js.
+  const KEPT_AS = [["easy", "easy"], ["fast", "known"], ["limit", "limit"], ["round", "perReview"], ["day", "perDay"], ["algo", "scheduler"], ["retain", "retention"],
+    ["steps", "steps"], ["restep", "missStep"], ["keep", "kept"], ["first", "firstInterval"], ["ease", "ease"], ["hard", "unsure"], ["max", "longest"]];
   function opts() {
     const kept = STORE.settings(), o = { ...OPTS };
     for (const [here, there] of KEPT_AS) if (kept[there] != null) o[here] = kept[there];
-    if (!(o.fast >= 1)) o.fast = OPTS.fast;
+    const sane = (key, min, max = Infinity) => { if (!(o[key] >= min && o[key] <= max)) o[key] = OPTS[key]; };
+    sane("fast", 1); sane("round", 1); sane("day", 1);
     if (!(o.limit > o.fast)) o.limit = Math.max(OPTS.limit, o.fast * 2);
-    if (!(o.round >= 1)) o.round = OPTS.round;
-    if (!(o.day >= 1)) o.day = OPTS.day;
+    if (!(o.easy >= 0 && o.easy < o.fast)) o.easy = Math.min(OPTS.easy, o.fast / 2); // 0: no answer is "easy"
+    if (o.algo !== "sm2") o.algo = "fsrs";
+    if (!Array.isArray(o.steps) || !o.steps.every(m => m > 0)) o.steps = OPTS.steps;
+    sane("retain", 70, 97); sane("restep", 0); sane("keep", 0, 100); sane("first", 1); sane("ease", MIN_EASE * 100); sane("hard", 50); sane("max", 1);
     return o;
   }
   const setOpts = o => STORE.setSettings(s => { for (const [here, there] of KEPT_AS) if (o[here] != null) s[there] = o[here]; });
+  // Back to the defaults, for these settings.
+  const resetOpts = keys => STORE.setSettings(s => { for (const [here, there] of KEPT_AS) if (keys.includes(here)) delete s[there]; });
 
   // How long until ts: "now", "in 10 min", "tomorrow", "in 5 days".
   function until(ts, now) {
@@ -214,5 +282,5 @@ const SRS = (() => {
     return n === 1 ? "tomorrow" : n < 60 ? `in ${n} days` : n < 730 ? `in ${Math.round(n / 30.4)} months` : `in ${(n / 365).toFixed(1)} years`;
   }
 
-  return { MISSED, UNSURE, KNOWN, grade, deck, save, remove, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, overview, run, setRun, nextStop, stretch, ran, tally, stopUrl, startRun, opts, setOpts, until, dayStart, days };
+  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, overview, run, setRun, nextStop, stretch, ran, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
 })();

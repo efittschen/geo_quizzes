@@ -6,31 +6,33 @@
 // A review over several quizzes, started on the review page or a country page, is shuffled in groups: a card can
 // only be asked on its own quiz's page, and changing page takes a moment, so a page (…?review=1) asks three of its
 // cards, picked at random, before the review moves on to another quiz, picked at random too.
-// Every question has a clock instead of "I knew it" buttons:
-//   known      right on the first click within the "known" time
-//   unsure     right on the first click, but slower
-//   not known  a wrong click (the answer shows at once: no second try), or the time limit runs out
-// A question that wasn't known comes back at the end of the review until it is answered right. Only the last answer
+// Every question has a clock instead of Anki's four buttons:
+//   easy   (instantly)  right on the first click within the "easy" time
+//   good   (known)      right on the first click within the "known" time
+//   hard   (unsure)     right on the first click, but slower
+//   again  (not known)  a wrong click (the answer shows at once: no second try), or the time limit runs out
+// A question that wasn't known comes back at the end of the review until it is answered right, and those answers
+// count like any other, except that they are never "easy": the answer was just shown. Only the last answer
 // stays colored on the map, every question starts from the whole map, and the areas of everything learned so far
 // stay lit (not just the ones asked), so the map gives nothing away. On a page that has only just appeared, the
 // first question's clock starts a moment late. A review asks 50 cards at most, and the due ones only until 200
 // cards have been reviewed that day (both are settings on the review page).
 //
 // Ordinary rounds count too, quietly (no clock is shown), for questions already on the stack: a wrong click, the
-// first one already, is "not known", and a first-try answer within the "known" time is "known". A slower right
-// answer changes nothing.
+// first one already, is "not known", and a first-try answer within the "known" time is "known" (or "instantly").
+// A slower right answer changes nothing.
 //
 // The engine calls learned (after a perfect round), asked, missed, grade, answered and finished; E is what it shares.
 
 window.areaReview = E => {
   const { $, Q, G, KINDS, PAGE, ROOT } = E;
-  const { MISSED, UNSURE, KNOWN } = SRS;
-  const CLASS = [3, 1, 0]; // grade -> the engine's result class: miss, t2, got
+  const { MISSED, UNSURE, KNOWN, INSTANT } = SRS;
+  const CLASS = [3, 1, 0, 0]; // answer -> the engine's result class: miss, t2, got, got
   const LEAD = 1500; // ms before the clock starts on a map that has only just appeared
   const cardKey = (kind, id) => kind + '|' + id;
   const pageTitle = () => (document.querySelector('.brand h1') || {}).textContent || document.title;
   let S = null; // the review being played
-  let P = null; // an ordinary round's question: { t: when it was asked, fast: the "known" time, missed }
+  let P = null; // an ordinary round's question: { t: when it was asked, easy, fast: the "easy" and "known" times, missed }
   let raf = 0;
 
   // This page's stack. Cards whose question is no longer in the quiz are kept but set aside (x) until it is back.
@@ -67,7 +69,8 @@ window.areaReview = E => {
   document.addEventListener('visibilitychange', syncIfShown);
   setInterval(syncIfShown, 15000);
 
-  // The clock: a bar that runs down to the time limit, green while a right answer still counts as known.
+  // The clock: a bar that runs down to the time limit, green while a right answer still counts as known, with a
+  // notch where "easy" ends and one where "known" ends.
   const bar = document.createElement('div'); bar.className = 'rv-timer'; bar.hidden = true;
   const fill = document.createElement('i'); bar.append(fill);
   $('ask').after(bar);
@@ -125,7 +128,7 @@ window.areaReview = E => {
   function showStats() {
     if (!G.review) return;
     const { res, total, known } = progress();
-    let streak = 0; while (streak < res.length && res[res.length - 1 - streak] === KNOWN) streak++;
+    let streak = 0; while (streak < res.length && res[res.length - 1 - streak] >= KNOWN) streak++;
     $('sQ').textContent = `${Math.min(res.length + 1, total)}/${total}`;
     $('sScore').textContent = known; $('sStreak').textContent = streak;
     const state = res.length + '/' + total;
@@ -170,13 +173,18 @@ window.areaReview = E => {
     const K = KINDS[G.kind], id = G.queue[G.i], o = SRS.opts();
     // An item with several areas to click gets half the time again for each extra one.
     const k = E.needAll(K, id) ? 1 + (K.areas[id].length - 1) / 2 : 1;
-    if (!G.review) { P = { t: performance.now() + (G.i ? 0 : LEAD), fast: o.fast * 1000 * k, missed: false }; return; }
+    // A card asked again after a miss was just shown: answering it quickly says nothing, so it is never "easy"
+    // (an "easy" time below zero), in a review and in an ordinary round of the missed ones alike.
+    const key = cardKey(G.kind, id), shown = G.review ? (S.chain ? (SRS.run().again[PAGE] || []).includes(key) : S.counted.has(key)) : G.retry;
+    const easy = shown ? -1 : o.easy * 1000 * k;
+    if (!G.review) { P = { t: performance.now() + (G.i ? 0 : LEAD), easy, fast: o.fast * 1000 * k, missed: false }; return; }
     // The last answer must not stay on the map if this question is about the same place.
     if (S.prev && K.areas[id].some(a => S.prev.areas.includes(a))) unmark();
-    Object.assign(S, { t: performance.now() + (S.asked ? 0 : LEAD), fast: o.fast * 1000 * k, limit: o.limit * 1000 * k, late: false });
+    Object.assign(S, { t: performance.now() + (S.asked ? 0 : LEAD), easy, fast: o.fast * 1000 * k, limit: o.limit * 1000 * k, late: false });
     E.home();
     showStats();
-    bar.hidden = false; bar.style.setProperty('--known', `${100 - S.fast / S.limit * 100}%`);
+    bar.hidden = false;
+    bar.style.setProperty('--easy', `${100 - S.easy / S.limit * 100}%`); bar.style.setProperty('--known', `${100 - S.fast / S.limit * 100}%`);
     cancelAnimationFrame(raf); raf = requestAnimationFrame(tick);
   }
   function tick() {
@@ -202,7 +210,7 @@ window.areaReview = E => {
   // The engine asks for the answer's result class when a question is done; wrong = a wrong click or a shown answer.
   function grade(wrong) {
     const t = Math.max(0, performance.now() - S.t);
-    S.g = wrong || S.late ? MISSED : t <= S.fast ? KNOWN : UNSURE;
+    S.g = wrong || S.late ? MISSED : t <= S.easy ? INSTANT : t <= S.fast ? KNOWN : UNSURE;
     S.secs = t / 1000;
     return CLASS[S.g];
   }
@@ -216,18 +224,19 @@ window.areaReview = E => {
   function answered(id, right) {
     if (!G.review) {
       if (!right) missed(id);
-      else if (P && !P.missed && performance.now() - P.t <= P.fast) SRS.answer(PAGE, cardKey(G.kind, id), KNOWN, Date.now());
+      else if (P && !P.missed && performance.now() - P.t <= P.fast) SRS.answer(PAGE, cardKey(G.kind, id), performance.now() - P.t <= P.easy ? INSTANT : KNOWN, Date.now());
       return;
     }
-    const K = KINDS[G.kind], g = S.g, now = Date.now();
-    const key = cardKey(G.kind, id), card = SRS.answer(PAGE, key, g, now);
+    const K = KINDS[G.kind], g = S.g, now = Date.now(), key = cardKey(G.kind, id);
+    const card = SRS.answer(PAGE, key, g, now);
+    // A card's first answer in a review is the one its result and the day's count go by.
     const first = S.chain ? SRS.ran(PAGE, key, g) : !S.counted.has(key);
     S.counted.add(key); S.res.push(g); S.asked++;
-    if (first) { S.n[g]++; SRS.reviewed(now); }
+    if (first) { S.n[Math.min(g, KNOWN)]++; SRS.reviewed(now); }
     if (S.prev) unmark();
     S.prev = { kind: G.kind, id, areas: K.areas[id], cls: E.RESULT_CLASS[CLASS[g]] };
     const fb = $('fb'), t = fb.querySelector('.t');
-    fb.className = 'feedback ' + ['bad', 'unsure', 'ok'][g];
+    fb.className = 'feedback ' + ['bad', 'unsure', 'ok', 'ok'][g];
     if (t) t.textContent = g === MISSED ? K.name(id) : `✓ ${K.name(id)} · ${S.secs.toFixed(1)} s`;
     if (card) { const p = document.createElement('p'); p.className = 'c'; p.textContent = `Next ${SRS.until(card.d, now)}`; fb.append(p); }
     if (g === MISSED && !S.chain) {

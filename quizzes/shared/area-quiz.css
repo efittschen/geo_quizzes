@@ -190,7 +190,8 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
 .rv-timer{position:relative;flex:none;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
 .rv-timer i{display:block;height:100%;background:var(--ok);transform-origin:left}
 .rv-timer.slow i{background:var(--yellow)}
-.rv-timer::after{content:"";position:absolute;top:0;bottom:0;left:var(--known,60%);width:2px;background:var(--panel)}
+.rv-timer::before,.rv-timer::after{content:"";position:absolute;z-index:1;top:0;bottom:0;width:2px;background:var(--panel)}
+.rv-timer::before{left:var(--easy,87%)} .rv-timer::after{left:var(--known,60%)}
 .feedback.unsure{border-left-color:var(--yellow)}
 .reviewing #restartBtn,.reviewing #againBtn,.reviewing #retryBtn,.reviewing .legend li:nth-child(3){display:none}
 /* a review is several rounds shown as one: it has its own ticks, and its results count cards, not the last round */

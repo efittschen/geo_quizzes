@@ -137,6 +137,9 @@ main > .map-wrap:first-child{margin-top:24px}
 .decks a:hover{text-decoration:underline}
 .decks .acts{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px 8px}
 .timer-opts{display:flex;flex-wrap:wrap;gap:10px 28px;color:var(--muted)}
+.timer-opts input[type=text]{width:7em}
+.timer-opts #max{width:6.4em}
+.timer-opts select{margin:0 4px;padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit}
 .timer-opts input{width:4.6em;margin:0 4px;padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;background:transparent;color:var(--ink);font:inherit}
 
 /* Multiple-choice quiz page */

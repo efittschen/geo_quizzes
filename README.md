@@ -232,23 +232,34 @@ It has its own small script, not the map-quiz engine: no custom quizzes, no revi
 
 ## Review (spaced repetition)
 
-Every question of a map quiz is a card. A round played perfectly (every answer right on the first try; "retry missed" rounds don't count) puts its questions on the stack. From then on they come back on Anki's schedule: its SM-2 scheduler with the default settings, without the random spread of intervals, so questions learned together stay due together. A new card is due after 1 minute, then after 10 minutes, then the next day; from there the interval grows (3, 7, 17, 42… days when always known; ease 2.5, unsure × 1.2). A miss starts a card over at one day, after a 10 minute relearning step. Days change at 4 am. A card in a step (1 or 10 minutes) moves on only once that time has passed, so asking it again at once doesn't skip the wait; a miss always counts.
+Every question of a map quiz is a card. A round played perfectly (every answer right on the first try; "retry missed" rounds don't count) puts its questions on the stack. From then on they come back for review: a new card after 1 minute, then after 10 minutes, and from there after ever longer intervals (without the random spread Anki gives them, so questions learned together stay due together). Days change at 4 am.
 
-A review asks cards in shuffled order, whatever their kind of question (a state's name, then a code, then another state's letters), on the map chosen on the quiz's setup screen, and grades each answer by the clock instead of by buttons:
+The intervals come from **FSRS** (version 6, with its default parameters), the scheduler Anki now recommends, as it is, with nothing added. It keeps a model of the memory of each card, its stability (the days after which the chance of recalling it has fallen to 90%) and its difficulty, and schedules the card for the day that chance reaches the target retention, 90% by default. Always good, a card comes back after 2, 11, 46, 163, 498 days. A hard answer makes it more difficult, so it comes back sooner from then on. A card that is missed does not go back to a new card's steps, but it falls a long way and climbs more slowly than the first time: missed when it had reached 46 days, it is asked again after 10 minutes and then comes back after 3, 8, 19, 42, 86 days; missed at 163 days, after 5, 12, 28, 59. An answer before the card is due counts for what it is worth: little, if the card was fresh in memory. The code follows the reference implementation (py-fsrs 6.3.2) and gives its numbers, for the steps too; cards scheduled by SM-2 get their memory by FSRS's own conversion from their interval and ease.
 
-- **Known**: right on the first click within the "known" time (6 s by default). Anki's Good.
-- **Unsure**: right on the first click, but slower. Anki's Hard.
-- **Not known**: a wrong click (the answer shows at once, there is no second try) or no answer within the time limit (15 s). Anki's Again; the card comes back at the end of the review until it is answered right.
+**SM-2**, Anki's older scheduler, is the other choice in the settings: fixed factors (good × the card's ease of 2.5, hard × 1.2, easy × the ease × 1.3; 1, 3, 7, 17, 42 days when always good). A card that is missed keeps a share of its interval, half by default (none in Anki), and its ease drops.
+
+Both take a card through its steps as Anki does. On a new card's steps (1 and 10 minutes), again goes back to the first step, hard repeats the step (the first one after 5½ minutes), good moves on to the next step or, after the last, into review, and easy goes into review at once. A card in review that is missed has one step of 10 minutes before it is back in review. Every answer counts, whenever it is given: there is no waiting for a step to be due, a card asked again after a miss is answered for real, and so is a second miss on the same day.
+
+All of this can be set on the review page, under the names Anki's options have: the scheduler; for FSRS the target retention; for both the new card steps, the step after a miss and the longest interval; for SM-2 the share of the interval kept after a miss, the first interval, the starting ease and the unsure interval.
+
+A review asks cards in shuffled order, whatever their kind of question (a state's name, then a code, then another state's letters), on the map chosen on the quiz's setup screen, and rates each answer by the clock instead of by Anki's four buttons:
+
+- **Easy** (instantly): right on the first click within the "easy" time (2 s by default; 0 turns it off).
+- **Good** (known): right on the first click within the "known" time (6 s).
+- **Hard** (unsure): right on the first click, but slower.
+- **Again** (not known): a wrong click (the answer shows at once, there is no second try) or no answer within the time limit (15 s). The card comes back at the end of the review until it is answered right. Asked again like that, it is never "easy", however quick the answer: it was just shown. The same goes for "Retry missed" in an ordinary round.
+
+The clock is a bar that runs down, with a notch where "easy" ends and one where "known" ends.
 
 Only the last answer stays colored on the map, each question starts from the whole map, and the areas of everything learned on that page stay lit, so the map gives nothing away. A code dialed in several areas gets half the time again per extra area. In map play (cities, click anywhere) a close answer counts as right.
 
-Ordinary rounds count too, quietly, for questions already on the stack: a wrong click (the first one already) is "not known", and a first-try answer within the "known" time is "known". A slower right answer changes nothing, and no clock is shown.
+Ordinary rounds count too, quietly, for questions already on the stack: a wrong click (the first one already) is "again", and a first-try answer within the "known" time is "good" (within the "easy" time, "easy"). A slower right answer changes nothing, and no clock is shown.
 
 A review covers one quiz, one country or everything, and asks either the cards that are **due** or **all** of them (to refresh everything learned; a card asked early follows Anki's rule for early reviews, so a right answer never shortens its interval):
 
 - a quiz's setup screen has Due and All for that quiz;
 - a country page has them for the country's quizzes;
-- `review.html` (linked in the header, with the number due) has them for the whole world, per country and per quiz, lists the stack, and holds the settings: the two times of the clock and the two limits.
+- `review.html` (linked in the header, with the number due) has them for the whole world, per country and per quiz, lists the stack, and holds the settings: the three times of the clock, the two limits and the schedule.
 
 Two limits keep a review day bearable, both settings: one review asks at most 50 cards, and once 200 cards have been reviewed in a day the due ones wait for the next day (All still works). Due asks the longest due first; All asks the cards not answered for longest, so asking for all again goes on through the stack instead of repeating. Putting new cards on the stack has no limit: players arrive knowing a lot already.
 
