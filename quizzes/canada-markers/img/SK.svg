@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300">
+<rect width="480" height="300" fill="#dce5ea"/>
+<rect y="262" width="480" height="38" fill="#b9c4b4"/>
+<rect x="234" y="150" width="12" height="150" fill="#8d979c"/>
+<rect x="160" y="70" width="160" height="124" rx="16" fill="#fff"/><rect x="163" y="73" width="154" height="118" rx="14" fill="#0c6b4c"/><text x="240" y="104" font-size="20" font-weight="500" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" text-anchor="middle" fill="#fff" >km</text><text x="240" y="166" font-size="52" font-weight="700" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" text-anchor="middle" fill="#fff" >150</text>
+</svg>

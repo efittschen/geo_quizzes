@@ -1449,6 +1449,14 @@
       "url": "quizzes/india-town-names/index.html"
     },
     {
+      "id": "canada-markers",
+      "country": "124",
+      "title": "Kilometre Markers",
+      "levels": 2,
+      "description": "See a kilometre marker and click the province that uses it.",
+      "url": "quizzes/canada-markers/index.html"
+    },
+    {
       "id": "canada-signs",
       "country": "124",
       "title": "Sign Languages",

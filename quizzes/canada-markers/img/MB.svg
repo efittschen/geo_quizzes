@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300">
+<rect width="480" height="300" fill="#dce5ea"/>
+<rect y="262" width="480" height="38" fill="#b9c4b4"/>
+<rect x="234" y="150" width="12" height="150" fill="#8d979c"/>
+<rect x="202" y="14" width="76" height="250" fill="#fff"/><rect x="205" y="17" width="70" height="244" fill="#0c6b4c"/><rect x="205" y="62" width="70" height="3" fill="#fff"/><text x="240" y="52" font-size="36" font-weight="500" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" text-anchor="middle" fill="#fff" >km</text><text x="240" y="124" font-size="60" font-weight="300" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" text-anchor="middle" fill="#fff" >0</text><text x="240" y="188" font-size="60" font-weight="300" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" text-anchor="middle" fill="#fff" >1</text><text x="240" y="252" font-size="60" font-weight="300" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" text-anchor="middle" fill="#fff" >8</text>
+</svg>
