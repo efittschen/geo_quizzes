@@ -13,10 +13,11 @@
 //   again  (not known)  a wrong click (the answer shows at once: no second try), or the time limit runs out
 // A question that wasn't known comes back at the end of the review until it is answered right, and those answers
 // count like any other, except that they are never "easy": the answer was just shown. Only the last answer
-// stays colored on the map, every question starts from the whole map, and the areas of everything learned so far
-// stay lit (not just the ones asked), so the map gives nothing away. On a page that has only just appeared, the
-// first question's clock starts a moment late. A review asks 50 cards at most, and the due ones only until 200
-// cards have been reviewed that day (both are settings on the review page).
+// stays colored on the map, and the areas of everything learned so far stay lit (not just the ones asked), so the
+// map gives nothing away. The review starts from the whole map, and from then on the map stays where the player has
+// it; an answer shown outside the view is flown to, and the next question returns. On a page that has only just
+// appeared, the first question's clock starts a moment late. A review asks 50 cards at most, and the due ones only
+// until 200 cards have been reviewed that day (both are settings on the review page).
 //
 // Ordinary rounds count too, quietly (no clock is shown), for questions already on the stack: a wrong click, the
 // first one already, is "not known", and a first-try answer within the "known" time is "known" (or "instantly").
@@ -181,7 +182,7 @@ window.areaReview = E => {
     // The last answer must not stay on the map if this question is about the same place.
     if (S.prev && K.areas[id].some(a => S.prev.areas.includes(a))) unmark();
     Object.assign(S, { t: performance.now() + (S.asked ? 0 : LEAD), easy, fast: o.fast * 1000 * k, limit: o.limit * 1000 * k, late: false });
-    E.home();
+    if (!S.asked) E.home();
     showStats();
     bar.hidden = false;
     bar.style.setProperty('--easy', `${100 - S.easy / S.limit * 100}%`); bar.style.setProperty('--known', `${100 - S.fast / S.limit * 100}%`);
@@ -203,7 +204,7 @@ window.areaReview = E => {
     S.late = true; G.revealed = true;
     const rest = K.areas[id].filter(a => !G.found.has(a));
     if (!E.free()) for (const p of E.pathsOf(rest)) p.classList.add('ans');
-    if (E.onStreet()) E.flyTo(K.areas[id]); else { E.home(); E.showAnswer(rest); }
+    if (E.onStreet()) E.flyTo(K.areas[id]); else E.showAnswer(rest);
     E.mark(rest);
     E.setFeedback($('fb'), 'bad', '✗ Time', `→ ${K.name(id)}`);
   }
