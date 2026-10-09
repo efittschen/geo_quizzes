@@ -15,7 +15,8 @@
 //   Select         the list of these controls
 //
 // The cursor shows with the first use of the controller and hides when the mouse moves. Its place is kept for the next
-// page in this tab (sessionStorage), so a review that moves from quiz to quiz keeps it. Loaded by every page in the root
+// page in this tab (sessionStorage), so a review that moves from quiz to quiz keeps it. The browser hides the controller
+// from each page it opens until a button is pressed there; that press counts. Loaded by every page in the root
 // and, through quizzes/shared/quiz-page.js, by every quiz page.
 (() => {
   if (window.top !== window || !navigator.getGamepads) return;
@@ -241,8 +242,9 @@
   const repeatAt = {};
   function tick(pad, dt, now) {
     const on = pad.buttons.map(b => b.pressed);
-    // A button already down when the controller is first read (the press that opened this page) waits for its release.
-    if (!prev || pad.index !== padIndex) { prev = on.slice(); padIndex = pad.index; if (on.some(Boolean)) shown = true; }
+    // A button already down when the controller is first read while the page loads (the press that opened it) waits
+    // for its release. Later, it is the press that showed the controller to this page, and counts.
+    if (!prev || pad.index !== padIndex) { prev = now < 1500 ? on.slice() : on.map(() => false); padIndex = pad.index; if (on.some(Boolean)) shown = true; }
     const pressed = i => on[i] && !prev[i];
     const again = i => {
       if (!on[i]) { delete repeatAt[i]; return false; }
@@ -288,11 +290,17 @@
     if (!pads.length) { running = false; prev = null; if (held) release(); if (pan) panEnd(); return; }
     const pad = pads.reduce((a, b) => (b.timestamp > a.timestamp ? b : a)); // the one used last
     const dt = Math.min(0.05, (t - (last || t)) / 1000); last = t;
-    tick(pad, dt, t);
-    requestAnimationFrame(loop);
+    try { tick(pad, dt, t); } finally { requestAnimationFrame(loop); }
   }
-  function run() { if (!running) { running = true; last = 0; requestAnimationFrame(loop); } }
+  const connected = () => { try { return [...navigator.getGamepads()].some(p => p && p.connected); } catch (e) { return false; } };
+  function run() { if (!running) { running = true; last = 0; if (note) note.hidden = true; requestAnimationFrame(loop); } }
   addEventListener('gamepadconnected', run);
-  try { if ([...navigator.getGamepads()].some(p => p && p.connected)) run(); } catch (e) {}
+  if (connected()) run();
+  // A browser shows the controller to each new page only once a button is pressed on it, and not every browser tells
+  // the page with an event: in a tab that has used a controller, it is looked for.
+  if (hinted) {
+    setInterval(() => { if (!running && connected()) run(); }, 500);
+    setTimeout(() => { if (!running) tell('Press any button to use the controller on this page'); }, 800);
+  }
   if (shown) requestAnimationFrame(place);
 })();
