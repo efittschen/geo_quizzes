@@ -75,6 +75,11 @@ main > .map-wrap:first-child{margin-top:24px}
 .files.own::before{left:23px;bottom:0}
 .files.own a{padding-left:40px}
 .files.own a .name{font-weight:600}
+/* a list with no folder above it (the language quizzes) */
+.files.flat{padding:6px 0}
+.files.flat::before{content:none}
+.files.flat a{padding-left:16px}
+.files.flat a .name{font-weight:600}
 .stars.unplayed{opacity:.6}
 
 /* Country page */

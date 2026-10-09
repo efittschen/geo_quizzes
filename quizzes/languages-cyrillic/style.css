@@ -1,0 +1,58 @@
+/* Cyrillic to Latin (quiz.js): the panel with the question on the left, the alphabet table on the right; one column
+   on a phone, the table below. Barlow has no Cyrillic, so Cyrillic text is set in Noto Sans. */
+.wrap{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:32px;max-width:1080px;margin:0 auto;padding:28px 26px}
+.back{display:inline-block;margin-bottom:10px;color:var(--muted);text-decoration:none;font-size:.9rem}
+.back:hover{color:var(--ink)}
+h1{font:700 2.1rem/1 var(--cond);letter-spacing:-.01em;margin:0 0 14px}
+h2{font:600 1rem/1.2 var(--sans);color:var(--muted);margin:18px 0 8px}
+h3{font:600 .78rem/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+.lead{margin:0;color:var(--muted)}
+[lang="ru"]{font-family:'Noto Sans',var(--sans)}
+
+.rounds{display:grid;gap:6px}
+.round{display:flex;justify-content:space-between;align-items:center;gap:10px;appearance:none;width:100%;text-align:left;padding:9px 12px;border:1.5px solid var(--line);border-radius:var(--radius);background:var(--card);cursor:pointer}
+.round:hover{border-color:var(--ink)}
+.round[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 4px 0 0 var(--ink)}
+.round .rl{display:flex;flex-direction:column}
+.round small,.round .rs{color:var(--muted);font-size:.85rem}
+.round.done .rs{color:var(--ok);font-weight:600}
+.toggle{display:flex;align-items:center;gap:8px;margin:16px 0;color:var(--muted);font-size:.95rem;cursor:pointer}
+#startBtn{width:100%}
+
+.word{font:700 clamp(2rem,7vw,3.2rem)/1.15 'Noto Sans',var(--sans);margin:8px 0 16px;overflow-wrap:anywhere}
+#form{display:flex;gap:8px}
+#answer{flex:1;min-width:0;font:500 1.15rem/1.2 var(--sans);padding:11px 14px;border:1.5px solid var(--line);border-radius:var(--radius);background:var(--card);color:var(--ink)}
+#answer:focus{outline:none;border-color:var(--ink)}
+#answer[readonly]{opacity:.7}
+.fb{min-height:58px;margin:12px 0;padding:10px 14px;border-radius:var(--radius);display:flex;flex-direction:column}
+.fb.ok{background:color-mix(in srgb,var(--got) 30%,transparent);box-shadow:inset 4px 0 0 var(--ok)}
+.fb.bad{background:color-mix(in srgb,var(--miss) 30%,transparent);box-shadow:inset 4px 0 0 var(--bad)}
+.fb b{font-size:1.15rem}
+.fb span{color:var(--muted);font-size:.92rem}
+.stats{display:flex;gap:28px}
+.stats div{display:flex;flex-direction:column}
+.stats b{font:700 1.5rem/1.1 var(--cond)}
+.stats span{color:var(--muted);font-size:.8rem}
+.bar{display:flex;gap:3px;margin:10px 0 16px}
+.bar i{flex:1;height:5px;border-radius:3px;background:var(--line)}
+.bar i.ok{background:var(--ok)} .bar i.bad{background:var(--bad)}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.missed{list-style:none;padding:0;margin:14px 0;display:grid;gap:4px}
+.missed li{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.missed small{grid-column:1/-1;color:var(--muted)}
+
+.table-wrap h2{margin-top:0}
+.table-wrap.hidden{visibility:hidden}
+.abc{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
+.cell{display:flex;justify-content:space-between;align-items:baseline;gap:6px;padding:7px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--card)}
+.cell .cy{font-weight:600;font-size:1.1rem;white-space:nowrap}
+.cell .la{font:600 1.05rem/1 var(--cond);color:var(--muted)}
+.cell.on{border-color:var(--ink);background:color-mix(in srgb,var(--yellow) 22%,var(--card))}
+.cell.on .la{color:var(--ink)}
+.note{color:var(--muted);font-size:.85rem;margin:12px 0 0}
+
+@media (max-width:760px){
+  .wrap{grid-template-columns:1fr;gap:18px;padding:16px}
+  .table-wrap.hidden{display:none}
+  .abc{grid-template-columns:repeat(auto-fill,minmax(76px,1fr))}
+}

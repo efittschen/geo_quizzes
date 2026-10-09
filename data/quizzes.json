@@ -2297,6 +2297,14 @@
       "hidden": true
     },
     {
+      "id": "languages-cyrillic",
+      "scope": "Languages",
+      "title": "Cyrillic to Latin",
+      "levels": 4,
+      "description": "Read a Russian word from a street sign or a map and type it in Latin letters, with the alphabet table at hand.",
+      "url": "quizzes/languages-cyrillic/index.html"
+    },
+    {
       "id": "world-countries",
       "scope": "World",
       "title": "Countries",
