@@ -1337,6 +1337,14 @@
       "url": "quizzes/spain-regions/index.html"
     },
     {
+      "id": "spain-iso",
+      "country": "724",
+      "title": "ISO Codes",
+      "levels": 2,
+      "description": "See a community's ISO 3166-2 code (AN) and find the autonomous community on the map.",
+      "url": "quizzes/spain-iso/index.html"
+    },
+    {
       "id": "spain-postcodes",
       "country": "724",
       "title": "Postcodes",
