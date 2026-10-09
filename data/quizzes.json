@@ -433,6 +433,14 @@
       "url": "quizzes/kazakhstan-regions/index.html"
     },
     {
+      "id": "kazakhstan-signs",
+      "country": "398",
+      "title": "Street Sign Codes",
+      "levels": 2,
+      "description": "See the letter under a street sign's QR code and find its region.",
+      "url": "quizzes/kazakhstan-signs/index.html"
+    },
+    {
       "id": "kazakhstan-cities",
       "country": "398",
       "title": "Cities",
