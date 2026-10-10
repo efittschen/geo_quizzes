@@ -15,6 +15,9 @@ function quizCountries(quiz) {
 // A quiz about the whole world or a whole continent has a `scope` instead ("World", or the continent's name as in
 // the index's `continents`). Its page lists the quizzes of that scope (country.html?area=<scope>).
 const WORLD_SCOPE = "World";
+// The quizzes about reading a language (scope "Languages") are no geography: the home page lists them in a section
+// of their own, below the others.
+const LANGUAGE_SCOPE = "Languages";
 function areaUrl(area) {
   return `country.html?area=${encodeURIComponent(area)}`;
 }

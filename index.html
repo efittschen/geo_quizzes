@@ -16,7 +16,7 @@
 <body>
   <header class="site-header">
     <a class="brand" href="index.html">🌍 Geo Quizzes</a>
-    <nav><a href="review.html" id="review-link">Review</a><a href="#quiz-list">All quizzes</a></nav>
+    <nav><a href="review.html" id="review-link">Review</a><a href="#quiz-list">All quizzes</a><a href="#language-list" id="language-link" hidden>Languages</a></nav>
   </header>
 
   <main>
@@ -36,6 +36,14 @@
       <div id="quiz-tree" class="tree"></div>
       <p id="quiz-links-empty" class="muted" hidden>No quizzes yet.</p>
     </section>
+
+    <section id="language-list" class="quiz-list" hidden>
+      <div class="list-head">
+        <h2>Language quizzes</h2>
+      </div>
+      <p class="muted rating-help">Reading the scripts and words on signs. Not tied to a place on the map.</p>
+      <div id="language-tree" class="tree"></div>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -49,5 +57,6 @@
   <script src="assets/js/common.js"></script>
   <script src="assets/js/srs.js"></script>
   <script src="assets/js/map.js"></script>
+  <script src="assets/js/gamepad.js"></script>
 </body>
 </html>

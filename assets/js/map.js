@@ -39,7 +39,9 @@ function renderQuizList(index, nameByCode, suites) {
   // folder, before its countries.
   const continents = new Map(); // continent -> place -> quizzes
   const whole = new Map(); // continent or "World" -> its own quizzes
+  const languages = index.quizzes.filter((q) => q.scope === LANGUAGE_SCOPE); // listed apart, below
   for (const quiz of index.quizzes) {
+    if (quiz.scope === LANGUAGE_SCOPE) continue;
     const code = quizCountries(quiz)[0];
     const continent = quiz.scope ?? index.continents?.[code] ?? "Other";
     if (quiz.scope) whole.set(continent, [...(whole.get(continent) ?? []), quiz]);
@@ -104,9 +106,14 @@ function renderQuizList(index, nameByCode, suites) {
     tree.append(folder(continent, "continent", continent, all, [...own(continent), ...placeFolders]));
   }
 
+  // The language quizzes, in their section: a plain list, as there are no places to fold them under.
+  document.getElementById("language-list").hidden = !languages.length;
+  document.getElementById("language-tree").replaceChildren(files(languages, "files flat"));
+  document.getElementById("language-link").hidden = !languages.length;
+
   // The world and the continents with quizzes of their own, and the suites, as links above the map: only on a page
   // that has a place for them (<nav id="areas">, <nav id="suites">); the home page has none at present.
-  const areas = [...whole.keys()].sort((a, b) => (b === WORLD_SCOPE) - (a === WORLD_SCOPE) || a.localeCompare(b));
+  const areas = [...whole.keys(), ...(languages.length ? [LANGUAGE_SCOPE] : [])].sort((a, b) => (b === WORLD_SCOPE) - (a === WORLD_SCOPE) || a.localeCompare(b));
   document.getElementById("areas")?.replaceChildren(...areas.map((area) => {
     const a = document.createElement("a");
     a.className = "ghost small";

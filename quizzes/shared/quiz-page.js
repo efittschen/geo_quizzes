@@ -19,6 +19,8 @@ document.write(`<script src="${new URL('../../assets/js/sync.js', document.curre
 window.addEventListener('geoquizzes:fresh', e => { if (document.getElementById('setup')?.hidden) e.preventDefault(); });
 // Likewise mercator.js, which redraws a page's map in Web Mercator: the scripts that build on a map call it first.
 document.write(`<script src="${new URL('mercator.js', document.currentScript.src).href}"><\/script>`);
+// And gamepad.js, which lets a game controller play the page as a mouse would.
+document.write(`<script src="${new URL('../../assets/js/gamepad.js', document.currentScript.src).href}"><\/script>`);
 // And the two links that make the site an app on a phone's home screen (manifest.webmanifest and the icon for
 // iPhones), which the pages in the root carry in their <head>.
 for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-icon', 'assets/icons/apple-touch-icon.png']])

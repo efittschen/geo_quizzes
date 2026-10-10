@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cyrillic to Latin · Geo Quizzes</title>
+<meta name="description" content="Read Cyrillic: see a Russian word from a street sign or a map and type it in Latin letters, with the alphabet table at hand.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Noto+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="../../assets/css/base.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="wrap">
+  <section class="side">
+    <a class="back" href="../../country.html?area=Languages">← Languages</a>
+    <h1>Cyrillic to Latin</h1>
+
+    <div id="setup">
+      <p class="lead">A word appears in Cyrillic, as on a Russian street sign or map. Type it in Latin letters.</p>
+      <h2>Choose a round</h2>
+      <div class="rounds" id="rounds"></div>
+      <label class="toggle"><input type="checkbox" id="hideTable"> Hide the alphabet table while playing</label>
+      <button class="primary" id="startBtn" type="button">Start</button>
+    </div>
+
+    <div id="play" hidden>
+      <div class="word" id="word" lang="ru"></div>
+      <form id="form" autocomplete="off">
+        <input id="answer" type="text" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="The word in Latin letters" placeholder="Type it in Latin letters">
+        <button class="primary" id="go" type="submit">Check</button>
+      </form>
+      <div class="fb" id="fb" aria-live="polite"></div>
+      <div class="stats">
+        <div><b id="sQ">1/9</b><span>Question</span></div>
+        <div><b id="sRight">0</b><span>Right</span></div>
+        <div><b id="sTime">0:00</b><span>Time</span></div>
+      </div>
+      <div class="bar" id="bar"></div>
+      <div class="row"><button class="ghost" id="restart" type="button">Restart</button><button class="ghost" id="end" type="button">End round</button></div>
+    </div>
+
+    <div id="result" hidden>
+      <h2 id="rTitle"></h2>
+      <p class="lead" id="rSub"></p>
+      <ul class="missed" id="missed"></ul>
+      <div class="row"><button class="primary" id="again" type="button">Play again</button><button class="ghost" id="retry" type="button">Missed ones</button><button class="ghost" id="rounds-back" type="button">Rounds</button></div>
+    </div>
+  </section>
+
+  <section class="table-wrap" id="tableWrap">
+    <h2>Russian alphabet</h2>
+    <div class="abc" id="abc"></div>
+    <p class="note">Simplified BGN/PCGN, close to the Latin names on Google Maps. Other common spellings are accepted too (j for й, h for х, c for ц, ye for е, ë for ё, -y for -ий/-ый). ь and ъ are not written; е after them is ye (въезд, vyezd).</p>
+  </section>
+</main>
+<script src="../../assets/js/store.js"></script>
+<script src="../../assets/js/sync.js"></script>
+<script src="words.js"></script>
+<script src="quiz.js"></script>
+</body>
+</html>

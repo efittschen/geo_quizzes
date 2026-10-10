@@ -433,6 +433,14 @@
       "url": "quizzes/kazakhstan-regions/index.html"
     },
     {
+      "id": "kazakhstan-signs",
+      "country": "398",
+      "title": "Street Sign Codes",
+      "levels": 2,
+      "description": "See the letter under a street sign's QR code and find its region.",
+      "url": "quizzes/kazakhstan-signs/index.html"
+    },
+    {
       "id": "kazakhstan-cities",
       "country": "398",
       "title": "Cities",
@@ -1337,6 +1345,14 @@
       "url": "quizzes/spain-regions/index.html"
     },
     {
+      "id": "spain-iso",
+      "country": "724",
+      "title": "ISO Codes",
+      "levels": 2,
+      "description": "See a community's ISO 3166-2 code (AN) and find the autonomous community on the map.",
+      "url": "quizzes/spain-iso/index.html"
+    },
+    {
       "id": "spain-postcodes",
       "country": "724",
       "title": "Postcodes",
@@ -1431,6 +1447,14 @@
       "role": "names",
       "levels": 3,
       "url": "quizzes/india-town-names/index.html"
+    },
+    {
+      "id": "canada-markers",
+      "country": "124",
+      "title": "Kilometre Markers",
+      "levels": 2,
+      "description": "See a kilometre marker and click the province that uses it.",
+      "url": "quizzes/canada-markers/index.html"
     },
     {
       "id": "canada-signs",
@@ -2271,6 +2295,14 @@
       "levels": 4,
       "url": "quizzes/united-kingdom-london/index.html",
       "hidden": true
+    },
+    {
+      "id": "languages-cyrillic",
+      "scope": "Languages",
+      "title": "Cyrillic to Latin",
+      "levels": 4,
+      "description": "Read a Russian word from a street sign or a map and type it in Latin letters, with the alphabet table at hand.",
+      "url": "quizzes/languages-cyrillic/index.html"
     },
     {
       "id": "world-countries",

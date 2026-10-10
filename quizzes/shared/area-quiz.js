@@ -1443,14 +1443,15 @@
     return b;
   }
   // Q.flyAnswer: a shown answer the view doesn't show (outside it, or a speck) is flown to; the next question
-  // returns to the view before.
+  // returns to the view before. A review does the same on every map for an answer outside the view, since it keeps
+  // the view from question to question.
   function showAnswer(areas) {
     if (overlaid()) { if (areas.length && !areas.some(a => lmap.getBounds().intersects(SP[a].getBounds()))) flyTo(areas); return; }
-    if (!Q.flyAnswer || !areas.length) return;
+    if (!(Q.flyAnswer || G.review) || !areas.length) return;
     const s = scale();
     const seen = areas.some(a => {
       const b = EL[a].getBBox(), x = b.x + b.width / 2, y = b.y + b.height / 2;
-      return x > vb.x && x < vb.x + vb.w && y > vb.y && y < vb.y + vb.h && (AREA[a].dot || Math.max(b.width, b.height) * s >= 16);
+      return x > vb.x && x < vb.x + vb.w && y > vb.y && y < vb.y + vb.h && (!Q.flyAnswer || AREA[a].dot || Math.max(b.width, b.height) * s >= 16);
     });
     if (seen) return;
     G.back ??= { ...vb };
