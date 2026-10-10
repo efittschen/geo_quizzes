@@ -5,11 +5,13 @@
 //     stars    progress per level, Beginner first; 1 means every round of the level was played perfectly. The quiz
 //              page works it out from `best` and keeps it here for the home and country pages, which show the stars
 //              without loading the quiz.
-//     cards    the review stack (see srs.js): { "<layer>|<item>": { due, last, interval, ease, stability, difficulty, misses, step, missing } }
+//     cards    the review stack (see srs.js): { "<layer>|<item>": { due, last, interval, ease, stability, difficulty, misses, step, missing, map, back, played } }
 //              due and last are times; interval is in days; ease is the SM-2 scheduler's number, stability (days)
 //              and difficulty (1 to 10) are FSRS's; step is
 //              there while the card is still being learned (2, 3…: a new card's steps, 1: learned again after a
-//              miss); missing: its question left the quiz
+//              miss); missing: its question left the quiz; map, back and played: how the last perfect round
+//              with it was played, which is how it is reviewed (the map, as in `best`; a city quiz's background if
+//              it wasn't the drawn map), and when (a time)
 //     best     the best result of every round played, per map: { "<layer>/<map>/<items>": { name, of, score, ms, points } }
 //              <items> stands for the round's exact items, as their number and a fingerprint of the list (see `print`),
 //              so a result counts for whatever round or custom quiz asks just those items, and no longer once a
@@ -84,10 +86,10 @@ const STORE = (() => {
 
   // Times are kept as text ("2026-10-07T14:03:12.869Z"); the code counts in milliseconds.
   const time = ms => (Number.isFinite(ms) ? new Date(ms).toISOString() : ms), ms = t => (typeof t === 'string' ? Date.parse(t) : t);
-  // A review card as kept, and as srs.js works with it: { d: due, l: last, i: interval, e: ease, st: stability, df: difficulty, n: misses, s: step, x: missing }.
+  // A review card as kept, and as srs.js works with it: { d: due, l: last, i: interval, e: ease, st: stability, df: difficulty, n: misses, s: step, x: missing, m: map, b: back, p: played }.
   const memory = (c, st, df, as) => (c[st] != null && c[df] != null ? { [as[0]]: c[st], [as[1]]: c[df] } : {});
-  const cardOut = c => ({ due: time(c.d), last: time(c.l), interval: c.i, ease: c.e, ...memory(c, 'st', 'df', ['stability', 'difficulty']), misses: c.n || 0, ...(c.s ? { step: c.s } : {}), ...(c.x ? { missing: true } : {}) });
-  const cardIn = c => ({ d: ms(c.due), i: c.interval, e: c.ease, ...memory(c, 'stability', 'difficulty', ['st', 'df']), l: ms(c.last), n: c.misses || 0, ...(c.step ? { s: c.step } : {}), ...(c.missing ? { x: 1 } : {}) });
+  const cardOut = c => ({ due: time(c.d), last: time(c.l), interval: c.i, ease: c.e, ...memory(c, 'st', 'df', ['stability', 'difficulty']), misses: c.n || 0, ...(c.s ? { step: c.s } : {}), ...(c.x ? { missing: true } : {}), ...(c.m ? { map: c.m } : {}), ...(c.b ? { back: c.b } : {}), ...(c.p ? { played: time(c.p) } : {}) });
+  const cardIn = c => ({ d: ms(c.due), i: c.interval, e: c.ease, ...memory(c, 'stability', 'difficulty', ['st', 'df']), l: ms(c.last), n: c.misses || 0, ...(c.step ? { s: c.step } : {}), ...(c.missing ? { x: 1 } : {}), ...(c.map ? { m: c.map } : {}), ...(c.back ? { b: c.back } : {}), ...(c.played ? { p: ms(c.played) } : {}) });
   // A best result as kept, and as the quiz engine works with it: { s: score, t: time in ms, p: points }.
   const bestOut = (b, of, name) => ({ ...(name ? { name } : {}), of, score: b.s, ms: Math.round(b.t), ...(b.p != null ? { points: b.p } : {}) });
   const bestIn = b => (b ? { s: b.score, t: b.ms, p: b.points } : null);

@@ -8,7 +8,8 @@
 // that belong to one browser: a record's `last` and its paint `choice`, the settings' `open`, the review's `run`.
 //
 // Two copies of an entry become one like this (`merge`), with nothing lost that either side learned:
-//   cards      each card from the copy where it was answered last; none from before the stack was removed (`cleared`)
+//   cards      each card from the copy where it was answered last, with how it is reviewed (map, back) from the copy
+//              where it was last played perfectly (played); none from before the stack was removed (`cleared`)
 //   best       each round's better result
 //   paint      each round's higher number
 //   stars      from the copy where they changed last (`changed`); if one doesn't say, the higher of each
@@ -59,7 +60,10 @@ const SYNC = (() => {
 
   function card(mine, theirs) {
     if (!mine || !theirs) return mine || theirs;
-    return when(mine.last) > when(theirs.last) ? mine : theirs;
+    const [answered, other] = when(mine.last) > when(theirs.last) ? [mine, theirs] : [theirs, mine];
+    if (!other.map || !(when(other.played) > when(answered.played))) return answered;
+    const { map, back, played, ...rest } = answered;
+    return { ...rest, map: other.map, ...(other.back ? { back: other.back } : {}), played: other.played };
   }
   // A round's better result: as the quiz counts it, by points on a map played for points, else by the score, then by
   // the time. The higher score is kept with either.

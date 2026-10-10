@@ -1009,8 +1009,15 @@
   function useBack(back) {
     chosenBack = back; store('back', back);
     for (const b of backSeg.children) b.setAttribute('aria-pressed', b.dataset.back === back);
+    showBack(back);
+  }
+  // The one on screen: the chosen one, or in a review the one of its cards (see reviewModes).
+  let shownBack = 'quiz';
+  function showBack(back) {
+    if (back === shownBack) return;
+    shownBack = back;
     svg.classList.toggle('streets', back !== 'quiz'); svg.classList.toggle('plain', back === 'street');
-    if (back !== 'quiz' || tiles) withTiles(() => { tiles.streets().show(chosenBack !== 'quiz'); apply(); });
+    withTiles(() => { tiles.streets().show(shownBack !== 'quiz'); apply(); });
   }
   if (BACKS.length) useBack(chosenBack);
   // Street View coverage on top of the map, whatever the map: a switch of its own beside the map picker. It is the
@@ -1120,6 +1127,38 @@
     const best = record().best || {}, unnamed = [];
     for (const r of ROUNDS) if (!r.random) { const p = STORE.print(roundIds(r)); for (const map of ['quiz', 'overlay', 'street', 'free']) { const k = `${r.kind}/${map}/${p}`; if (best[k] && !best[k].name) unnamed.push([k, r.label]); } }
     if (unnamed.length) keep(r => { for (const [k, name] of unnamed) if (r.best?.[k]) r.best[k].name = name; });
+  }
+  // How a card is reviewed: the way the last perfect round with it was played, which is kept with the card (see
+  // area-review.js): on that map (the quiz map, the overlay, the street map; a city quiz's dots or its map by
+  // distance) and, in a city quiz, with that background. A card not played perfectly since that is kept goes by the
+  // best results, which don't say when: the map of a perfect result of a round, a saved or a custom quiz with its
+  // item in it, the hardest of several (a player goes from the dots to the distance, not back); or else (a round
+  // that has changed since) of any perfect result of its kind, the easiest of several; and with none the map
+  // chosen on the setup screen. Its background is the one chosen there, as nothing tells what it was.
+  const EASIEST = ['quiz', 'overlay', 'street', 'free'].filter(m => MAPS.some(([x]) => x === m)); // (the dots before the map by distance)
+  const family = kind => KINDS[kind].cards || kind; // kinds that share their cards
+  // Per family: { any: the maps with a perfect result, on: { item: the maps with one that has the item in it } }.
+  function perfectMaps() {
+    const out = {}, maps = {}; // maps: '<kind>/<items>' -> the maps those items were played perfectly on
+    for (const [k, b] of Object.entries(record().best || {})) {
+      const i = k.lastIndexOf('/'), j = k.lastIndexOf('/', i - 1), kind = k.slice(0, j), map = k.slice(j + 1, i);
+      if (!KINDS[kind] || !EASIEST.includes(map) || !(b.score >= b.of)) continue;
+      (maps[kind + '/' + k.slice(i + 1)] ||= new Set()).add(map);
+      (out[family(kind)] ||= { any: new Set(), on: {} }).any.add(map);
+    }
+    const asked = [...ROUNDS.filter(r => !r.random).map(r => [r.kind, roundIds(r)]), ...SAVED.map(q => [q.kind, q.ids]), ...(SHARED ? [[SHARED.kind, SHARED.ids]] : []),
+      ...Object.keys(KINDS).map(k => [k, KINDS[k].ids.filter(id => SEL[k].has(id))])];
+    for (const [kind, ids] of asked) for (const map of maps[kind + '/' + STORE.print(ids)] || []) for (const id of ids) (out[family(kind)].on[id] ||= new Set()).add(map);
+    return out;
+  }
+  // -> (kind, item, card) => { map, back }, for the cards of one review.
+  function reviewModes() {
+    let perfect = null;
+    return (kind, id, card) => {
+      if (EASIEST.includes(card.m)) return { map: card.m, back: BACKS.some(([b]) => b === card.b) ? card.b : 'quiz' };
+      const p = (perfect ||= perfectMaps())[family(kind)], own = p && p.on[id];
+      return { map: (own ? [...EASIEST].reverse().find(m => own.has(m)) : p && EASIEST.find(m => p.any.has(m))) || chosenMap, back: chosenBack };
+    };
   }
   // One star per level, up to the quiz's highest: a level's star is earned when every one of its rounds has been
   // played perfectly (all right on the first try, on any map). Until then the star fills with the average best
@@ -1375,7 +1414,7 @@
   $('shareBtn').onclick = () => { const cur = current(); if (cur.ids.length) copyLink(cur.kind, cur.ids, $('saveName').value.trim()); };
 
   function openSetup() {
-    clearInterval(timer); clearTimeout(G.ending); useMap(chosenMap); clearMap();
+    clearInterval(timer); clearTimeout(G.ending); useMap(chosenMap); showBack(chosenBack); clearMap();
     show('setup');
     buildPicker(); buildRounds();
     frameRound();
@@ -1445,10 +1484,12 @@
     countEl.replaceChildren(b, left === K.areas[id].length ? ' areas' : ' more');
   }
 
-  function start(kind, items, { retry = false, review = false, box = null } = {}) {
+  // map, back: a review asks its cards the way they were last played perfectly (see reviewModes), not as chosen on the
+  // setup screen.
+  function start(kind, items, { retry = false, review = false, box = null, map = chosenMap, back = chosenBack } = {}) {
     clearInterval(timer); clearTimeout(G.ending);
     Object.assign(G, { kind, items, queue: shuffle(items), i: 0, score: 0, streak: 0, best: 0, res: [], t0: performance.now(), retry, review, points: 0, box, back: null });
-    useMap(chosenMap); clearMap();
+    useMap(map); showBack(back); clearMap();
     if (box) { if (onStreet()) frameStreet({ kind, ids: items, box }); else frame(box); }
     if (scoreLabel) scoreLabel.textContent = mapStyle === 'free' ? 'Points' : SCORE_LABEL;
     markOut(KINDS[kind].dim === false ? AREAS : items.flatMap(id => KINDS[kind].areas[id]));
@@ -1692,6 +1733,7 @@
       RV = areaReview({
         $, Q, G, KINDS, PAGE: PAGE_ID, ROOT, RESULT_CLASS, shuffle, fmt, start, markOut, mark, pathsOf, showLabel, setFeedback, needAll, flyTo, onStreet, showAnswer,
         free: () => mapStyle === 'free', home: () => onStreet() ? fitHome() : resetView(),
+        reviewModes, played: () => ({ m: mapStyle, ...(shownBack !== 'quiz' ? { b: shownBack } : {}) }), // how the round on screen is played
       });
     });
   }
