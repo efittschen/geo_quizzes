@@ -126,11 +126,34 @@
   // A quiz map in Web Mercator lies on the plain map of the world (Q.world, see mercator.js; world.js is fetched
   // unless it is the page's own map): the neighbours, and what lies between a country's far-off parts.
   if (Q.world && typeof MERCATOR === 'object') {
+    // The land is one shape without a line. Its lines (coasts and borders) are cut into the cells of a grid, a path
+    // per cell, so that only those near what the map shows are drawn: one path of all of them is drawn in full
+    // every time the map moves, wherever it is. A line two countries share stays in one path (it has one color).
     const lay = () => {
-      const p = document.createElementNS(NS, 'path'); p.setAttribute('d', WORLD.reg.filter(r => r.a).map(r => r.d).join(''));
+      const path = (cls, d) => { const p = document.createElementNS(NS, 'path'); p.setAttribute('class', cls); p.setAttribute('d', d); return p; };
+      const places = WORLD.reg.filter(r => r.a), CELL = WORLD.w / 32, cells = new Map();
+      const add = (c, run) => { const l = cells.get(c); if (l) l.push(run); else cells.set(c, [run]); };
+      // (world.js writes a ring as "Mx,yLx,y…Z": its points are taken as they are written, not read and written again)
+      for (const r of places) for (const part of r.d.split('M')) {
+        const ring = part.replace('Z', '').split('L'), n = ring.length; if (!part) continue;
+        const x = new Float64Array(n), y = new Float64Array(n);
+        for (let i = 0; i < n; i++) { const k = ring[i].indexOf(','); x[i] = +ring[i].slice(0, k); y[i] = +ring[i].slice(k + 1); }
+        // the cell of each of the ring's edges (by its middle; edge i runs from point i to the next one)
+        const cell = new Float64Array(n);
+        for (let i = 0, j = n - 1; i < n; j = i++) cell[j] = (Math.floor((x[j] + x[i]) / 2 / CELL) + 64) * 4096 + Math.floor((y[j] + y[i]) / 2 / CELL) + 64;
+        let from = 0; while (from < n && cell[from] === cell[(from + n - 1) % n]) from++; // where the ring enters a cell: its runs are walked from there
+        if (from === n) { add(cell[0], ring.join('L') + 'Z'); continue; } // all of it in one cell
+        for (let i = 0, run; i < n; i++) {
+          const at = (from + i) % n;
+          if (!i || cell[at] !== cell[(at + n - 1) % n]) add(cell[at], run = [ring[at]]);
+          run.push(ring[(at + 1) % n]);
+        }
+      }
+      const land = path('wland', places.map(r => r.d).join(''));
+      const lines = [...cells.values()].map(runs => path('wline', runs.map(run => 'M' + (typeof run === 'string' ? run : run.join('L'))).join('')));
       for (const [s, dx, dy] of MERCATOR.world(WORLD, Q.proj, Q.size[0])) { // (a second time for a map over the 180th meridian)
         const g = document.createElementNS(NS, 'g'); g.setAttribute('transform', `translate(${dx},${dy}) scale(${s})`);
-        g.append(p.cloneNode()); $('ctx').prepend(g);
+        g.append(land.cloneNode(), ...lines.map(p => p.cloneNode())); $('ctx').prepend(g);
       }
       const note = $('stage').querySelector('.note'); if (note && !/Natural Earth/.test(note.textContent)) note.append(' · World: Natural Earth');
     };
@@ -265,25 +288,66 @@
     return { ...r, kind: k.key, id: k.key + ':' + (r.key || r.label), of: r, ids: r.random ? mine : mine(), groups: null, preset: null, top: null };
   }).filter(v => v.random || v.ids.length)]);
 
-  /* ---------- pan & zoom for the quiz map (viewBox based) ---------- */
-  const [MW, MH] = Q.size, PAD = Q.pad;
+  /* ---------- pan & zoom for the quiz map ----------
+     The view is a box of the map (vb), shown in the stage. The picture of the map (the SVG) is drawn for a view and
+     reaches beyond each side of the stage: by AHEAD of the stage's size, or less on a large screen, where FAR pixels
+     are enough (the picture takes memory). While a finger or the wheel moves the map, that picture is only moved and
+     sized to the view: the browser slides what it has drawn already, which costs it next to nothing. It is drawn
+     again when the view has come EDGE of the way into what was drawn ahead, when the picture is stretched or shrunk
+     by more than STRETCH, when the hand rests (REST ms), and when it lets go. Drawing a large map again for every
+     step of a move (as a change of the SVG's viewBox does) is what made moving it slow. So while a pinch or the
+     wheel zooms, lines and labels grow and shrink with the picture until it is drawn again. */
+  const [MW, MH] = Q.size, PAD = Q.pad, stage = $('stage'), AHEAD = .5, FAR = 300, EDGE = .6, STRETCH = 1.6, REST = 120;
   let base = { x: 0, y: 0, w: MW, h: MH }, vb = { ...base };
-  svg.setAttribute('viewBox', `0 0 ${MW} ${MH}`);
+  // The picture's box: the stage's and `ahead` of its size more on every side (a share, so it follows the stage's size).
+  let ahead = 0;
+  function reach(a) { if (a !== ahead) Object.assign(svg.style, { left: -a * 100 + '%', top: -a * 100 + '%', width: (1 + 2 * a) * 100 + '%', height: (1 + 2 * a) * 100 + '%' }); ahead = a; }
+  reach(AHEAD);
+  svg.setAttribute('viewBox', `${-ahead * MW} ${-ahead * MH} ${MW * (1 + 2 * ahead)} ${MH * (1 + 2 * ahead)}`);
+  stage.addEventListener('scroll', () => { stage.scrollLeft = stage.scrollTop = 0; }); // (a browser without `overflow: clip` could be made to scroll the stage to the picture's rest)
+  // The map's box on the screen is the stage's: the picture is larger, and moved (none while the street map is shown).
+  const stageBox = () => (svg.style.display === 'none' ? { left: 0, top: 0, width: 0, height: 0 } : stage.getBoundingClientRect());
   const HOME = Q.home || [0, 0, MW, MH]; // what the map shows when zoomed out: all of it, or the page's part
   function fit() {
-    const r = svg.getBoundingClientRect(); if (!r.width || !r.height) return;
+    const r = stageBox(); if (!r.width || !r.height) return;
     const a = r.width / r.height;
     let w = HOME[2] - HOME[0] + PAD * 2, h = HOME[3] - HOME[1] + PAD * 2;
     if (w / h < a) w = h * a; else h = w / a;
     base = { x: (HOME[0] + HOME[2]) / 2 - w / 2, y: (HOME[1] + HOME[3]) / 2 - h / 2, w, h };
   }
+  let sized = 0; // the scale the labels were last sized for: moving the map without zooming leaves them as they are
+  let drawn = null, slid = false, raf = 0, resting = 0; // the view the picture is drawn for; whether it is moved from there
+  const showTiles = () => { if (tiles) { const r = stageBox(), s = Math.min(r.width / vb.w, r.height / vb.h); if (s) tiles.view(vb.x - (r.width / s - vb.w) / 2, vb.y - (r.height / s - vb.h) / 2, s); } };
+  // The picture drawn for the view.
   function apply() {
-    svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`); sizeLabels(); syncDetail();
-    if (tiles) { const r = svg.getBoundingClientRect(), s = Math.min(r.width / vb.w, r.height / vb.h); if (s) tiles.view(vb.x - (r.width / s - vb.w) / 2, vb.y - (r.height / s - vb.h) / 2, s); }
+    cancelAnimationFrame(raf); clearTimeout(resting);
+    const r = stageBox(); if (r.width && r.height) reach(Math.min(AHEAD, FAR / Math.min(r.width, r.height)));
+    svg.setAttribute('viewBox', `${vb.x - ahead * vb.w} ${vb.y - ahead * vb.h} ${vb.w * (1 + 2 * ahead)} ${vb.h * (1 + 2 * ahead)}`);
+    if (slid) { svg.style.transform = ''; slid = false; }
+    drawn = { ...vb };
+    const s = scale(); if (s !== sized) sizeLabels(s); syncDetail(s);
+    showTiles();
   }
-  function scale() { const r = svg.getBoundingClientRect(); return Math.min(r.width / vb.w, r.height / vb.h) || 1; }
+  // The picture as it is, moved and sized to the view; drawn again where that no longer does (see above).
+  function slide() {
+    const r = stageBox();
+    if (!drawn || !r.width || !r.height) return apply();
+    // where a view puts the map in the stage: its scale, and the room left beside it
+    const put = v => { const s = Math.min(r.width / v.w, r.height / v.h); return { s, x: (r.width - v.w * s) / 2, y: (r.height - v.h * s) / 2 }; };
+    const d = put(drawn), n = put(vb), k = n.s / d.s;
+    // how far the view reaches into what is drawn ahead (1: to its end), on its worst side
+    const out = Math.max((drawn.x - vb.x) / drawn.w, (vb.x + vb.w - drawn.x - drawn.w) / drawn.w, (drawn.y - vb.y) / drawn.h, (vb.y + vb.h - drawn.y - drawn.h) / drawn.h) / ahead;
+    if (out > EDGE || k > STRETCH || k < 1 / STRETCH) return apply();
+    // (the picture's own corner lies `ahead` of the stage's size outside the stage's)
+    const tx = n.x - k * d.x + n.s * (drawn.x - vb.x) + ahead * r.width * (1 - k), ty = n.y - k * d.y + n.s * (drawn.y - vb.y) + ahead * r.height * (1 - k);
+    svg.style.transform = `translate(${tx}px,${ty}px) scale(${k})`; slid = true;
+    showTiles();
+    clearTimeout(resting); resting = setTimeout(apply, REST);
+  }
+  const glide = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(slide); }; // once per frame, however many steps came
+  function scale() { const r = stageBox(); return Math.min(r.width / vb.w, r.height / vb.h) || 1; }
   function toSvg(cx, cy, v) {
-    const r = svg.getBoundingClientRect(); const s = Math.min(r.width / v.w, r.height / v.h);
+    const r = stageBox(); const s = Math.min(r.width / v.w, r.height / v.h);
     const ox = (r.width - v.w * s) / 2, oy = (r.height - v.h * s) / 2;
     return { x: v.x + (cx - r.left - ox) / s, y: v.y + (cy - r.top - oy) / s };
   }
@@ -295,13 +359,14 @@
     v.x = Math.min(Math.max(v.x, -mx), MW - v.w + mx); v.y = Math.min(Math.max(v.y, -my), MH - v.h + my);
     return v;
   }
-  function zoomAt(cx, cy, f, from = vb) {
+  // (show: how the new view gets on screen: drawn at once, or the picture moved to it while the wheel turns)
+  function zoomAt(cx, cy, f, from = vb, show = apply) {
     const p = toSvg(cx, cy, from); const w = from.w / f, h = from.h / f;
-    const r = svg.getBoundingClientRect(); const s = Math.min(r.width / w, r.height / h);
+    const r = stageBox(); const s = Math.min(r.width / w, r.height / h);
     const ox = (r.width - w * s) / 2, oy = (r.height - h * s) / 2;
-    vb = clampV({ x: p.x - (cx - r.left - ox) / s, y: p.y - (cy - r.top - oy) / s, w, h }); apply();
+    vb = clampV({ x: p.x - (cx - r.left - ox) / s, y: p.y - (cy - r.top - oy) / s, w, h }); show();
   }
-  function zoomCenter(f) { const r = svg.getBoundingClientRect(); zoomAt(r.left + r.width / 2, r.top + r.height / 2, f); }
+  function zoomCenter(f) { const r = stageBox(); zoomAt(r.left + r.width / 2, r.top + r.height / 2, f); }
   function resetView() { fit(); vb = { ...base }; apply(); }
   // Show a part of the map, [x0, y0, x1, y1] (a round's box), or all of it.
   function frame(box) {
@@ -315,11 +380,10 @@
     const r = view === 'play' ? { kind: G.kind, ids: G.items, box: G.box } : view === 'setup' ? current() : {};
     if (onStreet()) frameStreet(r); else frame(r.box);
   };
-  let raf = 0;
-  svg.addEventListener('wheel', e => { e.preventDefault(); const f = Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.0022)); zoomAt(e.clientX, e.clientY, f); }, { passive: false });
+  svg.addEventListener('wheel', e => { e.preventDefault(); const f = Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.0022)); zoomAt(e.clientX, e.clientY, f, vb, glide); }, { passive: false });
   $('zIn').onclick = () => zoomCenter(1.6); $('zOut').onclick = () => zoomCenter(1 / 1.6); $('zFit').onclick = () => frameRound();
   window.addEventListener('resize', () => {
-    if (!svg.getBoundingClientRect().width) return;
+    if (!stageBox().width) return;
     const c = { x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 }; const k = vb.w / base.w;
     fit(); vb = { w: base.w * k, h: base.h * k }; vb.x = c.x - vb.w / 2; vb.y = c.y - vb.h / 2; vb = clampV(vb); apply();
   });
@@ -337,13 +401,14 @@
     if (pinch && pts.size === 2) {
       const [a, b] = [...pts.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y), m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
       const p = toSvg(pinch.m.x, pinch.m.y, pinch.v); const f = d / pinch.d; const w = pinch.v.w / f, h = pinch.v.h / f;
-      const r = svg.getBoundingClientRect(); const s = Math.min(r.width / w, r.height / h); const ox = (r.width - w * s) / 2, oy = (r.height - h * s) / 2;
+      const r = stageBox(); const s = Math.min(r.width / w, r.height / h); const ox = (r.width - w * s) / 2, oy = (r.height - h * s) / 2;
       vb = clampV({ x: p.x - (m.x - r.left - ox) / s, y: p.y - (m.y - r.top - oy) / s, w, h });
-      cancelAnimationFrame(raf); raf = requestAnimationFrame(apply);
+      glide();
     } else if (drag) {
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-      if (!moved && Math.hypot(dx, dy) > 6) { moved = true; svg.classList.add('grab'); }
-      if (moved) { vb = clampV({ ...drag.v, x: drag.v.x - dx / drag.s, y: drag.v.y - dy / drag.s }); cancelAnimationFrame(raf); raf = requestAnimationFrame(apply); }
+      // (the grabbing hand is for a mouse: a new cursor is a new style for every area of the map, which a finger need not wait for)
+      if (!moved && Math.hypot(dx, dy) > 6) { moved = true; if (e.pointerType === 'mouse') svg.classList.add('grab'); }
+      if (moved) { vb = clampV({ ...drag.v, x: drag.v.x - dx / drag.s, y: drag.v.y - dy / drag.s }); glide(); }
     }
   });
   function up(e) {
@@ -351,6 +416,8 @@
     if (pts.size < 2) pinch = null;
     if (pts.size === 0) {
       svg.classList.remove('grab');
+      // the hand lets go: the picture is drawn for where the map is now (unless it is that picture already)
+      if (slid || !drawn || ['x', 'y', 'w', 'h'].some(k => drawn[k] !== vb[k])) apply();
       if (!moved && e.type === 'pointerup') {
         // Map play: only a plain click or tap that began on the map answers.
         if (mapStyle === 'free' && view === 'play') { if (had && (e.pointerType !== 'mouse' || e.button === 0)) answerFree(toSvg(e.clientX, e.clientY, vb)); }
@@ -447,7 +514,7 @@
       else fitHome();
     } else if (was) {
       fit();
-      const P = Q.proj, r = svg.getBoundingClientRect(), s = 256 * 2 ** was.zoom / 360 / P.k, w = r.width / s, h = r.height / s;
+      const P = Q.proj, r = stageBox(), s = 256 * 2 ** was.zoom / 360 / P.k, w = r.width / s, h = r.height / s;
       vb = clampV({ x: (was.lng - P.lng0) * P.k - w / 2, y: (P.y0 - MERCATOR.my(was.lat)) * P.k - h / 2, w, h }); apply();
     } else resetView();
     syncHints(); syncCover();
@@ -560,8 +627,8 @@
   }
   function showAllLabels(kind) { showLabels(kind, KINDS[kind].ids); }
   function clearLabels() { for (const e of ENTRIES) { e.shown.clear(); renderEntry(e); } }
-  function sizeLabels() {
-    const s = scale();
+  function sizeLabels(s = scale()) {
+    sized = s;
     for (const c of gPins.querySelectorAll('circle')) c.setAttribute('r', (4.5 / s).toFixed(3));
     for (const c of gFree.querySelectorAll('circle')) c.setAttribute('r', (5 / s).toFixed(3));
     for (const t of gPins.querySelectorAll('text')) { t.setAttribute('font-size', (13 / s).toFixed(3)); t.setAttribute('dy', (-9 / s).toFixed(3)); t.style.strokeWidth = (3 / s).toFixed(3) + 'px'; }
@@ -633,11 +700,13 @@
     const x = c.getContext('2d', { willReadFrequently: true }); x.scale(S, S);
     units.forEach((u, i) => { x.fillStyle = `rgb(${(i + 1) & 255},${(i + 1) >> 8},0)`; for (const a of u) x.fill(new Path2D(AREA[a].d), 'evenodd'); });
     const px = x.getImageData(0, 0, w, h).data, adj = units.map(() => new Set());
-    const id = k => px[k * 4 + 3] === 255 && px[k * 4 + 2] === 0 ? px[k * 4] + (px[k * 4 + 1] << 8) : 0;
-    const pure = k => { const v = id(k); return v && id(k - 1) === v && id(k + 1) === v && id(k - w) === v && id(k + w) === v ? v : 0; };
-    for (let j = 1; j < h - 5; j++) for (let i = 1; i < w - 5; i++) {
-      const u = pure(j * w + i); if (!u) continue;
-      for (const k of [j * w + i + 4, (j + 4) * w + i]) { const v = pure(k); if (v && v !== u) { adj[u - 1].add(v - 1); adj[v - 1].add(u - 1); } }
+    // each pixel's unit (0: none, or a blend), then the same for the pixels inside one: both as plain lists of numbers
+    const id = new Uint16Array(w * h), pure = new Uint16Array(w * h);
+    for (let k = 0, q = 0; k < id.length; k++, q += 4) if (px[q + 3] === 255 && px[q + 2] === 0) id[k] = px[q] + (px[q + 1] << 8);
+    for (let j = 1; j < h - 1; j++) for (let k = j * w + 1, end = (j + 1) * w - 1; k < end; k++) { const v = id[k]; if (v && id[k - 1] === v && id[k + 1] === v && id[k - w] === v && id[k + w] === v) pure[k] = v; }
+    for (let j = 1; j < h - 5; j++) for (let k = j * w + 1, end = (j + 1) * w - 5; k < end; k++) {
+      const u = pure[k]; if (!u) continue;
+      for (const v of [pure[k + 4], pure[k + 4 * w]]) if (v && v !== u) { adj[u - 1].add(v - 1); adj[v - 1].add(u - 1); }
     }
     return adj;
   }
@@ -731,7 +800,9 @@
       }
     }
     // side: 1 when the unit lies to the left of the edge from p to q, -1 to the right (0: on neither side)
-    const lines = units.map(() => []);
+    // loose: the areas with an edge that gets no outline although no other area has it: it faces another of the
+    // unit's areas across a narrow gap, or along a border that doesn't line up (see `tight` below).
+    const lines = units.map(() => []), loose = new Set();
     for (const e of edges.values()) {
       if (e.n > 1 && e.v < 0) continue; // shared by two areas of one unit
       const dx = e.q[0] - e.p[0], dy = e.q[1] - e.p[1], len = Math.hypot(dx, dy), nx = -dy / len, ny = dx / len, own = shapeOf(S, e.a);
@@ -756,18 +827,19 @@
         if (next === side) continue;
         let to = 1;
         if (i < n) { let lo = (i - .5) / n, hi = (i + .5) / n; for (let k = 0; k < 6; k++) { const mid = (lo + hi) / 2; if (sideAt(mid) === side) lo = mid; else hi = mid; } to = (lo + hi) / 2; }
-        if (side !== 2) {
+        if (side === 2) loose.add(e.a);
+        else {
           const p = from ? at(from) : e.p, q = to < 1 ? at(to) : e.q;
-          lines[e.u].push({ p, q, kp: from ? idOf(p) : e.kp, kq: to < 1 ? idOf(q) : e.kq, side });
+          lines[e.u].push({ p, q, kp: from ? idOf(p) : e.kp, kq: to < 1 ? idOf(q) : e.kq, side, own: e.a });
         }
         from = to; side = next;
       }
     }
-    return lines.map(es => joinEdges(es, gap));
+    return Object.assign(lines.map(es => joinEdges(es, gap, loose)), { loose });
   }
   // Edges end to end as one path, so the line has joins instead of thousands of loose ends. A small ring of edges
   // with the unit on its outside runs around a gap between the unit's areas, not around an island: it is left out.
-  function joinEdges(es, gap) {
+  function joinEdges(es, gap, loose) {
     const at = new Map(), seen = new Set(); let d = '';
     for (const e of es) for (const k of [e.kp, e.kq]) { const l = at.get(k); if (l) l.push(e); else at.set(k, [e]); }
     for (const e0 of es) {
@@ -781,7 +853,7 @@
       if (x1 - x0 < gap && y1 - y0 < gap) {
         const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2; let turn = 0; // positive: the unit lies inside the ring
         for (const e of part) turn += e.side * ((e.p[0] - cx) * (e.q[1] - cy) - (e.q[0] - cx) * (e.p[1] - cy));
-        if (turn < 1e-6) continue; // a gap, or a stray edge
+        if (turn < 1e-6) { for (const e of part) if (e.own !== undefined) loose.add(e.own); continue; } // a gap, or a stray edge
       }
       const used = new Set();
       for (const e of part) {
@@ -799,28 +871,61 @@
   }
   // The units' outlines go on top of the areas (under any areas marked top), the lines of dimmed units first so
   // that a line two units share is drawn in the stronger of their two colors.
-  let layoutKind = null, UNIT_LINES = [], detail = 0;
+  /* The areas of a unit are drawn one by one, and where two of them meet, the edge of each is half see-through: a
+     hair of the sea would show between them. So each unit has one shape of all its areas under them, in their
+     color (UNDER: drawn as one shape, it has no such seams), which shows through instead. A line of an area's own
+     color around it does the same and closes narrow gaps too, but costs more to draw than everything else on the
+     map: only the areas that need it for that keep it (those unitOutlines calls loose), the others are `tight`. */
+  let layoutKind = null, UNIT_LINES = [], UNDER = [], underOf = {}, detail = 0;
   function applyLayout(kind) {
     const L = layoutOf(kind), key = L ? kind : null;
     if (key === layoutKind) return;
     layoutKind = key;
-    for (const p of UNIT_LINES) p.remove();
-    UNIT_LINES = [];
-    for (const a of AREAS) EL[a].style.removeProperty('--hint');
+    for (const p of [...UNIT_LINES, ...UNDER]) if (p) p.remove();
+    UNIT_LINES = []; UNDER = []; underOf = {};
+    for (const a of AREAS) { EL[a].style.removeProperty('--hint'); EL[a].classList.remove('tight'); }
     mapClass('merged', !!L);
     if (!L) return;
     if (L.color) for (const a of AREAS) EL[a].style.setProperty('--hint', L.color[a]);
     UNIT_LINES = L.units.map(() => { const line = document.createElementNS(NS, 'path'); line.setAttribute('class', 'unit'); return line; });
+    UNDER = L.units.map((u, i) => {
+      const areas = u.filter(a => !AREA[a].top && !AREA[a].dot); if (areas.length < 2) return null;
+      const p = document.createElementNS(NS, 'path'), hint = EL[areas[0]].style.getPropertyValue('--hint');
+      p.setAttribute('d', areas.map(a => AREA[a].d).join('')); p.dataset.g = AREA[areas[0]].g; if (hint) p.style.setProperty('--hint', hint);
+      for (const a of areas) underOf[a] = i;
+      p.areas = areas;
+      return p;
+    });
+    gR.prepend(...UNDER.filter(Boolean));
+    UNDER.forEach((p, i) => paintUnder(i));
     drawUnits();
     syncUnitsOut();
   }
-  // Each version of the outlines is worked out when it is first shown.
+  // The shape under a unit is in the state all of the unit's areas are in (lit or not, answered, flashing).
+  const AREA_ONLY = new Set(['r', 'tight', 'top', 'dot']);
+  function paintUnder(i) {
+    const p = UNDER[i]; if (!p) return;
+    const [first, ...rest] = p.areas, cls = ['r', 'under', ...[...EL[first].classList].filter(c => !AREA_ONLY.has(c) && rest.every(a => EL[a].classList.contains(c)))].join(' ');
+    if (p.getAttribute('class') !== cls) p.setAttribute('class', cls);
+  }
+  // (it follows them by itself, whoever changes an area's state: before the map is next drawn)
+  new MutationObserver(changes => {
+    if (!UNDER.length) return;
+    const units = new Set();
+    for (const c of changes) { const i = underOf[c.target.dataset.a]; if (i !== undefined) units.add(i); }
+    for (const i of units) paintUnder(i);
+  }).observe(gR, { attributes: true, attributeFilter: ['class'], subtree: true });
+  // Each version of the outlines is worked out when it is first shown, and the other one right after it, as soon as
+  // the page has nothing to do: zooming in would else stand still at FINE the first time, until it is worked out.
+  const whenIdle = window.requestIdleCallback ? f => requestIdleCallback(f, { timeout: 4000 }) : f => setTimeout(f, 1500);
   function drawUnits() {
     const L = LAYOUTS[layoutKind], lines = (L.lines ??= [])[detail] ??= unitOutlines(L.units, DETAIL[detail]);
     UNIT_LINES.forEach((p, i) => p.setAttribute('d', lines[i]));
+    for (const a of AREAS) EL[a].classList.toggle('tight', underOf[a] !== undefined && !lines.loose.has(a));
+    if (!L.ahead) { L.ahead = true; whenIdle(() => DETAIL.forEach((d, i) => { L.lines[i] ??= unitOutlines(L.units, d); })); }
   }
-  function syncDetail() {
-    const d = scale() >= FINE ? 1 : 0;
+  function syncDetail(s = scale()) {
+    const d = s >= FINE ? 1 : 0;
     if (d === detail) return;
     detail = d;
     if (layoutKind) drawUnits();

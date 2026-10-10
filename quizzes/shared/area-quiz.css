@@ -31,7 +31,8 @@ body{overflow:hidden}
 
 .app{display:grid;grid-template-columns:minmax(300px,360px) 1fr;height:100%}
 .panel{display:flex;flex-direction:column;gap:20px;padding:28px 26px;border-right:1px solid var(--line);overflow-y:auto;min-height:0}
-.stage{position:relative;background:var(--sea);min-width:0;min-height:0;overflow:hidden}
+/* (clip: the map's picture is larger than the stage, which must not become something that can be scrolled to its rest) */
+.stage{position:relative;background:var(--sea);min-width:0;min-height:0;overflow:hidden;overflow:clip}
 
 .back{display:inline-block;margin-bottom:10px;color:var(--muted);text-decoration:none;font-size:.9rem}
 .back:hover{color:var(--ink)}
@@ -113,6 +114,8 @@ body{overflow:hidden}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ctx:#1B242D}}
 :root[data-theme="dark"]{--ctx:#1B242D}
 #ctx path{fill:var(--ctx,#DCDED8);stroke:var(--edge);stroke-width:.6;vector-effect:non-scaling-stroke;pointer-events:none}
+/* the world under a map (area-quiz.js): its land as one shape without a line, its lines in pieces without a fill */
+#ctx path.wland{stroke:none} #ctx path.wline{fill:none}
 /* city quizzes (Q.base, Q.dots): the country's land and region borders, and dots that keep their size on screen
    at every zoom (a zero-length stroke with round caps), so zooming in pulls crowded cities apart */
 #ctx path.land{fill:var(--land)} #ctx path.lines{fill:none;stroke-opacity:.55}
@@ -225,10 +228,10 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
 /* street map (hard mode) */
 #street{position:absolute;inset:0;background:var(--sea)}
 #street .leaflet-control-attribution{font-size:.7rem}
-#street path.ar{fill:transparent;stroke:none;transition:fill .18s}
+#street path.ar{fill:transparent;stroke:none}
 #street path.ar.got,#street path.ar.t2,#street path.ar.t3,#street path.ar.miss{fill-opacity:.55;stroke:var(--ink);stroke-width:1;stroke-opacity:.6}
 #street path.ar.got{fill:var(--got)} #street path.ar.t2{fill:var(--t2)} #street path.ar.t3{fill:var(--t3)} #street path.ar.miss{fill:var(--miss)}
-#street path.ar.flash{fill:var(--bad);fill-opacity:.55;stroke:var(--bad);stroke-width:1.5;transition:none}
+#street path.ar.flash{fill:var(--bad);fill-opacity:.55;stroke:var(--bad);stroke-width:1.5}
 /* setup preview on the street map: the round's areas, tinted */
 #street path.ar.pre{fill:var(--yellow);fill-opacity:.22}
 #street path.ar.sel{fill:var(--yellow);fill-opacity:.45;stroke:var(--ink);stroke-width:2}
@@ -240,7 +243,7 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
    The tiles are light in either theme, so lines are dark and the answer colors are the light theme's. */
 #street.overlay{--st-line:#15283A;--got:#62B686;--t2:#F2CF5B;--t3:#EE9A4D;--miss:#E8877E}
 #street.overlay .leaflet-areas-pane{mix-blend-mode:multiply;opacity:.8}
-#street.overlay path.ar{--base:transparent;--fill:var(--base);--paint:var(--fill);fill:var(--paint);fill-opacity:1;stroke:var(--st-line);stroke-width:1;stroke-opacity:1;animation:none;transition:fill .18s,stroke .18s}
+#street.overlay path.ar{--base:transparent;--fill:var(--base);--paint:var(--fill);fill:var(--paint);fill-opacity:1;stroke:var(--st-line);stroke-width:1;stroke-opacity:1;animation:none}
 #street.overlay.hints path.ar{--base:var(--hint,transparent)}
 #street.overlay.hints.fade path.ar{--base:color-mix(in oklab,var(--hint,transparent) var(--fade),#fff)}
 #street.overlay path.ar.out{--fill:#D8DCDF;stroke-opacity:.3}
@@ -248,7 +251,7 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
 #street.overlay path.ar.got{--fill:var(--got)} #street.overlay path.ar.t2{--fill:var(--t2)} #street.overlay path.ar.t3{--fill:var(--t3)} #street.overlay path.ar.miss{--fill:var(--miss)}
 #street.overlay path.ar.ans,#street.overlay path.ar.sel{--fill:var(--yellow)}
 #street.overlay path.ar.found{--fill:var(--got)}
-#street.overlay path.ar.flash{--fill:var(--bad);transition:none}
+#street.overlay path.ar.flash{--fill:var(--bad)}
 #street.overlay path.ar.hov{--paint:color-mix(in oklab,var(--fill) 82%,var(--st-line))}
 #street.overlay path.ar.ans{animation:st-ans 1s ease-in-out infinite alternate}
 @keyframes st-ans{from{fill:#fff}}
@@ -263,10 +266,13 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
 .st-label span{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:700 14px/1 var(--cond);color:#15283A;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;pointer-events:none}
 
 /* map */
-svg#map{width:100%;height:100%;display:block;touch-action:none;cursor:pointer;user-select:none;-webkit-user-select:none}
+/* The map's picture is larger than the stage, which shows its middle (area-quiz.js sets how much larger), and is
+   moved as a whole while a finger moves the map: a layer of its own, so that moving it draws nothing again. */
+svg#map{position:relative;display:block;transform-origin:0 0;will-change:transform;touch-action:none;cursor:pointer;user-select:none;-webkit-user-select:none}
 svg#map.grab{cursor:grabbing}
 /* an area's color lives in --fill, so merged layouts can paint the seams between areas in it too */
-.r{--fill:var(--land);fill:var(--fill);stroke:var(--edge);stroke-width:.8;vector-effect:non-scaling-stroke;fill-rule:evenodd;transition:fill .18s,stroke .18s}
+/* (an area's color changes at once: a fade would draw the map again for every step of it) */
+.r{--fill:var(--land);fill:var(--fill);stroke:var(--edge);stroke-width:.8;vector-effect:non-scaling-stroke;fill-rule:evenodd}
 .hints .r{--fill:var(--hint,var(--land))}
 /* while playing and on the results, hints fade so the answer colors are the only strong ones */
 .hints.fade .r{--fill:color-mix(in oklab,var(--hint,var(--land)) var(--fade),var(--land))}
@@ -275,12 +281,17 @@ svg#map.grab{cursor:grabbing}
 #regions .r.got{--fill:var(--got)} #regions .r.t2{--fill:var(--t2)} #regions .r.t3{--fill:var(--t3)} #regions .r.miss{--fill:var(--miss)}
 #regions .r.ans{--fill:var(--yellow)} #regions .r.sel{--fill:var(--yellow)}
 #regions .r.found{--fill:var(--got)}
-#regions .r.flash{--fill:var(--bad);transition:none}
+#regions .r.flash{--fill:var(--bad)}
 /* merged layouts (zones, states): only each unit's outline, no lines between its areas (see unitOutlines) */
 /* Each area's own-color stroke covers the seams and small gaps between a unit's areas. It is no wider than the unit
    outline drawn on top of it, which hides it at the coast and between units, so shapes keep their real edge at
    every zoom. Dimmed units get a solid paler line: see-through lines would add up where two of them meet. */
 .merged .r{stroke:var(--fill);stroke-width:1.2;stroke-opacity:1}
+/* … except the areas that need none: the one shape under their unit shows between them (see area-quiz.js). A click
+   still counts as far out as that line would reach, as it did when the line was drawn. */
+.merged .r.tight,.merged .r.under{stroke:none}
+.merged .r.tight,.merged.picking #regions .r.out.tight{pointer-events:visible}
+#regions .r.under{pointer-events:none!important}
 .unit{fill:none;stroke:var(--state);stroke-width:1.2;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round;pointer-events:none}
 .unit.out{stroke:color-mix(in oklab,var(--state) 30%,color-mix(in oklab,var(--land) 45%,var(--sea)))}
 .merged #borders{display:none}
@@ -293,6 +304,7 @@ svg#map.grab{cursor:grabbing}
 #hl path{fill:none;pointer-events:none;vector-effect:non-scaling-stroke;stroke-linejoin:round}
 #hoverUse{stroke:var(--ink);stroke-width:2.5}
 #ansUse{stroke:var(--ink);stroke-width:3;animation:pulse 1s ease-in-out infinite alternate}
+#ansUse[d=""]{animation:none} /* nothing shown: nothing to animate (an animation keeps the whole map being drawn) */
 @keyframes pulse{from{stroke-width:2}to{stroke-width:5}}
 #labels text{font-family:var(--cond);font-weight:700;fill:var(--ink);stroke:var(--halo);stroke-width:3px;paint-order:stroke;text-anchor:middle;dominant-baseline:central;pointer-events:none}
 #labels text.off{display:none}
@@ -307,7 +319,6 @@ canvas.tiles{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:
 /* (on the dark quiz map it is lightened into it instead; the street map is light in either theme) */
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .stage:not(.streets) #coverage{mix-blend-mode:screen;opacity:.85}}
 :root[data-theme="dark"] .stage:not(.streets) #coverage{mix-blend-mode:screen;opacity:.85}
-.stage.streets svg#map{position:relative}
 #ctx path.inset-box,#ctx path.inset-land{display:none}
 svg.streets #ctx path{fill:none;stroke:none}
 svg.streets #ctx path.land{stroke:var(--state);stroke-width:1.2;stroke-opacity:.55}
