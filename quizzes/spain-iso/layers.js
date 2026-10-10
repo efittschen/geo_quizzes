@@ -1,4 +1,4 @@
-// Spain ISO Codes, using the map areas of ../spain-regions/data.js (their field ccaa is the community's code).
+// Spain Community ISO Codes (the provinces' codes are ../spain-iso-provinces), using the map areas of ../spain-regions/data.js (their field ccaa is the community's code).
 // ISO 3166-2:ES gives each of the 17 autonomous communities and the 2 autonomous cities a two-letter code after
 // "ES-" (ES-AN Andalucía … ES-VC Comunitat Valenciana, ES-CE Ceuta, ES-ML Melilla). A question shows the two
 // letters without the "ES-", and you click the community. Names as in ../spain-regions/layers.js.
@@ -18,7 +18,7 @@ const LAYERS = {
   kinds: [
     {
       key: "iso",
-      label: "ISO codes",
+      label: "Codes",
       noun: ["code","codes"],
       prompt: "dial",
       groups: [["North","",["GA","AS","CB","PV","NC","RI","AR","CT","CL"]],["Centre and south","",["MD","CM","EX","VC","MC","AN"]],["Islands and cities","",["IB","CN","CE","ML"]]],

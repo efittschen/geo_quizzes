@@ -1347,10 +1347,18 @@
     {
       "id": "spain-iso",
       "country": "724",
-      "title": "ISO Codes",
+      "title": "ISO Codes: Communities",
       "levels": 2,
       "description": "See a community's ISO 3166-2 code (AN) and find the autonomous community on the map.",
       "url": "quizzes/spain-iso/index.html"
+    },
+    {
+      "id": "spain-iso-provinces",
+      "country": "724",
+      "title": "ISO Codes: Provinces",
+      "levels": 3,
+      "description": "See a province's ISO 3166-2 code (BI) and find the province on the map.",
+      "url": "quizzes/spain-iso-provinces/index.html"
     },
     {
       "id": "spain-postcodes",

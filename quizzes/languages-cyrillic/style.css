@@ -24,6 +24,12 @@ h3{font:600 .78rem/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;c
 #answer{flex:1;min-width:0;font:500 1.15rem/1.2 var(--sans);padding:11px 14px;border:1.5px solid var(--line);border-radius:var(--radius);background:var(--card);color:var(--ink)}
 #answer:focus{outline:none;border-color:var(--ink)}
 #answer[readonly]{opacity:.7}
+.kb{display:grid;gap:5px;margin-top:10px}
+.kb div{display:flex;gap:5px;justify-content:center}
+.key{appearance:none;flex:1;max-width:44px;min-width:0;height:40px;padding:0;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:600 1.05rem/1 var(--sans);cursor:pointer}
+.key.wide{flex:2.2;max-width:96px;font-size:.9rem}
+.key:hover{border-color:var(--ink)}
+.key:active{background:color-mix(in srgb,var(--yellow) 30%,var(--card))}
 .fb{min-height:58px;margin:12px 0;padding:10px 14px;border-radius:var(--radius);display:flex;flex-direction:column}
 .fb.ok{background:color-mix(in srgb,var(--got) 30%,transparent);box-shadow:inset 4px 0 0 var(--ok)}
 .fb.bad{background:color-mix(in srgb,var(--miss) 30%,transparent);box-shadow:inset 4px 0 0 var(--bad)}

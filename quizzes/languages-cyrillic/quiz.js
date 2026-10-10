@@ -7,6 +7,10 @@
 // Rounds are the groups of WORDS and one with every word. As in the map quizzes, a round's size sets its level
 // (Beginner under 10, Intermediate under 30, Hard under 60, Expert above), a round's best result is kept in the
 // page's record (store.js: best["translit/type/<items>"]) and the progress per level in `stars`.
+//
+// With a controller (assets/js/gamepad.js, loaded by the page) the cursor clicks as a mouse does, but there are no
+// keys to type on: an on-screen keyboard under the answer writes the letters. It is offered on the setup screen and
+// is on by itself once a controller is used in this tab, unless the player chose otherwise. Start is Check and Next.
 (() => {
   const $ = id => document.getElementById(id);
   const LAT = Object.fromEntries(ALPHABET.map(([c, ...alts]) => [c, alts]));
@@ -91,6 +95,28 @@
   $('hideTable').checked = !!last().hide;
   $('hideTable').onchange = () => remember('hide', $('hideTable').checked);
 
+  /* ---------- the on-screen keyboard ---------- */
+  const padUsed = () => { try { return !!JSON.parse(sessionStorage.getItem('geoquizzes-gamepad')).shown; } catch (e) { return false; } };
+  $('useKeys').checked = last().keys ?? padUsed();
+  $('useKeys').onchange = () => { remember('keys', $('useKeys').checked); keysShown(); };
+  const keysShown = () => { $('kb').hidden = !$('useKeys').checked; };
+  addEventListener('gamepadconnected', () => { if (last().keys == null) { $('useKeys').checked = true; keysShown(); } });
+  const type = k => {
+    if (!G || G.answered) return;
+    const a = $('answer');
+    a.value = k === '⌫' ? a.value.slice(0, -1) : a.value + (k === 'space' ? ' ' : k);
+  };
+  $('kb').append(...['qwertyuiop', 'asdfghjkl', "zxcvbnm-'"].map((row, r) => {
+    const d = document.createElement('div');
+    d.append(...[...row, ...(r === 2 ? ['space', '⌫'] : [])].map(k => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'key' + (k.length > 1 ? ' wide' : ''); b.textContent = k;
+      if (k === '⌫') b.setAttribute('aria-label', 'Delete the last letter');
+      b.onclick = () => type(k);
+      return b;
+    }));
+    return d;
+  }));
+
   /* ---------- a round ---------- */
   let G = null, clock = 0;
   const show = view => { for (const v of ['setup', 'play', 'result']) $(v).hidden = v !== view; $('tableWrap').classList.toggle('hidden', view === 'play' && $('hideTable').checked); };
@@ -99,7 +125,7 @@
     for (let i = queue.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [queue[i], queue[j]] = [queue[j], queue[i]]; }
     G = { ids, round, queue, i: 0, right: 0, missed: [], t0: Date.now(), answered: false };
     $('bar').replaceChildren(...queue.map(() => document.createElement('i')));
-    show('play'); ask();
+    show('play'); keysShown(); ask();
     clearInterval(clock); clock = setInterval(() => { $('sTime').textContent = fmt(Date.now() - G.t0); }, 500);
   }
   function ask() {
@@ -109,7 +135,7 @@
     $('fb').className = 'fb'; $('fb').textContent = '';
     $('sQ').textContent = `${G.i + 1}/${G.queue.length}`; $('sRight').textContent = G.right; $('sTime').textContent = fmt(Date.now() - G.t0);
     light($('hideTable').checked ? '' : it.w);
-    $('answer').focus();
+    if ($('kb').hidden) $('answer').focus();
   }
   function check() {
     const it = BY[G.queue[G.i]], typed = $('answer').value;
