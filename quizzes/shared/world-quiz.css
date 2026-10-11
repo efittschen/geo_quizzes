@@ -28,9 +28,17 @@
 .sent.s-arab{line-height:1.9} .sent.l-urd{font-family:"Noto Nastaliq Urdu",var(--script);line-height:2.3}
 .sent.s-tibt{line-height:1.7} .sent.s-mymr,.sent.s-khmr{line-height:1.8}
 .sent.l-hant{font-family:"Noto Sans TC",var(--script)} .sent.l-hans{font-family:"Noto Sans SC",var(--script)}
+.sent.letter{font-size:4rem;line-height:1.2;text-align:center} /* a single letter, capital and small (a script's own page) */
+.sent.word{font-size:2.5rem;line-height:1.3;text-align:center} /* … and one word of a sign */
+/* over it, the area it is asked in (the Balkans) */
+.card{flex-direction:column;justify-content:center}
+.card[data-tag]:not([data-tag=""])::before{content:attr(data-tag);font:600 .8rem/1.2 var(--sans);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:center}
 .card.pop .sent{animation:pop .35s ease-out}
 .writing .cd,.writing .chip,.writing #labels text,.writing .feedback{font-family:var(--script)}
 .writing #eDial .code{font:500 3rem/1.2 var(--script);letter-spacing:0}
+/* a place's letters: all of them on show, on as many lines as they take, a long row smaller */
+.writing #eDial{white-space:normal}
+.writing #eDial.long .code{font-size:1.9rem}
 
 @media (max-width:760px){
   .dial .code{font-size:3.2rem}

@@ -29,6 +29,11 @@
 //     list        another list of cities on the country's map: { order, list }, from a file of the page's own. The
 //                 page then loads the country's cities.js for the map and the regions, and this list replaces
 //                 its cities (us-cities-coverage: the cities picked by Street View coverage).
+//     typed       the country's Reading page (its script's file and ./reading.js are loaded before, see there):
+//                 the language its names are read in ('ru': a key of SCRIPT.langs). The cities with a name in that
+//                 script are shown in it, each time in another typeface, and the answer is typed in Latin letters:
+//                 the name on the map, or any spelling its letters allow. The city then shows on the map and its
+//                 name is said aloud. The page asks nothing else, and has no map play.
 
 const QUIZ = (() => {
   if (typeof MERCATOR === 'object') MERCATOR.cities(CITIES); // the map in Web Mercator, every part at its real place (mercator.js)
@@ -54,6 +59,8 @@ const QUIZ = (() => {
   const fullLocal = id => DUP_LOCAL[BY[id].local] > 1 ? `${BY[id].local}, ${region(id)}` : BY[id].local;
   const capitals = ids => ids.filter(id => /^PPL[CA]$/.test(BY[id].fc));
   const sizes = O.top || [8, 25, 50, 100];
+  const TYPED = O.typed ? ALL.filter(id => BY[id].local && new RegExp(`\\p{Script=${SCRIPT.unicode}}`, 'u').test(BY[id].local)) : null;
+  const READ = O.typed ? READING.of(O.typed) : null;
 
   const kind = (key, ids, extra) => ({
     key, noun: ['city', 'cities'], pickTitle: 'Cities to practice',
@@ -68,14 +75,24 @@ const QUIZ = (() => {
     ...extra,
   });
 
-  const kinds = [
+  const kinds = TYPED ? [
+    kind('names', TYPED, {
+      label: 'Names', sub: `${TYPED.length} names`, noun: ['name', 'names'], pickTitle: 'Names to practice',
+      prompt: 'text', text: id => ({ text: BY[id].local, lang: BY[id].lang, cls: READING.face(BY[id].local) }),
+      typed: (id, text) => READ.accepts(BY[id].local, text, [BY[id].en, latin(id)]),
+      say: id => ({ text: BY[id].local, lang: BY[id].lang }),
+      time: id => 1 + BY[id].local.length / 4, // a click's time for reading, and as much again for every four letters to type
+      name: id => `${BY[id].local} · ${latin(id)}`, short: latin,
+      clicked: a => fullEn(a), chip: id => BY[id].local, chipTitle: id => `${latin(id)} · ${region(id)}`,
+    }),
+  ] : [
     kind('en', ALL, {
       label: 'English', lang: 'English', sub: `${ALL.length} cities`,
       prompt: 'name', name: fullEn, short: latin,
       clicked: a => fullEn(a), chip: fullEn,
     }),
   ];
-  if (LOCAL.length) kinds.push(kind('local', LOCAL, {
+  if (LOCAL.length && !TYPED) kinds.push(kind('local', LOCAL, {
     label: O.lang, lang: O.lang, of: 'en', sub: `${LOCAL.length} cities`,
     prompt: 'text', text: id => ({ text: fullLocal(id), lang: BY[id].lang, cls: 'city' }),
     name: fullLocal, short: id => BY[id].local,
@@ -155,19 +172,22 @@ const QUIZ = (() => {
     },
   };
 
-  const rounds = [
+  const rounds = TYPED ? [
+    ...sizes.filter(n => n < TYPED.length).map(n => ({ kind: 'names', label: `Top ${n}`, top: n })),
+    { kind: 'names', label: 'All names' },
+  ] : [
     ...sizes.filter(n => n < ALL.length).map(n => ({ kind: 'en', label: `Top ${n}`, top: n })),
     { kind: 'en', label: 'All cities' },
   ];
 
   return {
     key: O.key || C.iso3.toLowerCase() + 'cities',
-    areas: C.list.map(c => ({ id: c.id, d: `M${c.x},${c.y}l0,0`, lx: c.x, ly: c.y, a: 1, g: c.adm })),
+    areas: C.list.filter(c => !TYPED || TYPED.includes(c.id)).map(c => ({ id: c.id, d: `M${c.x},${c.y}l0,0`, lx: c.x, ly: c.y, a: 1, g: c.adm })),
     borders: [],
     context: C.ctx, world: !!C.world, proj: C.proj, // (world: the map lies on the plain map of the world, by its projection: see mercator.js)
     base: { land: C.land, lines: C.lines },
     dots: true,
-    free,
+    free: TYPED ? undefined : free,
     streets: C,
     size: [C.w, C.h], pad: 16, maxZoom: 40, labelScale: 0.25, fly: { pad: 1.6, min: 1.5 / 40 },
     hintLabel: 'Color by region',

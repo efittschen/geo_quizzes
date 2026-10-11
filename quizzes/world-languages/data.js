@@ -3,7 +3,24 @@
 //              its languages are not asked one by one]
 //   languages  { id, n: name, s: script, p: places (ids of ../shared/world.js) where it is an official or main sign
 //                language, tell: the letters that give it away, t: language tag for fonts, w: [[words on signs, meaning]] }
+//                abc: its alphabet, where its script has a page of its own; x: its letters beyond a to z (Latin),
+//                xat: { place: letters } where a place writes it with others (Swiss German has no ß);
+//                r: those of x met in a few words only (é in Danish: allé, café), rat: { place: letters } those
+//                seldom met at one place (Swedish å in Finland: on the coast only). They are asked like the
+//                others and shown in a color of their own.
 //   rounds     per kind: [label, items, places to frame]
+//   pages      a script with a page of its own (WORLD_OPTS.script; ../cyrillic-countries/): only its languages, only
+//              where Street View goes. core: the language whose alphabet the others add letters to: those letters
+//              are asked, each with every place that writes it. letters: their rounds, as above. (Its words are
+//              the script's own: ../cyrillic-letters/cyrillic.js.)
+//              not: places left out although they are listed with Street View (Belarus: a single spot in Minsk).
+//              home: the places the map shows when zoomed out (without Russia's far east, the small countries of
+//              the Balkans are large enough to click).
+//              areas (Latin): the page asks by area, as a player meets it: a letter, several letters at once or
+//              a word of a sign is asked among the countries of one area only, [label, places, part of the world],
+//              where é tells a lot in the Balkans and nothing in Western Europe. Places that write the same
+//              languages are one area to click. Left out of an area: what all of it writes, and what more than
+//              `most` of its language areas do. more: languages with letters of their own and no words here.
 // A script is asked with a sign in one of its languages; a language is only asked where several share a script.
 // Neighbours share words (Skole is Norwegian and Danish): a sign always has a word that only its language has here.
 // India's regional scripts are one item here: ../south-asia-scripts/ tells them apart.
@@ -50,151 +67,179 @@ const WRITING = {
       ['Asian scripts', 'ara urd hin nep hant hans', 'EGY PAK IND NPL CHN TWN'],
     ],
   },
+  pages: {
+    latn: {
+      most: 4, not: 'CYP', // (Turkish is on signs in the north of Cyprus only)
+      areas: [
+        ['Nordic', 'ISL FRO NOR SJM SWE FIN DNK GRL', 'Europe'],
+        ['Baltic', 'EST LVA LTU FIN', 'Europe'],
+        ['Central Europe', 'POL CZE SVK HUN SVN HRV', 'Europe'],
+        ['Balkans', 'HUN ROU SVN HRV SRB MNE ALB MKD TUR', 'Europe'],
+        ['Western Europe', 'IRL GBR NLD BEL LUX FRA MCO DEU CHE LIE AUT', 'Europe'],
+        ['Southern Europe', 'PRT ESP AND FRA MCO ITA SMR CHE MLT', 'Europe'],
+        ['Americas', 'CAN SPM MEX GTM CRI PAN DOM PRI MTQ CUW COL ECU PER BOL CHL ARG URY BRA', ''],
+        ['Africa', 'SEN MLI TUN KEN TZA UGA STP MDG REU ZAF NAM', ''],
+        ['Asia & Pacific', 'VNM IDN MYS SGP PHL NZL', ''],
+      ],
+      more: [
+        { id: 'mri', n: 'Māori', p: 'NZL', x: 'ā ē ī ō ū' },
+        { id: 'pap', n: 'Papiamentu', p: 'CUW', x: 'á ç è é í ñ ò ó ù ú ü' },
+      ],
+    },
+    cyrl: {
+      core: 'rus', not: 'BLR', home: 'UKR BGR SRB MNE MKD KAZ KGZ MNG',
+      letters: [
+        ['Ukraine', 'ґ є і ї', 'UKR KAZ'], // (і is Kazakh too)
+        ['Balkans', 'ђ ј љ њ ћ џ ѓ ѕ ќ', 'SRB MKD MNE BGR'],
+        ['Central Asia & Mongolia', 'ә ғ қ ң ө ұ ү һ', 'KAZ KGZ MNG'],
+      ],
+    },
+  },
   languages: [
     /* ---------- Latin: Nordic ---------- */
-    { id: 'isl', n: 'Icelandic', s: 'latn', p: 'ISL', tell: 'ð þ æ ö · á é í ó ú ý', t: 'is', w: [
+    { id: 'isl', n: 'Icelandic', s: 'latn', x: 'á ð é í ó ú ý þ æ ö', p: 'ISL', tell: 'ð þ æ ö · á é í ó ú ý', t: 'is', w: [
       ['Velkomin', 'welcome'], ['Opið', 'open'], ['Skóli', 'school'], ['Gata', 'street'], ['Þjóðvegur', 'national road'], ['Sjúkrahús', 'hospital'],
       ['Apótek', 'pharmacy'], ['Verslun', 'shop'], ['Kirkja', 'church'], ['Lögreglan', 'police'], ['Bílastæði', 'parking'], ['Sundlaug', 'swimming pool'], ['Til sölu', 'for sale'], ['Brauð', 'bread']] },
-    { id: 'fao', n: 'Faroese', s: 'latn', p: 'FRO', tell: 'ð ø æ · á í ó ú ý', t: 'fo', w: [
+    { id: 'fao', n: 'Faroese', s: 'latn', x: 'á ð í ó ú ý æ ø', p: 'FRO', tell: 'ð ø æ · á í ó ú ý', t: 'fo', w: [
       ['Vælkomin', 'welcome'], ['Opið', 'open'], ['Skúli', 'school'], ['Gøta', 'street'], ['Vegur', 'road'], ['Sjúkrahús', 'hospital'],
       ['Handil', 'shop'], ['Kirkja', 'church'], ['Bókasavn', 'library'], ['Føroyar', 'Faroe Islands'], ['Til sølu', 'for sale'], ['Breyð', 'bread']] },
-    { id: 'nor', n: 'Norwegian', s: 'latn', p: 'NOR SJM', tell: 'å ø æ · -vei, gate · åpent, sykehus', t: 'nb', w: [
+    { id: 'nor', n: 'Norwegian', s: 'latn', x: 'æ ø å é', r: 'é', p: 'NOR SJM', tell: 'å ø æ · -vei, gate · åpent, sykehus', t: 'nb', w: [
       ['Velkommen', 'welcome'], ['Åpent', 'open'], ['Skole', 'school'], ['Gate', 'street'], ['Vei', 'road'], ['Sykehus', 'hospital'],
       ['Apotek', 'pharmacy'], ['Butikk', 'shop'], ['Kirke', 'church'], ['Politi', 'police'], ['Til salgs', 'for sale'], ['Innkjøring forbudt', 'no entry'], ['Kjøpesenter', 'shopping centre'], ['Brød', 'bread']] },
-    { id: 'dan', n: 'Danish', s: 'latn', p: 'DNK FRO GRL', tell: 'å ø æ · -vej, gade · åbent, sygehus', t: 'da', w: [
+    { id: 'dan', n: 'Danish', s: 'latn', x: 'æ ø å é', r: 'é', p: 'DNK GRL', tell: 'å ø æ · -vej, gade · åbent, sygehus', t: 'da', w: [
       ['Velkommen', 'welcome'], ['Åbent', 'open'], ['Skole', 'school'], ['Gade', 'street'], ['Vej', 'road'], ['Sygehus', 'hospital'],
       ['Apotek', 'pharmacy'], ['Købmand', 'grocer'], ['Kirke', 'church'], ['Politi', 'police'], ['Til salg', 'for sale'], ['Indkørsel forbudt', 'no entry'], ['Udsalg', 'sale'], ['Brød', 'bread']] },
-    { id: 'swe', n: 'Swedish', s: 'latn', p: 'SWE FIN ALD', tell: 'å ä ö', t: 'sv', w: [
+    { id: 'swe', n: 'Swedish', s: 'latn', x: 'å ä ö é', r: 'é', rat: { FIN: 'å é' }, p: 'SWE FIN ALD', tell: 'å ä ö', t: 'sv', w: [
       ['Välkommen', 'welcome'], ['Öppet', 'open'], ['Skola', 'school'], ['Gata', 'street'], ['Väg', 'road'], ['Sjukhus', 'hospital'],
       ['Apotek', 'pharmacy'], ['Affär', 'shop'], ['Kyrka', 'church'], ['Polis', 'police'], ['Till salu', 'for sale'], ['Infart förbjuden', 'no entry'], ['Järnvägsstation', 'railway station'], ['Bröd', 'bread']] },
-    { id: 'fin', n: 'Finnish', s: 'latn', p: 'FIN', tell: 'ä ö · double letters · -katu, -tie', t: 'fi', w: [
+    { id: 'fin', n: 'Finnish', s: 'latn', x: 'ä ö', p: 'FIN', tell: 'ä ö · double letters · -katu, -tie', t: 'fi', w: [
       ['Tervetuloa', 'welcome'], ['Avoinna', 'open'], ['Koulu', 'school'], ['Katu', 'street'], ['Tie', 'road'], ['Sairaala', 'hospital'],
       ['Apteekki', 'pharmacy'], ['Kauppa', 'shop'], ['Kirkko', 'church'], ['Poliisi', 'police'], ['Myytävänä', 'for sale'], ['Pysäköinti', 'parking'], ['Rautatieasema', 'railway station'], ['Leipä', 'bread']] },
-    { id: 'kal', n: 'Greenlandic', s: 'latn', p: 'GRL', tell: 'q · long words · -suaq, -miut', t: 'kl', w: [
+    { id: 'kal', n: 'Greenlandic', s: 'latn', x: '', p: 'GRL', tell: 'q · long words · -suaq, -miut', t: 'kl', w: [
       ['Tikilluarit', 'welcome'], ['Atuarfik', 'school'], ['Aqqusineq', 'road'], ['Napparsimmavik', 'hospital'], ['Pisiniarfik', 'shop'],
       ['Oqaluffik', 'church'], ['Kalaallit Nunaat', 'Greenland'], ['Qujanaq', 'thank you']] },
     /* ---------- Latin: Baltic and Central Europe ---------- */
-    { id: 'est', n: 'Estonian', s: 'latn', p: 'EST', tell: 'õ ä ö ü · double vowels', t: 'et', w: [
+    { id: 'est', n: 'Estonian', s: 'latn', x: 'õ ä ö ü š ž', p: 'EST', tell: 'õ ä ö ü · double vowels', t: 'et', w: [
       ['Tere tulemast', 'welcome'], ['Avatud', 'open'], ['Kool', 'school'], ['Tänav', 'street'], ['Maantee', 'highway'], ['Haigla', 'hospital'],
       ['Apteek', 'pharmacy'], ['Kauplus', 'shop'], ['Kirik', 'church'], ['Politsei', 'police'], ['Müüa', 'for sale'], ['Parkla', 'car park'], ['Raudteejaam', 'railway station'], ['Söökla', 'canteen']] },
-    { id: 'lav', n: 'Latvian', s: 'latn', p: 'LVA', tell: 'ā ē ī ū · ģ ķ ļ ņ · č š ž', t: 'lv', w: [
+    { id: 'lav', n: 'Latvian', s: 'latn', x: 'ā č ē ģ ī ķ ļ ņ š ū ž', p: 'LVA', tell: 'ā ē ī ū · ģ ķ ļ ņ · č š ž', t: 'lv', w: [
       ['Laipni lūdzam', 'welcome'], ['Atvērts', 'open'], ['Skola', 'school'], ['Iela', 'street'], ['Ceļš', 'road'], ['Slimnīca', 'hospital'],
       ['Aptieka', 'pharmacy'], ['Veikals', 'shop'], ['Baznīca', 'church'], ['Policija', 'police'], ['Pārdod', 'for sale'], ['Stāvvieta', 'parking'], ['Dzelzceļa stacija', 'railway station'], ['Maize', 'bread']] },
-    { id: 'lit', n: 'Lithuanian', s: 'latn', p: 'LTU', tell: 'ą ę ė į ų ū · č š ž', t: 'lt', w: [
+    { id: 'lit', n: 'Lithuanian', s: 'latn', x: 'ą č ę ė į š ų ū ž', p: 'LTU', tell: 'ą ę ė į ų ū · č š ž', t: 'lt', w: [
       ['Sveiki atvykę', 'welcome'], ['Atidaryta', 'open'], ['Mokykla', 'school'], ['Gatvė', 'street'], ['Kelias', 'road'], ['Ligoninė', 'hospital'],
       ['Vaistinė', 'pharmacy'], ['Parduotuvė', 'shop'], ['Bažnyčia', 'church'], ['Policija', 'police'], ['Parduodama', 'for sale'], ['Geležinkelio stotis', 'railway station'], ['Dėmesio', 'caution'], ['Duona', 'bread']] },
-    { id: 'pol', n: 'Polish', s: 'latn', p: 'POL', tell: 'ą ę ł ń ó ś ź ż ć · sz cz rz', t: 'pl', w: [
+    { id: 'pol', n: 'Polish', s: 'latn', x: 'ą ć ę ł ń ó ś ź ż', p: 'POL', tell: 'ą ę ł ń ó ś ź ż ć · sz cz rz', t: 'pl', w: [
       ['Witamy', 'welcome'], ['Otwarte', 'open'], ['Szkoła', 'school'], ['Ulica', 'street'], ['Droga', 'road'], ['Szpital', 'hospital'],
       ['Apteka', 'pharmacy'], ['Sklep', 'shop'], ['Kościół', 'church'], ['Policja', 'police'], ['Na sprzedaż', 'for sale'], ['Uwaga', 'caution'], ['Dworzec kolejowy', 'railway station'], ['Wyjście', 'exit']] },
-    { id: 'ces', n: 'Czech', s: 'latn', p: 'CZE', tell: 'ě ř ů · č š ž · á é í ý', t: 'cs', w: [
+    { id: 'ces', n: 'Czech', s: 'latn', x: 'á č ď é ě í ň ó ř š ť ú ů ý ž', p: 'CZE', tell: 'ě ř ů · č š ž · á é í ý', t: 'cs', w: [
       ['Vítejte', 'welcome'], ['Otevřeno', 'open'], ['Škola', 'school'], ['Ulice', 'street'], ['Silnice', 'road'], ['Nemocnice', 'hospital'],
       ['Lékárna', 'pharmacy'], ['Obchod', 'shop'], ['Kostel', 'church'], ['Policie', 'police'], ['Na prodej', 'for sale'], ['Pozor', 'caution'], ['Nádraží', 'railway station'], ['Průjezd zakázán', 'no through traffic']] },
-    { id: 'slk', n: 'Slovak', s: 'latn', p: 'SVK', tell: 'ľ ĺ ŕ ô ä · ť ď ň · no ě ř ů', t: 'sk', w: [
+    { id: 'slk', n: 'Slovak', s: 'latn', x: 'á ä č ď é í ĺ ľ ň ó ô ŕ š ť ú ý ž', p: 'SVK', tell: 'ľ ĺ ŕ ô ä · ť ď ň · no ě ř ů', t: 'sk', w: [
       ['Vitajte', 'welcome'], ['Otvorené', 'open'], ['Škola', 'school'], ['Ulica', 'street'], ['Cesta', 'road'], ['Nemocnica', 'hospital'],
       ['Lekáreň', 'pharmacy'], ['Obchod', 'shop'], ['Kostol', 'church'], ['Polícia', 'police'], ['Na predaj', 'for sale'], ['Železničná stanica', 'railway station'], ['Reštaurácia', 'restaurant'], ['Východ', 'exit']] },
-    { id: 'hun', n: 'Hungarian', s: 'latn', p: 'HUN', tell: 'ő ű · á é í ó ö ú ü · sz gy cs zs', t: 'hu', w: [
+    { id: 'hun', n: 'Hungarian', s: 'latn', x: 'á é í ó ö ő ú ü ű', p: 'HUN', tell: 'ő ű · á é í ó ö ú ü · sz gy cs zs', t: 'hu', w: [
       ['Üdvözöljük', 'welcome'], ['Nyitva', 'open'], ['Iskola', 'school'], ['Utca', 'street'], ['Út', 'road'], ['Kórház', 'hospital'],
       ['Gyógyszertár', 'pharmacy'], ['Üzlet', 'shop'], ['Templom', 'church'], ['Rendőrség', 'police'], ['Eladó', 'for sale'], ['Vasútállomás', 'railway station'], ['Étterem', 'restaurant'], ['Behajtani tilos', 'no entry']] },
     /* ---------- Latin: Western Europe ---------- */
-    { id: 'gle', n: 'Irish', s: 'latn', p: 'IRL', tell: 'á é í ó ú · bh mh dh', t: 'ga', w: [
+    { id: 'gle', n: 'Irish', s: 'latn', x: 'á é í ó ú', p: 'IRL', tell: 'á é í ó ú · bh mh dh', t: 'ga', w: [
       ['Fáilte', 'welcome'], ['Scoil', 'school'], ['Sráid', 'street'], ['Bóthar', 'road'], ['Ospidéal', 'hospital'], ['Siopa', 'shop'],
       ['Séipéal', 'chapel'], ['Géill slí', 'yield'], ['Go mall', 'slow'], ['An Lár', 'city centre'], ['Oifig an Phoist', 'post office'], ['Ar díol', 'for sale']] },
-    { id: 'cym', n: 'Welsh', s: 'latn', p: 'GBR', tell: 'w y as vowels · ll dd ff · ŵ ŷ', t: 'cy', w: [
+    { id: 'cym', n: 'Welsh', s: 'latn', x: 'â ê î ô û ŵ ŷ', p: 'GBR', tell: 'w y as vowels · ll dd ff · ŵ ŷ', t: 'cy', w: [
       ['Croeso', 'welcome'], ['Ar agor', 'open'], ['Ysgol', 'school'], ['Stryd', 'street'], ['Ffordd', 'road'], ['Ysbyty', 'hospital'],
       ['Siop', 'shop'], ['Eglwys', 'church'], ['Heddlu', 'police'], ['Araf', 'slow'], ['Ar werth', 'for sale'], ['Gorsaf', 'station'], ['Canol y dref', 'town centre'], ['Llwybr cyhoeddus', 'public footpath']] },
-    { id: 'nld', n: 'Dutch', s: 'latn', p: 'NLD BEL SUR CUW ABW SXM', tell: 'ij · aa ee oo uu · sch', t: 'nl', w: [
+    { id: 'nld', n: 'Dutch', s: 'latn', x: 'é ë ï', p: 'NLD BEL SUR CUW ABW SXM', tell: 'ij · aa ee oo uu · sch', t: 'nl', w: [
       ['Welkom', 'welcome'], ['Geopend', 'open'], ['School', 'school'], ['Straat', 'street'], ['Weg', 'road'], ['Ziekenhuis', 'hospital'],
       ['Apotheek', 'pharmacy'], ['Winkel', 'shop'], ['Kerk', 'church'], ['Politie', 'police'], ['Te koop', 'for sale'], ['Let op', 'caution'], ['Fietspad', 'cycle path'], ['Verboden toegang', 'no entry']] },
-    { id: 'deu', n: 'German', s: 'latn', p: 'DEU AUT CHE LIE LUX BEL', tell: 'ä ö ü ß · sch · capital nouns', t: 'de', w: [
+    { id: 'deu', n: 'German', s: 'latn', x: 'ä ö ü ß', xat: { CHE: 'ä ö ü', LIE: 'ä ö ü' }, p: 'DEU AUT CHE LIE LUX BEL', tell: 'ä ö ü ß · sch · capital nouns', t: 'de', w: [
       ['Willkommen', 'welcome'], ['Geöffnet', 'open'], ['Schule', 'school'], ['Straße', 'street'], ['Weg', 'way'], ['Krankenhaus', 'hospital'],
       ['Apotheke', 'pharmacy'], ['Bäckerei', 'bakery'], ['Kirche', 'church'], ['Polizei', 'police'], ['Zu verkaufen', 'for sale'], ['Achtung', 'caution'], ['Bahnhof', 'railway station'], ['Einfahrt freihalten', 'keep entrance clear']] },
-    { id: 'fra', n: 'French', s: 'latn', t: 'fr', tell: 'é è ê à ç ù · œ · eau, -aux',
-      p: 'FRA BEL CHE LUX MCO CAN HTI BEN BFA BDI CMR CAF TCD COM COG COD CIV DJI GNQ GAB GIN MDG MLI NER RWA SEN SYC TGO VUT MUS TUN DZA MAR MRT LBN GUF GLP MTQ MYT REU NCL PYF SPM WLF BLM MAF ATF', w: [
+    { id: 'fra', n: 'French', s: 'latn', x: 'à â ç é è ê ë î ï ô œ ù û', t: 'fr', tell: 'é è ê à ç ù · œ · eau, -aux',
+      p: 'FRA BEL CHE LUX MCO CAN HTI BEN BFA BDI CMR CAF TCD COM COG COD CIV DJI GNQ GAB GIN MDG MLI NER SEN SYC TGO VUT MUS TUN DZA MAR MRT LBN GUF GLP MTQ MYT REU NCL PYF SPM WLF BLM MAF ATF', w: [
       ['Bienvenue', 'welcome'], ['Ouvert', 'open'], ['École', 'school'], ['Rue', 'street'], ['Route', 'road'], ['Hôpital', 'hospital'],
       ['Pharmacie', 'pharmacy'], ['Boulangerie', 'bakery'], ['Église', 'church'], ['Mairie', 'town hall'], ['À vendre', 'for sale'], ['Attention', 'caution'], ['Gare', 'railway station'], ['Cédez le passage', 'yield']] },
-    { id: 'ita', n: 'Italian', s: 'latn', p: 'ITA SMR CHE VAT', tell: 'à è é ì ò ù · gli · -zione', t: 'it', w: [
+    { id: 'ita', n: 'Italian', s: 'latn', x: 'à è é ì ò ù', p: 'ITA SMR CHE VAT', tell: 'à è é ì ò ù · gli · -zione', t: 'it', w: [
       ['Benvenuti', 'welcome'], ['Aperto', 'open'], ['Scuola', 'school'], ['Via', 'street'], ['Strada', 'road'], ['Ospedale', 'hospital'],
       ['Farmacia', 'pharmacy'], ['Panificio', 'bakery'], ['Chiesa', 'church'], ['Carabinieri', 'police'], ['Vendesi', 'for sale'], ['Attenzione', 'caution'], ['Stazione', 'station'], ['Senso unico', 'one way']] },
-    { id: 'spa', n: 'Spanish', s: 'latn', t: 'es', tell: 'ñ · ¿ ¡ · á é í ó ú · ll',
+    { id: 'spa', n: 'Spanish', s: 'latn', x: 'á é í ñ ó ú ü', t: 'es', tell: 'ñ · ¿ ¡ · á é í ó ú · ll',
       p: 'ESP MEX GTM SLV HND NIC CRI PAN CUB DOM PRI COL VEN ECU PER BOL CHL ARG URY PRY GNQ', w: [
       ['Bienvenidos', 'welcome'], ['Abierto', 'open'], ['Escuela', 'school'], ['Calle', 'street'], ['Carretera', 'road'], ['Hospital', 'hospital'],
       ['Farmacia', 'pharmacy'], ['Panadería', 'bakery'], ['Iglesia', 'church'], ['Policía', 'police'], ['Se vende', 'for sale'], ['Cuidado', 'caution'], ['Estación', 'station'], ['Ceda el paso', 'yield'], ['Niños', 'children']] },
-    { id: 'por', n: 'Portuguese', s: 'latn', p: 'PRT BRA AGO MOZ CPV GNB STP TLS MAC', tell: 'ã õ · ç · â ê ô · lh nh', t: 'pt', w: [
+    { id: 'por', n: 'Portuguese', s: 'latn', x: 'á à â ã ç é ê í ó ô õ ú', p: 'PRT BRA AGO MOZ CPV GNB STP TLS MAC', tell: 'ã õ · ç · â ê ô · lh nh', t: 'pt', w: [
       ['Bem-vindo', 'welcome'], ['Aberto', 'open'], ['Escola', 'school'], ['Rua', 'street'], ['Estrada', 'road'], ['Hospital', 'hospital'],
       ['Farmácia', 'pharmacy'], ['Padaria', 'bakery'], ['Igreja', 'church'], ['Polícia', 'police'], ['Vende-se', 'for sale'], ['Atenção', 'caution'], ['Estação', 'station'], ['Informações', 'information'], ['Pão', 'bread']] },
-    { id: 'cat', n: 'Catalan', s: 'latn', p: 'AND ESP', tell: 'ç · l·l · à è ò · ny · carrer', t: 'ca', w: [
+    { id: 'cat', n: 'Catalan', s: 'latn', x: 'à ç è é í ï ò ó ú ü', p: 'AND ESP', tell: 'ç · l·l · à è ò · ny · carrer', t: 'ca', w: [
       ['Benvinguts', 'welcome'], ['Obert', 'open'], ['Escola', 'school'], ['Carrer', 'street'], ['Carretera', 'road'], ['Farmàcia', 'pharmacy'],
       ['Forn de pa', 'bakery'], ['Església', 'church'], ['Ajuntament', 'town hall'], ['En venda', 'for sale'], ['Atenció', 'caution'], ['Estació', 'station'], ['Sortida', 'exit'], ['Platja', 'beach'], ['Col·legi', 'school']] },
     /* ---------- Latin: Balkans and Turkey ---------- */
-    { id: 'slv', n: 'Slovenian', s: 'latn', p: 'SVN', tell: 'č š ž · no ć đ', t: 'sl', w: [
+    { id: 'slv', n: 'Slovenian', s: 'latn', x: 'č š ž', p: 'SVN', tell: 'č š ž · no ć đ', t: 'sl', w: [
       ['Dobrodošli', 'welcome'], ['Odprto', 'open'], ['Šola', 'school'], ['Ulica', 'street'], ['Cesta', 'road'], ['Bolnišnica', 'hospital'],
       ['Lekarna', 'pharmacy'], ['Trgovina', 'shop'], ['Cerkev', 'church'], ['Policija', 'police'], ['Prodamo', 'for sale'], ['Pozor', 'caution'], ['Železniška postaja', 'railway station'], ['Izhod', 'exit']] },
-    { id: 'hbs', n: 'Croatian, Bosnian, Serbian', s: 'latn', p: 'HRV BIH SRB MNE KOS', tell: 'č ć đ š ž · lj nj', t: 'hr', w: [
+    { id: 'hbs', n: 'Croatian, Bosnian, Serbian', s: 'latn', x: 'č ć đ š ž', p: 'HRV BIH SRB MNE KOS', tell: 'č ć đ š ž · lj nj', t: 'hr', w: [
       ['Dobrodošli', 'welcome'], ['Otvoreno', 'open'], ['Škola', 'school'], ['Ulica', 'street'], ['Cesta', 'road'], ['Bolnica', 'hospital'],
       ['Ljekarna', 'pharmacy'], ['Trgovina', 'shop'], ['Crkva', 'church'], ['Policija', 'police'], ['Prodaje se', 'for sale'], ['Pažnja', 'caution'], ['Pekara', 'bakery'], ['Izlaz', 'exit'], ['Općina', 'municipality']] },
-    { id: 'sqi', n: 'Albanian', s: 'latn', p: 'ALB KOS MKD', tell: 'ë ç · sh xh zh · q', t: 'sq', w: [
+    { id: 'sqi', n: 'Albanian', s: 'latn', x: 'ç ë', p: 'ALB KOS MKD', tell: 'ë ç · sh xh zh · q', t: 'sq', w: [
       ['Mirë se vini', 'welcome'], ['Hapur', 'open'], ['Shkolla', 'school'], ['Rruga', 'street'], ['Spitali', 'hospital'], ['Farmaci', 'pharmacy'],
       ['Dyqan', 'shop'], ['Kisha', 'church'], ['Xhamia', 'mosque'], ['Policia', 'police'], ['Shitet', 'for sale'], ['Kujdes', 'caution'], ['Bukë', 'bread'], ['Hyrje', 'entrance'], ['Bashkia', 'municipality']] },
-    { id: 'ron', n: 'Romanian', s: 'latn', p: 'ROU MDA', tell: 'ă â î ș ț', t: 'ro', w: [
+    { id: 'ron', n: 'Romanian', s: 'latn', x: 'ă â î ș ț', p: 'ROU MDA', tell: 'ă â î ș ț', t: 'ro', w: [
       ['Bine ați venit', 'welcome'], ['Deschis', 'open'], ['Școală', 'school'], ['Strada', 'street'], ['Drum', 'road'], ['Spital', 'hospital'],
       ['Farmacie', 'pharmacy'], ['Magazin', 'shop'], ['Biserică', 'church'], ['Poliția', 'police'], ['De vânzare', 'for sale'], ['Atenție', 'caution'], ['Gară', 'railway station'], ['Ieșire', 'exit'], ['Pâine', 'bread']] },
-    { id: 'tur', n: 'Turkish', s: 'latn', p: 'TUR CYP', tell: 'ç ğ ı İ ö ş ü', t: 'tr', w: [
+    { id: 'tur', n: 'Turkish', s: 'latn', x: 'ç ğ ı İ ö ş ü', p: 'TUR CYP', tell: 'ç ğ ı İ ö ş ü', t: 'tr', w: [
       ['Hoş geldiniz', 'welcome'], ['Açık', 'open'], ['Okul', 'school'], ['Sokak', 'street'], ['Cadde', 'avenue'], ['Hastane', 'hospital'],
       ['Eczane', 'pharmacy'], ['Mağaza', 'shop'], ['Cami', 'mosque'], ['Polis', 'police'], ['Satılık', 'for sale'], ['Dikkat', 'caution'], ['İstasyon', 'station'], ['Çıkış', 'exit'], ['Ekmek', 'bread']] },
-    { id: 'mlt', n: 'Maltese', s: 'latn', p: 'MLT', tell: 'ċ ġ ħ ż · għ · triq', t: 'mt', w: [
+    { id: 'mlt', n: 'Maltese', s: 'latn', x: 'ċ ġ ħ ż à è ì ò ù', p: 'MLT', tell: 'ċ ġ ħ ż · għ · triq', t: 'mt', w: [
       ['Merħba', 'welcome'], ['Miftuħ', 'open'], ['Skola', 'school'], ['Triq', 'street'], ['Sqaq', 'alley'], ['Sptar', 'hospital'],
       ['Spiżerija', 'pharmacy'], ['Ħanut', 'shop'], ['Knisja', 'church'], ['Pulizija', 'police'], ['Għall-bejgħ', 'for sale'], ['Pjazza', 'square'], ['Ħobż', 'bread']] },
     /* ---------- Latin: Asia and Africa ---------- */
-    { id: 'ind', n: 'Indonesian', s: 'latn', p: 'IDN', tell: 'no accents · kantor, polisi, apotek', t: 'id', w: [
+    { id: 'ind', n: 'Indonesian', s: 'latn', x: '', p: 'IDN', tell: 'no accents · kantor, polisi, apotek', t: 'id', w: [
       ['Selamat datang', 'welcome'], ['Buka', 'open'], ['Sekolah', 'school'], ['Jalan', 'street'], ['Rumah sakit', 'hospital'], ['Apotek', 'pharmacy'],
       ['Toko', 'shop'], ['Masjid', 'mosque'], ['Kantor polisi', 'police station'], ['Dijual', 'for sale'], ['Hati-hati', 'caution'], ['Stasiun', 'station'], ['Dilarang parkir', 'no parking'], ['Warung', 'food stall'], ['Kantor pos', 'post office']] },
-    { id: 'msa', n: 'Malay', s: 'latn', p: 'MYS BRN SGP', tell: 'no accents · pejabat, polis, farmasi', t: 'ms', w: [
+    { id: 'msa', n: 'Malay', s: 'latn', x: '', p: 'MYS BRN SGP', tell: 'no accents · pejabat, polis, farmasi', t: 'ms', w: [
       ['Selamat datang', 'welcome'], ['Buka', 'open'], ['Sekolah', 'school'], ['Jalan', 'street'], ['Hospital', 'hospital'], ['Farmasi', 'pharmacy'],
       ['Kedai', 'shop'], ['Masjid', 'mosque'], ['Balai polis', 'police station'], ['Untuk dijual', 'for sale'], ['Awas', 'caution'], ['Stesen', 'station'], ['Dilarang meletak kenderaan', 'no parking'], ['Lebuhraya', 'expressway'], ['Pejabat pos', 'post office']] },
-    { id: 'fil', n: 'Filipino', s: 'latn', p: 'PHL', tell: 'ng · mga · bawal', t: 'fil', w: [
+    { id: 'fil', n: 'Filipino', s: 'latn', x: 'ñ', p: 'PHL', tell: 'ng · mga · bawal', t: 'fil', w: [
       ['Mabuhay', 'welcome'], ['Maligayang pagdating', 'welcome'], ['Bukas', 'open'], ['Paaralan', 'school'], ['Kalye', 'street'], ['Daan', 'road'],
       ['Pagamutan', 'hospital'], ['Botika', 'pharmacy'], ['Tindahan', 'shop'], ['Simbahan', 'church'], ['Pulis', 'police'], ['Ipinagbibili', 'for sale'], ['Mag-ingat', 'caution'], ['Bawal pumarada', 'no parking'], ['Bawal magtapon ng basura', 'no littering']] },
-    { id: 'vie', n: 'Vietnamese', s: 'latn', p: 'VNM', tell: 'ă â ê ô ơ ư đ · stacked accents', t: 'vi', w: [
+    { id: 'vie', n: 'Vietnamese', s: 'latn', x: 'ă â đ ê ô ơ ư', p: 'VNM', tell: 'ă â ê ô ơ ư đ · stacked accents', t: 'vi', w: [
       ['Kính chào quý khách', 'welcome'], ['Mở cửa', 'open'], ['Trường học', 'school'], ['Đường', 'street'], ['Bệnh viện', 'hospital'], ['Nhà thuốc', 'pharmacy'],
       ['Cửa hàng', 'shop'], ['Nhà thờ', 'church'], ['Công an', 'police'], ['Bán nhà', 'house for sale'], ['Chú ý', 'caution'], ['Cấm đỗ xe', 'no parking'], ['Ủy ban nhân dân', 'people’s committee'], ['Phở', 'noodle soup']] },
-    { id: 'swa', n: 'Swahili', s: 'latn', p: 'KEN TZA UGA RWA', tell: 'no accents · karibu · m-, wa-, ki-', t: 'sw', w: [
+    { id: 'swa', n: 'Swahili', s: 'latn', x: '', p: 'KEN TZA UGA', tell: 'no accents · karibu · m-, wa-, ki-', t: 'sw', w: [
       ['Karibu', 'welcome'], ['Shule', 'school'], ['Barabara', 'road'], ['Hospitali', 'hospital'], ['Duka la dawa', 'pharmacy'], ['Duka', 'shop'],
       ['Kanisa', 'church'], ['Msikiti', 'mosque'], ['Polisi', 'police'], ['Inauzwa', 'for sale'], ['Hatari', 'danger'], ['Soko', 'market'], ['Shule ya msingi', 'primary school'], ['Maji', 'water']] },
-    { id: 'afr', n: 'Afrikaans', s: 'latn', p: 'ZAF NAM', tell: 'ê ë ô û · ’n · oe · -heid', t: 'af', w: [
+    { id: 'afr', n: 'Afrikaans', s: 'latn', x: 'ê ë ô û é ï', p: 'ZAF NAM', tell: 'ê ë ô û · ’n · oe · -heid', t: 'af', w: [
       ['Welkom', 'welcome'], ['Oop', 'open'], ['Skool', 'school'], ['Straat', 'street'], ['Pad', 'road'], ['Hospitaal', 'hospital'],
       ['Apteek', 'pharmacy'], ['Winkel', 'shop'], ['Kerk', 'church'], ['Polisie', 'police'], ['Te koop', 'for sale'], ['Gevaar', 'danger'], ['Slaghuis', 'butcher'], ['Geen toegang', 'no entry'], ['Padwerke', 'roadworks']] },
-    { id: 'mlg', n: 'Malagasy', s: 'latn', p: 'MDG', tell: 'long words · -ana, -ina · tsy', t: 'mg', w: [
+    { id: 'mlg', n: 'Malagasy', s: 'latn', x: '', p: 'MDG', tell: 'long words · -ana, -ina · tsy', t: 'mg', w: [
       ['Tongasoa', 'welcome'], ['Sekoly', 'school'], ['Lalana', 'road'], ['Hopitaly', 'hospital'], ['Fivarotam-panafody', 'pharmacy'], ['Fivarotana', 'shop'],
       ['Fiangonana', 'church'], ['Polisy', 'police'], ['Amidy', 'for sale'], ['Tandremo', 'caution'], ['Tsena', 'market'], ['Fokontany', 'neighbourhood'], ['Misaotra', 'thank you']] },
     /* ---------- Cyrillic ---------- */
-    { id: 'rus', n: 'Russian', s: 'cyrl', p: 'RUS BLR KAZ KGZ', tell: 'ы э ё ъ · no і ї ў', t: 'ru', w: [
+    { id: 'rus', n: 'Russian', s: 'cyrl', p: 'RUS BLR KAZ KGZ', tell: 'ы э ё ъ · no і ї ў', t: 'ru', abc: 'а б в г д е ё ж з и й к л м н о п р с т у ф х ц ч ш щ ъ ы ь э ю я', w: [
       ['Добро пожаловать', 'welcome'], ['Открыто', 'open'], ['Школа', 'school'], ['Улица', 'street'], ['Дорога', 'road'], ['Больница', 'hospital'],
       ['Аптека', 'pharmacy'], ['Магазин', 'shop'], ['Церковь', 'church'], ['Полиция', 'police'], ['Продаётся', 'for sale'], ['Внимание', 'caution'], ['Вокзал', 'railway station'], ['Выход', 'exit'], ['Продукты', 'groceries'], ['Хлеб', 'bread']] },
-    { id: 'ukr', n: 'Ukrainian', s: 'cyrl', p: 'UKR', tell: 'і ї є ґ · no ы э ё ъ', t: 'uk', w: [
+    { id: 'ukr', n: 'Ukrainian', s: 'cyrl', p: 'UKR', tell: 'і ї є ґ · no ы э ё ъ', t: 'uk', abc: 'а б в г ґ д е є ж з и і ї й к л м н о п р с т у ф х ц ч ш щ ь ю я', w: [
       ['Ласкаво просимо', 'welcome'], ['Відчинено', 'open'], ['Школа', 'school'], ['Вулиця', 'street'], ['Дорога', 'road'], ['Лікарня', 'hospital'],
       ['Аптека', 'pharmacy'], ['Крамниця', 'shop'], ['Церква', 'church'], ['Поліція', 'police'], ['Продається', 'for sale'], ['Увага', 'caution'], ['Вокзал', 'railway station'], ['Вихід', 'exit'], ['Продукти', 'groceries'], ['Їдальня', 'canteen']] },
-    { id: 'bel', n: 'Belarusian', s: 'cyrl', p: 'BLR', tell: 'ў і · э ы · no и щ', t: 'be', w: [
+    { id: 'bel', n: 'Belarusian', s: 'cyrl', p: 'BLR', tell: 'ў і · э ы · no и щ', t: 'be', abc: 'а б в г д е ё ж з і й к л м н о п р с т у ў ф х ц ч ш ы ь э ю я', w: [
       ['Сардэчна запрашаем', 'welcome'], ['Адчынена', 'open'], ['Школа', 'school'], ['Вуліца', 'street'], ['Дарога', 'road'], ['Бальніца', 'hospital'],
       ['Аптэка', 'pharmacy'], ['Крама', 'shop'], ['Царква', 'church'], ['Міліцыя', 'police'], ['Прадаецца', 'for sale'], ['Увага', 'caution'], ['Вакзал', 'railway station'], ['Выхад', 'exit'], ['Прадукты', 'groceries']] },
-    { id: 'bul', n: 'Bulgarian', s: 'cyrl', p: 'BGR', tell: 'ъ as a vowel · щ · no ы э', t: 'bg', w: [
+    { id: 'bul', n: 'Bulgarian', s: 'cyrl', p: 'BGR', tell: 'ъ as a vowel · щ · no ы э', t: 'bg', abc: 'а б в г д е ж з и й к л м н о п р с т у ф х ц ч ш щ ъ ь ю я', w: [
       ['Добре дошли', 'welcome'], ['Отворено', 'open'], ['Училище', 'school'], ['Улица', 'street'], ['Път', 'road'], ['Болница', 'hospital'],
       ['Аптека', 'pharmacy'], ['Магазин', 'shop'], ['Църква', 'church'], ['Полиция', 'police'], ['Продава се', 'for sale'], ['Внимание', 'caution'], ['Гара', 'railway station'], ['Изход', 'exit'], ['Хранителни стоки', 'groceries'], ['Община', 'municipality']] },
-    { id: 'srp', n: 'Serbian', s: 'cyrl', p: 'SRB BIH MNE KOS', tell: 'ђ ћ љ њ џ ј', t: 'sr', w: [
+    { id: 'srp', n: 'Serbian', s: 'cyrl', p: 'SRB BIH MNE KOS', tell: 'ђ ћ љ њ џ ј', t: 'sr', abc: 'а б в г д ђ е ж з и ј к л љ м н њ о п р с т ћ у ф х ц ч џ ш', w: [
       ['Добро дошли', 'welcome'], ['Отворено', 'open'], ['Школа', 'school'], ['Улица', 'street'], ['Пут', 'road'], ['Болница', 'hospital'],
       ['Апотека', 'pharmacy'], ['Продавница', 'shop'], ['Црква', 'church'], ['Полиција', 'police'], ['Продаје се', 'for sale'], ['Пажња', 'caution'], ['Станица', 'station'], ['Излаз', 'exit'], ['Пекара', 'bakery'], ['Општина', 'municipality']] },
-    { id: 'mkd', n: 'Macedonian', s: 'cyrl', p: 'MKD', tell: 'ѓ ќ ѕ · љ њ џ ј', t: 'mk', w: [
+    { id: 'mkd', n: 'Macedonian', s: 'cyrl', p: 'MKD', tell: 'ѓ ќ ѕ · љ њ џ ј', t: 'mk', abc: 'а б в г д ѓ е ж з ѕ и ј к л љ м н њ о п р с т ќ у ф х ц ч џ ш', w: [
       ['Добредојдовте', 'welcome'], ['Отворено', 'open'], ['Училиште', 'school'], ['Улица', 'street'], ['Пат', 'road'], ['Болница', 'hospital'],
       ['Аптека', 'pharmacy'], ['Продавница', 'shop'], ['Црква', 'church'], ['Полиција', 'police'], ['Се продава', 'for sale'], ['Внимание', 'caution'], ['Станица', 'station'], ['Излез', 'exit'], ['Куќа', 'house'], ['Општина', 'municipality']] },
-    { id: 'kaz', n: 'Kazakh', s: 'cyrl', p: 'KAZ', tell: 'ә ғ қ ң ө ұ ү һ і', t: 'kk', w: [
+    { id: 'kaz', n: 'Kazakh', s: 'cyrl', p: 'KAZ', tell: 'ә ғ қ ң ө ұ ү һ і', t: 'kk', abc: 'а ә б в г ғ д е ё ж з и й к қ л м н ң о ө п р с т у ұ ү ф х һ ц ч ш щ ъ ы і ь э ю я', w: [
       ['Қош келдіңіздер', 'welcome'], ['Ашық', 'open'], ['Мектеп', 'school'], ['Көше', 'street'], ['Жол', 'road'], ['Аурухана', 'hospital'],
       ['Дәріхана', 'pharmacy'], ['Дүкен', 'shop'], ['Мешіт', 'mosque'], ['Полиция', 'police'], ['Сатылады', 'for sale'], ['Назар аударыңыз', 'caution'], ['Шығу', 'exit'], ['Азық-түлік', 'groceries'], ['Нан', 'bread'], ['Әкімдік', 'town hall']] },
-    { id: 'kir', n: 'Kyrgyz', s: 'cyrl', p: 'KGZ', tell: 'ң ө ү · no ә ғ қ ұ', t: 'ky', w: [
+    { id: 'kir', n: 'Kyrgyz', s: 'cyrl', p: 'KGZ', tell: 'ң ө ү · no ә ғ қ ұ', t: 'ky', abc: 'а б в г д е ё ж з и й к л м н ң о ө п р с т у ү ф х ц ч ш щ ъ ы ь э ю я', w: [
       ['Кош келиңиздер', 'welcome'], ['Ачык', 'open'], ['Мектеп', 'school'], ['Көчө', 'street'], ['Жол', 'road'], ['Оорукана', 'hospital'],
       ['Дарыкана', 'pharmacy'], ['Дүкөн', 'shop'], ['Мечит', 'mosque'], ['Милиция', 'police'], ['Сатылат', 'for sale'], ['Көңүл буруңуз', 'caution'], ['Чыгуу', 'exit'], ['Азык-түлүк', 'groceries'], ['Нан', 'bread'], ['Айыл өкмөтү', 'village government']] },
-    { id: 'mon', n: 'Mongolian', s: 'cyrl', p: 'MNG', tell: 'ө ү · doubled vowels', t: 'mn', w: [
+    { id: 'mon', n: 'Mongolian', s: 'cyrl', p: 'MNG', tell: 'ө ү · doubled vowels', t: 'mn', abc: 'а б в г д е ё ж з и й к л м н о ө п р с т у ү ф х ц ч ш щ ъ ы ь э ю я', w: [
       ['Тавтай морилно уу', 'welcome'], ['Нээлттэй', 'open'], ['Сургууль', 'school'], ['Гудамж', 'street'], ['Зам', 'road'], ['Эмнэлэг', 'hospital'],
       ['Эмийн сан', 'pharmacy'], ['Дэлгүүр', 'shop'], ['Сүм', 'temple'], ['Цагдаа', 'police'], ['Зарна', 'for sale'], ['Анхаар', 'caution'], ['Гарц', 'exit'], ['Хүнсний дэлгүүр', 'grocery shop'], ['Талх', 'bread']] },
-    { id: 'tgk', n: 'Tajik', s: 'cyrl', p: 'TJK', tell: 'ӣ ӯ ҷ ҳ қ ғ', t: 'tg', w: [
+    { id: 'tgk', n: 'Tajik', s: 'cyrl', p: 'TJK', tell: 'ӣ ӯ ҷ ҳ қ ғ', t: 'tg', abc: 'а б в г ғ д е ё ж з и ӣ й к қ л м н о п р с т у ӯ ф х ҳ ч ҷ ш ъ э ю я', w: [
       ['Хуш омадед', 'welcome'], ['Кушода', 'open'], ['Мактаб', 'school'], ['Кӯча', 'street'], ['Роҳ', 'road'], ['Беморхона', 'hospital'],
       ['Дорухона', 'pharmacy'], ['Мағоза', 'shop'], ['Масҷид', 'mosque'], ['Милитсия', 'police'], ['Баромад', 'exit'], ['Нон', 'bread']] },
     /* ---------- other scripts ---------- */

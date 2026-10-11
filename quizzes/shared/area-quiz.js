@@ -17,6 +17,9 @@
 //   kinds        what can be asked, see KINDS below
 //   explore(areaId) -> { code, title, sub, photos }  (sub may be an array of lines; photos: pictures to show, as
 //                returned by a kind's photo(id))
+//   exploreList  optional { label, items: [{ label, areas, rare, code, title, sub }] }: Explore also shows one of a
+//                list at a time, picked beside Back (a language: the tiles of its letters lit, the `rare` ones of
+//                them in the color of rare answers)
 //   context      optional SVG path drawn under the areas (neighbouring countries), not clickable
 //   base, dots   city quizzes: base { land, lines } draws the country and its region borders under the areas;
 //                dots: true draws each area (a zero-length path "Mx,yl0,0") as a dot that keeps its size on
@@ -32,6 +35,8 @@
 //                then be laid on the quiz map too, not only on the street map (see useCover)
 //   hintsDefault whether "color areas" starts ticked (default true)
 //   lettersLabel optional option text: show every area's label while playing
+//   board        true where the "map" is a board of tiles (shared/lang-config.js): it is fitted to its box again when
+//                a round starts, since on a phone that box grows once the round's panel replaces the list of rounds
 //   (per kind)   merge: false keeps every area drawn separately even when the kind's items group them;
 //                unitColors(areas) -> [css colors] picks each group's color from its own list (default: the palette)
 //   rounds       ready-made quizzes offered on the setup screen: [{ kind, label, sub?, and one of groups: [group
@@ -46,7 +51,12 @@
 //                lang: the language's name ('English', 'Thai'). It needs no rounds of its own: every round of the
 //                kind it follows offers it as a language to pick, in the round's own box (where a round's sub would
 //                be), with the round's items that have a name in that language. The language picked last is the one
-//                every box starts with; best scores, stars and review cards stay per kind.
+//                every box starts with (before any is picked: the kind marked start: true, else the kind the
+//                others follow), and a box stands in the level of the round it shows; best scores, stars and
+//                review cards stay per kind.
+//   langLabel    'Country': the languages are chosen once for the whole list, in a row of their own above the
+//                rounds under this heading, instead of in each round's box (the countries of a script's words: a
+//                choice a player has to see). A round with nothing in the language chosen is left out.
 //
 // One config can serve several pages: <body data-kinds="states" data-key="dddstates"> keeps only the listed
 // kinds; each page keeps its own scores (data-key: its short name, see `key`), e.g. an area-code quiz and a states
@@ -72,6 +82,7 @@
   const HERE = document.currentScript.src.replace(/[^/]*$/, ''); // where the shared scripts are
   const MAX_TRIES = 3;
   const RESULT_CLASS = ['got', 't2', 't3', 'miss']; // index = wrong clicks before the right one
+  const FRESH_MS = 700; // how long an answer's color stays in a kind that starts every question on a clean map
   // Standard OpenStreetMap tiles: free for light use with attribution, no API key needed.
   const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -178,7 +189,8 @@
      (expand(id) widens each pick, e.g. ranking cities, then taking every code dialed there; a "largest area"
      ranking comes first unless areaRank: false, with each area's size shared between the items covering it,
      so a code alone in its area outranks one of five codes sharing an area of the same size), primary(areaId) naming the item a click on that area "is", and chipClass(id).
-     prompt 'text' shows text(id) -> { text, cls, lang } on the sign card instead. prompt 'photo' shows a picture,
+     prompt 'text' shows text(id) -> { text, cls, lang, tag } on the sign card instead (tag: a small label over it,
+     e.g. the country a letter is read that way in). prompt 'photo' shows a picture,
      photo(id) -> { src, alt, label, link }: a click enlarges it, and once answered it comes with its label and
      link (e.g. the place in Street View); missed pictures are listed as pictures. areaLabel(areaId) labels
      each area on its own (e.g. a script's letter) instead of one label per item; flashArea: true flashes
@@ -187,10 +199,20 @@
      (when the answer is the whole map's business, dimming the rest would give it away). labelPerArea: true
      labels every area with all the items dialed there (main one first), so a code covering two areas shows
      on both. clickAll: true makes an item covering several areas need a click on each of them on the quiz
-     map and on the overlay, with a counter on the map; on the street map one click still counts and highlights
-     them all.
+     map and on the overlay, with a counter on the map ("3 areas", or what areaNoun calls them: 'letters'); on the
+     street map one click still counts and highlights them all. fresh: true is for areas that are the answer to many of the kind's items (a country that writes
+     many letters): every question starts on a map without colors, an answer's color leaving it after a moment,
+     and the results show none. rare(id, areaId) -> true colors a right area another way (blue): the answer holds
+     there, but is seldom met (a letter a country writes in a few words only).
      dial(id) -> [[text, 'hot' | 'cold'], …] shows the dial code in parts (e.g. only the prefix bold); pin(id) ->
-     { x, y, ll, label } marks a place (e.g. the town the code belongs to) after the question is answered. */
+     { x, y, ll, label } marks a place (e.g. the town the code belongs to) after the question is answered.
+     typed(id, text) -> true | false makes the answer one to type, in a field under the prompt (a name read in
+     another script, written in Latin letters): a wrong one counts like a wrong click, a shown answer is typed to
+     go on, and clicks on the map answer nothing. time(id) is how many times longer than a click such an answer
+     may take on the review's clock.
+     say(id) -> { text, lang } has the answer said aloud once it is given: see "sound" below.
+     cards: '<kind>' gives a kind the review cards of another one, whose questions it shares (a country's words
+     among the words of all countries): a word learned in one is learned in the other. */
   const kindOf = k => {
     const ids = k.groups.flatMap(g => g.ids);
     const areas = Object.fromEntries(ids.map(id => [id, k.areasOf(id)]));
@@ -598,8 +620,11 @@
         e.ids.push(id); ENTRY_OF[id] = [e];
       }
     }
-    sizeLabels();
+    sizeLabels(); labelsOut();
   }
+  // A label of an area's own (areaLabel) is marked dimmed with its area, for a page that keeps those labels on show
+  // (a board of tiles, see lang-config.js).
+  function labelsOut() { for (const a in AREA_ENTRY) AREA_ENTRY[a].el.classList.toggle('out', EL[a].classList.contains('out')); }
   function renderEntry(e) {
     const K = KINDS[labelKind];
     // A flashed area ('area:…' in shown) reveals everything on its label for a moment.
@@ -655,12 +680,19 @@
   function clearPin() { gPins.replaceChildren(); if (streetPin) { streetPin.remove(); streetPin = null; } }
 
   const flashTimers = new Map();
+  // A kind with fresh: the colors of the answers leave the map, at once or after `wait` ms.
+  let freshTimer;
+  function fresh(wait) {
+    clearTimeout(freshTimer);
+    const clear = () => { for (const a of AREAS) for (const p of shapesOf(a)) p.classList.remove(...RESULT_CLASS, 'rare'); };
+    if (wait) freshTimer = setTimeout(clear, wait); else clear();
+  }
   function clearMap() {
-    clearPin(); gFree.replaceChildren();
+    clearPin(); gFree.replaceChildren(); clearTimeout(freshTimer);
     for (const t of flashTimers.values()) clearTimeout(t);
     flashTimers.clear();
-    for (const a of AREAS) for (const p of shapesOf(a)) p.classList.remove('got', 't2', 't3', 'miss', 'ans', 'sel', 'flash', 'found', 'out', 'pre');
-    clearLabels();
+    for (const a of AREAS) for (const p of shapesOf(a)) p.classList.remove('got', 't2', 't3', 'miss', 'ans', 'sel', 'flash', 'found', 'rare', 'out', 'pre');
+    clearLabels(); labelsOut();
     mark(null);
   }
   // Dim the areas outside the current set, on the quiz map and the overlay. The street map alone never dims (its
@@ -668,7 +700,7 @@
   function markOut(areas) {
     const inSet = new Set(areas);
     for (const a of AREAS) for (const p of shapesOf(a)) p.classList.toggle('out', !inSet.has(a));
-    syncUnitsOut();
+    labelsOut(); syncUnitsOut();
   }
 
   /* ---------- layouts: when a kind's items are groups of areas (zones, states), each group is one shape ----------
@@ -1197,8 +1229,24 @@
   }));
   const roundOf = key => ROUNDS.find(r => 'r:' + r.id === key);
   const savedOf = key => key.startsWith('s:') ? SAVED[+key.slice(2)] : null;
+  // The round a box shows, of a round and its other languages: the one picked, else the one in the language picked
+  // last, else the one of the kind a quiz starts with, else the first.
+  const keyOf = v => 'r:' + v.id, langOf = v => KINDS[v.kind].lang || KINDS[v.kind].label;
+  const variantsOf = r => ROUNDS.filter(v => v === r || v.of === r);
+  // (Q.langLabel: the language chosen for the whole list, and of each round the one in that language, if it has one)
+  const LANGS = Q.langLabel ? uniq(Q.kinds.filter(k => ROUNDS.some(r => r.kind === k.key)).map(k => k.lang || k.label)) : []; // in the order of the kinds
+  const listLang = () => (LANGS.includes(load('lang')) ? load('lang') : langOf((Q.kinds.find(k => k.start) ? ROUNDS.find(r => KINDS[r.kind].start) : null) || ROUNDS[0]));
+  const shownOf = variants => (Q.langLabel ? variants.find(v => langOf(v) === listLang())
+    : variants.find(v => keyOf(v) === choice) || variants.find(v => langOf(v) === load('lang')) || variants.find(v => KINDS[v.kind].start) || variants[0]);
   function validChoice() {
-    if (!(choice === 'custom' || (choice === 'shared' && SHARED) || savedOf(choice) || roundOf(choice))) choice = 'r:' + ROUNDS[0].id;
+    if (!(choice === 'custom' || (choice === 'shared' && SHARED) || savedOf(choice) || roundOf(choice))) choice = keyOf(ROUNDS.filter(r => !r.of).map(r => shownOf(variantsOf(r))).find(Boolean));
+  }
+  // Another language for the whole list: the round picked stays picked, in that language, where it has one.
+  function pickLang(lang) {
+    const picked = roundOf(choice), same = picked && variantsOf(picked.of || picked).find(v => langOf(v) === lang);
+    store('lang', lang);
+    if (picked) { choice = same ? keyOf(same) : ''; validChoice(); store('choice', choice); }
+    buildRounds(); frameRound();
   }
   function choiceKind() {
     validChoice();
@@ -1318,9 +1366,9 @@
   // A round offered in several languages is one box. It shows (and a click on it chooses) the round in the language
   // picked last, or in its first one; once it is the round picked, its languages are a switch under its name.
   function roundBox(variants) {
-    const keyOf = v => 'r:' + v.id, langOf = v => KINDS[v.kind].lang || KINDS[v.kind].label;
     if (variants.length < 2) { const r = variants[0]; return answerable(roundBtn(keyOf(r), r.label, r.sub, r.kind, roundIds(r), r.random)); }
-    const on = variants.find(v => keyOf(v) === choice) || variants.find(v => langOf(v) === load('lang')) || variants[0];
+    const on = shownOf(variants);
+    if (Q.langLabel) return answerable(roundBtn(keyOf(on), on.label, '', on.kind, roundIds(on), on.random));
     const langs = () => options(variants.map(v => [langOf(v), '', v === on, () => { store('lang', langOf(v)); choice = keyOf(v); store('choice', choice); buildRounds(); frameRound(); }]));
     return answerable(roundBtn(keyOf(on), on.label, '', on.kind, roundIds(on), on.random), ...(keyOf(on) === choice ? [langs()] : []));
   }
@@ -1354,7 +1402,8 @@
 
   function buildRounds() {
     const wrap = $('rounds'); wrap.replaceChildren();
-    const many = FOLDERS.length > 1, open = folderOf(choiceKind()), inOpen = kind => !many || folderOf(kind) === open;
+    // (a page whose tabs are other pages has no room for folders of its own: its kinds' rounds are one list)
+    const many = FOLDERS.length > 1 && !PAGE_FOLDERS, open = folderOf(choiceKind()), inOpen = kind => !many || folderOf(kind) === open;
     const levels = levelProgress(many ? open : null);
     if (!PAGE_FOLDERS) { $('folders').hidden = !many; for (const b of $('folders').children) b.setAttribute('aria-selected', b.dataset.folder === open); }
     const section = (tier, title, rows) => {
@@ -1372,7 +1421,8 @@
     if (SHARED && inOpen(SHARED.kind)) section(-1, 'Shared with you', [withIcons(answerable(roundBtn('shared', SHARED.name, kindNote(SHARED.kind), SHARED.kind, SHARED.ids)),
       iconBtn('save', 'Save to your quizzes', () => saveQuiz(SHARED.name, SHARED.kind, SHARED.ids)))]);
     const byTier = TIERS.map(() => []);
-    for (const r of ROUNDS) if (!r.of && inOpen(r.kind)) byTier[tierOf(roundIds(r).length)].push(roundBox(ROUNDS.filter(v => v === r || v.of === r)));
+    if (LANGS.length > 1) { const row = options(LANGS.map(l => [l, '', l === listLang(), () => pickLang(l)])); row.classList.add('list'); section(-1, Q.langLabel, [row]); }
+    for (const r of ROUNDS) if (!r.of && inOpen(r.kind)) { const variants = variantsOf(r); if (shownOf(variants)) byTier[tierOf(roundIds(shownOf(variants)).length)].push(roundBox(variants)); }
     TIERS.forEach(([, name], i) => section(i, name, byTier[i]));
     section(-1, 'Your quizzes', SAVED.map((s, i) => inOpen(s.kind) && withIcons(answerable(roundBtn('s:' + i, s.name, kindNote(s.kind), s.kind, s.ids)),
       iconBtn('link', 'Copy a link to this quiz', () => copyLink(s.kind, s.ids, s.name)),
@@ -1587,21 +1637,53 @@
     if (countEl.hidden) return;
     const left = remaining(K, id).length, b = document.createElement('b');
     b.textContent = left;
-    countEl.replaceChildren(b, left === K.areas[id].length ? ' areas' : ' more');
+    countEl.replaceChildren(b, left === K.areas[id].length ? ` ${K.areaNoun || 'areas'}` : ' more');
   }
+
+  /* ---------- sound: an answer said aloud (a kind with say) ---------- */
+  // The browser speaks, in a voice of the device for the answer's language: what has no such voice stays silent, so
+  // it depends on the device what is heard. The switch in the round's panel turns the sound off and on, for every
+  // quiz (the settings' `sound`, see store.js).
+  const soundBtn = $('soundBtn'), SPEAKS = typeof speechSynthesis === 'object' && typeof SpeechSynthesisUtterance === 'function';
+  let soundOn = STORE.settings().sound !== false;
+  if (SPEAKS) speechSynthesis.getVoices(); // (the list is fetched when first asked for, and may come late)
+  const voiceOf = lang => speechSynthesis.getVoices().find(v => v.lang.replace('_', '-').toLowerCase().split('-')[0] === lang);
+  function say(id) {
+    const K = KINDS[G.kind];
+    if (!SPEAKS || !soundOn || !K.say) return;
+    const s = K.say(id), voice = s && s.text && voiceOf(s.lang);
+    if (!voice) return;
+    const u = new SpeechSynthesisUtterance(s.text);
+    u.voice = voice; u.lang = voice.lang; u.rate = .8;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }
+  function syncSound() {
+    if (!soundBtn) return;
+    soundBtn.hidden = !(SPEAKS && KINDS[G.kind].say);
+    soundBtn.setAttribute('aria-pressed', soundOn); soundBtn.textContent = soundOn ? 'Sound on' : 'Sound off';
+  }
+  if (soundBtn) soundBtn.onclick = () => {
+    soundOn = !soundOn;
+    STORE.setSettings(s => { if (soundOn) delete s.sound; else s.sound = false; });
+    if (!soundOn) speechSynthesis.cancel();
+    syncSound();
+  };
 
   // map, back: a review asks its cards the way they were last played perfectly (see reviewModes), not as chosen on the
   // setup screen.
   function start(kind, items, { retry = false, review = false, box = null, map = chosenMap, back = chosenBack } = {}) {
     clearInterval(timer); clearTimeout(G.ending);
     Object.assign(G, { kind, items, queue: shuffle(items), i: 0, score: 0, streak: 0, best: 0, res: [], t0: performance.now(), retry, review, points: 0, box, back: null });
+    syncSound();
     useMap(map); showBack(back); clearMap();
     if (box) { if (onStreet()) frameStreet({ kind, ids: items, box }); else frame(box); }
     if (scoreLabel) scoreLabel.textContent = mapStyle === 'free' ? 'Points' : SCORE_LABEL;
     markOut(KINDS[kind].dim === false ? AREAS : items.flatMap(id => KINDS[kind].areas[id]));
     $('ticks').replaceChildren(...G.queue.map(() => document.createElement('i')));
     setFeedback($('fb'), '', '', '');
-    show('play'); ask();
+    show('play');
+    if (Q.board) frame(box);
+    ask();
     timer = setInterval(() => $('sTime').textContent = fmt(performance.now() - G.t0), 500);
   }
   function ask() {
@@ -1622,10 +1704,11 @@
       $('photo').onclick = () => zoomPhoto(p, false);
       if (next !== undefined) new Image().src = K.photo(next).src; // the next picture is there when it is asked
     }
-    else if (isText) { const t = K.text(id); $('sent').textContent = t.text; $('sent').className = 'sent ' + (t.cls || ''); $('sent').lang = t.lang || ''; }
+    else if (isText) { const t = K.text(id); $('sent').textContent = t.text; $('sent').className = 'sent ' + (t.cls || ''); $('sent').lang = t.lang || ''; $('card').dataset.tag = t.tag || ''; }
     else if (isName) $('bigname').textContent = K.name(id);
     else if (K.dial) $('code').replaceChildren(...K.dial(id).map(([text, cls]) => { const s = document.createElement('span'); s.className = cls; s.textContent = text; return s; }));
     else $('code').textContent = K.short(id);
+    if (typedForm) { typedForm.hidden = !K.typed; if (K.typed) { $('typed').value = ''; $('typed').focus({ preventScroll: true }); } }
     // The optional hint under the prompt, e.g. the state a code is in; empty (and hidden) otherwise.
     const ask = $('ask'); ask.replaceChildren();
     if (K.detail && $('optDetail').checked) { const s = document.createElement('strong'); s.textContent = K.detail.text(id); ask.append(s); }
@@ -1641,8 +1724,16 @@
       const ids = KINDS[pickKind].at[area]; if (ids) toggleItems(ids); return;
     }
     if (view === 'explore') { explore(area); return; }
-    if (view === 'play') answer(area);
+    if (view === 'play' && !KINDS[G.kind].typed) answer(area);
   }
+  // A typed answer: right, it counts as a click on the item's area; wrong, as a wrong click.
+  const typedForm = $('typedForm');
+  if (typedForm) typedForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const K = KINDS[G.kind], id = G.queue[G.i], text = $('typed').value.trim();
+    if (view !== 'play' || !K.typed || id === undefined || !text) return;
+    if (K.typed(id, text)) answer(K.areas[id][0]); else { wrong(text); $('typed').select(); }
+  });
   function flash(kind, id) {
     const K = KINDS[kind], key = kind + ':' + id;
     for (const p of pathsOf(K.areas[id])) p.classList.add('flash');
@@ -1676,6 +1767,7 @@
         if (left > 0) {
           if (!wasFound) {
             const p = pathsOf([area])[0]; p.classList.remove('ans', 'flash'); p.classList.add('found');
+            p.classList.toggle('rare', !!(K.rare && K.rare(target, area)));
             buildLabels(G.kind); const e = AREA_ENTRY[area]; if (e) { e.shown.add(target); renderEntry(e); }
             if (G.revealed) mark(remaining(K, target));
           }
@@ -1686,7 +1778,10 @@
       }
       if (G.review) G.tries = RV.grade(G.tries > 0 || G.revealed); // a review grades by the clock: known, unsure or not known
       const k = RESULT_CLASS[G.tries];
+      if (K.fresh) fresh();
       for (const p of pathsOf(K.areas[target])) { p.classList.remove('ans', 'flash', 'found', ...RESULT_CLASS); p.classList.add(k); }
+      if (K.rare) K.areas[target].forEach((a, i) => pathsOf(K.areas[target])[i].classList.toggle('rare', !!K.rare(target, a)));
+      if (K.fresh) fresh(FRESH_MS);
       showLabel(G.kind, target);
       const tick = $('ticks').children[G.i]; tick.classList.remove('now'); tick.classList.add(k);
       G.res.push(G.tries);
@@ -1695,6 +1790,7 @@
       setFeedback($('fb'), G.tries === 0 ? 'ok' : 'bad', title, K.about(target));
       if (K.photo) $('fb').prepend(thumb(K.photo(target)));
       if (K.pin) showPin(K.pin(target));
+      say(target);
       if (RV) RV.answered(target, G.tries === 0);
       G.i++;
       if (G.i >= G.queue.length) finish(); else ask();
@@ -1702,7 +1798,11 @@
     }
     if (K.flashArea || K.labelPerArea) flashArea(area);
     else { const clicked = K.primary(area); if (clicked) flash(G.kind, clicked); }
-    const what = K.clicked(area, target);
+    wrong(K.clicked(area, target));
+  }
+  // A wrong answer, `what` being what was clicked or typed: a try less, and after the last one the answer is shown.
+  function wrong(what) {
+    const K = KINDS[G.kind], target = G.queue[G.i];
     if (G.revealed) {
       setFeedback($('fb'), 'bad', `✗ ${what}`, `→ ${K.name(target)}`);
       return;
@@ -1769,6 +1869,7 @@
     let line = free ? `${pct}% of ${(n * FREE_MAX).toLocaleString('en-US')} · ${G.score}/${n} close · ${fmt(ms)}` : `${pct}% · ${fmt(ms)} · streak ${G.best}`;
     if (prev && complete) line += better ? ' · new best' : free ? ` · best ${(prev.p || 0).toLocaleString('en-US')}` : ` · best ${prev.s}/${n}`;
     legendItems.forEach((li, i) => { li.lastChild.textContent = free ? FREE_LEGEND[i] : LEGEND[i]; });
+    if (legendItems[0]) legendItems[0].parentNode.hidden = !!K.fresh;
     $('rLine').textContent = line;
     const missed = G.queue.slice(0, n).map((id, i) => [id, G.res[i]]).filter(([, t]) => t > 0)
       .sort((a, b) => K.ids.indexOf(a[0]) - K.ids.indexOf(b[0]));
@@ -1796,14 +1897,31 @@
   });
 
   /* ---------- explore ---------- */
+  // (a code of many letters is set smaller, on the pages that say how: `long`)
+  const showCode = code => { $('eCode').textContent = code; $('eDial').classList.toggle('multi', code.includes(',')); $('eDial').classList.toggle('long', code.length > 14); };
   function explore(area) {
-    for (const p of pathsOf(AREAS)) p.classList.remove('sel');
+    for (const p of pathsOf(AREAS)) p.classList.remove('sel', ...(ePick ? ['rare'] : []));
+    if (ePick) ePick.value = '';
     pathsOf([area])[0].classList.add('sel'); mark([area]);
     if (plain()) { clearLabels(); for (const id of KINDS[Q.exploreKind].at[area] || []) showLabel(Q.exploreKind, id); }
     const info = Q.explore(area);
-    $('eCode').textContent = info.code; $('eDial').classList.toggle('multi', info.code.includes(','));
+    showCode(info.code);
     setFeedback($('eInfo'), '', info.title, info.sub);
     if (info.photos) { const g = document.createElement('div'); g.className = 'gallery'; g.append(...info.photos.map(thumb)); $('eInfo').append(g); }
+  }
+  // Q.exploreList: one of the list, picked beside Back: all its areas are lit at once.
+  const ePick = Q.exploreList ? document.createElement('select') : null;
+  if (ePick) {
+    ePick.id = 'ePick'; ePick.setAttribute('aria-label', Q.exploreList.label);
+    ePick.append(new Option(Q.exploreList.label, ''), ...Q.exploreList.items.map((it, i) => new Option(it.label, i)));
+    ePick.onchange = () => {
+      const it = Q.exploreList.items[ePick.value], rare = new Set(it ? it.rare : []);
+      for (const p of pathsOf(AREAS)) p.classList.remove('sel', 'rare');
+      for (const a of it ? it.areas : []) { const p = pathsOf([a])[0]; p.classList.add('sel'); p.classList.toggle('rare', rare.has(a)); }
+      mark(it ? it.areas : null);
+      showCode(it ? it.code : '--'); setFeedback($('eInfo'), '', it ? it.title : '', it ? it.sub : '');
+    };
+    $('eBack').after(ePick);
   }
 
   /* ---------- buttons & keys ---------- */
@@ -1811,7 +1929,7 @@
   $('exploreBtn').onclick = () => {
     useMap(chosenMap); clearMap(); show('explore');
     if (!plain()) showAllLabels(Q.exploreKind);
-    $('eCode').textContent = '--'; $('eDial').classList.remove('multi');
+    showCode('--'); if (ePick) ePick.value = '';
     setFeedback($('eInfo'), '', '', '');
   };
   $('restartBtn').onclick = () => start(G.kind, G.items, { retry: G.retry, box: G.box });

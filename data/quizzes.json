@@ -369,6 +369,14 @@
       "url": "quizzes/bangladesh-town-names/index.html"
     },
     {
+      "id": "bangladesh-reading",
+      "country": "050",
+      "title": "Reading",
+      "role": "reading",
+      "levels": 4,
+      "url": "quizzes/bangladesh-reading/index.html"
+    },
+    {
       "id": "ecuador-regions",
       "country": "218",
       "title": "Regions",
@@ -455,6 +463,14 @@
       "role": "names",
       "levels": 1,
       "url": "quizzes/kazakhstan-town-names/index.html"
+    },
+    {
+      "id": "kazakhstan-reading",
+      "country": "398",
+      "title": "Reading",
+      "role": "reading",
+      "levels": 4,
+      "url": "quizzes/kazakhstan-reading/index.html"
     },
     {
       "id": "paraguay-regions",
@@ -583,6 +599,14 @@
       "role": "cities",
       "levels": 4,
       "url": "quizzes/bulgaria-cities/index.html"
+    },
+    {
+      "id": "bulgaria-reading",
+      "country": "100",
+      "title": "Reading",
+      "role": "reading",
+      "levels": 4,
+      "url": "quizzes/bulgaria-reading/index.html"
     },
     {
       "id": "hungary-codes",
@@ -1097,6 +1121,14 @@
       "url": "quizzes/russia-town-names/index.html"
     },
     {
+      "id": "russia-reading",
+      "country": "643",
+      "title": "Reading",
+      "role": "reading",
+      "levels": 4,
+      "url": "quizzes/russia-reading/index.html"
+    },
+    {
       "id": "us-road-grid",
       "country": "840",
       "title": "Road Grid",
@@ -1449,6 +1481,14 @@
       "url": "quizzes/india-town-names/index.html"
     },
     {
+      "id": "india-reading",
+      "country": "356",
+      "title": "Reading",
+      "role": "reading",
+      "levels": 4,
+      "url": "quizzes/india-reading/index.html"
+    },
+    {
       "id": "canada-markers",
       "country": "124",
       "title": "Kilometre Markers",
@@ -1599,6 +1639,14 @@
       "role": "names",
       "levels": 2,
       "url": "quizzes/ukraine-town-names/index.html"
+    },
+    {
+      "id": "ukraine-reading",
+      "country": "804",
+      "title": "Reading",
+      "role": "reading",
+      "levels": 4,
+      "url": "quizzes/ukraine-reading/index.html"
     },
     {
       "id": "norway-codes",
@@ -2401,6 +2449,94 @@
       "levels": 4,
       "url": "quizzes/south-america-bollards/index.html",
       "hidden": true
+    },
+    {
+      "id": "cyrillic-letters",
+      "scope": "Languages",
+      "area": "Cyrillic",
+      "title": "Letters",
+      "levels": 4,
+      "url": "quizzes/cyrillic-letters/index.html"
+    },
+    {
+      "id": "cyrillic-words",
+      "scope": "Languages",
+      "area": "Cyrillic",
+      "title": "Words",
+      "levels": 4,
+      "url": "quizzes/cyrillic-words/index.html"
+    },
+    {
+      "id": "cyrillic-countries",
+      "scope": "Languages",
+      "area": "Cyrillic",
+      "title": "Countries",
+      "levels": 4,
+      "url": "quizzes/cyrillic-countries/index.html"
+    },
+    {
+      "id": "devanagari-letters",
+      "scope": "Languages",
+      "area": "Devanagari",
+      "title": "Letters",
+      "levels": 4,
+      "url": "quizzes/devanagari-letters/index.html"
+    },
+    {
+      "id": "devanagari-words",
+      "scope": "Languages",
+      "area": "Devanagari",
+      "title": "Words",
+      "levels": 4,
+      "url": "quizzes/devanagari-words/index.html"
+    },
+    {
+      "id": "devanagari-regions",
+      "scope": "Languages",
+      "area": "Devanagari",
+      "title": "Regions",
+      "levels": 4,
+      "url": "quizzes/devanagari-regions/index.html"
+    },
+    {
+      "id": "bengali-letters",
+      "scope": "Languages",
+      "area": "Bengali",
+      "title": "Letters",
+      "levels": 4,
+      "url": "quizzes/bengali-letters/index.html"
+    },
+    {
+      "id": "bengali-words",
+      "scope": "Languages",
+      "area": "Bengali",
+      "title": "Words",
+      "levels": 4,
+      "url": "quizzes/bengali-words/index.html"
+    },
+    {
+      "id": "latin-alphabets",
+      "scope": "Languages",
+      "area": "Latin",
+      "title": "Alphabets",
+      "levels": 1,
+      "url": "quizzes/latin-alphabets/index.html"
+    },
+    {
+      "id": "latin-words",
+      "scope": "Languages",
+      "area": "Latin",
+      "title": "Words",
+      "levels": 4,
+      "url": "quizzes/latin-words/index.html"
+    },
+    {
+      "id": "latin-countries",
+      "scope": "Languages",
+      "area": "Latin",
+      "title": "Countries",
+      "levels": 4,
+      "url": "quizzes/latin-countries/index.html"
     }
   ]
 }

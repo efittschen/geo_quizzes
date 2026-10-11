@@ -1,6 +1,6 @@
 // Country page: shows the country's outline and lists its quizzes (country.html?code=<ISO numeric>). The same page
-// lists the quizzes about the whole world or a whole continent (country.html?area=World, …?area=Europe) and the
-// quizzes of a suite, in order (country.html?suite=Beginner).
+// lists the quizzes about the whole world or a whole continent (country.html?area=World, …?area=Europe), those of a
+// subject (…?area=Languages) and the quizzes of a suite, in order (country.html?suite=Beginner).
 
 const $ = (id) => document.getElementById(id);
 
@@ -77,7 +77,7 @@ function renderQuizzes(quizzes, placeOf, inside = () => [], group = null) {
       const h = document.createElement("li");
       h.className = "group-t";
       h.textContent = heading;
-      list.appendChild(h);
+      if (heading) list.appendChild(h); // (the quizzes of no group come first, under no heading)
     }
     const li = document.createElement("li");
     const a = document.createElement("a");
@@ -130,13 +130,16 @@ function renderReview(index, quizzes, back) {
 }
 
 // The world or a continent (country.html?area=Europe): the quizzes about it as a whole. No outline to draw.
+// A subject (…?area=Languages) has its quizzes in groups (`area`: a script), each under its heading, after those
+// of no group.
 function renderArea(index, area) {
-  const quizzes = index.quizzes.filter((q) => q.scope === area);
+  const scoped = index.quizzes.filter((q) => q.scope === area);
+  const quizzes = [...scoped.filter((q) => !q.area), ...scoped.filter((q) => q.area)];
   document.title = `${area} · Geo Quizzes`;
   $("country-name").textContent = area;
   $("country-count").textContent = quizzes.length ? `${quizzes.length} quiz${quizzes.length === 1 ? "" : "zes"}` : "";
   $("country-shape").remove();
-  if (quizzes.length) renderQuizzes(quizzes);
+  if (quizzes.length) renderQuizzes(quizzes, null, undefined, scoped.some((q) => q.area) ? (q) => q.area ?? "" : null);
   else showEmpty(`No quizzes for ${area} yet.`);
   renderReview(index, quizzes, areaUrl(area));
   showReviewDue(index);
@@ -195,7 +198,7 @@ async function init() {
       : "";
     drawShape(feature, roads && (roads.ids[code] ?? roads.names[name]));
     const ordered = inOrder(quizzes);
-    if (quizzes.length) renderQuizzes(ordered, null, (q) => (q.role === "cities" ? ordered.filter((x) => x.role === "cities-coverage" || x.role === "names") : []), quizGroup);
+    if (quizzes.length) renderQuizzes(ordered, null, (q) => (q.role === "cities" ? ordered.filter((x) => WITH_CITIES.includes(x.role)) : []), quizGroup);
     else showEmpty(`No quizzes for ${name} yet.`);
     renderReview(index, quizzes, countryUrl(code));
     showReviewDue(index);

@@ -51,7 +51,7 @@ const page = o => `<!doctype html>
 <link rel="stylesheet" href="../shared/area-quiz.css">
 <link rel="stylesheet" href="../shared/paint-quiz.css">
 </head>
-<body data-page="paint" data-folders="Cities=../${o.cities}/index.html${o.coverage}|Town names">
+<body data-page="paint" data-folders="Cities=../${o.cities}/index.html${o.coverage}|Town names${o.reading}">
 <a class="back" href="../../country.html?code=${o.code}">← ${o.back}</a>
 <h1>${o.title}</h1>
 <p class="note">Places: ${o.places}${o.borders ? ' · ' + o.borders : ''}</p>
@@ -66,12 +66,17 @@ const page = o => `<!doctype html>
 // A country can have a third folder between the two: its cities picked by Street View coverage
 // (quizzes/<country>-cities-coverage, made by tools/builds/city-coverage), which keeps its tab.
 const coverage = s => (fs.existsSync(path.join(ROOT, 'quizzes', `${s}-cities-coverage`, 'index.html')) ? `|By coverage=../${s}-cities-coverage/index.html` : '');
+// A last folder where the country's names are written in another script: reading them (quizzes/<country>-reading,
+// made by tools/builds/languages), which keeps its tab too.
+const reading = s => (fs.existsSync(path.join(ROOT, 'quizzes', `${s}-reading`, 'index.html')) ? `|Reading=../${s}-reading/index.html` : '');
 function tabs(s, on) {
   const file = path.join(ROOT, 'quizzes', `${s}-cities`, 'index.html'), html = fs.readFileSync(file, 'utf8');
-  const bare = html.replace(/ data-folders="[^"]*"/, ''), rest = coverage(s) + (on ? `|Town names=../${s}-town-names/index.html` : '');
+  const bare = html.replace(/ data-folders="[^"]*"/, ''), rest = coverage(s) + (on ? `|Town names=../${s}-town-names/index.html` : '') + reading(s);
   fs.writeFileSync(file, rest ? bare.replace(/<body([^>]*)>/, `<body$1 data-folders="Cities${rest}">`) : bare);
   const third = path.join(ROOT, 'quizzes', `${s}-cities-coverage`, 'index.html');
-  if (coverage(s)) fs.writeFileSync(third, fs.readFileSync(third, 'utf8').replace(/ data-folders="[^"]*"/, ` data-folders="Cities=../${s}-cities/index.html|By coverage${on ? `|Town names=../${s}-town-names/index.html` : ''}"`));
+  if (coverage(s)) fs.writeFileSync(third, fs.readFileSync(third, 'utf8').replace(/ data-folders="[^"]*"/, ` data-folders="Cities=../${s}-cities/index.html|By coverage${on ? `|Town names=../${s}-town-names/index.html` : ''}${reading(s)}"`));
+  const last = path.join(ROOT, 'quizzes', `${s}-reading`, 'index.html');
+  if (reading(s)) fs.writeFileSync(last, fs.readFileSync(last, 'utf8').replace(/ data-folders="[^"]*"/, ` data-folders="Cities=../${s}-cities/index.html${coverage(s)}${on ? `|Town names=../${s}-town-names/index.html` : ''}|Reading"`));
 }
 const LIST = path.join(ROOT, 'data', 'quizzes.json');
 let list = fs.readFileSync(LIST, 'utf8');
@@ -90,7 +95,7 @@ for (const s of slugs) {
   const [, code, back] = /country\.html\?code=(\d+)">← ([^<]+)</.exec(cities), title = /<h1>([^<]+)<\/h1>/.exec(cities)[1].replace(/ Cities$/, ' Town Names');
   const borders = (/<p class="note">[^<]*?(Borders:[^<]*)<\/p>/.exec(cities) || [])[1];
   tabs(s, true);
-  fs.writeFileSync(path.join(dir, 'index.html'), page({ title, country: N.country, code, back, borders, cities: `${s}-cities`, coverage: coverage(s), places: PLACES[s] || 'GeoNames (CC BY 4.0)' }));
+  fs.writeFileSync(path.join(dir, 'index.html'), page({ title, country: N.country, code, back, borders, cities: `${s}-cities`, coverage: coverage(s), reading: reading(s), places: PLACES[s] || 'GeoNames (CC BY 4.0)' }));
   // One star per level its rounds reach: the round of all parts is the largest.
   const levels = 1 + [10, 30, 60, Infinity].findIndex(max => N.parts.length < max), id = `${s}-town-names`;
   const entry = `    {\n      "id": "${id}",\n      "country": "${code}",\n      "title": "Town Names",\n      "role": "names",\n      "levels": ${levels},\n      "url": "quizzes/${id}/index.html"\n    }`;

@@ -35,7 +35,7 @@ window.areaReview = E => {
   const { MISSED, UNSURE, KNOWN, INSTANT } = SRS;
   const CLASS = [3, 1, 0, 0]; // answer -> the engine's result class: miss, t2, got, got
   const LEAD = 1500; // ms before the clock starts on a map that has only just appeared
-  const cardKey = (kind, id) => kind + '|' + id;
+  const cardKey = (kind, id) => (KINDS[kind].cards || kind) + '|' + id; // (a kind may share another kind's cards)
   const pageTitle = () => (document.querySelector('.brand h1') || {}).textContent || document.title;
   let S = null; // the review being played
   let P = null; // an ordinary round's question: { t: when it was asked, easy, fast: the "easy" and "known" times, missed }
@@ -44,7 +44,7 @@ window.areaReview = E => {
   // This page's stack. Cards whose question is no longer in the quiz are kept but set aside (x) until it is back.
   function stack() {
     const deck = SRS.deck(PAGE), items = {}; // card key -> [kind, item id]
-    for (const k in KINDS) for (const id of KINDS[k].ids) items[cardKey(k, id)] = [k, id];
+    for (const k in KINDS) for (const id of KINDS[k].ids) items[cardKey(k, id)] ??= [k, id]; // (shared cards are asked as the kind they belong to, which comes first)
     let changed = false;
     for (const c in deck.c) {
       const gone = !items[c];
@@ -182,8 +182,8 @@ window.areaReview = E => {
   }
   function asked() {
     const K = KINDS[G.kind], id = G.queue[G.i], o = SRS.opts();
-    // An item with several areas to click gets half the time again for each extra one.
-    const k = E.needAll(K, id) ? 1 + (K.areas[id].length - 1) / 2 : 1;
+    // An item with several areas to click gets half the time again for each extra one; a typed answer its own time.
+    const k = K.time ? K.time(id) : E.needAll(K, id) ? 1 + (K.areas[id].length - 1) / 2 : 1;
     // A card asked again after a miss was just shown: answering it quickly says nothing, so it is never "easy"
     // (an "easy" time below zero), in a review and in an ordinary round of the missed ones alike.
     const key = cardKey(G.kind, id), shown = G.review ? (S.chain ? (SRS.run().again[PAGE] || []).includes(key) : S.counted.has(key)) : G.retry;
