@@ -31,7 +31,7 @@ function render(index, nameByCode) {
     const place = d.quiz.area ?? d.quiz.scope ?? nameByCode.get(quizCountries(d.quiz)[0]) ?? d.title;
     places.set(place, [...(places.get(place) ?? []), d]);
   }
-  const row = (cls, head, list, extra = []) => {
+  const row = (cls, head, list, extra = [], layer = null) => {
     const tr = document.createElement("tr");
     tr.className = cls;
     const cell = (content, className) => {
@@ -46,7 +46,7 @@ function render(index, nameByCode) {
     cell(SRS.until(Math.min(...list.map((d) => d.next)), now), "next");
     const acts = document.createElement("div");
     acts.className = "acts";
-    acts.append(...reviewButtons(index, list.map((d) => d.quiz), BACK, true), ...extra);
+    acts.append(...(reviewButtons(index, layer ? [layer.quiz] : list.map((d) => d.quiz), BACK, true, layer) ?? []), ...extra);
     cell(acts);
     return tr;
   };
@@ -70,8 +70,30 @@ function render(index, nameByCode) {
         SRS.remove(d.id);
         render(index, nameByCode);
       };
-      return row("", td, [d], [remove]);
-    })];
+      // A quiz with cards of several layers (island groups, provinces…): each layer on a line of its own, to be
+      // reviewed or removed by itself. The quiz's own line is then named as the sum of them ("All - Area Codes (2 layers)"), and a layer named
+      // like its quiz (the "Area codes" of "Area Codes", next to "First digit") is told apart: "Full codes".
+      const several = d.layers.length > 1;
+      if (several) a.textContent = `All - ${d.quiz.title} (${d.layers.length} layers)`;
+      const same = (label) => label.toLowerCase() === d.quiz.title.toLowerCase();
+      const named = d.layers.map((l) => ({ ...l, label: !same(l.label) ? l.label : d.quiz.role === "area-codes" ? "Full codes" : `${l.label} only` }));
+      // The layers hang from the sum's line on a branch, indented under it (see .decks tr.sum, tr.layer).
+      const layers = !several ? [] : named.map((l, i) => {
+        const cell = document.createElement("td");
+        cell.textContent = l.label;
+        const drop = document.createElement("button");
+        drop.type = "button";
+        drop.className = "linkbtn";
+        drop.textContent = "Remove";
+        drop.onclick = () => {
+          if (!window.confirm(`Remove “${l.label}” of “${d.title}” from the stack?`)) return;
+          SRS.remove(d.id, l.key);
+          render(index, nameByCode);
+        };
+        return row(i === named.length - 1 ? "layer last" : "layer", cell, [l], [drop], { id: d.id, key: l.key, quiz: d.quiz });
+      });
+      return [row(several ? "sum" : "", td, [d], [remove]), ...layers];
+    }).flat()];
   }));
   $("decks").hidden = !decks.length;
   $("empty").hidden = decks.length > 0;

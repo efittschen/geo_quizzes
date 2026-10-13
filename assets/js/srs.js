@@ -22,6 +22,9 @@
 // Everything is kept in this browser, through store.js, which says how it is written there. Here it is:
 //   a deck, the cards of one quiz page (in the page's record, so quizzes can come and go):
 //     { t: page title, c: { '<kind>|<item id>': card } }
+//     A page's cards fall into its layers by their <kind> (a regions quiz: island groups, provinces, kabupaten):
+//     the review page lists and reviews each on its own (`layers`, and `kinds` of a run). The names of the layers
+//     are kept with the cards (the record's `layers`: { <kind>: label }), written by the quiz page.
 //     card  { d: due (ms), i: interval in days, e: ease (SM-2), st, df: stability in days and difficulty (FSRS; a
 //             card without them gets them from i and e), l: last answered (ms), n: times it was missed in review,
 //             s: its learning step (2, 3…: a new card's first, second… step; 1: the step after a miss, if the
@@ -151,7 +154,28 @@ const SRS = (() => {
   const cards = (list, as) => Object.fromEntries(Object.entries(list).map(([k, c]) => [k, as(c)]));
   function deck(id) { const r = STORE.quiz(id); return { t: r.title || "", c: cards(r.cards || {}, STORE.cardIn) }; }
   function save(id, d) { STORE.setQuiz(id, r => { if (d.t) r.title = d.t; r.cards = cards(d.c, STORE.cardOut); }); }
-  function remove(id) { STORE.setQuiz(id, r => { delete r.cards; }); }
+  // Takes a page's cards off the stack: all of them, or those of one layer.
+  function remove(id, kind = null) {
+    STORE.setQuiz(id, r => {
+      if (kind == null) { delete r.cards; return; }
+      for (const k in r.cards || {}) if (kindOf(k) === kind) delete r.cards[k];
+      if (r.cards && !Object.keys(r.cards).length) delete r.cards;
+    });
+  }
+  // The layer a card belongs to; the layers' names, as the quiz page wrote them, else made from the kind's key.
+  const kindOf = key => key.slice(0, key.indexOf('|'));
+  const nameOf = (id, kind) => (STORE.quiz(id).layers || {})[kind] || kind.replace(/[-_]+/g, ' ').replace(/^./, c => c.toUpperCase());
+  function setLayers(id, names) {
+    const was = JSON.stringify(STORE.quiz(id).layers || {});
+    if (JSON.stringify(names) !== was) STORE.setQuiz(id, r => { r.layers = names; });
+  }
+  // A deck with only the cards of some layers (kinds: a list; null: all of them).
+  const part = (d, kinds) => (kinds ? { ...d, c: Object.fromEntries(Object.entries(d.c).filter(([k]) => kinds.includes(kindOf(k)))) } : d);
+  // A deck's layers with their numbers, in the order their first card was put on the stack.
+  function layers(d, now) {
+    const kinds = [...new Set(Object.keys(d.c).map(kindOf))];
+    return kinds.map(key => ({ key, label: nameOf(d.id, key), ...stats(part(d, [key]), now) })).filter(l => l.total);
+  }
   const decks = () => STORE.quizIds().filter(id => STORE.quiz(id).cards).map(id => ({ id, ...deck(id) }));
   // Cards that can be asked (their question is still in the quiz), and the ones due now, longest due first.
   const all = d => Object.keys(d.c).filter(k => !d.c[k].x);
@@ -197,7 +221,7 @@ const SRS = (() => {
   function overview(quizzes, now) {
     const byId = new Map(quizzes.filter(q => q.url).map(q => [q.id, q]));
     return decks().filter(d => byId.has(d.id))
-      .map(d => ({ id: d.id, quiz: byId.get(d.id), title: d.t || byId.get(d.id).title, ...stats(d, now) }))
+      .map(d => ({ id: d.id, quiz: byId.get(d.id), title: d.t || byId.get(d.id).title, ...stats(d, now), layers: layers(d, now) }))
       .filter(d => d.total).sort((a, b) => a.next - b.next);
   }
   // A review over several quizzes is shuffled in groups: a card can only be asked on its own quiz's page (its map),
@@ -255,10 +279,11 @@ const SRS = (() => {
     return u.href;
   }
   // Start a run over the quizzes with these ids (null: all of them) and return the address to open first.
-  // all: out of every learned card instead of only the due ones (see pick); back: the page to end on.
-  function startRun(root, quizzes, { ids = null, all: every = false, back = "review.html" } = {}) {
+  // all: out of every learned card instead of only the due ones (see pick); back: the page to end on;
+  // kinds: { <quiz id>: [layers] } keeps a quiz to the cards of those layers.
+  function startRun(root, quizzes, { ids = null, all: every = false, back = "review.html", kinds = null } = {}) {
     const now = Date.now(), listed = new Set(quizzes.filter(q => q.url).map(q => q.id)), left = {};
-    const cards = pick(decks().filter(d => listed.has(d.id) && (!ids || ids.includes(d.id))), every, now);
+    const cards = pick(decks().filter(d => listed.has(d.id) && (!ids || ids.includes(d.id))).map(d => part(d, kinds && kinds[d.id])), every, now);
     for (const c of cards) (left[c.id] ||= []).push(c.key);
     setRun({ back, t: now, total: cards.length, left, again: {}, res: [] });
     return stopUrl(root, nextStop(quizzes));
@@ -291,5 +316,5 @@ const SRS = (() => {
     return n === 1 ? "tomorrow" : n < 60 ? `in ${n} days` : n < 730 ? `in ${Math.round(n / 30.4)} months` : `in ${(n / 365).toFixed(1)} years`;
   }
 
-  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, overview, run, setRun, nextStop, stretch, ran, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
+  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, overview, run, setRun, nextStop, stretch, ran, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
 })();

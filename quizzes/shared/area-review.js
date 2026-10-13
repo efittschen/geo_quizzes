@@ -51,6 +51,10 @@ window.areaReview = E => {
       if (!!deck.c[c].x !== gone) { if (gone) deck.c[c].x = 1; else delete deck.c[c].x; changed = true; }
     }
     if (changed) SRS.save(PAGE, deck);
+    // The names of the layers with cards, for the review page, which lists each layer on its own.
+    const names = {};
+    for (const c in deck.c) { const kind = c.slice(0, c.indexOf('|')), K = KINDS[kind] || Object.values(KINDS).find(K => K.cards === kind); if (K && K.label) names[kind] = K.label; }
+    if (Object.keys(names).length) SRS.setLayers(PAGE, names);
     return { deck, items };
   }
 

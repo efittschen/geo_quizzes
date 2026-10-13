@@ -101,11 +101,14 @@ function starsEl(levels) {
 // Two buttons that review some of the quizzes: "Due 12" asks their cards that are due, "All 80" everything learned
 // in them (one review asks 50 cards at most, and the due ones only until 200 are reviewed in a day: see srs.js).
 // index: data/quizzes.json; back: the page the review ends on. Null if nothing is learned in these quizzes.
-function reviewButtons(index, quizzes, back, small = false) {
+// layer: { id, key } keeps them to one layer of one quiz (its island groups, not its provinces).
+function reviewButtons(index, quizzes, back, small = false, layer = null) {
   if (typeof SRS === "undefined") return null;
-  const decks = SRS.overview(quizzes, Date.now());
+  const whole = SRS.overview(quizzes, Date.now());
+  const decks = layer ? whole.filter((d) => d.id === layer.id).flatMap((d) => d.layers.filter((l) => l.key === layer.key)) : whole;
   if (!decks.length) return null;
   const ids = quizzes === index.quizzes ? null : quizzes.map((q) => q.id); // null: every quiz
+  const kinds = layer ? { [layer.id]: [layer.key] } : null;
   const limit = !SRS.dayLeft(Date.now()); // enough cards reviewed for today: the due ones wait
   const button = (label, key, all, className) => {
     const n = decks.reduce((sum, d) => sum + d[key], 0);
@@ -115,7 +118,7 @@ function reviewButtons(index, quizzes, back, small = false) {
     b.textContent = `${label} ${n}`;
     b.disabled = !n || (limit && !all);
     b.addEventListener("click", () => {
-      window.location.href = SRS.startRun(window.location.href, index.quizzes, { ids, all, back });
+      window.location.href = SRS.startRun(window.location.href, index.quizzes, { ids, all, back, kinds });
     });
     return b;
   };

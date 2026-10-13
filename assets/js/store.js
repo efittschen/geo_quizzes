@@ -2,6 +2,7 @@
 //
 //   geoquizzes.quiz.<quiz id>   one record per quiz page (its folder name, as in data/quizzes.json), with what it has of:
 //     title    the page's title (set with its first review card)
+//     layers   the names of the page's layers that have review cards: { <layer>: label } (see srs.js)
 //     stars    progress per level, Beginner first; 1 means every round of the level was played perfectly. The quiz
 //              page works it out from `best` and keeps it here for the home and country pages, which show the stars
 //              without loading the quiz.
@@ -54,7 +55,7 @@ const STORE = (() => {
   const now = () => time(Date.now());
 
   // A record is written with its parts in one order, and a best result's too, so the entries read alike.
-  const PARTS = ['title', 'stars', 'cards', 'best', 'custom', 'last', 'paint', 'changed', 'cleared'];
+  const PARTS = ['title', 'layers', 'stars', 'cards', 'best', 'custom', 'last', 'paint', 'changed', 'cleared'];
   const WHOLE = ['stars', 'custom']; // the parts a merge takes as a whole, from where they changed last
   function tidy(r) {
     const out = {};

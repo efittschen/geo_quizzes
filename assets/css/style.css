@@ -138,6 +138,17 @@ main > .map-wrap:first-child{margin-top:24px}
 .decks .due{font-weight:700}
 .decks .place th{font:700 1.2rem/1.1 var(--cond)}
 .decks tr:not(.place) td:first-child{padding-left:32px}
+/* a quiz with several layers: its line is the total (a tinted band), and the layers hang from it on a branch,
+   indented under it */
+.decks tr.sum td{background:color-mix(in srgb,var(--ink) 6%,transparent);font-weight:600}
+.decks tr.sum td:first-child{box-shadow:inset 4px 0 0 var(--ink)}
+.decks tr.layer td{border-top:0;padding-top:5px;padding-bottom:5px;font-size:.93rem}
+.decks tr.layer td:first-child{position:relative;padding-left:66px;color:var(--muted);box-shadow:inset 4px 0 0 color-mix(in srgb,var(--ink) 35%,transparent)}
+.decks tr.layer td:first-child::before{content:"";position:absolute;left:42px;top:0;bottom:0;border-left:1.5px solid var(--line)}
+.decks tr.layer.last td:first-child::before{bottom:50%}
+.decks tr.layer td:first-child::after{content:"";position:absolute;left:42px;top:50%;width:16px;border-top:1.5px solid var(--line)}
+.decks tr.layer .num{font-weight:400}
+.decks tr.layer.last td{padding-bottom:10px}
 .decks a{text-decoration:none}
 .decks a:hover{text-decoration:underline}
 .decks .acts{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px 8px}
