@@ -5,7 +5,9 @@ const WIDTH = 960;
 const HEIGHT = 500;
 
 // "All quizzes": continents, then countries (or an area like South Asia), then quizzes, each level folding open
-// like a folder. Which folders are open is remembered in this browser (the settings' `open`, see store.js).
+// like a folder. The language quizzes of a script (scope "Languages" with an `area`: Cyrillic) are a folder of
+// their own below the world's, "Languages", with a folder for each script. Which folders are open is remembered in
+// this browser (the settings' `open`, see store.js).
 function loadOpen() {
   const open = STORE.settings().open;
   return new Set(Array.isArray(open) ? open : []);
@@ -39,8 +41,10 @@ function renderQuizList(index, nameByCode, suites) {
   // folder, before its countries.
   const continents = new Map(); // continent -> place -> quizzes
   const whole = new Map(); // continent or "World" -> its own quizzes
-  const languages = index.quizzes.filter((q) => q.scope === LANGUAGE_SCOPE); // listed apart, below
+  const languages = index.quizzes.filter((q) => q.scope === LANGUAGE_SCOPE && !q.area); // listed apart, below
+  const scripts = new Map(); // script -> its language quizzes: the Languages folder
   for (const quiz of index.quizzes) {
+    if (quiz.scope === LANGUAGE_SCOPE && quiz.area) scripts.set(quiz.area, [...(scripts.get(quiz.area) ?? []), quiz]);
     if (quiz.scope === LANGUAGE_SCOPE) continue;
     const code = quizCountries(quiz)[0];
     const continent = quiz.scope ?? index.continents?.[code] ?? "Other";
@@ -98,6 +102,11 @@ function renderQuizList(index, nameByCode, suites) {
   const own = (area) => (whole.has(area) ? [files(whole.get(area), "files own")] : []);
   if (whole.has(WORLD_SCOPE)) tree.append(folder(WORLD_SCOPE, "continent", WORLD_SCOPE, whole.get(WORLD_SCOPE), own(WORLD_SCOPE)));
   const byName = ([a], [b]) => a.localeCompare(b);
+  if (scripts.size) {
+    tree.append(folder(LANGUAGE_SCOPE, "continent", LANGUAGE_SCOPE, [...scripts.values()].flat(), [...scripts].sort(byName).map(([script, quizzes]) => {
+      return folder(`${LANGUAGE_SCOPE}/${script}`, "place", script, quizzes, [files(quizzes, "files")]);
+    })));
+  }
   for (const [continent, places] of [...continents].sort(byName)) {
     const all = [...(whole.get(continent) ?? []), ...[...places.values()].flat()];
     const placeFolders = [...places].sort(byName).map(([place, quizzes]) => {

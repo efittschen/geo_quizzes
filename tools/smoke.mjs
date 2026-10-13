@@ -53,7 +53,7 @@ for (const p of pages) {
         if (src) result.prompt = 'picture ' + src.split('/').pop(); else errors.push('picture did not load');
       }
       // click some area that is part of the round and check the game reacts
-      const area = page.locator('#regions .r:not(.out)').first();
+      const area = page.locator('#regions .r:not(.out):not(.under)').first();
       if (await area.count()) { await area.click({ force: true }); await page.waitForTimeout(300); result.clicked = (await page.locator('#fb').textContent()).trim().length > 0; }
       if (o.shots) { const f = path.join(o.shots, `${slug}_play.png`); await page.screenshot({ path: f }); result.shots.push(f); }
     } else errors.push('no rounds on the setup screen');

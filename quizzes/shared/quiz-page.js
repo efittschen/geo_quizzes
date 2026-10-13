@@ -76,6 +76,7 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
       <button class="photo" id="photo" type="button" aria-label="Enlarge the picture" hidden><img id="photoImg" alt=""></button>
       <div class="bigname" id="bigname" aria-live="polite" hidden></div>
       <div class="card" id="card" hidden><p class="sent" id="sent" dir="auto" aria-live="polite"></p></div>
+      <form class="typed" id="typedForm" hidden><input type="text" id="typed" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" aria-label="Answer"><button class="ghost small" type="submit">OK</button></form>
       <div class="dial" id="dial" aria-live="polite"></div>
       <p class="ask" id="ask"></p>
       <div class="stats">
@@ -87,6 +88,7 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
       <div class="ticks" id="ticks"></div>
       <div class="feedback" id="fb" role="status"></div>
       <div class="row">
+        <button class="ghost" id="soundBtn" type="button" hidden></button>
         <button class="ghost" id="restartBtn" type="button">Restart</button>
         <button class="ghost" id="endBtn" type="button">End round</button>
       </div>

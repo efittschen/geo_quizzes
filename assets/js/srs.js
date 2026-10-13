@@ -25,7 +25,10 @@
 //     card  { d: due (ms), i: interval in days, e: ease (SM-2), st, df: stability in days and difficulty (FSRS; a
 //             card without them gets them from i and e), l: last answered (ms), n: times it was missed in review,
 //             s: its learning step (2, 3…: a new card's first, second… step; 1: the step after a miss, if the
-//             settings have one; none once it is in review), x: 1 while its question is missing from the quiz }
+//             settings have one; none once it is in review), x: 1 while its question is missing from the quiz,
+//             m, b, p: how the last perfect round with it was played, which is how it is reviewed: the map
+//             ("quiz", "overlay", "street", or in a city quiz "quiz" for the dots and "free" for the map by
+//             distance), a city quiz's background if it wasn't the drawn map ("overlay", "street"), and when (ms) }
 //   the settings  { easy, fast, limit }: seconds for "easy", for "known" and for the time limit;
 //                 { round, day }: the most cards one review asks, and the most reviewed in a day;
 //                 the schedule, named as in Anki's options: { algo: "fsrs" or "sm2", retain: FSRS's target
@@ -170,10 +173,16 @@ const SRS = (() => {
   const dayLeft = now => Math.max(0, opts().day - today(now));
   const reviewed = now => { const n = today(now) + 1; STORE.setReview(r => { r.day = { date: STORE.time(dayStart(now)), reviewed: n }; }); };
   // Put questions on the stack (those not on it yet), at a new card's first step: due in a minute. Returns how many.
-  function add(id, title, keys, now) {
+  // on: how their round, a perfect one, was played ({ m, b }): kept with every one of its cards, those on the stack
+  // already too, since a card is reviewed the way it was last played perfectly.
+  function add(id, title, keys, now, on = null) {
     const d = deck(id); let n = 0;
-    for (const k of keys) if (!d.c[k]) { d.c[k] = fresh(now); n++; }
-    if (n) { d.t = title; save(id, d); }
+    for (const k of keys) {
+      if (!d.c[k]) { d.c[k] = fresh(now); n++; }
+      if (on) { const c = d.c[k]; c.m = on.m; if (on.b) c.b = on.b; else delete c.b; c.p = now; }
+    }
+    if (n) d.t = title;
+    if (n || (on && keys.length)) save(id, d);
     return n;
   }
   function answer(id, key, g, now) {

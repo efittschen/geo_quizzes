@@ -17,6 +17,9 @@
 //   kinds        what can be asked, see KINDS below
 //   explore(areaId) -> { code, title, sub, photos }  (sub may be an array of lines; photos: pictures to show, as
 //                returned by a kind's photo(id))
+//   exploreList  optional { label, items: [{ label, areas, rare, code, title, sub }] }: Explore also shows one of a
+//                list at a time, picked beside Back (a language: the tiles of its letters lit, the `rare` ones of
+//                them in the color of rare answers)
 //   context      optional SVG path drawn under the areas (neighbouring countries), not clickable
 //   base, dots   city quizzes: base { land, lines } draws the country and its region borders under the areas;
 //                dots: true draws each area (a zero-length path "Mx,yl0,0") as a dot that keeps its size on
@@ -32,6 +35,8 @@
 //                then be laid on the quiz map too, not only on the street map (see useCover)
 //   hintsDefault whether "color areas" starts ticked (default true)
 //   lettersLabel optional option text: show every area's label while playing
+//   board        true where the "map" is a board of tiles (shared/lang-config.js): it is fitted to its box again when
+//                a round starts, since on a phone that box grows once the round's panel replaces the list of rounds
 //   (per kind)   merge: false keeps every area drawn separately even when the kind's items group them;
 //                unitColors(areas) -> [css colors] picks each group's color from its own list (default: the palette)
 //   rounds       ready-made quizzes offered on the setup screen: [{ kind, label, sub?, and one of groups: [group
@@ -46,7 +51,12 @@
 //                lang: the language's name ('English', 'Thai'). It needs no rounds of its own: every round of the
 //                kind it follows offers it as a language to pick, in the round's own box (where a round's sub would
 //                be), with the round's items that have a name in that language. The language picked last is the one
-//                every box starts with; best scores, stars and review cards stay per kind.
+//                every box starts with (before any is picked: the kind marked start: true, else the kind the
+//                others follow), and a box stands in the level of the round it shows; best scores, stars and
+//                review cards stay per kind.
+//   langLabel    'Country': the languages are chosen once for the whole list, in a row of their own above the
+//                rounds under this heading, instead of in each round's box (the countries of a script's words: a
+//                choice a player has to see). A round with nothing in the language chosen is left out.
 //
 // One config can serve several pages: <body data-kinds="states" data-key="dddstates"> keeps only the listed
 // kinds; each page keeps its own scores (data-key: its short name, see `key`), e.g. an area-code quiz and a states
@@ -72,6 +82,7 @@
   const HERE = document.currentScript.src.replace(/[^/]*$/, ''); // where the shared scripts are
   const MAX_TRIES = 3;
   const RESULT_CLASS = ['got', 't2', 't3', 'miss']; // index = wrong clicks before the right one
+  const FRESH_MS = 700; // how long an answer's color stays in a kind that starts every question on a clean map
   // Standard OpenStreetMap tiles: free for light use with attribution, no API key needed.
   const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -126,11 +137,34 @@
   // A quiz map in Web Mercator lies on the plain map of the world (Q.world, see mercator.js; world.js is fetched
   // unless it is the page's own map): the neighbours, and what lies between a country's far-off parts.
   if (Q.world && typeof MERCATOR === 'object') {
+    // The land is one shape without a line. Its lines (coasts and borders) are cut into the cells of a grid, a path
+    // per cell, so that only those near what the map shows are drawn: one path of all of them is drawn in full
+    // every time the map moves, wherever it is. A line two countries share stays in one path (it has one color).
     const lay = () => {
-      const p = document.createElementNS(NS, 'path'); p.setAttribute('d', WORLD.reg.filter(r => r.a).map(r => r.d).join(''));
+      const path = (cls, d) => { const p = document.createElementNS(NS, 'path'); p.setAttribute('class', cls); p.setAttribute('d', d); return p; };
+      const places = WORLD.reg.filter(r => r.a), CELL = WORLD.w / 32, cells = new Map();
+      const add = (c, run) => { const l = cells.get(c); if (l) l.push(run); else cells.set(c, [run]); };
+      // (world.js writes a ring as "Mx,yLx,y…Z": its points are taken as they are written, not read and written again)
+      for (const r of places) for (const part of r.d.split('M')) {
+        const ring = part.replace('Z', '').split('L'), n = ring.length; if (!part) continue;
+        const x = new Float64Array(n), y = new Float64Array(n);
+        for (let i = 0; i < n; i++) { const k = ring[i].indexOf(','); x[i] = +ring[i].slice(0, k); y[i] = +ring[i].slice(k + 1); }
+        // the cell of each of the ring's edges (by its middle; edge i runs from point i to the next one)
+        const cell = new Float64Array(n);
+        for (let i = 0, j = n - 1; i < n; j = i++) cell[j] = (Math.floor((x[j] + x[i]) / 2 / CELL) + 64) * 4096 + Math.floor((y[j] + y[i]) / 2 / CELL) + 64;
+        let from = 0; while (from < n && cell[from] === cell[(from + n - 1) % n]) from++; // where the ring enters a cell: its runs are walked from there
+        if (from === n) { add(cell[0], ring.join('L') + 'Z'); continue; } // all of it in one cell
+        for (let i = 0, run; i < n; i++) {
+          const at = (from + i) % n;
+          if (!i || cell[at] !== cell[(at + n - 1) % n]) add(cell[at], run = [ring[at]]);
+          run.push(ring[(at + 1) % n]);
+        }
+      }
+      const land = path('wland', places.map(r => r.d).join(''));
+      const lines = [...cells.values()].map(runs => path('wline', runs.map(run => 'M' + (typeof run === 'string' ? run : run.join('L'))).join('')));
       for (const [s, dx, dy] of MERCATOR.world(WORLD, Q.proj, Q.size[0])) { // (a second time for a map over the 180th meridian)
         const g = document.createElementNS(NS, 'g'); g.setAttribute('transform', `translate(${dx},${dy}) scale(${s})`);
-        g.append(p.cloneNode()); $('ctx').prepend(g);
+        g.append(land.cloneNode(), ...lines.map(p => p.cloneNode())); $('ctx').prepend(g);
       }
       const note = $('stage').querySelector('.note'); if (note && !/Natural Earth/.test(note.textContent)) note.append(' · World: Natural Earth');
     };
@@ -155,7 +189,8 @@
      (expand(id) widens each pick, e.g. ranking cities, then taking every code dialed there; a "largest area"
      ranking comes first unless areaRank: false, with each area's size shared between the items covering it,
      so a code alone in its area outranks one of five codes sharing an area of the same size), primary(areaId) naming the item a click on that area "is", and chipClass(id).
-     prompt 'text' shows text(id) -> { text, cls, lang } on the sign card instead. prompt 'photo' shows a picture,
+     prompt 'text' shows text(id) -> { text, cls, lang, tag } on the sign card instead (tag: a small label over it,
+     e.g. the country a letter is read that way in). prompt 'photo' shows a picture,
      photo(id) -> { src, alt, label, link }: a click enlarges it, and once answered it comes with its label and
      link (e.g. the place in Street View); missed pictures are listed as pictures. areaLabel(areaId) labels
      each area on its own (e.g. a script's letter) instead of one label per item; flashArea: true flashes
@@ -164,10 +199,20 @@
      (when the answer is the whole map's business, dimming the rest would give it away). labelPerArea: true
      labels every area with all the items dialed there (main one first), so a code covering two areas shows
      on both. clickAll: true makes an item covering several areas need a click on each of them on the quiz
-     map and on the overlay, with a counter on the map; on the street map one click still counts and highlights
-     them all.
+     map and on the overlay, with a counter on the map ("3 areas", or what areaNoun calls them: 'letters'); on the
+     street map one click still counts and highlights them all. fresh: true is for areas that are the answer to many of the kind's items (a country that writes
+     many letters): every question starts on a map without colors, an answer's color leaving it after a moment,
+     and the results show none. rare(id, areaId) -> true colors a right area another way (blue): the answer holds
+     there, but is seldom met (a letter a country writes in a few words only).
      dial(id) -> [[text, 'hot' | 'cold'], …] shows the dial code in parts (e.g. only the prefix bold); pin(id) ->
-     { x, y, ll, label } marks a place (e.g. the town the code belongs to) after the question is answered. */
+     { x, y, ll, label } marks a place (e.g. the town the code belongs to) after the question is answered.
+     typed(id, text) -> true | false makes the answer one to type, in a field under the prompt (a name read in
+     another script, written in Latin letters): a wrong one counts like a wrong click, a shown answer is typed to
+     go on, and clicks on the map answer nothing. time(id) is how many times longer than a click such an answer
+     may take on the review's clock.
+     say(id) -> { text, lang } has the answer said aloud once it is given: see "sound" below.
+     cards: '<kind>' gives a kind the review cards of another one, whose questions it shares (a country's words
+     among the words of all countries): a word learned in one is learned in the other. */
   const kindOf = k => {
     const ids = k.groups.flatMap(g => g.ids);
     const areas = Object.fromEntries(ids.map(id => [id, k.areasOf(id)]));
@@ -265,25 +310,66 @@
     return { ...r, kind: k.key, id: k.key + ':' + (r.key || r.label), of: r, ids: r.random ? mine : mine(), groups: null, preset: null, top: null };
   }).filter(v => v.random || v.ids.length)]);
 
-  /* ---------- pan & zoom for the quiz map (viewBox based) ---------- */
-  const [MW, MH] = Q.size, PAD = Q.pad;
+  /* ---------- pan & zoom for the quiz map ----------
+     The view is a box of the map (vb), shown in the stage. The picture of the map (the SVG) is drawn for a view and
+     reaches beyond each side of the stage: by AHEAD of the stage's size, or less on a large screen, where FAR pixels
+     are enough (the picture takes memory). While a finger or the wheel moves the map, that picture is only moved and
+     sized to the view: the browser slides what it has drawn already, which costs it next to nothing. It is drawn
+     again when the view has come EDGE of the way into what was drawn ahead, when the picture is stretched or shrunk
+     by more than STRETCH, when the hand rests (REST ms), and when it lets go. Drawing a large map again for every
+     step of a move (as a change of the SVG's viewBox does) is what made moving it slow. So while a pinch or the
+     wheel zooms, lines and labels grow and shrink with the picture until it is drawn again. */
+  const [MW, MH] = Q.size, PAD = Q.pad, stage = $('stage'), AHEAD = .5, FAR = 300, EDGE = .6, STRETCH = 1.6, REST = 120;
   let base = { x: 0, y: 0, w: MW, h: MH }, vb = { ...base };
-  svg.setAttribute('viewBox', `0 0 ${MW} ${MH}`);
+  // The picture's box: the stage's and `ahead` of its size more on every side (a share, so it follows the stage's size).
+  let ahead = 0;
+  function reach(a) { if (a !== ahead) Object.assign(svg.style, { left: -a * 100 + '%', top: -a * 100 + '%', width: (1 + 2 * a) * 100 + '%', height: (1 + 2 * a) * 100 + '%' }); ahead = a; }
+  reach(AHEAD);
+  svg.setAttribute('viewBox', `${-ahead * MW} ${-ahead * MH} ${MW * (1 + 2 * ahead)} ${MH * (1 + 2 * ahead)}`);
+  stage.addEventListener('scroll', () => { stage.scrollLeft = stage.scrollTop = 0; }); // (a browser without `overflow: clip` could be made to scroll the stage to the picture's rest)
+  // The map's box on the screen is the stage's: the picture is larger, and moved (none while the street map is shown).
+  const stageBox = () => (svg.style.display === 'none' ? { left: 0, top: 0, width: 0, height: 0 } : stage.getBoundingClientRect());
   const HOME = Q.home || [0, 0, MW, MH]; // what the map shows when zoomed out: all of it, or the page's part
   function fit() {
-    const r = svg.getBoundingClientRect(); if (!r.width || !r.height) return;
+    const r = stageBox(); if (!r.width || !r.height) return;
     const a = r.width / r.height;
     let w = HOME[2] - HOME[0] + PAD * 2, h = HOME[3] - HOME[1] + PAD * 2;
     if (w / h < a) w = h * a; else h = w / a;
     base = { x: (HOME[0] + HOME[2]) / 2 - w / 2, y: (HOME[1] + HOME[3]) / 2 - h / 2, w, h };
   }
+  let sized = 0; // the scale the labels were last sized for: moving the map without zooming leaves them as they are
+  let drawn = null, slid = false, raf = 0, resting = 0; // the view the picture is drawn for; whether it is moved from there
+  const showTiles = () => { if (tiles) { const r = stageBox(), s = Math.min(r.width / vb.w, r.height / vb.h); if (s) tiles.view(vb.x - (r.width / s - vb.w) / 2, vb.y - (r.height / s - vb.h) / 2, s); } };
+  // The picture drawn for the view.
   function apply() {
-    svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`); sizeLabels(); syncDetail();
-    if (tiles) { const r = svg.getBoundingClientRect(), s = Math.min(r.width / vb.w, r.height / vb.h); if (s) tiles.view(vb.x - (r.width / s - vb.w) / 2, vb.y - (r.height / s - vb.h) / 2, s); }
+    cancelAnimationFrame(raf); clearTimeout(resting);
+    const r = stageBox(); if (r.width && r.height) reach(Math.min(AHEAD, FAR / Math.min(r.width, r.height)));
+    svg.setAttribute('viewBox', `${vb.x - ahead * vb.w} ${vb.y - ahead * vb.h} ${vb.w * (1 + 2 * ahead)} ${vb.h * (1 + 2 * ahead)}`);
+    if (slid) { svg.style.transform = ''; slid = false; }
+    drawn = { ...vb };
+    const s = scale(); if (s !== sized) sizeLabels(s); syncDetail(s);
+    showTiles();
   }
-  function scale() { const r = svg.getBoundingClientRect(); return Math.min(r.width / vb.w, r.height / vb.h) || 1; }
+  // The picture as it is, moved and sized to the view; drawn again where that no longer does (see above).
+  function slide() {
+    const r = stageBox();
+    if (!drawn || !r.width || !r.height) return apply();
+    // where a view puts the map in the stage: its scale, and the room left beside it
+    const put = v => { const s = Math.min(r.width / v.w, r.height / v.h); return { s, x: (r.width - v.w * s) / 2, y: (r.height - v.h * s) / 2 }; };
+    const d = put(drawn), n = put(vb), k = n.s / d.s;
+    // how far the view reaches into what is drawn ahead (1: to its end), on its worst side
+    const out = Math.max((drawn.x - vb.x) / drawn.w, (vb.x + vb.w - drawn.x - drawn.w) / drawn.w, (drawn.y - vb.y) / drawn.h, (vb.y + vb.h - drawn.y - drawn.h) / drawn.h) / ahead;
+    if (out > EDGE || k > STRETCH || k < 1 / STRETCH) return apply();
+    // (the picture's own corner lies `ahead` of the stage's size outside the stage's)
+    const tx = n.x - k * d.x + n.s * (drawn.x - vb.x) + ahead * r.width * (1 - k), ty = n.y - k * d.y + n.s * (drawn.y - vb.y) + ahead * r.height * (1 - k);
+    svg.style.transform = `translate(${tx}px,${ty}px) scale(${k})`; slid = true;
+    showTiles();
+    clearTimeout(resting); resting = setTimeout(apply, REST);
+  }
+  const glide = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(slide); }; // once per frame, however many steps came
+  function scale() { const r = stageBox(); return Math.min(r.width / vb.w, r.height / vb.h) || 1; }
   function toSvg(cx, cy, v) {
-    const r = svg.getBoundingClientRect(); const s = Math.min(r.width / v.w, r.height / v.h);
+    const r = stageBox(); const s = Math.min(r.width / v.w, r.height / v.h);
     const ox = (r.width - v.w * s) / 2, oy = (r.height - v.h * s) / 2;
     return { x: v.x + (cx - r.left - ox) / s, y: v.y + (cy - r.top - oy) / s };
   }
@@ -295,13 +381,14 @@
     v.x = Math.min(Math.max(v.x, -mx), MW - v.w + mx); v.y = Math.min(Math.max(v.y, -my), MH - v.h + my);
     return v;
   }
-  function zoomAt(cx, cy, f, from = vb) {
+  // (show: how the new view gets on screen: drawn at once, or the picture moved to it while the wheel turns)
+  function zoomAt(cx, cy, f, from = vb, show = apply) {
     const p = toSvg(cx, cy, from); const w = from.w / f, h = from.h / f;
-    const r = svg.getBoundingClientRect(); const s = Math.min(r.width / w, r.height / h);
+    const r = stageBox(); const s = Math.min(r.width / w, r.height / h);
     const ox = (r.width - w * s) / 2, oy = (r.height - h * s) / 2;
-    vb = clampV({ x: p.x - (cx - r.left - ox) / s, y: p.y - (cy - r.top - oy) / s, w, h }); apply();
+    vb = clampV({ x: p.x - (cx - r.left - ox) / s, y: p.y - (cy - r.top - oy) / s, w, h }); show();
   }
-  function zoomCenter(f) { const r = svg.getBoundingClientRect(); zoomAt(r.left + r.width / 2, r.top + r.height / 2, f); }
+  function zoomCenter(f) { const r = stageBox(); zoomAt(r.left + r.width / 2, r.top + r.height / 2, f); }
   function resetView() { fit(); vb = { ...base }; apply(); }
   // Show a part of the map, [x0, y0, x1, y1] (a round's box), or all of it.
   function frame(box) {
@@ -315,11 +402,10 @@
     const r = view === 'play' ? { kind: G.kind, ids: G.items, box: G.box } : view === 'setup' ? current() : {};
     if (onStreet()) frameStreet(r); else frame(r.box);
   };
-  let raf = 0;
-  svg.addEventListener('wheel', e => { e.preventDefault(); const f = Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.0022)); zoomAt(e.clientX, e.clientY, f); }, { passive: false });
+  svg.addEventListener('wheel', e => { e.preventDefault(); const f = Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.0022)); zoomAt(e.clientX, e.clientY, f, vb, glide); }, { passive: false });
   $('zIn').onclick = () => zoomCenter(1.6); $('zOut').onclick = () => zoomCenter(1 / 1.6); $('zFit').onclick = () => frameRound();
   window.addEventListener('resize', () => {
-    if (!svg.getBoundingClientRect().width) return;
+    if (!stageBox().width) return;
     const c = { x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 }; const k = vb.w / base.w;
     fit(); vb = { w: base.w * k, h: base.h * k }; vb.x = c.x - vb.w / 2; vb.y = c.y - vb.h / 2; vb = clampV(vb); apply();
   });
@@ -337,13 +423,14 @@
     if (pinch && pts.size === 2) {
       const [a, b] = [...pts.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y), m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
       const p = toSvg(pinch.m.x, pinch.m.y, pinch.v); const f = d / pinch.d; const w = pinch.v.w / f, h = pinch.v.h / f;
-      const r = svg.getBoundingClientRect(); const s = Math.min(r.width / w, r.height / h); const ox = (r.width - w * s) / 2, oy = (r.height - h * s) / 2;
+      const r = stageBox(); const s = Math.min(r.width / w, r.height / h); const ox = (r.width - w * s) / 2, oy = (r.height - h * s) / 2;
       vb = clampV({ x: p.x - (m.x - r.left - ox) / s, y: p.y - (m.y - r.top - oy) / s, w, h });
-      cancelAnimationFrame(raf); raf = requestAnimationFrame(apply);
+      glide();
     } else if (drag) {
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-      if (!moved && Math.hypot(dx, dy) > 6) { moved = true; svg.classList.add('grab'); }
-      if (moved) { vb = clampV({ ...drag.v, x: drag.v.x - dx / drag.s, y: drag.v.y - dy / drag.s }); cancelAnimationFrame(raf); raf = requestAnimationFrame(apply); }
+      // (the grabbing hand is for a mouse: a new cursor is a new style for every area of the map, which a finger need not wait for)
+      if (!moved && Math.hypot(dx, dy) > 6) { moved = true; if (e.pointerType === 'mouse') svg.classList.add('grab'); }
+      if (moved) { vb = clampV({ ...drag.v, x: drag.v.x - dx / drag.s, y: drag.v.y - dy / drag.s }); glide(); }
     }
   });
   function up(e) {
@@ -351,6 +438,8 @@
     if (pts.size < 2) pinch = null;
     if (pts.size === 0) {
       svg.classList.remove('grab');
+      // the hand lets go: the picture is drawn for where the map is now (unless it is that picture already)
+      if (slid || !drawn || ['x', 'y', 'w', 'h'].some(k => drawn[k] !== vb[k])) apply();
       if (!moved && e.type === 'pointerup') {
         // Map play: only a plain click or tap that began on the map answers.
         if (mapStyle === 'free' && view === 'play') { if (had && (e.pointerType !== 'mouse' || e.button === 0)) answerFree(toSvg(e.clientX, e.clientY, vb)); }
@@ -447,7 +536,7 @@
       else fitHome();
     } else if (was) {
       fit();
-      const P = Q.proj, r = svg.getBoundingClientRect(), s = 256 * 2 ** was.zoom / 360 / P.k, w = r.width / s, h = r.height / s;
+      const P = Q.proj, r = stageBox(), s = 256 * 2 ** was.zoom / 360 / P.k, w = r.width / s, h = r.height / s;
       vb = clampV({ x: (was.lng - P.lng0) * P.k - w / 2, y: (P.y0 - MERCATOR.my(was.lat)) * P.k - h / 2, w, h }); apply();
     } else resetView();
     syncHints(); syncCover();
@@ -531,8 +620,11 @@
         e.ids.push(id); ENTRY_OF[id] = [e];
       }
     }
-    sizeLabels();
+    sizeLabels(); labelsOut();
   }
+  // A label of an area's own (areaLabel) is marked dimmed with its area, for a page that keeps those labels on show
+  // (a board of tiles, see lang-config.js).
+  function labelsOut() { for (const a in AREA_ENTRY) AREA_ENTRY[a].el.classList.toggle('out', EL[a].classList.contains('out')); }
   function renderEntry(e) {
     const K = KINDS[labelKind];
     // A flashed area ('area:…' in shown) reveals everything on its label for a moment.
@@ -560,8 +652,8 @@
   }
   function showAllLabels(kind) { showLabels(kind, KINDS[kind].ids); }
   function clearLabels() { for (const e of ENTRIES) { e.shown.clear(); renderEntry(e); } }
-  function sizeLabels() {
-    const s = scale();
+  function sizeLabels(s = scale()) {
+    sized = s;
     for (const c of gPins.querySelectorAll('circle')) c.setAttribute('r', (4.5 / s).toFixed(3));
     for (const c of gFree.querySelectorAll('circle')) c.setAttribute('r', (5 / s).toFixed(3));
     for (const t of gPins.querySelectorAll('text')) { t.setAttribute('font-size', (13 / s).toFixed(3)); t.setAttribute('dy', (-9 / s).toFixed(3)); t.style.strokeWidth = (3 / s).toFixed(3) + 'px'; }
@@ -588,12 +680,19 @@
   function clearPin() { gPins.replaceChildren(); if (streetPin) { streetPin.remove(); streetPin = null; } }
 
   const flashTimers = new Map();
+  // A kind with fresh: the colors of the answers leave the map, at once or after `wait` ms.
+  let freshTimer;
+  function fresh(wait) {
+    clearTimeout(freshTimer);
+    const clear = () => { for (const a of AREAS) for (const p of shapesOf(a)) p.classList.remove(...RESULT_CLASS, 'rare'); };
+    if (wait) freshTimer = setTimeout(clear, wait); else clear();
+  }
   function clearMap() {
-    clearPin(); gFree.replaceChildren();
+    clearPin(); gFree.replaceChildren(); clearTimeout(freshTimer);
     for (const t of flashTimers.values()) clearTimeout(t);
     flashTimers.clear();
-    for (const a of AREAS) for (const p of shapesOf(a)) p.classList.remove('got', 't2', 't3', 'miss', 'ans', 'sel', 'flash', 'found', 'out', 'pre');
-    clearLabels();
+    for (const a of AREAS) for (const p of shapesOf(a)) p.classList.remove('got', 't2', 't3', 'miss', 'ans', 'sel', 'flash', 'found', 'rare', 'out', 'pre');
+    clearLabels(); labelsOut();
     mark(null);
   }
   // Dim the areas outside the current set, on the quiz map and the overlay. The street map alone never dims (its
@@ -601,7 +700,7 @@
   function markOut(areas) {
     const inSet = new Set(areas);
     for (const a of AREAS) for (const p of shapesOf(a)) p.classList.toggle('out', !inSet.has(a));
-    syncUnitsOut();
+    labelsOut(); syncUnitsOut();
   }
 
   /* ---------- layouts: when a kind's items are groups of areas (zones, states), each group is one shape ----------
@@ -633,11 +732,13 @@
     const x = c.getContext('2d', { willReadFrequently: true }); x.scale(S, S);
     units.forEach((u, i) => { x.fillStyle = `rgb(${(i + 1) & 255},${(i + 1) >> 8},0)`; for (const a of u) x.fill(new Path2D(AREA[a].d), 'evenodd'); });
     const px = x.getImageData(0, 0, w, h).data, adj = units.map(() => new Set());
-    const id = k => px[k * 4 + 3] === 255 && px[k * 4 + 2] === 0 ? px[k * 4] + (px[k * 4 + 1] << 8) : 0;
-    const pure = k => { const v = id(k); return v && id(k - 1) === v && id(k + 1) === v && id(k - w) === v && id(k + w) === v ? v : 0; };
-    for (let j = 1; j < h - 5; j++) for (let i = 1; i < w - 5; i++) {
-      const u = pure(j * w + i); if (!u) continue;
-      for (const k of [j * w + i + 4, (j + 4) * w + i]) { const v = pure(k); if (v && v !== u) { adj[u - 1].add(v - 1); adj[v - 1].add(u - 1); } }
+    // each pixel's unit (0: none, or a blend), then the same for the pixels inside one: both as plain lists of numbers
+    const id = new Uint16Array(w * h), pure = new Uint16Array(w * h);
+    for (let k = 0, q = 0; k < id.length; k++, q += 4) if (px[q + 3] === 255 && px[q + 2] === 0) id[k] = px[q] + (px[q + 1] << 8);
+    for (let j = 1; j < h - 1; j++) for (let k = j * w + 1, end = (j + 1) * w - 1; k < end; k++) { const v = id[k]; if (v && id[k - 1] === v && id[k + 1] === v && id[k - w] === v && id[k + w] === v) pure[k] = v; }
+    for (let j = 1; j < h - 5; j++) for (let k = j * w + 1, end = (j + 1) * w - 5; k < end; k++) {
+      const u = pure[k]; if (!u) continue;
+      for (const v of [pure[k + 4], pure[k + 4 * w]]) if (v && v !== u) { adj[u - 1].add(v - 1); adj[v - 1].add(u - 1); }
     }
     return adj;
   }
@@ -731,7 +832,9 @@
       }
     }
     // side: 1 when the unit lies to the left of the edge from p to q, -1 to the right (0: on neither side)
-    const lines = units.map(() => []);
+    // loose: the areas with an edge that gets no outline although no other area has it: it faces another of the
+    // unit's areas across a narrow gap, or along a border that doesn't line up (see `tight` below).
+    const lines = units.map(() => []), loose = new Set();
     for (const e of edges.values()) {
       if (e.n > 1 && e.v < 0) continue; // shared by two areas of one unit
       const dx = e.q[0] - e.p[0], dy = e.q[1] - e.p[1], len = Math.hypot(dx, dy), nx = -dy / len, ny = dx / len, own = shapeOf(S, e.a);
@@ -756,18 +859,19 @@
         if (next === side) continue;
         let to = 1;
         if (i < n) { let lo = (i - .5) / n, hi = (i + .5) / n; for (let k = 0; k < 6; k++) { const mid = (lo + hi) / 2; if (sideAt(mid) === side) lo = mid; else hi = mid; } to = (lo + hi) / 2; }
-        if (side !== 2) {
+        if (side === 2) loose.add(e.a);
+        else {
           const p = from ? at(from) : e.p, q = to < 1 ? at(to) : e.q;
-          lines[e.u].push({ p, q, kp: from ? idOf(p) : e.kp, kq: to < 1 ? idOf(q) : e.kq, side });
+          lines[e.u].push({ p, q, kp: from ? idOf(p) : e.kp, kq: to < 1 ? idOf(q) : e.kq, side, own: e.a });
         }
         from = to; side = next;
       }
     }
-    return lines.map(es => joinEdges(es, gap));
+    return Object.assign(lines.map(es => joinEdges(es, gap, loose)), { loose });
   }
   // Edges end to end as one path, so the line has joins instead of thousands of loose ends. A small ring of edges
   // with the unit on its outside runs around a gap between the unit's areas, not around an island: it is left out.
-  function joinEdges(es, gap) {
+  function joinEdges(es, gap, loose) {
     const at = new Map(), seen = new Set(); let d = '';
     for (const e of es) for (const k of [e.kp, e.kq]) { const l = at.get(k); if (l) l.push(e); else at.set(k, [e]); }
     for (const e0 of es) {
@@ -781,7 +885,7 @@
       if (x1 - x0 < gap && y1 - y0 < gap) {
         const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2; let turn = 0; // positive: the unit lies inside the ring
         for (const e of part) turn += e.side * ((e.p[0] - cx) * (e.q[1] - cy) - (e.q[0] - cx) * (e.p[1] - cy));
-        if (turn < 1e-6) continue; // a gap, or a stray edge
+        if (turn < 1e-6) { for (const e of part) if (e.own !== undefined) loose.add(e.own); continue; } // a gap, or a stray edge
       }
       const used = new Set();
       for (const e of part) {
@@ -799,28 +903,61 @@
   }
   // The units' outlines go on top of the areas (under any areas marked top), the lines of dimmed units first so
   // that a line two units share is drawn in the stronger of their two colors.
-  let layoutKind = null, UNIT_LINES = [], detail = 0;
+  /* The areas of a unit are drawn one by one, and where two of them meet, the edge of each is half see-through: a
+     hair of the sea would show between them. So each unit has one shape of all its areas under them, in their
+     color (UNDER: drawn as one shape, it has no such seams), which shows through instead. A line of an area's own
+     color around it does the same and closes narrow gaps too, but costs more to draw than everything else on the
+     map: only the areas that need it for that keep it (those unitOutlines calls loose), the others are `tight`. */
+  let layoutKind = null, UNIT_LINES = [], UNDER = [], underOf = {}, detail = 0;
   function applyLayout(kind) {
     const L = layoutOf(kind), key = L ? kind : null;
     if (key === layoutKind) return;
     layoutKind = key;
-    for (const p of UNIT_LINES) p.remove();
-    UNIT_LINES = [];
-    for (const a of AREAS) EL[a].style.removeProperty('--hint');
+    for (const p of [...UNIT_LINES, ...UNDER]) if (p) p.remove();
+    UNIT_LINES = []; UNDER = []; underOf = {};
+    for (const a of AREAS) { EL[a].style.removeProperty('--hint'); EL[a].classList.remove('tight'); }
     mapClass('merged', !!L);
     if (!L) return;
     if (L.color) for (const a of AREAS) EL[a].style.setProperty('--hint', L.color[a]);
     UNIT_LINES = L.units.map(() => { const line = document.createElementNS(NS, 'path'); line.setAttribute('class', 'unit'); return line; });
+    UNDER = L.units.map((u, i) => {
+      const areas = u.filter(a => !AREA[a].top && !AREA[a].dot); if (areas.length < 2) return null;
+      const p = document.createElementNS(NS, 'path'), hint = EL[areas[0]].style.getPropertyValue('--hint');
+      p.setAttribute('d', areas.map(a => AREA[a].d).join('')); p.dataset.g = AREA[areas[0]].g; if (hint) p.style.setProperty('--hint', hint);
+      for (const a of areas) underOf[a] = i;
+      p.areas = areas;
+      return p;
+    });
+    gR.prepend(...UNDER.filter(Boolean));
+    UNDER.forEach((p, i) => paintUnder(i));
     drawUnits();
     syncUnitsOut();
   }
-  // Each version of the outlines is worked out when it is first shown.
+  // The shape under a unit is in the state all of the unit's areas are in (lit or not, answered, flashing).
+  const AREA_ONLY = new Set(['r', 'tight', 'top', 'dot']);
+  function paintUnder(i) {
+    const p = UNDER[i]; if (!p) return;
+    const [first, ...rest] = p.areas, cls = ['r', 'under', ...[...EL[first].classList].filter(c => !AREA_ONLY.has(c) && rest.every(a => EL[a].classList.contains(c)))].join(' ');
+    if (p.getAttribute('class') !== cls) p.setAttribute('class', cls);
+  }
+  // (it follows them by itself, whoever changes an area's state: before the map is next drawn)
+  new MutationObserver(changes => {
+    if (!UNDER.length) return;
+    const units = new Set();
+    for (const c of changes) { const i = underOf[c.target.dataset.a]; if (i !== undefined) units.add(i); }
+    for (const i of units) paintUnder(i);
+  }).observe(gR, { attributes: true, attributeFilter: ['class'], subtree: true });
+  // Each version of the outlines is worked out when it is first shown, and the other one right after it, as soon as
+  // the page has nothing to do: zooming in would else stand still at FINE the first time, until it is worked out.
+  const whenIdle = window.requestIdleCallback ? f => requestIdleCallback(f, { timeout: 4000 }) : f => setTimeout(f, 1500);
   function drawUnits() {
     const L = LAYOUTS[layoutKind], lines = (L.lines ??= [])[detail] ??= unitOutlines(L.units, DETAIL[detail]);
     UNIT_LINES.forEach((p, i) => p.setAttribute('d', lines[i]));
+    for (const a of AREAS) EL[a].classList.toggle('tight', underOf[a] !== undefined && !lines.loose.has(a));
+    if (!L.ahead) { L.ahead = true; whenIdle(() => DETAIL.forEach((d, i) => { L.lines[i] ??= unitOutlines(L.units, d); })); }
   }
-  function syncDetail() {
-    const d = scale() >= FINE ? 1 : 0;
+  function syncDetail(s = scale()) {
+    const d = s >= FINE ? 1 : 0;
     if (d === detail) return;
     detail = d;
     if (layoutKind) drawUnits();
@@ -1009,8 +1146,15 @@
   function useBack(back) {
     chosenBack = back; store('back', back);
     for (const b of backSeg.children) b.setAttribute('aria-pressed', b.dataset.back === back);
+    showBack(back);
+  }
+  // The one on screen: the chosen one, or in a review the one of its cards (see reviewModes).
+  let shownBack = 'quiz';
+  function showBack(back) {
+    if (back === shownBack) return;
+    shownBack = back;
     svg.classList.toggle('streets', back !== 'quiz'); svg.classList.toggle('plain', back === 'street');
-    if (back !== 'quiz' || tiles) withTiles(() => { tiles.streets().show(chosenBack !== 'quiz'); apply(); });
+    withTiles(() => { tiles.streets().show(shownBack !== 'quiz'); apply(); });
   }
   if (BACKS.length) useBack(chosenBack);
   // Street View coverage on top of the map, whatever the map: a switch of its own beside the map picker. It is the
@@ -1085,8 +1229,24 @@
   }));
   const roundOf = key => ROUNDS.find(r => 'r:' + r.id === key);
   const savedOf = key => key.startsWith('s:') ? SAVED[+key.slice(2)] : null;
+  // The round a box shows, of a round and its other languages: the one picked, else the one in the language picked
+  // last, else the one of the kind a quiz starts with, else the first.
+  const keyOf = v => 'r:' + v.id, langOf = v => KINDS[v.kind].lang || KINDS[v.kind].label;
+  const variantsOf = r => ROUNDS.filter(v => v === r || v.of === r);
+  // (Q.langLabel: the language chosen for the whole list, and of each round the one in that language, if it has one)
+  const LANGS = Q.langLabel ? uniq(Q.kinds.filter(k => ROUNDS.some(r => r.kind === k.key)).map(k => k.lang || k.label)) : []; // in the order of the kinds
+  const listLang = () => (LANGS.includes(load('lang')) ? load('lang') : langOf((Q.kinds.find(k => k.start) ? ROUNDS.find(r => KINDS[r.kind].start) : null) || ROUNDS[0]));
+  const shownOf = variants => (Q.langLabel ? variants.find(v => langOf(v) === listLang())
+    : variants.find(v => keyOf(v) === choice) || variants.find(v => langOf(v) === load('lang')) || variants.find(v => KINDS[v.kind].start) || variants[0]);
   function validChoice() {
-    if (!(choice === 'custom' || (choice === 'shared' && SHARED) || savedOf(choice) || roundOf(choice))) choice = 'r:' + ROUNDS[0].id;
+    if (!(choice === 'custom' || (choice === 'shared' && SHARED) || savedOf(choice) || roundOf(choice))) choice = keyOf(ROUNDS.filter(r => !r.of).map(r => shownOf(variantsOf(r))).find(Boolean));
+  }
+  // Another language for the whole list: the round picked stays picked, in that language, where it has one.
+  function pickLang(lang) {
+    const picked = roundOf(choice), same = picked && variantsOf(picked.of || picked).find(v => langOf(v) === lang);
+    store('lang', lang);
+    if (picked) { choice = same ? keyOf(same) : ''; validChoice(); store('choice', choice); }
+    buildRounds(); frameRound();
   }
   function choiceKind() {
     validChoice();
@@ -1120,6 +1280,38 @@
     const best = record().best || {}, unnamed = [];
     for (const r of ROUNDS) if (!r.random) { const p = STORE.print(roundIds(r)); for (const map of ['quiz', 'overlay', 'street', 'free']) { const k = `${r.kind}/${map}/${p}`; if (best[k] && !best[k].name) unnamed.push([k, r.label]); } }
     if (unnamed.length) keep(r => { for (const [k, name] of unnamed) if (r.best?.[k]) r.best[k].name = name; });
+  }
+  // How a card is reviewed: the way the last perfect round with it was played, which is kept with the card (see
+  // area-review.js): on that map (the quiz map, the overlay, the street map; a city quiz's dots or its map by
+  // distance) and, in a city quiz, with that background. A card not played perfectly since that is kept goes by the
+  // best results, which don't say when: the map of a perfect result of a round, a saved or a custom quiz with its
+  // item in it, the hardest of several (a player goes from the dots to the distance, not back); or else (a round
+  // that has changed since) of any perfect result of its kind, the easiest of several; and with none the map
+  // chosen on the setup screen. Its background is the one chosen there, as nothing tells what it was.
+  const EASIEST = ['quiz', 'overlay', 'street', 'free'].filter(m => MAPS.some(([x]) => x === m)); // (the dots before the map by distance)
+  const family = kind => KINDS[kind].cards || kind; // kinds that share their cards
+  // Per family: { any: the maps with a perfect result, on: { item: the maps with one that has the item in it } }.
+  function perfectMaps() {
+    const out = {}, maps = {}; // maps: '<kind>/<items>' -> the maps those items were played perfectly on
+    for (const [k, b] of Object.entries(record().best || {})) {
+      const i = k.lastIndexOf('/'), j = k.lastIndexOf('/', i - 1), kind = k.slice(0, j), map = k.slice(j + 1, i);
+      if (!KINDS[kind] || !EASIEST.includes(map) || !(b.score >= b.of)) continue;
+      (maps[kind + '/' + k.slice(i + 1)] ||= new Set()).add(map);
+      (out[family(kind)] ||= { any: new Set(), on: {} }).any.add(map);
+    }
+    const asked = [...ROUNDS.filter(r => !r.random).map(r => [r.kind, roundIds(r)]), ...SAVED.map(q => [q.kind, q.ids]), ...(SHARED ? [[SHARED.kind, SHARED.ids]] : []),
+      ...Object.keys(KINDS).map(k => [k, KINDS[k].ids.filter(id => SEL[k].has(id))])];
+    for (const [kind, ids] of asked) for (const map of maps[kind + '/' + STORE.print(ids)] || []) for (const id of ids) (out[family(kind)].on[id] ||= new Set()).add(map);
+    return out;
+  }
+  // -> (kind, item, card) => { map, back }, for the cards of one review.
+  function reviewModes() {
+    let perfect = null;
+    return (kind, id, card) => {
+      if (EASIEST.includes(card.m)) return { map: card.m, back: BACKS.some(([b]) => b === card.b) ? card.b : 'quiz' };
+      const p = (perfect ||= perfectMaps())[family(kind)], own = p && p.on[id];
+      return { map: (own ? [...EASIEST].reverse().find(m => own.has(m)) : p && EASIEST.find(m => p.any.has(m))) || chosenMap, back: chosenBack };
+    };
   }
   // One star per level, up to the quiz's highest: a level's star is earned when every one of its rounds has been
   // played perfectly (all right on the first try, on any map). Until then the star fills with the average best
@@ -1174,9 +1366,9 @@
   // A round offered in several languages is one box. It shows (and a click on it chooses) the round in the language
   // picked last, or in its first one; once it is the round picked, its languages are a switch under its name.
   function roundBox(variants) {
-    const keyOf = v => 'r:' + v.id, langOf = v => KINDS[v.kind].lang || KINDS[v.kind].label;
     if (variants.length < 2) { const r = variants[0]; return answerable(roundBtn(keyOf(r), r.label, r.sub, r.kind, roundIds(r), r.random)); }
-    const on = variants.find(v => keyOf(v) === choice) || variants.find(v => langOf(v) === load('lang')) || variants[0];
+    const on = shownOf(variants);
+    if (Q.langLabel) return answerable(roundBtn(keyOf(on), on.label, '', on.kind, roundIds(on), on.random));
     const langs = () => options(variants.map(v => [langOf(v), '', v === on, () => { store('lang', langOf(v)); choice = keyOf(v); store('choice', choice); buildRounds(); frameRound(); }]));
     return answerable(roundBtn(keyOf(on), on.label, '', on.kind, roundIds(on), on.random), ...(keyOf(on) === choice ? [langs()] : []));
   }
@@ -1210,7 +1402,8 @@
 
   function buildRounds() {
     const wrap = $('rounds'); wrap.replaceChildren();
-    const many = FOLDERS.length > 1, open = folderOf(choiceKind()), inOpen = kind => !many || folderOf(kind) === open;
+    // (a page whose tabs are other pages has no room for folders of its own: its kinds' rounds are one list)
+    const many = FOLDERS.length > 1 && !PAGE_FOLDERS, open = folderOf(choiceKind()), inOpen = kind => !many || folderOf(kind) === open;
     const levels = levelProgress(many ? open : null);
     if (!PAGE_FOLDERS) { $('folders').hidden = !many; for (const b of $('folders').children) b.setAttribute('aria-selected', b.dataset.folder === open); }
     const section = (tier, title, rows) => {
@@ -1228,7 +1421,8 @@
     if (SHARED && inOpen(SHARED.kind)) section(-1, 'Shared with you', [withIcons(answerable(roundBtn('shared', SHARED.name, kindNote(SHARED.kind), SHARED.kind, SHARED.ids)),
       iconBtn('save', 'Save to your quizzes', () => saveQuiz(SHARED.name, SHARED.kind, SHARED.ids)))]);
     const byTier = TIERS.map(() => []);
-    for (const r of ROUNDS) if (!r.of && inOpen(r.kind)) byTier[tierOf(roundIds(r).length)].push(roundBox(ROUNDS.filter(v => v === r || v.of === r)));
+    if (LANGS.length > 1) { const row = options(LANGS.map(l => [l, '', l === listLang(), () => pickLang(l)])); row.classList.add('list'); section(-1, Q.langLabel, [row]); }
+    for (const r of ROUNDS) if (!r.of && inOpen(r.kind)) { const variants = variantsOf(r); if (shownOf(variants)) byTier[tierOf(roundIds(shownOf(variants)).length)].push(roundBox(variants)); }
     TIERS.forEach(([, name], i) => section(i, name, byTier[i]));
     section(-1, 'Your quizzes', SAVED.map((s, i) => inOpen(s.kind) && withIcons(answerable(roundBtn('s:' + i, s.name, kindNote(s.kind), s.kind, s.ids)),
       iconBtn('link', 'Copy a link to this quiz', () => copyLink(s.kind, s.ids, s.name)),
@@ -1375,7 +1569,7 @@
   $('shareBtn').onclick = () => { const cur = current(); if (cur.ids.length) copyLink(cur.kind, cur.ids, $('saveName').value.trim()); };
 
   function openSetup() {
-    clearInterval(timer); clearTimeout(G.ending); useMap(chosenMap); clearMap();
+    clearInterval(timer); clearTimeout(G.ending); useMap(chosenMap); showBack(chosenBack); clearMap();
     show('setup');
     buildPicker(); buildRounds();
     frameRound();
@@ -1443,19 +1637,53 @@
     if (countEl.hidden) return;
     const left = remaining(K, id).length, b = document.createElement('b');
     b.textContent = left;
-    countEl.replaceChildren(b, left === K.areas[id].length ? ' areas' : ' more');
+    countEl.replaceChildren(b, left === K.areas[id].length ? ` ${K.areaNoun || 'areas'}` : ' more');
   }
 
-  function start(kind, items, { retry = false, review = false, box = null } = {}) {
+  /* ---------- sound: an answer said aloud (a kind with say) ---------- */
+  // The browser speaks, in a voice of the device for the answer's language: what has no such voice stays silent, so
+  // it depends on the device what is heard. The switch in the round's panel turns the sound off and on, for every
+  // quiz (the settings' `sound`, see store.js).
+  const soundBtn = $('soundBtn'), SPEAKS = typeof speechSynthesis === 'object' && typeof SpeechSynthesisUtterance === 'function';
+  let soundOn = STORE.settings().sound !== false;
+  if (SPEAKS) speechSynthesis.getVoices(); // (the list is fetched when first asked for, and may come late)
+  const voiceOf = lang => speechSynthesis.getVoices().find(v => v.lang.replace('_', '-').toLowerCase().split('-')[0] === lang);
+  function say(id) {
+    const K = KINDS[G.kind];
+    if (!SPEAKS || !soundOn || !K.say) return;
+    const s = K.say(id), voice = s && s.text && voiceOf(s.lang);
+    if (!voice) return;
+    const u = new SpeechSynthesisUtterance(s.text);
+    u.voice = voice; u.lang = voice.lang; u.rate = .8;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }
+  function syncSound() {
+    if (!soundBtn) return;
+    soundBtn.hidden = !(SPEAKS && KINDS[G.kind].say);
+    soundBtn.setAttribute('aria-pressed', soundOn); soundBtn.textContent = soundOn ? 'Sound on' : 'Sound off';
+  }
+  if (soundBtn) soundBtn.onclick = () => {
+    soundOn = !soundOn;
+    STORE.setSettings(s => { if (soundOn) delete s.sound; else s.sound = false; });
+    if (!soundOn) speechSynthesis.cancel();
+    syncSound();
+  };
+
+  // map, back: a review asks its cards the way they were last played perfectly (see reviewModes), not as chosen on the
+  // setup screen.
+  function start(kind, items, { retry = false, review = false, box = null, map = chosenMap, back = chosenBack } = {}) {
     clearInterval(timer); clearTimeout(G.ending);
     Object.assign(G, { kind, items, queue: shuffle(items), i: 0, score: 0, streak: 0, best: 0, res: [], t0: performance.now(), retry, review, points: 0, box, back: null });
-    useMap(chosenMap); clearMap();
+    syncSound();
+    useMap(map); showBack(back); clearMap();
     if (box) { if (onStreet()) frameStreet({ kind, ids: items, box }); else frame(box); }
     if (scoreLabel) scoreLabel.textContent = mapStyle === 'free' ? 'Points' : SCORE_LABEL;
     markOut(KINDS[kind].dim === false ? AREAS : items.flatMap(id => KINDS[kind].areas[id]));
     $('ticks').replaceChildren(...G.queue.map(() => document.createElement('i')));
     setFeedback($('fb'), '', '', '');
-    show('play'); ask();
+    show('play');
+    if (Q.board) frame(box);
+    ask();
     timer = setInterval(() => $('sTime').textContent = fmt(performance.now() - G.t0), 500);
   }
   function ask() {
@@ -1476,10 +1704,11 @@
       $('photo').onclick = () => zoomPhoto(p, false);
       if (next !== undefined) new Image().src = K.photo(next).src; // the next picture is there when it is asked
     }
-    else if (isText) { const t = K.text(id); $('sent').textContent = t.text; $('sent').className = 'sent ' + (t.cls || ''); $('sent').lang = t.lang || ''; }
+    else if (isText) { const t = K.text(id); $('sent').textContent = t.text; $('sent').className = 'sent ' + (t.cls || ''); $('sent').lang = t.lang || ''; $('card').dataset.tag = t.tag || ''; }
     else if (isName) $('bigname').textContent = K.name(id);
     else if (K.dial) $('code').replaceChildren(...K.dial(id).map(([text, cls]) => { const s = document.createElement('span'); s.className = cls; s.textContent = text; return s; }));
     else $('code').textContent = K.short(id);
+    if (typedForm) { typedForm.hidden = !K.typed; if (K.typed) { $('typed').value = ''; $('typed').focus({ preventScroll: true }); } }
     // The optional hint under the prompt, e.g. the state a code is in; empty (and hidden) otherwise.
     const ask = $('ask'); ask.replaceChildren();
     if (K.detail && $('optDetail').checked) { const s = document.createElement('strong'); s.textContent = K.detail.text(id); ask.append(s); }
@@ -1495,8 +1724,16 @@
       const ids = KINDS[pickKind].at[area]; if (ids) toggleItems(ids); return;
     }
     if (view === 'explore') { explore(area); return; }
-    if (view === 'play') answer(area);
+    if (view === 'play' && !KINDS[G.kind].typed) answer(area);
   }
+  // A typed answer: right, it counts as a click on the item's area; wrong, as a wrong click.
+  const typedForm = $('typedForm');
+  if (typedForm) typedForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const K = KINDS[G.kind], id = G.queue[G.i], text = $('typed').value.trim();
+    if (view !== 'play' || !K.typed || id === undefined || !text) return;
+    if (K.typed(id, text)) answer(K.areas[id][0]); else { wrong(text); $('typed').select(); }
+  });
   function flash(kind, id) {
     const K = KINDS[kind], key = kind + ':' + id;
     for (const p of pathsOf(K.areas[id])) p.classList.add('flash');
@@ -1530,6 +1767,7 @@
         if (left > 0) {
           if (!wasFound) {
             const p = pathsOf([area])[0]; p.classList.remove('ans', 'flash'); p.classList.add('found');
+            p.classList.toggle('rare', !!(K.rare && K.rare(target, area)));
             buildLabels(G.kind); const e = AREA_ENTRY[area]; if (e) { e.shown.add(target); renderEntry(e); }
             if (G.revealed) mark(remaining(K, target));
           }
@@ -1540,7 +1778,10 @@
       }
       if (G.review) G.tries = RV.grade(G.tries > 0 || G.revealed); // a review grades by the clock: known, unsure or not known
       const k = RESULT_CLASS[G.tries];
+      if (K.fresh) fresh();
       for (const p of pathsOf(K.areas[target])) { p.classList.remove('ans', 'flash', 'found', ...RESULT_CLASS); p.classList.add(k); }
+      if (K.rare) K.areas[target].forEach((a, i) => pathsOf(K.areas[target])[i].classList.toggle('rare', !!K.rare(target, a)));
+      if (K.fresh) fresh(FRESH_MS);
       showLabel(G.kind, target);
       const tick = $('ticks').children[G.i]; tick.classList.remove('now'); tick.classList.add(k);
       G.res.push(G.tries);
@@ -1549,6 +1790,7 @@
       setFeedback($('fb'), G.tries === 0 ? 'ok' : 'bad', title, K.about(target));
       if (K.photo) $('fb').prepend(thumb(K.photo(target)));
       if (K.pin) showPin(K.pin(target));
+      say(target);
       if (RV) RV.answered(target, G.tries === 0);
       G.i++;
       if (G.i >= G.queue.length) finish(); else ask();
@@ -1556,7 +1798,11 @@
     }
     if (K.flashArea || K.labelPerArea) flashArea(area);
     else { const clicked = K.primary(area); if (clicked) flash(G.kind, clicked); }
-    const what = K.clicked(area, target);
+    wrong(K.clicked(area, target));
+  }
+  // A wrong answer, `what` being what was clicked or typed: a try less, and after the last one the answer is shown.
+  function wrong(what) {
+    const K = KINDS[G.kind], target = G.queue[G.i];
     if (G.revealed) {
       setFeedback($('fb'), 'bad', `✗ ${what}`, `→ ${K.name(target)}`);
       return;
@@ -1623,6 +1869,7 @@
     let line = free ? `${pct}% of ${(n * FREE_MAX).toLocaleString('en-US')} · ${G.score}/${n} close · ${fmt(ms)}` : `${pct}% · ${fmt(ms)} · streak ${G.best}`;
     if (prev && complete) line += better ? ' · new best' : free ? ` · best ${(prev.p || 0).toLocaleString('en-US')}` : ` · best ${prev.s}/${n}`;
     legendItems.forEach((li, i) => { li.lastChild.textContent = free ? FREE_LEGEND[i] : LEGEND[i]; });
+    if (legendItems[0]) legendItems[0].parentNode.hidden = !!K.fresh;
     $('rLine').textContent = line;
     const missed = G.queue.slice(0, n).map((id, i) => [id, G.res[i]]).filter(([, t]) => t > 0)
       .sort((a, b) => K.ids.indexOf(a[0]) - K.ids.indexOf(b[0]));
@@ -1650,14 +1897,31 @@
   });
 
   /* ---------- explore ---------- */
+  // (a code of many letters is set smaller, on the pages that say how: `long`)
+  const showCode = code => { $('eCode').textContent = code; $('eDial').classList.toggle('multi', code.includes(',')); $('eDial').classList.toggle('long', code.length > 14); };
   function explore(area) {
-    for (const p of pathsOf(AREAS)) p.classList.remove('sel');
+    for (const p of pathsOf(AREAS)) p.classList.remove('sel', ...(ePick ? ['rare'] : []));
+    if (ePick) ePick.value = '';
     pathsOf([area])[0].classList.add('sel'); mark([area]);
     if (plain()) { clearLabels(); for (const id of KINDS[Q.exploreKind].at[area] || []) showLabel(Q.exploreKind, id); }
     const info = Q.explore(area);
-    $('eCode').textContent = info.code; $('eDial').classList.toggle('multi', info.code.includes(','));
+    showCode(info.code);
     setFeedback($('eInfo'), '', info.title, info.sub);
     if (info.photos) { const g = document.createElement('div'); g.className = 'gallery'; g.append(...info.photos.map(thumb)); $('eInfo').append(g); }
+  }
+  // Q.exploreList: one of the list, picked beside Back: all its areas are lit at once.
+  const ePick = Q.exploreList ? document.createElement('select') : null;
+  if (ePick) {
+    ePick.id = 'ePick'; ePick.setAttribute('aria-label', Q.exploreList.label);
+    ePick.append(new Option(Q.exploreList.label, ''), ...Q.exploreList.items.map((it, i) => new Option(it.label, i)));
+    ePick.onchange = () => {
+      const it = Q.exploreList.items[ePick.value], rare = new Set(it ? it.rare : []);
+      for (const p of pathsOf(AREAS)) p.classList.remove('sel', 'rare');
+      for (const a of it ? it.areas : []) { const p = pathsOf([a])[0]; p.classList.add('sel'); p.classList.toggle('rare', rare.has(a)); }
+      mark(it ? it.areas : null);
+      showCode(it ? it.code : '--'); setFeedback($('eInfo'), '', it ? it.title : '', it ? it.sub : '');
+    };
+    $('eBack').after(ePick);
   }
 
   /* ---------- buttons & keys ---------- */
@@ -1665,7 +1929,7 @@
   $('exploreBtn').onclick = () => {
     useMap(chosenMap); clearMap(); show('explore');
     if (!plain()) showAllLabels(Q.exploreKind);
-    $('eCode').textContent = '--'; $('eDial').classList.remove('multi');
+    showCode('--'); if (ePick) ePick.value = '';
     setFeedback($('eInfo'), '', '', '');
   };
   $('restartBtn').onclick = () => start(G.kind, G.items, { retry: G.retry, box: G.box });
@@ -1693,6 +1957,7 @@
       RV = areaReview({
         $, Q, G, KINDS, PAGE: PAGE_ID, ROOT, RESULT_CLASS, shuffle, fmt, start, markOut, mark, pathsOf, showLabel, setFeedback, needAll, flyTo, onStreet, showAnswer,
         free: () => mapStyle === 'free', home: () => onStreet() ? fitHome() : resetView(),
+        reviewModes, played: () => ({ m: mapStyle, ...(shownBack !== 'quiz' ? { b: shownBack } : {}) }), // how the round on screen is played
       });
     });
   }

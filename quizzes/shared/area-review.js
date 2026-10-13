@@ -2,7 +2,12 @@
 // schedule, ../../assets/js/srs.js) itself, so quiz pages need no changes.
 //
 // A round played perfectly puts its questions on this page's stack. "Review" on the setup screen asks the ones that
-// are due, or all of them, in shuffled order whatever their kind of question, on the map chosen on the setup screen.
+// are due, or all of them, in shuffled order whatever their kind of question. Each card is asked the way the last
+// perfect round with it was played: on that map (the quiz map, the overlay, the street map; a city quiz's dots or its
+// map by distance) and, in a city quiz, with that background, whatever is chosen on the setup screen now. Every
+// perfect round keeps that with its cards, new ones and those on the stack already; for a card not played perfectly
+// since, the engine works the map out from the best results (see reviewModes there). Cards asked the same way stay
+// together in a review, so the map changes as seldom as it can.
 // A review over several quizzes, started on the review page or a country page, is shuffled in groups: a card can
 // only be asked on its own quiz's page, and changing page takes a moment, so a page (…?review=1) asks three of its
 // cards, picked at random, before the review moves on to another quiz, picked at random too.
@@ -30,7 +35,7 @@ window.areaReview = E => {
   const { MISSED, UNSURE, KNOWN, INSTANT } = SRS;
   const CLASS = [3, 1, 0, 0]; // answer -> the engine's result class: miss, t2, got, got
   const LEAD = 1500; // ms before the clock starts on a map that has only just appeared
-  const cardKey = (kind, id) => kind + '|' + id;
+  const cardKey = (kind, id) => (KINDS[kind].cards || kind) + '|' + id; // (a kind may share another kind's cards)
   const pageTitle = () => (document.querySelector('.brand h1') || {}).textContent || document.title;
   let S = null; // the review being played
   let P = null; // an ordinary round's question: { t: when it was asked, easy, fast: the "easy" and "known" times, missed }
@@ -39,7 +44,7 @@ window.areaReview = E => {
   // This page's stack. Cards whose question is no longer in the quiz are kept but set aside (x) until it is back.
   function stack() {
     const deck = SRS.deck(PAGE), items = {}; // card key -> [kind, item id]
-    for (const k in KINDS) for (const id of KINDS[k].ids) items[cardKey(k, id)] = [k, id];
+    for (const k in KINDS) for (const id of KINDS[k].ids) items[cardKey(k, id)] ??= [k, id]; // (shared cards are asked as the kind they belong to, which comes first)
     let changed = false;
     for (const c in deck.c) {
       const gone = !items[c];
@@ -96,21 +101,26 @@ window.areaReview = E => {
       asked: 0, prev: null, rounds: [],
       lit: kind => SRS.all(deck).filter(c => items[c][0] === kind).flatMap(c => KINDS[kind].areas[items[c][1]]),
     };
-    for (const c of keys) enqueue(...items[c]);
+    // Cards asked the same way stay together, in the order their ways first come up.
+    const modeOf = E.reviewModes(), ways = new Map();
+    for (const c of keys) { const m = modeOf(...items[c], deck.c[c]), k = m.map + '/' + m.back; (ways.get(k) || ways.set(k, [m, []]).get(k))[1].push(c); }
+    for (const [mode, cards] of ways.values()) for (const c of cards) enqueue(...items[c], mode);
     $('app').classList.remove('moving');
     nextRound();
     return true;
   }
-  // Put a card at the end of the review: in its last round if that asks the same kind, else in a new one.
-  function enqueue(kind, id) {
+  // Put a card at the end of the review: in its last round if that asks the same kind the same way (mode: { map,
+  // back }), else in a new one.
+  function enqueue(kind, id, mode) {
     const last = S.rounds[S.rounds.length - 1];
-    if (last && last[0] === kind) last[1].push(id); else S.rounds.push([kind, [id]]);
+    if (last && last[0] === kind && last[2] === mode) last[1].push(id); else S.rounds.push([kind, [id], mode]);
   }
   function nextRound() {
-    const [kind, ids] = S.rounds.shift();
+    const [kind, ids, mode] = S.rounds.shift();
+    S.mode = mode;
     // A new round clears the panel and the map; the last answer and what was said about it stay.
     const fb = $('fb'), said = S.asked ? [fb.className, [...fb.childNodes]] : null;
-    E.start(kind, ids, { retry: true, review: true });
+    E.start(kind, ids, { retry: true, review: true, ...mode });
     G.t0 = S.t0;
     if (KINDS[kind].dim !== false) E.markOut(S.lit(kind));
     const label = $('sScore').nextElementSibling; if (label) label.textContent = 'Known';
@@ -172,8 +182,8 @@ window.areaReview = E => {
   }
   function asked() {
     const K = KINDS[G.kind], id = G.queue[G.i], o = SRS.opts();
-    // An item with several areas to click gets half the time again for each extra one.
-    const k = E.needAll(K, id) ? 1 + (K.areas[id].length - 1) / 2 : 1;
+    // An item with several areas to click gets half the time again for each extra one; a typed answer its own time.
+    const k = K.time ? K.time(id) : E.needAll(K, id) ? 1 + (K.areas[id].length - 1) / 2 : 1;
     // A card asked again after a miss was just shown: answering it quickly says nothing, so it is never "easy"
     // (an "easy" time below zero), in a review and in an ordinary round of the missed ones alike.
     const key = cardKey(G.kind, id), shown = G.review ? (S.chain ? (SRS.run().again[PAGE] || []).includes(key) : S.counted.has(key)) : G.retry;
@@ -243,7 +253,7 @@ window.areaReview = E => {
     if (g === MISSED && !S.chain) {
       // It comes back at the end of the review: in this round if it is the last one, else in a later one.
       // (A review over several quizzes has noted it, and asks it again at its own end.)
-      if (S.rounds.length) enqueue(G.kind, id); else { G.queue.push(id); $('ticks').append(document.createElement('i')); }
+      if (S.rounds.length) enqueue(G.kind, id, S.mode); else { G.queue.push(id); $('ticks').append(document.createElement('i')); }
       S.total++;
     }
     queueMicrotask(() => {
@@ -268,9 +278,9 @@ window.areaReview = E => {
     [...$('done').querySelectorAll('.legend li')].forEach((li, i) => { li.lastChild.textContent = ['Known', 'Unsure', '', 'Not known'][i]; });
   }
 
-  // A perfect round: its questions go on the stack.
+  // A perfect round: its questions go on the stack, and all of them keep how it was played.
   function learned(kind, ids) {
-    const n = SRS.add(PAGE, pageTitle(), ids.map(id => cardKey(kind, id)), Date.now());
+    const n = SRS.add(PAGE, pageTitle(), ids.map(id => cardKey(kind, id)), Date.now(), E.played());
     if (n) $('rLine').textContent += ` · +${n} review`;
     syncButtons();
   }
