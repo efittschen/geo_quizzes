@@ -17,6 +17,8 @@ document.write(`<script src="${new URL('../../assets/js/store.js', document.curr
 // which it does by itself as long as the page wasn't touched; not during a round.
 document.write(`<script src="${new URL('../../assets/js/sync.js', document.currentScript.src).href}"><\/script>`);
 window.addEventListener('geoquizzes:fresh', e => { if (document.getElementById('setup')?.hidden) e.preventDefault(); });
+// And gmaps.js: Google's map as the street map, for a player who named a key of their own on the review page.
+document.write(`<script src="${new URL('../../assets/js/gmaps.js', document.currentScript.src).href}"><\/script>`);
 // Likewise mercator.js, which redraws a page's map in Web Mercator: the scripts that build on a map call it first.
 document.write(`<script src="${new URL('mercator.js', document.currentScript.src).href}"><\/script>`);
 // And gamepad.js, which lets a game controller play the page as a mouse would.

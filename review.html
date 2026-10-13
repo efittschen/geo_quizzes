@@ -79,6 +79,27 @@
     </section>
 
     <section>
+      <h2>Google street map</h2>
+      <div class="timer-opts">
+        <input type="password" id="maps-key" placeholder="Google Maps API key" aria-label="Google Maps API key" autocomplete="off" spellcheck="false">
+        <button type="button" class="ghost small" id="maps-on">Use</button>
+        <button type="button" class="ghost small" id="maps-off" hidden>Remove</button>
+        <span id="maps-state"></span>
+      </div>
+      <details class="steps">
+        <summary>Setup</summary>
+        <ol>
+          <li><a href="https://console.cloud.google.com/google/maps-apis/" target="_blank" rel="noopener">Google Maps Platform</a> → a project with billing</li>
+          <li>APIs &amp; Services → enable “Map Tiles API”</li>
+          <li>Keys &amp; Credentials → the key → API restriction: Map Tiles API · Websites: this site’s address</li>
+          <li>Quotas → a daily limit, so the free amount is never passed</li>
+          <li>The key → above, in every browser. It stays in the browser: it is not part of the online copy or the data file.</li>
+        </ol>
+        <p class="muted">With a key, the street map of the region and code quizzes is Google’s, with English names. Without one, or when Google refuses it, it is OpenStreetMap’s. The city quizzes and the coverage map stay on OpenStreetMap.</p>
+      </details>
+    </section>
+
+    <section>
       <h2>Online copy</h2>
       <div class="timer-opts">
         <input type="url" id="sync-url" placeholder="Web app link" aria-label="Web app link" autocomplete="off" spellcheck="false">
@@ -102,6 +123,7 @@
 
   <script src="assets/js/store.js"></script>
   <script src="assets/js/sync.js"></script>
+  <script src="assets/js/gmaps.js"></script>
   <script src="assets/js/common.js"></script>
   <script src="assets/js/srs.js"></script>
   <script src="assets/js/review.js"></script>
