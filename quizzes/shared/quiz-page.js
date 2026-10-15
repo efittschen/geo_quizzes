@@ -146,7 +146,6 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
       <button id="zOut" type="button" aria-label="Zoom out">&minus;</button>
       <button id="zFit" type="button" aria-label="Show the whole map">&#8634;</button>
     </div>
-    <div id="street" hidden></div>
     <div class="maps" id="mapSeg" role="group" aria-label="Map"></div>
   </main>
 `;

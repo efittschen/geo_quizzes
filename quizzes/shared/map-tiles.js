@@ -12,8 +12,9 @@
                                 whenever that changes. The pictures follow at once. While the map is dragged they are
                                 drawn again as it goes, so its sides are there before the drag ends; after a zoom
                                 they are drawn again when it rests.
-     tiles.streets().show(on)   the street map, a canvas at the back of the stage (the standard OpenStreetMap tiles,
-                                as on the street map of the other quizzes); its credit stands on the map meanwhile
+     tiles.streets().show(on)   the street map, at the back of the stage (the standard OpenStreetMap tiles): a canvas
+                                drawn from them, or on a Mercator map the tiles themselves (see sheets); its credit
+                                stands on the map meanwhile
      tiles.coverage(dir, meta).show(on)   Street View coverage (data/coverage and its meta.json, see the README), a
                                 canvas over the map, blended into it
      tiles.insets               { box, land }: SVG paths of the insets' frames and of the land in them. An inset
@@ -85,6 +86,7 @@ function mapTiles(stage, C, AHEAD = 192) {
   // A layer of tiles: { id, over (on top of the map, else at the back of the stage), size (of a tile, in pixels),
   // minZ, maxZ, url(z, x, y) -> its address or null where there is none, shown(on) }
   function layer(L) {
+    if (merc) return sheets(L);
     const SIZE = L.size, MAX_Z = L.maxZ, cv = document.createElement('canvas'), ctx = cv.getContext('2d');
     cv.id = L.id; cv.className = 'tiles'; cv.hidden = true;
     if (L.over) stage.querySelector('#map, #paint').after(cv); else stage.prepend(cv);
@@ -168,6 +170,63 @@ function mapTiles(stage, C, AHEAD = 192) {
     const me = {
       show(yes) { on = yes; cv.hidden = !yes; L.shown(yes); if (yes) render(); },
       moved() { if (!on) return; place(); soon(); },
+    };
+    layers.push(me);
+    return me;
+  }
+  /* A Mercator map is in the tiles' own projection, so its tiles lie on it as they are: each is a picture of its own,
+     placed once on a sheet that holds one zoom level's tiles, and a move or a zoom only moves and sizes the sheet (as
+     the street map's own library does it). Nothing is drawn again: the browser moves pictures it has. A sheet of
+     another zoom level is laid over the last one, which goes once the new one's tiles are there; while the map is being
+     zoomed through levels, only once it has stayed at one for SETTLE ms. Tiles are looked for while the map moves
+     (every FILL ms), AHEAD pixels beyond the stage. (A tile's pixel is 1/k · 360 / (SIZE · 2^z)
+     map units; zoom level: the one whose tiles are as fine as the screen's pixels, as on the street map.) */
+  function sheets(L) {
+    const SIZE = L.size, FILL = 100, SETTLE = 250, { k: kp, lng0, y0 } = C.proj, box = document.createElement('div');
+    box.id = L.id; box.className = 'tiles'; box.hidden = true;
+    if (L.over) stage.querySelector('#map, #paint').after(box); else stage.prepend(box);
+    let on = false, sheet = null, old = null, timer = 0, filled = 0;
+    // A sheet of zoom level z: unit, map units to a tile pixel; B, its own pixels to a map unit (a tile is a whole
+    // px of them); [mx, my], the map point at its corner; its tiles by 'column,row' (null: none there).
+    function make(z) {
+      const n = 2 ** z, unit = kp * 360 / (SIZE * n), px = Math.max(1, Math.round(SIZE * unit * want.k)), el = document.createElement('div');
+      el.className = 'sheet'; box.append(el);
+      return { z, n, unit, px, B: px / (SIZE * unit), mx: want.x, my: want.y, el, tiles: new Map(), wait: 0, cx: (lng0 + 180) / 360 * SIZE * n, cy: (180 - y0) / 360 * SIZE * n };
+    }
+    const place = s => { s.el.style.transform = `translate(${(s.mx - want.x) * want.k}px,${(s.my - want.y) * want.k}px) scale(${want.k / s.B})`; };
+    const level = () => Math.max(L.minZ, Math.min(L.maxZ, Math.round(Math.log2(want.k * kp * 360 / SIZE))));
+    function fill() {
+      clearTimeout(timer); timer = 0; filled = performance.now();
+      if (!on || !want || !stage.clientWidth || !stage.clientHeight) return;
+      const z = level();
+      if (!sheet || sheet.z !== z) { if (old) old.el.remove(); old = sheet; sheet = make(z); }
+      const s = sheet, a = AHEAD / want.k, W = stage.clientWidth / want.k, H = stage.clientHeight / want.k;
+      const col = x => Math.floor((s.cx + x / s.unit) / SIZE), row = y => Math.floor((s.cy + y / s.unit) / SIZE);
+      const c0 = col(want.x - a), c1 = col(want.x + W + a), r0 = Math.max(0, row(want.y - a)), r1 = Math.min(s.n - 1, row(want.y + H + a));
+      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+        const key = c + ',' + r; if (s.tiles.has(key)) continue;
+        const url = L.url(s.z, ((c % s.n) + s.n) % s.n, r);
+        if (!url) { s.tiles.set(key, null); continue; }
+        const img = new Image(); img.decoding = 'async'; img.alt = ''; img.draggable = false;
+        // (a whole pixel of the sheet apart, one more wide: no seams)
+        img.style.left = Math.round(((c * SIZE - s.cx) * s.unit - s.mx) * s.B) + 'px'; img.style.top = Math.round(((r * SIZE - s.cy) * s.unit - s.my) * s.B) + 'px';
+        img.style.width = img.style.height = s.px + 1 + 'px';
+        s.wait++;
+        img.onload = img.onerror = () => { img.onload = img.onerror = null; if (!img.naturalWidth) img.remove(); if (!--s.wait && s === sheet && old) { old.el.remove(); old = null; } };
+        img.src = url; s.el.append(img); s.tiles.set(key, img);
+      }
+      // the tiles more than a stage away go (the browser keeps the pictures for a while: coming back loads none)
+      for (const [key, img] of s.tiles) { const [c, r] = key.split(',').map(Number); if (c < c0 - (c1 - c0) || c > c1 + (c1 - c0) || r < r0 - (r1 - r0) || r > r1 + (r1 - r0)) { if (img) img.remove(); s.tiles.delete(key); } }
+      place(s); if (old) place(old);
+    }
+    const me = {
+      show(yes) { on = yes; box.hidden = !yes; L.shown(yes); if (yes) fill(); },
+      moved() {
+        if (!on || !want) return;
+        if (sheet) place(sheet); if (old) place(old);
+        if (sheet && level() !== sheet.z) { clearTimeout(timer); timer = setTimeout(fill, SETTLE); } // (waits while the zoom goes on)
+        else if (!timer) timer = setTimeout(fill, Math.max(0, FILL - (performance.now() - filled)));
+      },
     };
     layers.push(me);
     return me;

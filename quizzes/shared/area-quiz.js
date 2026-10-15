@@ -83,9 +83,6 @@
   const MAX_TRIES = 3;
   const RESULT_CLASS = ['got', 't2', 't3', 'miss']; // index = wrong clicks before the right one
   const FRESH_MS = 700; // how long an answer's color stays in a kind that starts every question on a clean map
-  // Standard OpenStreetMap tiles: free for light use with attribution, no API key needed.
-  const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-  const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
   const NS = 'http://www.w3.org/2000/svg';
   const $ = id => document.getElementById(id);
@@ -120,6 +117,9 @@
   }
 
   /* ---------- build quiz map ---------- */
+  // Every area gets its element, but it is put in the drawing only while the kind played or explored draws it
+  // (placeAreas): a round of states draws no Kreis. The others wait in SPARE, which is no part of the page.
+  const SPARE = document.createElementNS(NS, 'g');
   for (const a of Q.areas) {
     if (a.lx === undefined || a.a === undefined) Object.assign(a, pathStats(a.d), a.lx === undefined ? {} : { lx: a.lx, ly: a.ly });
     AREA[a.id] = a;
@@ -128,20 +128,22 @@
     p.dataset.a = a.id; p.dataset.g = a.g;
     if (a.top) p.classList.add('top');
     if (a.dot) p.classList.add('dot');
-    gR.appendChild(p); EL[a.id] = p;
+    SPARE.appendChild(p); EL[a.id] = p;
   }
   // Areas marked top stay above everything else in the map (they may overlap their neighbours).
-  const raiseTops = () => { for (const a of Q.areas) if (a.top) gR.appendChild(EL[a.id]); };
-  raiseTops();
+  const raiseTops = () => { for (const a of Q.areas) if (a.top && EL[a.id].isConnected) gR.appendChild(EL[a.id]); };
   if (Q.context) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', Q.context); $('ctx').appendChild(p); }
   // A quiz map in Web Mercator lies on the plain map of the world (Q.world, see mercator.js; world.js is fetched
   // unless it is the page's own map): the neighbours, and what lies between a country's far-off parts.
+  // The world under the map is two shapes, its land (without a line) and its lines (coasts and borders), holding only
+  // what lies near the picture drawn: the countries whose box meets it, and the lines of the cells of a grid that
+  // meet it. Both are made anew with every full redraw (worldNear, from apply): drawing the whole world every time,
+  // or even a shape for every part of it, is what the browser would otherwise do. A line two countries share stays
+  // in the one shape of lines (it has one color, not two see-through ones over each other).
+  let worldNear = () => {};
   if (Q.world && typeof MERCATOR === 'object') {
-    // The land is one shape without a line. Its lines (coasts and borders) are cut into the cells of a grid, a path
-    // per cell, so that only those near what the map shows are drawn: one path of all of them is drawn in full
-    // every time the map moves, wherever it is. A line two countries share stays in one path (it has one color).
     const lay = () => {
-      const path = (cls, d) => { const p = document.createElementNS(NS, 'path'); p.setAttribute('class', cls); p.setAttribute('d', d); return p; };
+      const path = cls => { const p = document.createElementNS(NS, 'path'); p.setAttribute('class', cls); p.setAttribute('d', ''); return p; };
       const places = WORLD.reg.filter(r => r.a), CELL = WORLD.w / 32, cells = new Map();
       const add = (c, run) => { const l = cells.get(c); if (l) l.push(run); else cells.set(c, [run]); };
       // (world.js writes a ring as "Mx,yLx,y…Z": its points are taken as they are written, not read and written again)
@@ -160,12 +162,27 @@
           run.push(ring[(at + 1) % n]);
         }
       }
-      const land = path('wland', places.map(r => r.d).join(''));
-      const lines = [...cells.values()].map(runs => path('wline', runs.map(run => 'M' + (typeof run === 'string' ? run : run.join('L'))).join('')));
-      for (const [s, dx, dy] of MERCATOR.world(WORLD, Q.proj, Q.size[0])) { // (a second time for a map over the 180th meridian)
-        const g = document.createElementNS(NS, 'g'); g.setAttribute('transform', `translate(${dx},${dy}) scale(${s})`);
-        g.append(land.cloneNode(), ...lines.map(p => p.cloneNode())); $('ctx').prepend(g);
-      }
+      // each cell's lines as a piece of path, with the box of its points
+      const pieces = [...cells.values()].map(runs => {
+        const pts = runs.flatMap(run => (typeof run === 'string' ? run.replace('Z', '').split('L') : run)), box = [Infinity, Infinity, -Infinity, -Infinity];
+        for (const t of pts) { const k = t.indexOf(','), x = +t.slice(0, k), y = +t.slice(k + 1); if (x < box[0]) box[0] = x; if (x > box[2]) box[2] = x; if (y < box[1]) box[1] = y; if (y > box[3]) box[3] = y; }
+        return { box, d: runs.map(run => 'M' + (typeof run === 'string' ? run : run.join('L'))).join('') };
+      });
+      const copies = MERCATOR.world(WORLD, Q.proj, Q.size[0]).map(([s, dx, dy]) => { // (a second one for a map over the 180th meridian)
+        const g = document.createElementNS(NS, 'g'), land = path('wland'), lines = path('wline');
+        g.setAttribute('transform', `translate(${dx},${dy}) scale(${s})`); g.append(land, lines); $('ctx').prepend(g);
+        return { s, dx, dy, land, lines, key: '' };
+      });
+      // [x0, y0, x1, y1]: the picture drawn, in the quiz map's units
+      worldNear = ([X0, Y0, X1, Y1]) => {
+        for (const c of copies) {
+          const x0 = (X0 - c.dx) / c.s, y0 = (Y0 - c.dy) / c.s, x1 = (X1 - c.dx) / c.s, y1 = (Y1 - c.dy) / c.s, meets = b => b[2] >= x0 && b[0] <= x1 && b[3] >= y0 && b[1] <= y1;
+          const land = places.filter(r => meets(r.b)), lines = pieces.filter(p => meets(p.box)), key = land.map(r => r.id).join() + '|' + lines.map(p => pieces.indexOf(p)).join();
+          if (key === c.key) continue;
+          c.key = key; c.land.setAttribute('d', land.map(r => r.d).join('')); c.lines.setAttribute('d', lines.map(p => p.d).join(''));
+        }
+      };
+      setTimeout(() => { worldNear(pictureBox()); countSoon(); }); // (after the page's script has run, which lay may run in)
       const note = $('stage').querySelector('.note'); if (note && !/Natural Earth/.test(note.textContent)) note.append(' · World: Natural Earth');
     };
     if (typeof WORLD === 'object') lay(); else { const s = document.createElement('script'); s.src = HERE + 'world.js'; s.onload = lay; document.head.append(s); }
@@ -177,7 +194,6 @@
   const AREAS = Q.areas.map(a => a.id);
   const gPins = document.createElementNS(NS, 'g'); gPins.id = 'pins'; svg.appendChild(gPins);
   const gFree = document.createElementNS(NS, 'g'); gFree.id = 'free'; svg.insertBefore(gFree, gR); // map play: the last guess, under the dots
-  let streetPin = null;
   let tiles = null; // map tiles in the quiz map's own projection (map-tiles.js), once asked for: see withTiles
 
   /* ---------- what can be asked ----------
@@ -312,14 +328,20 @@
 
   /* ---------- pan & zoom for the quiz map ----------
      The view is a box of the map (vb), shown in the stage. The picture of the map (the SVG) is drawn for a view and
-     reaches beyond each side of the stage: by AHEAD of the stage's size, or less on a large screen, where FAR pixels
-     are enough (the picture takes memory). While a finger or the wheel moves the map, that picture is only moved and
-     sized to the view: the browser slides what it has drawn already, which costs it next to nothing. It is drawn
-     again when the view has come EDGE of the way into what was drawn ahead, when the picture is stretched or shrunk
-     by more than STRETCH, when the hand rests (REST ms), and when it lets go. Drawing a large map again for every
-     step of a move (as a change of the SVG's viewBox does) is what made moving it slow. So while a pinch or the
-     wheel zooms, lines and labels grow and shrink with the picture until it is drawn again. */
-  const [MW, MH] = Q.size, PAD = Q.pad, stage = $('stage'), AHEAD = .5, FAR = 300, EDGE = .6, STRETCH = 1.6, REST = 120;
+     reaches beyond each side of the stage by AHEAD of the stage's size (the browser only paints the part near the
+     stage, so a larger picture costs next to nothing). While a finger, the mouse or the wheel moves the map, that
+     picture is only moved and sized to the view: the browser slides what it has drawn already, which costs it next to
+     nothing. Drawing a large map again for every step of a move (as a change of the SVG's viewBox does) is what made
+     moving it slow, and drawing it again in the middle of a drag is what made the drag stutter. So it is drawn again
+     only when the hand rests (REST ms) or lets go, and while held only once the picture is stretched or shrunk by
+     more than HELD_STRETCH (a drag that goes on past the picture shows the sea beside it until then, as the street
+     map's library does). Moved by the wheel, it is drawn again when the view has come EDGE of the way into what was
+     drawn ahead or the picture is stretched by more than STRETCH. Meanwhile lines and labels grow and shrink with the
+     picture. */
+  // Points are told apart, and those worked out here rounded, to 1/QN of a map unit: hundredths, or finer where the
+  // map's own points are (Q.grain, mercator.js).
+  const QN = Math.max(100, Math.round(1 / (Q.grain || 1)));
+  const [MW, MH] = Q.size, PAD = Q.pad, stage = $('stage'), AHEAD = .5, EDGE = .6, STRETCH = 1.6, HELD_STRETCH = 4, REST = 120;
   let base = { x: 0, y: 0, w: MW, h: MH }, vb = { ...base };
   // The picture's box: the stage's and `ahead` of its size more on every side (a share, so it follows the stage's size).
   let ahead = 0;
@@ -343,12 +365,17 @@
   // The picture drawn for the view.
   function apply() {
     cancelAnimationFrame(raf); clearTimeout(resting);
-    const r = stageBox(); if (r.width && r.height) reach(Math.min(AHEAD, FAR / Math.min(r.width, r.height)));
     svg.setAttribute('viewBox', `${vb.x - ahead * vb.w} ${vb.y - ahead * vb.h} ${vb.w * (1 + 2 * ahead)} ${vb.h * (1 + 2 * ahead)}`);
     if (slid) { svg.style.transform = ''; slid = false; }
-    drawn = { ...vb };
+    drawn = { ...vb }; redraws++;
     const s = scale(); if (s !== sized) sizeLabels(s); syncDetail(s);
-    showTiles();
+    worldNear(pictureBox());
+    showTiles(); countSoon();
+  }
+  // The part of the map the picture holds (the stage's view and what is drawn ahead), [x0, y0, x1, y1] in map units.
+  function pictureBox() {
+    const r = stageBox(), k = Math.min(r.width / vb.w, r.height / vb.h) || 1, w = r.width / k * (1 + 2 * ahead), h = r.height / k * (1 + 2 * ahead), cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2;
+    return [cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2];
   }
   // The picture as it is, moved and sized to the view; drawn again where that no longer does (see above).
   function slide() {
@@ -359,7 +386,7 @@
     const d = put(drawn), n = put(vb), k = n.s / d.s;
     // how far the view reaches into what is drawn ahead (1: to its end), on its worst side
     const out = Math.max((drawn.x - vb.x) / drawn.w, (vb.x + vb.w - drawn.x - drawn.w) / drawn.w, (drawn.y - vb.y) / drawn.h, (vb.y + vb.h - drawn.y - drawn.h) / drawn.h) / ahead;
-    if (out > EDGE || k > STRETCH || k < 1 / STRETCH) return apply();
+    if (pts.size ? k > HELD_STRETCH || k < 1 / HELD_STRETCH : out > EDGE || k > STRETCH || k < 1 / STRETCH) return apply();
     // (the picture's own corner lies `ahead` of the stage's size outside the stage's)
     const tx = n.x - k * d.x + n.s * (drawn.x - vb.x) + ahead * r.width * (1 - k), ty = n.y - k * d.y + n.s * (drawn.y - vb.y) + ahead * r.height * (1 - k);
     svg.style.transform = `translate(${tx}px,${ty}px) scale(${k})`; slid = true;
@@ -373,8 +400,12 @@
     const ox = (r.width - v.w * s) / 2, oy = (r.height - v.h * s) / 2;
     return { x: v.x + (cx - r.left - ox) / s, y: v.y + (cy - r.top - oy) / s };
   }
+  // On the street map and the overlay the map zooms in as far as the street map's tiles go (zoom level 19); a Mercator
+  // map has 256 · 2^zoom / 360 / k screen pixels to its unit there (k: its units to a degree of longitude, mercator.js).
+  const STREET_MAX = Q.proj && Q.proj.type === 'mercator' ? 256 * 2 ** 19 / 360 / Q.proj.k : 0;
   function clampV(v) {
-    const minW = base.w / Q.maxZoom, maxW = base.w * (Q.world ? 3 : 1.15); // (a map lying on the world's shows more of it when zoomed out)
+    const r = stageBox(), deep = onStreet() && STREET_MAX && r.width;
+    const minW = deep ? Math.min(r.width, r.height * v.w / v.h) / STREET_MAX : base.w / Q.maxZoom, maxW = base.w * (Q.world ? 3 : 1.15); // (a map lying on the world's shows more of it when zoomed out)
     const k = Math.min(Math.max(v.w, minW), maxW) / v.w;
     if (k !== 1) { const cx = v.x + v.w / 2, cy = v.y + v.h / 2; v.w *= k; v.h *= k; v.x = cx - v.w / 2; v.y = cy - v.h / 2; }
     const mx = v.w * .5, my = v.h * .5;
@@ -397,13 +428,15 @@
     const ar = base.w / base.h, w = Math.max(box[2] - box[0], (box[3] - box[1]) * ar) + PAD * 2, h = w / ar;
     vb = clampV({ x: (box[0] + box[2]) / 2 - w / 2, y: (box[1] + box[3]) / 2 - h / 2, w, h }); apply();
   }
-  // The view to go back to: the box of the round being played or chosen.
-  const frameRound = () => {
+  // The view to go back to: the box of the round being played or chosen. The street map alone stays where it is (a
+  // round's box would give it away); asked to (all: the button, the key), it shows all of the map.
+  const frameRound = (all = false) => {
     const r = view === 'play' ? { kind: G.kind, ids: G.items, box: G.box } : view === 'setup' ? current() : {};
-    if (onStreet()) frameStreet(r); else frame(r.box);
+    if (plain()) { if (all === true) resetView(); return; }
+    frame(r.box);
   };
   svg.addEventListener('wheel', e => { e.preventDefault(); const f = Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.0022)); zoomAt(e.clientX, e.clientY, f, vb, glide); }, { passive: false });
-  $('zIn').onclick = () => zoomCenter(1.6); $('zOut').onclick = () => zoomCenter(1 / 1.6); $('zFit').onclick = () => frameRound();
+  $('zIn').onclick = () => zoomCenter(1.6); $('zOut').onclick = () => zoomCenter(1 / 1.6); $('zFit').onclick = () => frameRound(true);
   window.addEventListener('resize', () => {
     if (!stageBox().width) return;
     const c = { x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 }; const k = vb.w / base.w;
@@ -414,11 +447,11 @@
   svg.addEventListener('pointerdown', e => {
     svg.setPointerCapture(e.pointerId);
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pts.size === 1) { drag = { x: e.clientX, y: e.clientY, v: { ...vb }, s: scale() }; moved = false; downArea = e.target.dataset ? e.target.dataset.a : null; }
+    if (pts.size === 1) { drag = { x: e.clientX, y: e.clientY, v: { ...vb }, s: scale() }; moved = false; downArea = areaAt(e); }
     else if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, m: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, v: { ...vb } }; moved = true; drag = null; }
   });
   svg.addEventListener('pointermove', e => {
-    if (!pts.has(e.pointerId)) { if (e.pointerType === 'mouse') hover(e.target.dataset && e.target.dataset.a); return; }
+    if (!pts.has(e.pointerId)) { if (e.pointerType === 'mouse') hover(areaAt(e)); return; }
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinch && pts.size === 2) {
       const [a, b] = [...pts.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y), m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
@@ -433,6 +466,17 @@
       if (moved) { vb = clampV({ ...drag.v, x: drag.v.x - dx / drag.s, y: drag.v.y - dy / drag.s }); glide(); }
     }
   });
+  // The area a press or the pointer is on. On a unit drawn as one shape any of its areas, since they are all the same
+  // item (a round of states asks nothing of the Kreise); in Explore, which tells about an area, the one under it.
+  function areaAt(e) {
+    const t = e.target, d = t && t.dataset; if (!d) return null;
+    if (d.a) return d.a;
+    const p = d.u !== undefined ? UNDER[+d.u] : null; if (!p) return null;
+    if (view !== 'explore') return p.areas[0];
+    const q = toSvg(e.clientX, e.clientY, vb), at = s => inside(s, q.x, q.y);
+    // (its shape drawn at a view's detail may reach half a pixel past its areas: then the area there, of any unit)
+    return p.areas.find(a => at(shapeOf(SVG_SPACE, a))) || (shapesNear(SVG_SPACE, q.x, q.y).find(at) || {}).a || p.areas[0];
+  }
   function up(e) {
     const had = pts.delete(e.pointerId); // false when the press began outside the map
     if (pts.size < 2) pinch = null;
@@ -451,111 +495,56 @@
   svg.addEventListener('pointerup', up); svg.addEventListener('pointercancel', up);
   svg.addEventListener('pointerleave', () => hover(null));
 
-  /* ---------- street map (hard mode), and the overlay: the same map with the areas drawn on it ---------- */
-  let lmap = null;
-  const SP = {}; // polygon per area
-  const CAN_HOVER = matchMedia('(hover: hover)').matches;
-  // Tiles only look crisp at whole zoom levels, so zoom in one extra step if most of the country still fits.
-  function fitHome() {
-    const b = L.latLngBounds(Q.street.bounds), z = lmap.getBoundsZoom(b), size = lmap.getSize();
-    const nw = lmap.project(b.getNorthWest(), z + 1), se = lmap.project(b.getSouthEast(), z + 1);
-    const fits = Math.min(size.x / (se.x - nw.x), size.y / (se.y - nw.y)) >= 0.8;
-    lmap.setView(b.getCenter(), fits ? z + 1 : z);
-  }
-  // The street map's layers load `ahead` pixels beyond the edge of the map, and look for new tiles while it is dragged
-  // (on a phone too, and twice as often as Leaflet's default): so a move finds its sides there.
-  const loadsAhead = Layer => Layer.extend({
-    options: { updateInterval: 100, updateWhenIdle: false },
-    _getTiledPixelBounds(center) {
-      const b = Layer.prototype._getTiledPixelBounds.call(this, center), pad = L.point(this.options.ahead, this.options.ahead);
-      return L.bounds(b.min.subtract(pad), b.max.add(pad));
-    },
-  });
-  function initStreet() {
-    if (lmap) return;
-    lmap = L.map('street', { minZoom: 2, maxBounds: Q.street.maxBounds });
-    lmap.attributionControl.setPrefix(false); // credits name the map data only, not the Leaflet library
-    fitHome();
-    new (loadsAhead(L.TileLayer))(TILE_URL, { maxZoom: 19, attribution: TILE_ATTRIBUTION, ahead: 256 }).addTo(lmap); // one ring of tiles: OpenStreetMap asks not to fetch much ahead
-    // The areas get a pane of their own, under pins and labels: the overlay tints the map with it as a whole.
-    lmap.createPane('areas').style.zIndex = 350;
-    for (const a of AREAS) {
-      const poly = L.polygon(Q.geo[a].rings, { pane: 'areas', stroke: false, fillOpacity: 0, bubblingMouseEvents: false }).addTo(lmap);
-      // 'r' and data-g as on the quiz map, so the areas take the quiz's hint colors on the overlay.
-      const el = poly.getElement();
-      el.classList.add('ar', 'r'); el.dataset.g = AREA[a].g;
-      if (AREA[a].top) el.classList.add('top');
-      poly.on('click', () => pick(a));
-      if (CAN_HOVER) poly.on({ mouseover: () => hover(a), mouseout: () => hover(null) });
-      SP[a] = poly;
-    }
-    lmap.on('zoomend', syncOverlayDetail);
-  }
-
-  // A round's box is in quiz-map units, so the overlay shows the round's areas instead (or all of the map, without a
-  // box). The street map alone stays as it is.
-  function frameStreet({ kind, ids, box }) {
-    if (!overlaid()) return;
-    if (box && ids.length) lmap.fitBounds(L.featureGroup(ids.flatMap(id => KINDS[kind].areas[id]).map(a => SP[a])).getBounds(), { padding: [30, 30] });
-    else fitHome();
-  }
+  /* ---------- the street map and the overlay: the quiz map on the street map's tiles ---------- */
+  // Every quiz map that offers them is in Web Mercator (mercator.js), the street map's own projection, so the street
+  // map's tiles lie under it as they are (map-tiles.js, behind the quiz map, following its view: see showTiles). The
+  // overlay is the quiz map itself, tinting the tiles (area-quiz.css); the street map alone is the same map with its
+  // areas not shown, there to be tapped, and only what was answered shows.
 
   /* ---------- one interface over the maps ---------- */
   let mapStyle = 'quiz';
   const onStreet = () => mapStyle === 'street' || mapStyle === 'overlay'; // on the street map, with or without the areas
   const overlaid = () => mapStyle === 'overlay';
   const plain = () => mapStyle === 'street'; // the street map alone: nothing may give the borders away
-  const pathsOf = areas => onStreet() ? areas.map(a => SP[a].getElement()) : areas.map(a => EL[a]);
-  // An area's shape on the quiz map and, once the street map exists, on that too.
-  const shapesOf = a => SP[a] ? [EL[a], SP[a].getElement()] : [EL[a]];
-  // Classes the stylesheet reads on either map (hints, fade, merged, picking).
-  const mapClass = (cls, on) => { svg.classList.toggle(cls, on); $('street').classList.toggle(cls, on); };
+  const pathsOf = areas => areas.map(a => EL[a]);
+  const shapesOf = a => [EL[a]];
+  // Classes the stylesheet reads on the map (hints, fade, merged, picking).
+  const mapClass = (cls, on) => svg.classList.toggle(cls, on);
 
-  // The middle of what the map in use shows, and its size as the street map's zoom level (256 · 2^zoom pixels around
-  // the globe): the quiz map is Web Mercator like the street map (mercator.js), so one says it for the other.
-  function placeInView() {
-    if (onStreet() && lmap) { const c = lmap.getCenter(); return { lat: c.lat, lng: c.lng, zoom: lmap.getZoom() }; }
-    const P = Q.proj;
-    return { lat: MERCATOR.latOf(P.y0 - (vb.y + vb.h / 2) / P.k), lng: P.lng0 + (vb.x + vb.w / 2) / P.k, zoom: Math.log2(scale() * P.k * 360 / 256) };
-  }
   // keep: the picker changed the map (no round is starting), so the new map shows the place the old one showed, at
-  // the same size: only the look changes. Else each map starts from its whole.
+  // the same size (as far as it zooms): only the look changes. Else each map starts from its whole.
   function useMap(style, keep) {
-    const was = keep && typeof MERCATOR === 'object' && Q.proj && Q.proj.type === 'mercator' ? placeInView() : null;
     clearLabels(); hover(null);
     mapStyle = style;
-    $('street').hidden = !onStreet();
-    $('street').classList.toggle('overlay', overlaid());
-    svg.style.display = onStreet() ? 'none' : '';
-    $('zoomCtl').hidden = onStreet();
     svg.classList.toggle('free', style === 'free');
-    if (onStreet()) {
-      initStreet(); lmap.invalidateSize();
-      // (the street map keeps to whole zoom levels on its own: not for this one step)
-      if (was) { const snap = lmap.options.zoomSnap; lmap.options.zoomSnap = 0; lmap.setView([was.lat, was.lng], was.zoom, { animate: false }); lmap.options.zoomSnap = snap; }
-      else fitHome();
-    } else if (was) {
-      fit();
-      const P = Q.proj, r = stageBox(), s = 256 * 2 ** was.zoom / 360 / P.k, w = r.width / s, h = r.height / s;
-      vb = clampV({ x: (was.lng - P.lng0) * P.k - w / 2, y: (P.y0 - MERCATOR.my(was.lat)) * P.k - h / 2, w, h }); apply();
-    } else resetView();
+    svg.classList.toggle('overlay', overlaid()); svg.classList.toggle('blind', plain());
+    syncStreets();
+    if (keep) { vb = clampV({ ...vb }); apply(); } else resetView();
     syncHints(); syncCover();
+  }
+  // The street map's tiles behind the map: on the street map and the overlay, and behind a city quiz's map (showBack).
+  function syncStreets() {
+    const on = onStreet() || shownBack !== 'quiz';
+    svg.classList.toggle('streets', on);
+    if (on || tiles) withTiles(() => { tiles.streets().show(onStreet() || shownBack !== 'quiz'); apply(); });
   }
   function activeKind() { return view === 'explore' ? Q.exploreKind : view === 'setup' ? choiceKind() : G.kind; }
   // The item under the pointer: outlined on the quiz map, tinted on the overlay.
-  let hovered = [];
+  // (not on the street map alone: that would show its borders)
   function hover(area) {
     const K = KINDS[activeKind()], id = area && K.primary(area);
-    for (const p of hovered) p.classList.remove('hov');
-    hovered = id && overlaid() ? pathsOf(K.areas[id]) : [];
-    for (const p of hovered) p.classList.add('hov');
-    hoverUse.setAttribute('d', id && !onStreet() ? K.areas[id].map(a => AREA[a].d).join(' ') : '');
+    hoverUse.setAttribute('d', id && !plain() ? outline(K.areas[id]) : '');
   }
-  function mark(areas) { ansUse.setAttribute('d', areas && !onStreet() ? areas.map(a => AREA[a].d).join(' ') : ''); }
+  function mark(areas) { ansUse.setAttribute('d', areas ? outline(areas) : ''); }
+  // The shapes of some areas as one: where they make up units drawn as one shape (see `whole` below), by those.
+  function outline(areas) {
+    const done = new Set();
+    return areas.map(a => { const p = UNDER[underOf[a]]; if (!p || !p.whole) return AREA[a].d; if (done.has(p)) return ''; done.add(p); return p.getAttribute('d'); }).join(' ');
+  }
+  // An area's box on the quiz map: from its outline where it is not drawn itself.
+  const boxOf_ = a => { if (EL[a].isConnected) return EL[a].getBBox(); const s = shapeOf(SVG_SPACE, a); return { x: s.x0, y: s.y0, width: s.x1 - s.x0, height: s.y1 - s.y0 }; };
   function flyTo(areas) {
-    // Not too close: zoom level 9, or two steps closer than the whole map where that is a city.
-    if (onStreet()) { lmap.fitBounds(L.featureGroup(areas.map(a => SP[a])).getBounds(), { padding: [60, 60], maxZoom: Math.max(9, lmap.getBoundsZoom(L.latLngBounds(Q.street.bounds)) + 2) }); return; }
-    const bs = areas.map(a => EL[a].getBBox());
+    const bs = areas.map(boxOf_);
     const x0 = Math.min(...bs.map(b => b.x)), y0 = Math.min(...bs.map(b => b.y));
     const x1 = Math.max(...bs.map(b => b.x + b.width)), y1 = Math.max(...bs.map(b => b.y + b.height));
     const ar = base.w / base.h;
@@ -595,7 +584,7 @@
     const entry = (key, m) => {
       let e = byPos[key];
       if (!e) {
-        e = byPos[key] = { ...m, ids: [], shown: new Set(), marker: null, el: document.createElementNS(NS, 'text') };
+        e = byPos[key] = { ...m, ids: [], shown: new Set(), el: document.createElementNS(NS, 'text') };
         e.el.setAttribute('x', m.x); e.el.setAttribute('y', m.y); e.el.setAttribute('class', 'off');
         gL.appendChild(e.el); ENTRIES.push(e);
       }
@@ -633,13 +622,6 @@
       : e.ids.filter(id => all || e.shown.has(id)).map(id => K.short(id)).join(' / ');
     if (e.fixed === undefined) e.el.textContent = text;
     e.el.classList.toggle('off', !text);
-    if (onStreet() && text) {
-      if (!e.marker) {
-        const span = document.createElement('span');
-        e.marker = L.marker(e.ll, { icon: L.divIcon({ className: 'st-label', html: span, iconSize: [0, 0] }), interactive: false, keyboard: false }).addTo(lmap);
-      }
-      e.marker.getElement().querySelector('span').textContent = text;
-    } else if (e.marker) { e.marker.remove(); e.marker = null; }
   }
   function showLabel(kind, id, on = true) {
     buildLabels(kind);
@@ -668,16 +650,11 @@
   function showPin(p) {
     clearPin();
     if (!p) return;
-    if (onStreet()) {
-      streetPin = L.circleMarker(p.ll, { radius: 6, weight: 2, color: '#fff', fillColor: '#15283A', fillOpacity: 1, interactive: false })
-        .bindTooltip(p.label, { permanent: true, direction: 'top', offset: [0, -6], className: 'st-pin' }).addTo(lmap);
-      return;
-    }
     const c = document.createElementNS(NS, 'circle'); c.setAttribute('cx', p.x); c.setAttribute('cy', p.y);
     const t = document.createElementNS(NS, 'text'); t.setAttribute('x', p.x); t.setAttribute('y', p.y); t.textContent = p.label;
     gPins.append(c, t); sizeLabels();
   }
-  function clearPin() { gPins.replaceChildren(); if (streetPin) { streetPin.remove(); streetPin = null; } }
+  function clearPin() { gPins.replaceChildren(); }
 
   const flashTimers = new Map();
   // A kind with fresh: the colors of the answers leave the map, at once or after `wait` ms.
@@ -695,8 +672,8 @@
     clearLabels(); labelsOut();
     mark(null);
   }
-  // Dim the areas outside the current set, on the quiz map and the overlay. The street map alone never dims (its
-  // stylesheet ignores 'out'): that would give away borders.
+  // Dim the areas outside the current set. The street map alone never shows it (its stylesheet ignores 'out'): that
+  // would give away borders.
   function markOut(areas) {
     const inSet = new Set(areas);
     for (const a of AREAS) for (const p of shapesOf(a)) p.classList.toggle('out', !inSet.has(a));
@@ -709,6 +686,40 @@
      that differs from its neighbours'. Code kinds (clickAll) and per-area labels (areaLabel) keep every area. */
   const LAYOUTS = {};
   const PALETTE = Array.from({ length: 10 }, (_, i) => `var(--h${i + 1})`);
+  /* Precomputed (shapes.js beside the page, made by tools/builds/layer-shapes): for each kind whose items group areas,
+     its units' colors, their shapes (dissolve) and their outlines (unitOutlines, both versions), worked out by this
+     very code when the page was built. They are used where the units the page finds in its data are the ones they
+     were made for (sig); else all of it is worked out here, as the page opens.
+     Every line is kept once, as an arc: [x, y, then each next point's dx, dy], in 1/QN of a map unit. A shape
+     or an outline is a list of runs, a run a list of arcs (~i: arc i backwards), each starting where the last ended.
+     Each point between an arc's ends has a level (SHAPES.lv): how fine a view needs it. A view keeps only the points
+     its pixels can show (band, see syncDetail), as the street map's library does at every zoom, but looked up, not
+     worked out: zoomed out, a map draws a fraction of its points. Two units that share a border share its points. */
+  const PRE = typeof SHAPES === 'object' && SHAPES.v === 1 && SHAPES.q === QN && !window.SHAPES_DUMP ? SHAPES.kinds : {};
+  const ARC = [], BAND = [];
+  function arcPts(i, T = 0) {
+    if (T) { const all = arcPts(i), lv = SHAPES.lv[i]; return (BAND[T] ??= [])[i] ??= all.filter((_, j) => j === 0 || j === all.length - 1 || lv[j - 1] >= T); }
+    if (ARC[i]) return ARC[i];
+    const a = SHAPES.arcs[i], pts = [[a[0] / QN, a[1] / QN]];
+    for (let j = 2, x = a[0], y = a[1]; j < a.length; j += 2) { x += a[j]; y += a[j + 1]; pts.push([x / QN, y / QN]); }
+    return ARC[i] = pts;
+  }
+  function runPts(run, T = 0) {
+    const pts = [];
+    for (const r of run) { const a = r < 0 ? arcPts(~r, T).slice().reverse() : arcPts(r, T); pts.pop(); pts.push(...a); }
+    return pts;
+  }
+  // (a ring left with fewer than four corners keeps all its points: an island too small to see stays one)
+  const ringsD = (rings, T = 0) => rings.map(r => { let p = runPts(r, T); if (T && p.length < 5) p = runPts(r); p.pop(); return 'M' + p.join('L') + 'Z'; }).join('');
+  const runsD = (runs, T = 0) => runs.map(r => 'M' + runPts(r, T).join('L')).join('');
+  // (the units, and the outlines they are made of as the page's data has them: points in latitude and longitude, else
+  // the path's own text; the same in every browser)
+  function sigOf(units) {
+    let n = 0; for (const u of units) for (const a of u) n += Q.geo && Q.geo[a] ? Q.geo[a].rings.reduce((m, r) => m + r.length, 0) : AREA[a].d.length;
+    const s = units.map(u => u.join(',')).join('|') + '|' + Math.round(MW) + 'x' + Math.round(MH) + '|' + n + '|' + (Q.grain || '');
+    let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return (h >>> 0).toString(36) + ':' + units.length;
+  }
   function layoutOf(kind) {
     if (kind in LAYOUTS) return LAYOUTS[kind];
     const K = KINDS[kind];
@@ -720,7 +731,10 @@
         byKey.set(key, [...(byKey.get(key) || []), a]);
       }
       const units = [...byKey.values()];
-      if (units.some(u => u.length > 1)) L = { units, color: unitColors(K, units) };
+      if (units.some(u => u.length > 1)) {
+        const pre = PRE[kind] && PRE[kind].sig === sigOf(units) ? PRE[kind] : null;
+        L = { units, pre, color: pre ? pre.color && Object.fromEntries(units.flatMap((u, i) => u.map(a => [a, pre.color[i]]))) : unitColors(K, units) };
+      }
     }
     return LAYOUTS[kind] = L;
   }
@@ -770,8 +784,8 @@
   // Also in map units: the height of a row of edges and the size of a cell of areas (both only for speed), how far
   // off an edge to look for its own area and for areas right next to it, and how long a piece of edge to test at once.
   const ROW = 4, CELL = 16, OWN = .01, NEAR = .3, STEP = 1;
-  // Outlines are worked out in a flat space: the quiz map's, or the street map's for the overlay (GEO_SPACE below).
-  // rings(a): the area's rings there; k: how many of its units make one map unit, which scales every size above.
+  // Outlines are worked out in a flat space, the quiz map's: rings(a) are the area's rings there; k: how many of its
+  // units make one map unit, which scales every size above.
   const SVG_SPACE = { k: 1, rings: a => pathRings(AREA[a].d), shapes: {}, cells: null };
   function shapeOf(S, a) {
     if (S.shapes[a]) return S.shapes[a];
@@ -815,7 +829,7 @@
     // Every edge once: its area, how many areas have it, and the two units it lies between (v: -1 while only one).
     // Points and edges are numbered, which is much quicker to look up than their coordinates as text.
     const points = new Map(), edges = new Map();
-    const idOf = p => { const k = Math.round(p[0] * 100) * 67108864 + Math.round(p[1] * 100); let i = points.get(k); if (i === undefined) points.set(k, i = points.size); return i; };
+    const idOf = p => { const k = Math.round(p[0] * QN) * 67108864 + Math.round(p[1] * QN); let i = points.get(k); if (i === undefined) points.set(k, i = points.size); return i; };
     for (const a of AREAS) {
       if (AREA[a].top) continue; // areas on top keep their own border
       for (const r of shapeOf(S, a).rings) {
@@ -853,7 +867,7 @@
       const sideAt = t => { const l = on(t, 1), r = on(t, -1); return l && r ? 2 : l ? 1 : r ? -1 : 0; }; // 2: a border inside the unit
       // A long edge may lie on the unit's outline for only part of its length (its neighbours change along it), so
       // it is tested piece by piece, and the point where the answer changes is narrowed down.
-      const n = Math.ceil(len / (STEP * sc)), at = t => [Math.round((e.p[0] + dx * t) * 100) / 100, Math.round((e.p[1] + dy * t) * 100) / 100];
+      const n = Math.ceil(len / (STEP * sc)), at = t => [Math.round((e.p[0] + dx * t) * QN) / QN, Math.round((e.p[1] + dy * t) * QN) / QN];
       for (let i = 1, from = 0, side = sideAt(.5 / n); i <= n; i++) {
         const next = i < n ? sideAt((i + .5) / n) : null;
         if (next === side) continue;
@@ -903,12 +917,46 @@
   }
   // The units' outlines go on top of the areas (under any areas marked top), the lines of dimmed units first so
   // that a line two units share is drawn in the stronger of their two colors.
-  /* The areas of a unit are drawn one by one, and where two of them meet, the edge of each is half see-through: a
-     hair of the sea would show between them. So each unit has one shape of all its areas under them, in their
-     color (UNDER: drawn as one shape, it has no such seams), which shows through instead. A line of an area's own
-     color around it does the same and closes narrow gaps too, but costs more to draw than everything else on the
-     map: only the areas that need it for that keep it (those unitOutlines calls loose), the others are `tight`. */
-  let layoutKind = null, UNIT_LINES = [], UNDER = [], underOf = {}, detail = 0;
+  /* A unit is drawn as one shape (UNDER, `whole`): its border alone, the edges only one of its areas has (dissolve),
+     with a line of its own color around it as each area had (it closes narrow gaps between its areas). Its areas are
+     then not in the drawing at all (placeAreas), and the shape is what is clicked: a round of states draws and asks
+     16 shapes, not 400 Kreise. Only an area with a state of its own is put in (the one picked in Explore, one flashing).
+     Where the areas' borders don't meet point for point, the edges don't join up into a border: such a unit is drawn
+     as its areas, one by one, over one shape of all of them in their color (no seam of the sea can show between
+     them), and only the areas that need a line of their own color keep it (those unitOutlines calls loose), the
+     others are `tight`. */
+  function dissolve(areas, S = SVG_SPACE) {
+    const key = p => Math.round(p[0] * QN) + ',' + Math.round(p[1] * QN), edges = new Map();
+    for (const a of areas) for (const r of S.rings(a)) for (let i = 0; i < r.length; i++) {
+      const p = r[i], q = r[(i + 1) % r.length], kp = key(p), kq = key(q); if (kp === kq) continue;
+      const k = kp < kq ? kp + '|' + kq : kq + '|' + kp, e = edges.get(k);
+      if (e) e.n++; else edges.set(k, { p, q, kp, kq, n: 1 });
+    }
+    // (an edge had an odd number of times is a border, as filling all the areas as one shape counts it: a spike that
+    // goes out and back along an edge has it twice more)
+    const border = [...edges.values()].filter(e => e.n % 2), at = new Map();
+    for (const e of border) for (const k of [e.kp, e.kq]) { const l = at.get(k); if (l) l.push(e); else at.set(k, [e]); }
+    for (const l of at.values()) if (l.length % 2) return null; // an end that goes nowhere: the borders don't meet
+    const used = new Set(); let d = '';
+    for (const e0 of border) {
+      if (used.has(e0)) continue;
+      used.add(e0);
+      const run = [e0.p, e0.q]; let end = e0.kq;
+      while (end !== e0.kp) {
+        const f = at.get(end).find(f => !used.has(f)); if (!f) return null;
+        used.add(f); const fwd = f.kp === end; run.push(fwd ? f.q : f.p); end = fwd ? f.kq : f.kp;
+      }
+      run.pop();
+      d += 'M' + run.map(p => p[0] + ',' + p[1]).join('L') + 'Z';
+    }
+    return d;
+  }
+  let layoutKind, UNIT_LINES = [], UNDER = [], underOf = {}, detail = 0, band = 0; // (layoutKind: undefined until the first layout)
+  // A unit drawn as one shape, at a band's detail (stored shapes only: one worked out here has all its points).
+  function wholeOf(L, i, T) {
+    if (!L.pre) return ((L.whole ??= {})[0] ??= [])[i] ??= dissolve(L.units[i].filter(a => !AREA[a].top && !AREA[a].dot));
+    return ((L.whole ??= {})[T] ??= [])[i] ??= L.pre.fill[i] && ringsD(L.pre.fill[i], T);
+  }
   function applyLayout(kind) {
     const L = layoutOf(kind), key = L ? kind : null;
     if (key === layoutKind) return;
@@ -917,50 +965,108 @@
     UNIT_LINES = []; UNDER = []; underOf = {};
     for (const a of AREAS) { EL[a].style.removeProperty('--hint'); EL[a].classList.remove('tight'); }
     mapClass('merged', !!L);
-    if (!L) return;
+    if (!L) return placeAreas();
     if (L.color) for (const a of AREAS) EL[a].style.setProperty('--hint', L.color[a]);
     UNIT_LINES = L.units.map(() => { const line = document.createElementNS(NS, 'path'); line.setAttribute('class', 'unit'); return line; });
     UNDER = L.units.map((u, i) => {
       const areas = u.filter(a => !AREA[a].top && !AREA[a].dot); if (areas.length < 2) return null;
-      const p = document.createElementNS(NS, 'path'), hint = EL[areas[0]].style.getPropertyValue('--hint');
-      p.setAttribute('d', areas.map(a => AREA[a].d).join('')); p.dataset.g = AREA[areas[0]].g; if (hint) p.style.setProperty('--hint', hint);
+      const p = document.createElementNS(NS, 'path'), hint = EL[areas[0]].style.getPropertyValue('--hint'), d = wholeOf(L, i, band);
+      p.setAttribute('d', d || areas.map(a => AREA[a].d).join('')); p.dataset.g = AREA[areas[0]].g; p.dataset.u = i; if (hint) p.style.setProperty('--hint', hint);
       for (const a of areas) underOf[a] = i;
-      p.areas = areas;
+      p.areas = areas; p.whole = !!d;
       return p;
     });
-    gR.prepend(...UNDER.filter(Boolean));
     UNDER.forEach((p, i) => paintUnder(i));
+    placeAreas();
     drawUnits();
     syncUnitsOut();
+  }
+  // What the quiz map draws, bottom up: the shapes under units, the areas that are drawn themselves (every one not in
+  // a unit drawn as one shape, and of those the ones with a state of their own: picked in Explore, flashing), the
+  // units' outlines, the areas on top. The rest wait in SPARE.
+  const ownState = el => el.classList.contains('sel') || el.classList.contains('flash');
+  const drawnItself = a => { const p = UNDER[underOf[a]]; return !p || !p.whole || ownState(EL[a]); };
+  function placeAreas() {
+    const shown = AREAS.filter(drawnItself);
+    gR.replaceChildren(...UNDER.filter(Boolean), ...shown.filter(a => !AREA[a].top).map(a => EL[a]), ...UNIT_LINES, ...shown.filter(a => AREA[a].top).map(a => EL[a]));
+    SPARE.replaceChildren(...AREAS.filter(a => !EL[a].isConnected).map(a => EL[a]));
+  }
+  // An area of a unit drawn as one shape is put in the drawing while it has a state of its own, and taken out after.
+  function placeArea(a) {
+    const el = EL[a], want = drawnItself(a);
+    if (want === el.isConnected) return;
+    if (want) gR.insertBefore(el, UNIT_LINES.find(l => l.isConnected) || null); else SPARE.appendChild(el);
   }
   // The shape under a unit is in the state all of the unit's areas are in (lit or not, answered, flashing).
   const AREA_ONLY = new Set(['r', 'tight', 'top', 'dot']);
   function paintUnder(i) {
     const p = UNDER[i]; if (!p) return;
-    const [first, ...rest] = p.areas, cls = ['r', 'under', ...[...EL[first].classList].filter(c => !AREA_ONLY.has(c) && rest.every(a => EL[a].classList.contains(c)))].join(' ');
+    const [first, ...rest] = p.areas, cls = ['r', 'under', ...(p.whole ? ['whole'] : []), ...[...EL[first].classList].filter(c => !AREA_ONLY.has(c) && rest.every(a => EL[a].classList.contains(c)))].join(' ');
     if (p.getAttribute('class') !== cls) p.setAttribute('class', cls);
   }
-  // (it follows them by itself, whoever changes an area's state: before the map is next drawn)
-  new MutationObserver(changes => {
+  // (it follows them by itself, whoever changes an area's state, drawn or not: before the map is next drawn)
+  const following = new MutationObserver(changes => {
     if (!UNDER.length) return;
     const units = new Set();
-    for (const c of changes) { const i = underOf[c.target.dataset.a]; if (i !== undefined) units.add(i); }
+    for (const c of changes) { const a = c.target.dataset.a, i = underOf[a]; if (i === undefined) continue; units.add(i); if (UNDER[i] && UNDER[i].whole) placeArea(a); }
     for (const i of units) paintUnder(i);
-  }).observe(gR, { attributes: true, attributeFilter: ['class'], subtree: true });
+  });
+  following.observe(gR, { attributes: true, attributeFilter: ['class'], subtree: true });
+  following.observe(SPARE, { attributes: true, attributeFilter: ['class'], subtree: true });
+  new MutationObserver(() => countSoon()).observe(gR, { attributes: true, attributeFilter: ['class'], subtree: true, childList: true });
+  new MutationObserver(() => countSoon()).observe(svg, { attributes: true, attributeFilter: ['class'] });
+
+  /* ---------- for finding what is slow: a counter in the map's corner, bottom right ----------
+     Taken at the moment the picture is handed to the browser to be drawn anew (apply: a full redraw), and when what
+     is drawn changes (a color, a state), from the browser's own view of every element of the map: what it has to
+     paint, by its computed style, not by any rule of this engine. redraws: full redraws since the page opened (a
+     move that only slides the picture is none); painted: the elements the browser paints in each of them, anywhere
+     in the picture, and their outline points; in view: those of them whose box on screen meets the stage; tappable:
+     those in view that take a tap. */
+  const counter = document.createElement('div');
+  counter.className = 'dbg-count'; counter.setAttribute('aria-hidden', 'true');
+  ($('stage').querySelector('.corner') || $('stage')).prepend(counter);
+  let counting = 0, redraws = 0;
+  function countSoon() { if (!counting) counting = setTimeout(() => { counting = 0; requestAnimationFrame(count); }, 200); }
+  function count() {
+    const root = svg, st = $('stage').getBoundingClientRect();
+    let painted = 0, points = 0, inView = 0, tappable = 0;
+    for (const el of root.querySelectorAll('path, circle, line, text, polygon, rect')) {
+      const cs = getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility !== 'visible') continue;
+      const d = el.getAttribute('d'), shape = el.tagName !== 'text';
+      if (shape && el.tagName === 'path' && (!d || d.length < 5)) continue;
+      const paints = el.tagName === 'text' ? cs.display !== 'none' : !(cs.fill === 'none' && (cs.stroke === 'none' || parseFloat(cs.strokeWidth) === 0)) && parseFloat(cs.opacity) > 0;
+      const takes = cs.pointerEvents !== 'none';
+      if (!paints && !takes) continue;
+      const r = el.getBoundingClientRect(), seen = r.right >= st.left && r.left <= st.right && r.bottom >= st.top && r.top <= st.bottom && (r.width || r.height);
+      if (paints) { painted++; if (d) points += (d.match(/[MLHVCQAmlhvcqa]/g) || []).length; if (seen) inView++; }
+      if (takes && seen && el.closest('#regions')) tappable++;
+    }
+    counter.textContent = `redraws ${redraws} · painted ${painted} (${points >= 1000 ? Math.round(points / 1000) + 'k' : points} pts) · in view ${inView} · tappable ${tappable}`;
+  }
   // Each version of the outlines is worked out when it is first shown, and the other one right after it, as soon as
   // the page has nothing to do: zooming in would else stand still at FINE the first time, until it is worked out.
   const whenIdle = window.requestIdleCallback ? f => requestIdleCallback(f, { timeout: 4000 }) : f => setTimeout(f, 1500);
   function drawUnits() {
-    const L = LAYOUTS[layoutKind], lines = (L.lines ??= [])[detail] ??= unitOutlines(L.units, DETAIL[detail]);
+    const L = LAYOUTS[layoutKind], lines = L.pre ? ((L.bands ??= {})[detail + ':' + band] ??= Object.assign(L.pre.lines[detail].map(runs => runsD(runs, band)), { loose: new Set(L.pre.loose[detail]) }))
+      : (L.lines ??= [])[detail] ??= unitOutlines(L.units, DETAIL[detail]);
     UNIT_LINES.forEach((p, i) => p.setAttribute('d', lines[i]));
     for (const a of AREAS) EL[a].classList.toggle('tight', underOf[a] !== undefined && !lines.loose.has(a));
-    if (!L.ahead) { L.ahead = true; whenIdle(() => DETAIL.forEach((d, i) => { L.lines[i] ??= unitOutlines(L.units, d); })); }
+    if (!L.ahead && !L.pre) { L.ahead = true; whenIdle(() => DETAIL.forEach((d, i) => { L.lines[i] ??= unitOutlines(L.units, d); })); }
   }
+  // The detail a view draws: the version of the outlines (detail), and the band of points kept, those that lie half a
+  // screen pixel or more off a line without them (band T: a tolerance of 2^(T-1) / QN map units, see SHAPES.lv).
+  const bandOf = s => { const t = .5 / s * QN; return t < 1 ? 0 : Math.floor(Math.log2(t)) + 1; };
   function syncDetail(s = scale()) {
-    const d = s >= FINE ? 1 : 0;
-    if (d === detail) return;
-    detail = d;
-    if (layoutKind) drawUnits();
+    const d = s >= FINE ? 1 : 0, T = typeof SHAPES === 'object' && SHAPES.lv ? bandOf(s) : 0;
+    if (d === detail && T === band) return;
+    const shapes = T !== band;
+    detail = d; band = T;
+    if (!layoutKind) return;
+    const L = LAYOUTS[layoutKind];
+    if (shapes && L.pre) UNDER.forEach((p, i) => { if (p && p.whole) p.setAttribute('d', wholeOf(L, i, band)); });
+    drawUnits();
   }
   function syncUnitsOut() {
     if (!layoutKind) return;
@@ -968,44 +1074,23 @@
     UNIT_LINES.forEach((p, i) => p.classList.toggle('out', out[i]));
     for (const o of [true, false]) for (const p of UNIT_LINES) if (p.classList.contains('out') === o) gR.appendChild(p);
     raiseTops();
-    if (overlayKind !== layoutKind) return; // the overlay's lines, in the same order
-    OVERLAY_LINES.forEach((l, i) => { l.getElement().classList.toggle('out', out[i]); if (!out[i]) l.bringToFront(); });
-    for (const a of AREAS) if (AREA[a].top) SP[a].bringToFront();
   }
-  /* The overlay shows the same layout on the street map. Its outlines are worked out again, from the areas' [lat, lng]
-     rings (which need not match the quiz map's point for point), in a flat space of their own: thousandths of a
-     degree, east–west shrunk to its true size at the middle of the map. ll turns a point back into [lat, lng]; px is
-     the number of screen pixels per map unit at a zoom level, as scale() gives it for the quiz map. */
-  const GEO_SPACE = Q.geo && (() => {
-    const [[s, w], [n, e]] = Q.street.bounds, c = Math.cos((s + n) / 2 * Math.PI / 180), r = v => Math.round(v * 100) / 100;
-    const k = Math.hypot((e - w) * c, n - s) * 1000 / Math.hypot(MW, MH);
-    return {
-      k, shapes: {}, cells: null,
-      rings: a => Q.geo[a].rings.map(ring => ring.map(([lat, lng]) => [r((lng - w) * 1000 * c), r((n - lat) * 1000)])),
-      ll: ([x, y]) => [n - y / 1000, w + x / (1000 * c)],
-      px: zoom => 256 * 2 ** zoom / 360 / (1000 * c) * k,
-    };
-  })();
-  let overlayKind = null, OVERLAY_LINES = [], overlayShown = null;
-  function overlayLayout() {
-    if (overlayKind !== layoutKind) {
-      overlayKind = layoutKind; overlayShown = null;
-      for (const l of OVERLAY_LINES) l.remove();
-      const lay = layoutKind && LAYOUTS[layoutKind], color = lay && lay.color;
-      for (const a of AREAS) { const st = SP[a].getElement().style; if (color) st.setProperty('--hint', color[a]); else st.removeProperty('--hint'); }
-      OVERLAY_LINES = lay ? lay.units.map(() => L.polyline([], { pane: 'areas', className: 'unit', interactive: false }).addTo(lmap)) : [];
-      syncUnitsOut();
+  // For tools/builds/layer-shapes: with window.SHAPES_DUMP set before the page loads, the page works out what PRE
+  // holds for each of its kinds, the same way as without it, and leaves it in window.SHAPES_OUT as paths (the build
+  // turns them into arcs).
+  if (window.SHAPES_DUMP) {
+    const kinds = {};
+    for (const k of Q.kinds) {
+      const L = layoutOf(k.key); if (!L) continue;
+      const lines = DETAIL.map(d => unitOutlines(L.units, d));
+      kinds[k.key] = {
+        sig: sigOf(L.units),
+        color: L.color && L.units.map(u => L.color[u[0]]),
+        fill: L.units.map(u => { const areas = u.filter(a => !AREA[a].top && !AREA[a].dot); return areas.length < 2 ? null : dissolve(areas); }),
+        lines: lines.map(l => l.slice()), loose: lines.map(l => [...l.loose]),
+      };
     }
-    syncOverlayDetail();
-  }
-  // As on the quiz map, there are two versions of the outlines, and the zoom level picks one.
-  function syncOverlayDetail() {
-    if (!overlaid() || !overlayKind) return;
-    const lay = LAYOUTS[overlayKind], d = GEO_SPACE.px(lmap.getZoom()) >= FINE ? 1 : 0;
-    const lines = (lay.geoLines ??= [])[d] ??= unitOutlines(lay.units, DETAIL[d], GEO_SPACE).map(path => path ? pathRings(path).map(run => run.map(GEO_SPACE.ll)) : []);
-    if (lines === overlayShown) return;
-    overlayShown = lines;
-    OVERLAY_LINES.forEach((l, i) => l.setLatLngs(lines[i]));
+    window.SHAPES_OUT = { v: 1, q: QN, kinds };
   }
   const hintLabelOf = kind => {
     const K = KINDS[kind], L = layoutOf(kind);
@@ -1015,9 +1100,8 @@
   function syncHints() {
     const kind = activeKind();
     applyLayout(kind);
-    mapClass('hints', $('optColors').checked && !(view === 'play' && KINDS[kind].hints === false));
+    mapClass('hints', $('optColors').checked && !plain() && !(view === 'play' && KINDS[kind].hints === false));
     svg.classList.toggle('all-labels', !!(Q.lettersLabel && $('optLetters') && $('optLetters').checked && view === 'play'));
-    if (overlaid()) overlayLayout();
   }
 
   /* ---------- storage & options ---------- */
@@ -1153,38 +1237,24 @@
   function showBack(back) {
     if (back === shownBack) return;
     shownBack = back;
-    svg.classList.toggle('streets', back !== 'quiz'); svg.classList.toggle('plain', back === 'street');
-    withTiles(() => { tiles.streets().show(shownBack !== 'quiz'); apply(); });
+    svg.classList.toggle('plain', back === 'street');
+    syncStreets();
   }
   if (BACKS.length) useBack(chosenBack);
   // Street View coverage on top of the map, whatever the map: a switch of its own beside the map picker. It is the
-  // layer of the Coverage page (data/coverage, see the README): on the street map and the overlay a layer of that
-  // map, on the quiz map redrawn in the quiz map's projection, where that is known (TILED).
+  // layer of the Coverage page (data/coverage, see the README), redrawn in the quiz map's projection where that is
+  // known (TILED).
   const COVER = HERE + '../../data/coverage';
-  let coverOn = !!load('cover'), coverMeta = null, coverLayer = null, covered = false;
+  let coverOn = !!load('cover'), coverMeta = null, covered = false;
   const coverSeg = document.createElement('div'), coverBtn = document.createElement('button');
-  coverSeg.className = 'maps'; coverSeg.hidden = !(TILED || Q.geo); coverBtn.type = 'button'; coverBtn.textContent = 'Coverage'; coverBtn.title = 'Street View coverage';
+  coverSeg.className = 'maps'; coverSeg.hidden = !TILED; coverBtn.type = 'button'; coverBtn.textContent = 'Coverage'; coverBtn.title = 'Street View coverage';
   coverBtn.onclick = () => { coverOn = !coverOn; store('cover', coverOn || null); syncCover(); };
   coverSeg.append(coverBtn); mapBar.append(coverSeg);
   function syncCover() {
-    const here = onStreet() ? !!Q.geo : !!TILED; // can the map in use show it
-    coverBtn.disabled = !here; coverBtn.setAttribute('aria-pressed', coverOn && here);
-    if (!coverOn && !covered) return;
+    coverBtn.disabled = !TILED; coverBtn.setAttribute('aria-pressed', coverOn && !!TILED);
+    if (!TILED || (!coverOn && !covered)) return;
     covered = true;
-    (coverMeta ||= fetch(COVER + '/meta.json').then(r => r.json())).then(meta => {
-      if (TILED) withTiles(() => { tiles.coverage(COVER, meta).show(coverOn && !onStreet()); apply(); });
-      if (!lmap) return;
-      if (!coverLayer) {
-        lmap.createPane('coverage').style.zIndex = 300; // over the street map's tiles, under the areas
-        const have = Object.fromEntries(Object.entries(meta.tiles).map(([z, l]) => [z, new Set(l)]));
-        coverLayer = new (loadsAhead(L.TileLayer).extend({ _isValidTile(c) { // only the tiles that exist are asked for
-          if (!L.TileLayer.prototype._isValidTile.call(this, c)) return false;
-          const z = c.z - 2, n = 2 ** z; return !!have[z] && have[z].has(`${((c.x % n) + n) % n}/${c.y}`);
-        } }))(COVER + '/{z}/{x}/{y}.png', { pane: 'coverage', tileSize: 1024, zoomOffset: -2, minNativeZoom: 2, maxNativeZoom: meta.zoom, ahead: 512,
-          attribution: 'Coverage: <a href="https://github.com/slashP/Vali">Vali</a> location pool' });
-      }
-      if (coverOn && onStreet()) coverLayer.addTo(lmap); else coverLayer.remove();
-    }, () => {});
+    (coverMeta ||= fetch(COVER + '/meta.json').then(r => r.json())).then(meta => withTiles(() => { tiles.coverage(COVER, meta).show(coverOn); apply(); }), () => {});
   }
   const SEL = {};
   for (const k in KINDS) {
@@ -1540,7 +1610,7 @@
       markOut(chosen);
       // On the street map alone the round's areas are tinted instead (the map itself has no borders to dim).
       const inRound = new Set(chosen);
-      for (const a of AREAS) if (SP[a]) SP[a].getElement().classList.toggle('pre', plain() && inRound.has(a));
+      for (const a of AREAS) EL[a].classList.toggle('pre', plain() && inRound.has(a));
       showLabels(cur.kind, cur.ids);
       syncHints();
     }
@@ -1601,11 +1671,14 @@
   // returns to the view before. A review does the same on every map for an answer outside the view, since it keeps
   // the view from question to question.
   function showAnswer(areas) {
-    if (overlaid()) { if (areas.length && !areas.some(a => lmap.getBounds().intersects(SP[a].getBounds()))) flyTo(areas); return; }
+    if (overlaid()) {
+      if (areas.length && !areas.some(a => { const b = boxOf_(a); return b.x < vb.x + vb.w && b.x + b.width > vb.x && b.y < vb.y + vb.h && b.y + b.height > vb.y; })) flyTo(areas);
+      return;
+    }
     if (!(Q.flyAnswer || G.review) || !areas.length) return;
     const s = scale();
     const seen = areas.some(a => {
-      const b = EL[a].getBBox(), x = b.x + b.width / 2, y = b.y + b.height / 2;
+      const b = boxOf_(a), x = b.x + b.width / 2, y = b.y + b.height / 2;
       return x > vb.x && x < vb.x + vb.w && y > vb.y && y < vb.y + vb.h && (!Q.flyAnswer || AREA[a].dot || Math.max(b.width, b.height) * s >= 16);
     });
     if (seen) return;
@@ -1676,7 +1749,7 @@
     Object.assign(G, { kind, items, queue: shuffle(items), i: 0, score: 0, streak: 0, best: 0, res: [], t0: performance.now(), retry, review, points: 0, box, back: null });
     syncSound();
     useMap(map); showBack(back); clearMap();
-    if (box) { if (onStreet()) frameStreet({ kind, ids: items, box }); else frame(box); }
+    if (box && !plain()) frame(box); // (the street map alone stays where it is: a round's box would give it away)
     if (scoreLabel) scoreLabel.textContent = mapStyle === 'free' ? 'Points' : SCORE_LABEL;
     markOut(KINDS[kind].dim === false ? AREAS : items.flatMap(id => KINDS[kind].areas[id]));
     $('ticks').replaceChildren(...G.queue.map(() => document.createElement('i')));
@@ -1942,8 +2015,7 @@
     if (e.target.tagName === 'INPUT') return;
     if (e.key === 'Escape') { lightbox.hidden = true; return; }
     const zoomIn = e.key === '+' || e.key === '=', zoomOut = e.key === '-', reset = e.key === '0';
-    if (onStreet()) { if (zoomIn) lmap.zoomIn(); else if (zoomOut) lmap.zoomOut(); else if (reset) { if (overlaid()) frameRound(); else fitHome(); } return; }
-    if (zoomIn) zoomCenter(1.4); else if (zoomOut) zoomCenter(1 / 1.4); else if (reset) frameRound();
+    if (zoomIn) zoomCenter(1.4); else if (zoomOut) zoomCenter(1 / 1.4); else if (reset) frameRound(true);
   });
 
   /* ---------- review: learned questions come back on a schedule, timed (see ./area-review.js) ---------- */
@@ -1956,7 +2028,7 @@
     script(ROOT + 'assets/js/srs.js').then(() => script(new URL('area-review.js', here).href)).then(() => {
       RV = areaReview({
         $, Q, G, KINDS, PAGE: PAGE_ID, ROOT, RESULT_CLASS, shuffle, fmt, start, markOut, mark, pathsOf, showLabel, setFeedback, needAll, flyTo, onStreet, showAnswer,
-        free: () => mapStyle === 'free', home: () => onStreet() ? fitHome() : resetView(),
+        free: () => mapStyle === 'free', home: () => resetView(),
         reviewModes, played: () => ({ m: mapStyle, ...(shownBack !== 'quiz' ? { b: shownBack } : {}) }), // how the round on screen is played
       });
     });
