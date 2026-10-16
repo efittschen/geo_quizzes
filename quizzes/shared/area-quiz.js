@@ -83,7 +83,8 @@
   const MAX_TRIES = 3;
   const RESULT_CLASS = ['got', 't2', 't3', 'miss']; // index = wrong clicks before the right one
   const FRESH_MS = 700; // how long an answer's color stays in a kind that starts every question on a clean map
-  // Standard OpenStreetMap tiles: free for light use with attribution, no API key needed.
+  // Standard OpenStreetMap tiles: free for light use with attribution, no API key needed. A player with a Google Maps
+  // key of their own gets Google's map in their place (assets/js/gmaps.js, see initStreet).
   const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
@@ -476,7 +477,29 @@
     lmap = L.map('street', { minZoom: 2, maxBounds: Q.street.maxBounds });
     lmap.attributionControl.setPrefix(false); // credits name the map data only, not the Leaflet library
     fitHome();
-    new (loadsAhead(L.TileLayer))(TILE_URL, { maxZoom: 19, attribution: TILE_ATTRIBUTION, ahead: 256 }).addTo(lmap); // one ring of tiles: OpenStreetMap asks not to fetch much ahead
+    const osm = new (loadsAhead(L.TileLayer))(TILE_URL, { maxZoom: 19, attribution: TILE_ATTRIBUTION, ahead: 256 }); // one ring of tiles: OpenStreetMap asks not to fetch much ahead
+    // Google's map instead, where the player named a key of their own: only the tiles in view, and none while the
+    // map is still moving, as each is counted. If a tile does not come (the key refused, its quota used up), the
+    // map is OpenStreetMap's again for the rest of the page.
+    const google = typeof GMAPS === 'object' && GMAPS.key() ? GMAPS.tiles() : null;
+    if (!google) osm.addTo(lmap);
+    else google.then(g => {
+      if (!g) { osm.addTo(lmap); return; }
+      const layer = L.tileLayer(g.url, { maxZoom: 19, updateWhenIdle: true, updateWhenZooming: false, keepBuffer: 4, attribution: 'Map data &copy; Google' }).addTo(lmap);
+      let back = false, credit = 0;
+      layer.on('tileerror', () => { if (back) return; back = true; lmap.off('moveend', owed); GMAPS.failed('Tiles refused'); lmap.removeLayer(layer); osm.addTo(lmap); });
+      function owed() {
+        clearTimeout(credit);
+        credit = setTimeout(async () => {
+          const b = lmap.getBounds(), text = await g.copyright({ north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() }, Math.round(lmap.getZoom()));
+          if (back || !text) return;
+          lmap.attributionControl.removeAttribution(layer.options.attribution);
+          layer.options.attribution = text.replace(/[<>&]/g, '');
+          lmap.attributionControl.addAttribution(layer.options.attribution);
+        }, 1200);
+      }
+      lmap.on('moveend', owed); owed();
+    });
     // The areas get a pane of their own, under pins and labels: the overlay tints the map with it as a whole.
     lmap.createPane('areas').style.zIndex = 350;
     for (const a of AREAS) {

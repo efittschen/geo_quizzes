@@ -157,6 +157,29 @@ function initData() {
   });
 }
 
+// "Google street map" (see gmaps.js): the player's own Google Maps key, kept in this browser, and whether it answers.
+function initMaps() {
+  const show = (busy) => {
+    const { key, fault, at } = GMAPS.state();
+    $("maps-key").readOnly = !!key;
+    $("maps-key").value = key;
+    $("maps-on").hidden = !!key;
+    $("maps-off").hidden = !key;
+    $("maps-state").textContent = !key ? "" : busy ? "Trying" : fault ?? (at ? "Works" : "");
+  };
+  $("maps-on").addEventListener("click", async () => {
+    const typed = $("maps-key").value;
+    if (!typed.trim()) return;
+    const trying = GMAPS.set(typed);
+    show(true);
+    await trying;
+    show();
+  });
+  $("maps-key").addEventListener("keydown", (event) => { if (event.key === "Enter" && !GMAPS.key()) $("maps-on").click(); });
+  $("maps-off").addEventListener("click", () => { GMAPS.set(""); show(); });
+  show();
+}
+
 // "Online copy" (see sync.js): the web app link of the player's own script, which every change is then also sent to
 // and read from, how that goes, and the script itself, to copy while setting it up (the steps under "Setup").
 // onFresh: entries here changed from the online copy.
@@ -198,6 +221,7 @@ async function init() {
   const showSettings = initSettings(() => refresh());
   initData();
   initOnline(() => { showSettings(); refresh(); });
+  initMaps();
   try {
     const json = async (url) => (await fetch(url)).json();
     // Country names come with the world map; without it the quizzes are still listed, under their own titles.

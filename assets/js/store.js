@@ -32,6 +32,9 @@
 //   geoquizzes.review           { day: { date, reviewed }: cards reviewed today; run: a review in progress (srs.js) }
 //   geoquizzes.sync             the online copy, if the player named one (see sync.js): its link and what was seen
 //                                 of it. It belongs to this browser: no data file holds it, and none replaces it.
+//   geoquizzes.maps             the player's own Google Maps key, if they named one (see gmaps.js): { key, session,
+//                                 expiry, at, fault }. It too belongs to this browser alone: the online copy does not
+//                                 take it, no data file holds it, and none replaces it.
 //
 // The data file of the review page ("Your data") is these entries as they are:
 //   { app: "geo-quizzes", version: 2, saved, settings, review, quizzes: { <quiz id>: record }, older }
@@ -41,7 +44,7 @@
 // carried over when this file loads; those of the second by their quiz page when it next opens (`adopt`), since only
 // the page knows its short name. Until then they are the `older` part of a data file, so nothing is left behind.
 const STORE = (() => {
-  const P = 'geoquizzes.', QUIZ = P + 'quiz.', SETTINGS = P + 'settings', REVIEW = P + 'review', SYNC = P + 'sync';
+  const P = 'geoquizzes.', QUIZ = P + 'quiz.', SETTINGS = P + 'settings', REVIEW = P + 'review', SYNC = P + 'sync', MAPS = P + 'maps';
   const keys = () => { const out = []; try { for (let i = 0; i < localStorage.length; i++) out.push(localStorage.key(i)); } catch (e) {} return out; };
   const parse = key => { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } };
   const drop = key => { try { localStorage.removeItem(key); } catch (e) {} };
@@ -51,7 +54,7 @@ const STORE = (() => {
   // Every change is told to whoever listens: sync.js, which sends it to the online copy.
   let heard = null;
   const told = () => { if (heard) heard(); };
-  const change = (key, f) => { const v = get(key); f(v); put(key, v); if (key !== SYNC) told(); };
+  const change = (key, f) => { const v = get(key); f(v); put(key, v); if (key !== SYNC && key !== MAPS) told(); };
   const now = () => time(Date.now());
 
   // A record is written with its parts in one order, and a best result's too, so the entries read alike.
@@ -99,11 +102,11 @@ const STORE = (() => {
   /* ---------- entries of the layout before ---------- */
   const OLD_NAMES = ['choice', 'kind', 'lang', 'map', 'topN', 'opts'];
   const OLD = /^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)?\.(?:choice|kind|lang|map|opts|saved|topN|sel|sel\..+|best\..+)$/;
-  const isOld = key => OLD.test(key) || (key.startsWith(P) && !key.startsWith(QUIZ) && key !== SETTINGS && key !== REVIEW && key !== SYNC);
+  const isOld = key => OLD.test(key) || (key.startsWith(P) && !key.startsWith(QUIZ) && key !== SETTINGS && key !== REVIEW && key !== SYNC && key !== MAPS);
   // Those under "geoquizzes.": stars, cards, drawings, settings, the review's state.
   function carryOver() {
     for (const key of keys()) {
-      if (!key.startsWith(P) || key.startsWith(QUIZ) || key === SETTINGS || key === REVIEW || key === SYNC) continue;
+      if (!key.startsWith(P) || key.startsWith(QUIZ) || key === SETTINGS || key === REVIEW || key === SYNC || key === MAPS) continue;
       const name = key.slice(P.length), v = parse(key) || {};
       if (name.startsWith('rating.')) { if (Array.isArray(v.levels)) setQuiz(name.slice(7), r => { r.stars = v.levels; }); }
       else if (name.startsWith('srs.deck.')) setQuiz(name.slice(9), r => { if (v.t) r.title = v.t; r.cards = Object.fromEntries(Object.entries(v.c || {}).map(([k, c]) => [k, cardOut(c)])); });
@@ -155,7 +158,7 @@ const STORE = (() => {
   function restore(f) {
     const first = f?.app === 'geo-quizzes' && f.version === 1 && f.data && typeof f.data === 'object'; // the file format before
     if (!first && !(f?.app === 'geo-quizzes' && f.quizzes && typeof f.quizzes === 'object')) return false;
-    for (const key of keys()) if ((key.startsWith(P) && key !== SYNC) || OLD.test(key)) drop(key);
+    for (const key of keys()) if ((key.startsWith(P) && key !== SYNC && key !== MAPS) || OLD.test(key)) drop(key);
     const raw = (entries, text) => { for (const [key, v] of Object.entries(entries || {})) if (isOld(key)) { try { localStorage.setItem(key, text ? v : JSON.stringify(v)); } catch (e) {} } };
     if (first) { raw(f.data, false); raw(f.raw, true); }
     else {
@@ -174,11 +177,12 @@ const STORE = (() => {
   // ("settings", "review", "quiz.<quiz id>"); one of them put in place as it is, which is not told as a change;
   // and `listen`, to be told of every other change.
   const sync = () => get(SYNC), setSync = f => change(SYNC, f);
+  const maps = () => get(MAPS), setMaps = f => change(MAPS, f); // the player's Google Maps key (gmaps.js)
   const names = () => ['settings', 'review', ...quizIds().map(id => 'quiz.' + id)];
   const entry = name => get(P + name);
   const place = (name, v) => put(P + name, name.startsWith('quiz.') ? tidy(v) : v);
   const listen = f => { heard = f; };
 
   carryOver();
-  return { quiz, setQuiz, quizIds, settings, setSettings, review, setReview, print, time, ms, cardOut, cardIn, bestOut, bestIn, adopt, file, restore, sync, setSync, names, entry, place, listen };
+  return { quiz, setQuiz, quizIds, settings, setSettings, review, setReview, print, time, ms, cardOut, cardIn, bestOut, bestIn, adopt, file, restore, sync, setSync, maps, setMaps, names, entry, place, listen };
 })();
