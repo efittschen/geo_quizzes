@@ -10,7 +10,7 @@
 //
 //   GMAPS.key()                the key, or ''
 //   GMAPS.set(key)             names the key ('' removes it) and tries it: resolves to what is wrong, or null
-//   GMAPS.tiles()              resolves to { url: a Leaflet tile address, copyright(bounds, zoom) } or, without a
+//   GMAPS.tiles()              resolves to { url: a tile address with {z}, {x}, {y}, copyright(bounds, zoom) } or, without a
 //                              key or without an answer, null (the fault is then in GMAPS.state())
 //   GMAPS.failed(why)          a page tells that tiles did not come: the session is dropped, the fault kept
 //   GMAPS.state()              { key, fault, at: when the key last answered (ms) }

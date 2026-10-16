@@ -83,13 +83,6 @@
   const MAX_TRIES = 3;
   const RESULT_CLASS = ['got', 't2', 't3', 'miss']; // index = wrong clicks before the right one
   const FRESH_MS = 700; // how long an answer's color stays in a kind that starts every question on a clean map
-<<<<<<< HEAD
-  // Standard OpenStreetMap tiles: free for light use with attribution, no API key needed. A player with a Google Maps
-  // key of their own gets Google's map in their place (assets/js/gmaps.js, see initStreet).
-  const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-  const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-=======
->>>>>>> ba65943bd039ab5af1bfc53b6bd74cc38d6e6057
 
   const NS = 'http://www.w3.org/2000/svg';
   const $ = id => document.getElementById(id);
@@ -502,76 +495,6 @@
   svg.addEventListener('pointerup', up); svg.addEventListener('pointercancel', up);
   svg.addEventListener('pointerleave', () => hover(null));
 
-  /* ---------- street map (hard mode), and the overlay: the same map with the areas drawn on it ---------- */
-  let lmap = null;
-  const SP = {}; // polygon per area
-  const CAN_HOVER = matchMedia('(hover: hover)').matches;
-  // Tiles only look crisp at whole zoom levels, so zoom in one extra step if most of the country still fits.
-  function fitHome() {
-    const b = L.latLngBounds(Q.street.bounds), z = lmap.getBoundsZoom(b), size = lmap.getSize();
-    const nw = lmap.project(b.getNorthWest(), z + 1), se = lmap.project(b.getSouthEast(), z + 1);
-    const fits = Math.min(size.x / (se.x - nw.x), size.y / (se.y - nw.y)) >= 0.8;
-    lmap.setView(b.getCenter(), fits ? z + 1 : z);
-  }
-  // The street map's layers load `ahead` pixels beyond the edge of the map, and look for new tiles while it is dragged
-  // (on a phone too, and twice as often as Leaflet's default): so a move finds its sides there.
-  const loadsAhead = Layer => Layer.extend({
-    options: { updateInterval: 100, updateWhenIdle: false },
-    _getTiledPixelBounds(center) {
-      const b = Layer.prototype._getTiledPixelBounds.call(this, center), pad = L.point(this.options.ahead, this.options.ahead);
-      return L.bounds(b.min.subtract(pad), b.max.add(pad));
-    },
-  });
-  function initStreet() {
-    if (lmap) return;
-    lmap = L.map('street', { minZoom: 2, maxBounds: Q.street.maxBounds });
-    lmap.attributionControl.setPrefix(false); // credits name the map data only, not the Leaflet library
-    fitHome();
-    const osm = new (loadsAhead(L.TileLayer))(TILE_URL, { maxZoom: 19, attribution: TILE_ATTRIBUTION, ahead: 256 }); // one ring of tiles: OpenStreetMap asks not to fetch much ahead
-    // Google's map instead, where the player named a key of their own: only the tiles in view, and none while the
-    // map is still moving, as each is counted. If a tile does not come (the key refused, its quota used up), the
-    // map is OpenStreetMap's again for the rest of the page.
-    const google = typeof GMAPS === 'object' && GMAPS.key() ? GMAPS.tiles() : null;
-    if (!google) osm.addTo(lmap);
-    else google.then(g => {
-      if (!g) { osm.addTo(lmap); return; }
-      const layer = L.tileLayer(g.url, { maxZoom: 19, updateWhenIdle: true, updateWhenZooming: false, keepBuffer: 4, attribution: 'Map data &copy; Google' }).addTo(lmap);
-      let back = false, credit = 0;
-      layer.on('tileerror', () => { if (back) return; back = true; lmap.off('moveend', owed); GMAPS.failed('Tiles refused'); lmap.removeLayer(layer); osm.addTo(lmap); });
-      function owed() {
-        clearTimeout(credit);
-        credit = setTimeout(async () => {
-          const b = lmap.getBounds(), text = await g.copyright({ north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() }, Math.round(lmap.getZoom()));
-          if (back || !text) return;
-          lmap.attributionControl.removeAttribution(layer.options.attribution);
-          layer.options.attribution = text.replace(/[<>&]/g, '');
-          lmap.attributionControl.addAttribution(layer.options.attribution);
-        }, 1200);
-      }
-      lmap.on('moveend', owed); owed();
-    });
-    // The areas get a pane of their own, under pins and labels: the overlay tints the map with it as a whole.
-    lmap.createPane('areas').style.zIndex = 350;
-    for (const a of AREAS) {
-      const poly = L.polygon(Q.geo[a].rings, { pane: 'areas', stroke: false, fillOpacity: 0, bubblingMouseEvents: false }).addTo(lmap);
-      // 'r' and data-g as on the quiz map, so the areas take the quiz's hint colors on the overlay.
-      const el = poly.getElement();
-      el.classList.add('ar', 'r'); el.dataset.g = AREA[a].g;
-      if (AREA[a].top) el.classList.add('top');
-      poly.on('click', () => pick(a));
-      if (CAN_HOVER) poly.on({ mouseover: () => hover(a), mouseout: () => hover(null) });
-      SP[a] = poly;
-    }
-    lmap.on('zoomend', syncOverlayDetail);
-  }
-
-  // A round's box is in quiz-map units, so the overlay shows the round's areas instead (or all of the map, without a
-  // box). The street map alone stays as it is.
-  function frameStreet({ kind, ids, box }) {
-    if (!overlaid()) return;
-    if (box && ids.length) lmap.fitBounds(L.featureGroup(ids.flatMap(id => KINDS[kind].areas[id]).map(a => SP[a])).getBounds(), { padding: [30, 30] });
-    else fitHome();
-  }
   /* ---------- the street map and the overlay: the quiz map on the street map's tiles ---------- */
   // Every quiz map that offers them is in Web Mercator (mercator.js), the street map's own projection, so the street
   // map's tiles lie under it as they are (map-tiles.js, behind the quiz map, following its view: see showTiles). The

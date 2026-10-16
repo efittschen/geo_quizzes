@@ -14,7 +14,8 @@
                                 they are drawn again when it rests.
      tiles.streets().show(on)   the street map, at the back of the stage (the standard OpenStreetMap tiles): a canvas
                                 drawn from them, or on a Mercator map the tiles themselves (see sheets); its credit
-                                stands on the map meanwhile
+                                stands on the map meanwhile. On a Mercator map, a player who named a Google Maps key
+                                of their own (assets/js/gmaps.js) gets Google's tiles instead, laid as they come
      tiles.coverage(dir, meta).show(on)   Street View coverage (data/coverage and its meta.json, see the README), a
                                 canvas over the map, blended into it
      tiles.insets               { box, land }: SVG paths of the insets' frames and of the land in them. An inset
@@ -170,6 +171,7 @@ function mapTiles(stage, C, AHEAD = 192) {
     const me = {
       show(yes) { on = yes; cv.hidden = !yes; L.shown(yes); if (yes) render(); },
       moved() { if (!on) return; place(); soon(); },
+      reset() { pics.clear(); if (on) soon(); },   // the addresses changed: every tile is asked for again
     };
     layers.push(me);
     return me;
@@ -212,7 +214,7 @@ function mapTiles(stage, C, AHEAD = 192) {
         img.style.left = Math.round(((c * SIZE - s.cx) * s.unit - s.mx) * s.B) + 'px'; img.style.top = Math.round(((r * SIZE - s.cy) * s.unit - s.my) * s.B) + 'px';
         img.style.width = img.style.height = s.px + 1 + 'px';
         s.wait++;
-        img.onload = img.onerror = () => { img.onload = img.onerror = null; if (!img.naturalWidth) img.remove(); if (!--s.wait && s === sheet && old) { old.el.remove(); old = null; } };
+        img.onload = img.onerror = () => { img.onload = img.onerror = null; if (!img.naturalWidth) { img.remove(); if (L.failed) L.failed(); } if (!--s.wait && s === sheet && old) { old.el.remove(); old = null; } };
         img.src = url; s.el.append(img); s.tiles.set(key, img);
       }
       // the tiles more than a stage away go (the browser keeps the pictures for a while: coming back loads none)
@@ -221,6 +223,7 @@ function mapTiles(stage, C, AHEAD = 192) {
     }
     const me = {
       show(yes) { on = yes; box.hidden = !yes; L.shown(yes); if (yes) fill(); },
+      reset() { if (sheet) sheet.el.remove(); if (old) old.el.remove(); sheet = old = null; if (on) fill(); },   // the addresses changed
       moved() {
         if (!on || !want) return;
         if (sheet) place(sheet); if (old) place(old);
@@ -231,15 +234,45 @@ function mapTiles(stage, C, AHEAD = 192) {
     layers.push(me);
     return me;
   }
-  let streets = null, coverage = null;
+  let streets = null, coverage = null, owed = null; // owed: asks Google for the credit of the tiles in view
   return {
     insets,
-    view(x, y, k) { want = { x, y, k }; for (const l of layers) l.moved(); },
+    view(x, y, k) { want = { x, y, k }; for (const l of layers) l.moved(); if (owed) owed(); },
     streets() {
       if (streets) return streets;
       const credit = said(' · Street map ' + OSM + ' contributors'), osm = credits && !credits.querySelector('.osm') ? document.createElement('span') : null;
       if (osm) { osm.className = 'osm'; osm.innerHTML = OSM; osm.hidden = true; credits.prepend(osm); }   // on the map itself, unless the page shows it anyway
-      return streets = layer({ id: 'streets', size: 256, minZ: 1, maxZ: 19, url: (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`,
+      const credited = html => { credit.innerHTML = ' · Street map ' + html; if (osm) osm.innerHTML = html; };
+      const FROM_OSM = (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+      // Google's map, for a player with a key of their own (gmaps.js), on a Mercator map only: there its tiles lie
+      // as they come, not redrawn. Until its session answers there are no tiles; without an answer, or after a few
+      // tiles refused (the key's quota used up, the key restricted), OpenStreetMap's are asked for instead.
+      let from = FROM_OSM, google = null, refused = 0;
+      const back = fault => { google = null; owed = null; GMAPS.failed(fault); from = FROM_OSM; credited(OSM + ' contributors'); streets.reset(); };
+      if (merc && typeof GMAPS === 'object' && GMAPS.key()) {
+        from = () => null;
+        GMAPS.tiles().then(g => {
+          if (!g) { from = FROM_OSM; streets.reset(); return; }
+          google = g; from = (z, x, y) => g.url.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+          credited('&copy; Google'); streets.reset();
+          // The copyright Google asks to be shown for the tiles in view, once the map rests.
+          let timer = 0;
+          owed = () => {
+            clearTimeout(timer);
+            timer = setTimeout(async () => {
+              if (!want || google !== g) return;
+              const a = invert(want.x, want.y), b = invert(want.x + stage.clientWidth / want.k, want.y + stage.clientHeight / want.k);
+              if (!a || !b) return;
+              const z = Math.max(0, Math.min(19, Math.round(Math.log2(want.k * C.proj.k * 360 / 256))));
+              const text = await g.copyright({ north: a[0], south: b[0], east: b[1], west: a[1] }, z);
+              if (text && google === g) credited(text.replace(/[<>&]/g, ''));
+            }, 1200);
+          };
+          owed();
+        });
+      }
+      return streets = layer({ id: 'streets', size: 256, minZ: 1, maxZ: 19, url: (z, x, y) => from(z, x, y),
+        failed() { if (google && ++refused >= 3) back('Tiles refused'); },
         shown(yes) { credit.hidden = !yes; if (osm) osm.hidden = !yes; stage.classList.toggle('streets', yes); } });
     },
     coverage(dir, meta) {
