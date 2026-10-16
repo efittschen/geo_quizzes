@@ -159,13 +159,14 @@ const MERCATOR = (() => {
     if (cmd) flush();
     return out;
   }
-  const write = list => list.map(r => { let s = '', last = ''; for (const [x, y] of r.pts) { const p = r1(x) + ',' + r1(y); if (p !== last) s += (s ? 'L' : 'M') + p; last = p; } return s + (r.closed ? 'Z' : ''); }).join('');
+  // (rd: how a point is rounded, to tenths of a map unit unless said)
+  const write = (list, rd = r1) => list.map(r => { let s = '', last = ''; for (const [x, y] of r.pts) { const p = rd(x) + ',' + rd(y); if (p !== last) s += (s ? 'L' : 'M') + p; last = p; } return s + (r.closed ? 'Z' : ''); }).join('');
   // A path through a change of place (x, y) -> [x, y] or null; points that cannot be placed are left out, and so are,
   // if asked, the boxes that framed a far-off part (a run of four upright and level sides).
   const boxed = r => r.pts.length >= 4 && r.pts.length <= 5 && r.pts.every((p, i) => { const q = r.pts[(i + 1) % r.pts.length]; return Math.abs(p[0] - q[0]) < 1e-6 || Math.abs(p[1] - q[1]) < 1e-6; });
-  function redraw(d, to, noBoxes) {
+  function redraw(d, to, noBoxes, rd) {
     const list = runs(d); if (!list) return null;
-    return write(list.filter(r => !(noBoxes && boxed(r))).map(r => ({ closed: r.closed, pts: r.pts.map(([x, y]) => to(x, y)).filter(Boolean) })).filter(r => r.pts.length > 1));
+    return write(list.filter(r => !(noBoxes && boxed(r))).map(r => ({ closed: r.closed, pts: r.pts.map(([x, y]) => to(x, y)).filter(Boolean) })).filter(r => r.pts.length > 1), rd);
   }
   // Where the world's map (world.js: W.proj) goes under a map with projection P that is w map units wide: a list of
   // [scale, dx, dy], one per turn of the globe the map reaches into (a country over the 180th meridian needs two).
@@ -193,6 +194,11 @@ const MERCATOR = (() => {
       for (const ring of rings) for (const [lat, lng] of ring) box.add(lat, lng);
     }
     const F = frame(box.get(), Q.size[0]);
+    // The areas' points are rounded no coarser than the latitudes and longitudes they come from (thousandths of a
+    // degree): half a step at most 0.001°, so the street map under the quiz map meets its borders even when zoomed in
+    // to its streets. A map unit is 1/k of a degree: tenths of a unit where k is 50 or more, else hundredths or
+    // thousandths. Q.grain: that step.
+    const dec = Math.min(3, Math.max(1, Math.ceil(-Math.log10(0.002 * F.proj.k)))), rq = v => Math.round(v * 10 ** dec) / 10 ** dec;
     // What is drawn beside the areas goes through the old map: a point that is a corner of an area by that area's
     // latitude and longitude, any other through the old projection.
     const others = Q.borders || [];
@@ -228,15 +234,15 @@ const MERCATOR = (() => {
       const stats = rings.map(r => shoelace(r.pts)), big = stats.reduce((m, r) => (Math.abs(r.a) > Math.abs(m.a) ? r : m));
       const [lx, ly] = g.lab ? F.at(g.lab[0], g.lab[1]) : [big.cx, big.cy], area = stats.reduce((sum, r) => sum + Math.abs(r.a), 0);
       a.size = a.a; // its size on the old, equal-area map: what "largest area" goes by
-      if (drawn.get(a)) a.d = write(rings);
+      if (drawn.get(a)) a.d = write(rings, rq);
       else { const m = /a\s*(\d*\.?\d+)/i.exec(a.d), r = m ? +m[1] : 5; a.d = `M${r1(lx - r)},${r1(ly)}a${r},${r} 0 1,0 ${2 * r},0a${r},${r} 0 1,0 ${-2 * r},0z`; } // drawn as a circle: a circle again
       a.lx = r1(lx); a.ly = r1(ly); a.a = r1(area);
     }
-    if (Q.borders) Q.borders = Q.borders.map(d => redraw(d, to, true) || '');
+    if (Q.borders) Q.borders = Q.borders.map(d => redraw(d, to, true, rq) || '');
     delete Q.context; Q.world = true; // the map lies on the world's: its own neighbouring land is not drawn
     // a pin (the town a code belongs to) by its latitude and longitude
     for (const k of Q.kinds || []) if (k.pin) { const pin = k.pin; k.pin = id => { const p = pin(id); if (!p || !p.ll) return p; const [x, y] = F.at(p.ll[0], p.ll[1] + turn(p.ll[1])); return { ...p, x, y }; }; }
-    Q.size = [F.w, F.h]; Q.proj = F.proj; Q.kpu = F.kpu;
+    Q.size = [F.w, F.h]; Q.proj = F.proj; Q.kpu = F.kpu; Q.grain = 10 ** -dec;
     done.push({ what: 'quiz', w: F.w, h: F.h, ms: Math.round(performance.now() - t0) });
     return true;
   }

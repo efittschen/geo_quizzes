@@ -3,9 +3,9 @@
 :root{padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px)}
 /* Hint colors: a shared palette of blues, violets, pinks, cyans and greys that stays clear of the answer
    colors (green, yellow, orange, red). Quizzes pick from it per area: .r[data-g="1"]{--hint:var(--h3)}
-   The street map's tiles are light in either theme, so the areas drawn on it (overlay) keep the light palette,
-   and so does a drawn map with the street map behind it (.stage.streets). */
-:root,#street,.stage.streets{
+   The street map's tiles are light in either theme, so a map with the street map behind it (.stage.streets: the
+   overlay, a city quiz's streets) keeps the light palette. */
+:root,.stage.streets{
   --h1:#A7D9F6; --h2:#E5A8CD; --h3:#A5B0EB; --h4:#A3B9BA; --h5:#E5D0FE; --h6:#77CFD1; --h7:#C8C5D6; --h8:#7CBEE2;
   --h9:#CABDFA; --h10:#C7A5DC; --h11:#CABAAE; --h12:#C3EFEC; --h13:#A5C9FF; --h14:#B5AFCF; --h15:#CCDBF9; --h16:#A7C1DA;
   --h17:#D6B2C0; --h18:#C5CEFC; --h19:#97E9FF; --h20:#DDCBD6; --h21:#C3D4E0; --h22:#E4C1FA; --h23:#D0B1D9; --h24:#B6B9E7;
@@ -140,7 +140,6 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
 /* pin for the last answered place */
 #pins circle{fill:var(--ink);stroke:var(--panel);stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none}
 #pins text{font-family:var(--sans);font-weight:600;fill:var(--ink);stroke:var(--halo);paint-order:stroke;text-anchor:middle;pointer-events:none}
-.leaflet-tooltip.st-pin{font:600 12px/1.2 var(--sans);padding:2px 6px}
 .count{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:1001;pointer-events:none;background:var(--panel);border:1.5px solid var(--ink);border-radius:999px;padding:6px 16px;font-weight:600;white-space:nowrap;box-shadow:var(--shadow)}
 .count b{font:700 1.35rem/1 var(--cond);margin-right:2px;font-variant-numeric:tabular-nums}
 
@@ -225,6 +224,9 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
    shows its tiles. The street map carries its own line, which the corner stays above. */
 .corner{position:absolute;right:0;bottom:0;z-index:1100;display:flex;flex-direction:column;align-items:flex-end;gap:8px;width:min(62%,36rem);padding-bottom:env(safe-area-inset-bottom,0px);pointer-events:none}
 .corner .zoom{position:static;margin-right:14px;pointer-events:auto}
+/* for finding what is slow: what the map draws and what can be tapped, of what lies in view (area-quiz.js) */
+.dbg-count{margin-right:14px;padding:2px 7px;border-radius:6px;background:color-mix(in srgb,var(--panel) 85%,transparent);color:var(--ink);font:600 .72rem/1.3 var(--sans);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dbg-count:empty{display:none}
 .credits{display:flex;align-items:flex-end}
 .credits > *{pointer-events:auto}
 .credits .osm,.note{margin:0;font-size:.7rem;line-height:1.35;color:var(--muted);background:color-mix(in srgb,var(--panel) 85%,transparent)}
@@ -235,48 +237,6 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
 .note::before{content:'©';position:absolute;inset:0;text-indent:0;text-align:center;font-size:.85rem;line-height:1.45rem}
 .note:hover,.note:focus,.note:focus-within{position:absolute;right:0;bottom:env(safe-area-inset-bottom,0px);z-index:1;width:max-content;max-width:100%;height:auto;padding:3px 8px;white-space:normal;text-indent:0;text-align:right;background:var(--panel);border-top-left-radius:6px;cursor:auto;outline:0}
 .note:hover::before,.note:focus::before,.note:focus-within::before{content:none}
-.stage:has(#street:not([hidden])) .corner{bottom:20px}
-.stage:has(#street:not([hidden])) .credits .osm{display:none}
-
-/* street map (hard mode) */
-#street{position:absolute;inset:0;background:var(--sea)}
-#street .leaflet-control-attribution{font-size:.7rem}
-#street path.ar{fill:transparent;stroke:none}
-#street path.ar.got,#street path.ar.t2,#street path.ar.t3,#street path.ar.miss{fill-opacity:.55;stroke:var(--ink);stroke-width:1;stroke-opacity:.6}
-#street path.ar.got{fill:var(--got)} #street path.ar.t2{fill:var(--t2)} #street path.ar.t3{fill:var(--t3)} #street path.ar.miss{fill:var(--miss)}
-#street path.ar.flash{fill:var(--bad);fill-opacity:.55;stroke:var(--bad);stroke-width:1.5}
-/* setup preview on the street map: the round's areas, tinted */
-#street path.ar.pre{fill:var(--yellow);fill-opacity:.22}
-#street path.ar.sel{fill:var(--yellow);fill-opacity:.45;stroke:var(--ink);stroke-width:2}
-#street path.ar.ans{fill:var(--yellow);fill-opacity:.4;stroke:#15283A;stroke-width:3;animation:pulse 1s ease-in-out infinite alternate}
-/* overlay: the street map with the quiz map's outlines and colors on it. The areas are painted solid, as on the
-   quiz map, in a pane that tints the tiles under it as a whole (multiply: roads and names stay as dark as they are,
-   and white leaves the map as it is). That way the lines covering the seams inside a unit don't add up with its
-   color. --base is an area's hint color, --fill its color now, --paint that with the pointer on it.
-   The tiles are light in either theme, so lines are dark and the answer colors are the light theme's. */
-#street.overlay{--st-line:#15283A;--got:#62B686;--t2:#F2CF5B;--t3:#EE9A4D;--miss:#E8877E}
-#street.overlay .leaflet-areas-pane{mix-blend-mode:multiply;opacity:.8}
-#street.overlay path.ar{--base:transparent;--fill:var(--base);--paint:var(--fill);fill:var(--paint);fill-opacity:1;stroke:var(--st-line);stroke-width:1;stroke-opacity:1;animation:none}
-#street.overlay.hints path.ar{--base:var(--hint,transparent)}
-#street.overlay.hints.fade path.ar{--base:color-mix(in oklab,var(--hint,transparent) var(--fade),#fff)}
-#street.overlay path.ar.out{--fill:#D8DCDF;stroke-opacity:.3}
-#street.overlay:not(.picking) path.ar.out{pointer-events:none}
-#street.overlay path.ar.got{--fill:var(--got)} #street.overlay path.ar.t2{--fill:var(--t2)} #street.overlay path.ar.t3{--fill:var(--t3)} #street.overlay path.ar.miss{--fill:var(--miss)}
-#street.overlay path.ar.ans,#street.overlay path.ar.sel{--fill:var(--yellow)}
-#street.overlay path.ar.found{--fill:var(--got)}
-#street.overlay path.ar.flash{--fill:var(--bad)}
-#street.overlay path.ar.hov{--paint:color-mix(in oklab,var(--fill) 82%,var(--st-line))}
-#street.overlay path.ar.ans{animation:st-ans 1s ease-in-out infinite alternate}
-@keyframes st-ans{from{fill:#fff}}
-/* merged layouts: only each unit's outline (L.polyline.unit), the areas' own lines cover the seams between them */
-#street path.unit{display:none}
-#street.overlay.merged path.unit{display:inline;stroke:var(--st-line);stroke-width:1.4;stroke-opacity:1}
-#street.overlay.merged path.unit.out{stroke-opacity:.3}
-#street.overlay.merged path.ar{stroke:var(--paint);stroke-width:1.2;stroke-opacity:1}
-#street.overlay.merged path.ar.top{stroke:var(--st-line)}
-#street.overlay.merged path.ar.ans{animation-name:st-ans-merged}
-@keyframes st-ans-merged{from{fill:#fff;stroke:#fff}}
-.st-label span{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:700 14px/1 var(--cond);color:#15283A;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;pointer-events:none}
 
 /* map */
 /* The map's picture is larger than the stage, which shows its middle (area-quiz.js sets how much larger), and is
@@ -306,7 +266,10 @@ svg#map.grab{cursor:grabbing}
    still counts as far out as that line would reach, as it did when the line was drawn. */
 .merged .r.tight,.merged .r.under{stroke:none}
 .merged .r.tight,.merged.picking #regions .r.out.tight{pointer-events:visible}
-#regions .r.under{pointer-events:none!important}
+#regions .r.under:not(.whole){pointer-events:none!important}
+/* a unit drawn as one shape (its areas are not in the drawing, see placeAreas in area-quiz.js): it has the line of its
+   own color around it that its areas had */
+.merged .r.under.whole{stroke:var(--fill)}
 .unit{fill:none;stroke:var(--state);stroke-width:1.2;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round;pointer-events:none}
 .unit.out{stroke:color-mix(in oklab,var(--state) 30%,color-mix(in oklab,var(--land) 45%,var(--sea)))}
 .merged #borders{display:none}
@@ -316,7 +279,7 @@ svg#map.grab{cursor:grabbing}
 .merged #ansUse{fill:var(--ink);stroke:none;animation:tint 1s ease-in-out infinite alternate}
 @keyframes tint{from{fill-opacity:.04}to{fill-opacity:.24}}
 #borders path{fill:none;stroke:var(--state);stroke-width:1.5;vector-effect:non-scaling-stroke;stroke-linejoin:round;pointer-events:none;opacity:.75}
-#hl path{fill:none;pointer-events:none;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+#hl path{fill:none;pointer-events:none;vector-effect:non-scaling-stroke;stroke-linejoin:round;fill-rule:evenodd}
 #hoverUse{stroke:var(--ink);stroke-width:2.5}
 #ansUse{stroke:var(--ink);stroke-width:3;animation:pulse 1s ease-in-out infinite alternate}
 #ansUse[d=""]{animation:none} /* nothing shown: nothing to animate (an animation keeps the whole map being drawn) */
@@ -328,9 +291,27 @@ svg#map.grab{cursor:grabbing}
    borders, the street map alone nothing. An inset has no tiles: its frame and land stay drawn. */
 .stage.streets{--sea:#D6E2E7;--panel:#F6F8F6;--card:#FFFFFF;--ink:#15283A;--muted:#5A6B78;--line:#C9D3D8;--land:#EDF0E4;--edge:rgba(21,40,58,.32);--state:#15283A;
   --got:#62B686;--t2:#F2CF5B;--t3:#EE9A4D;--miss:#E8877E;--halo:rgba(246,248,246,.9);--btn:#15283A;--btnink:#F6F8F6;color:var(--ink)}
-canvas.tiles{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none}
+.tiles{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none}
+/* (a Mercator map's tiles: pictures on sheets, moved as a whole, see map-tiles.js) */
+.tiles .sheet{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+.tiles .sheet img{position:absolute;max-width:none;user-select:none;-webkit-user-select:none}
+/* The overlay and the street map of an area quiz: the quiz map itself on the street map's tiles (area-quiz.js).
+   Overlay: the map tints the tiles under it as a whole (multiply: roads and names stay as dark as they are, and
+   white, the land without a hint color, leaves them as they are), at 80%: as an 80% opaque layer over the tiles. */
+svg#map.overlay{--land:#fff;mix-blend-mode:multiply;opacity:.8}
+/* Street map alone ("hard, no borders"): the areas are there to be tapped and not seen, nothing is dimmed or
+   outlined; only what was answered shows, see-through. (Its hint colors are off, see syncHints.) */
+svg#map.blind{--land:transparent}
+svg#map.blind #regions .r{stroke:none}
+svg#map.blind #regions .r.out{--fill:transparent;pointer-events:auto}
+svg#map.blind .unit,svg#map.blind #borders{display:none}
+svg#map.blind #regions .r:is(.got,.t2,.t3,.miss,.found,.rare){fill-opacity:.55;stroke:var(--ink);stroke-width:1;stroke-opacity:.6}
+svg#map.blind #regions .r.flash{fill-opacity:.55;stroke:var(--bad);stroke-width:1.5}
+svg#map.blind #regions .r.pre{--fill:var(--yellow);fill-opacity:.22}
+svg#map.blind #regions .r.sel{fill-opacity:.45;stroke:var(--ink);stroke-width:2}
+svg#map.blind #regions .r.ans{fill-opacity:.4}
 /* Street View coverage laid over a map: blended into it, so what is under it stays readable */
-#coverage,.leaflet-coverage-pane{mix-blend-mode:multiply;opacity:.5}
+#coverage{mix-blend-mode:multiply;opacity:.5}
 /* (on the dark quiz map it is lightened into it instead; the street map is light in either theme) */
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .stage:not(.streets) #coverage{mix-blend-mode:screen;opacity:.85}}
 :root[data-theme="dark"] .stage:not(.streets) #coverage{mix-blend-mode:screen;opacity:.85}
