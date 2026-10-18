@@ -87,7 +87,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const $ = id => document.getElementById(id);
   const svg = $('map'), gR = $('regions'), gB = $('borders'), gL = $('labels');
-  const hoverUse = $('hoverUse'), ansUse = $('ansUse');
+  const hoverUse = $('hoverUse'), ansUse = $('ansUse'), askUse = $('askUse'); // (askUse: the place asked, prompt 'area')
   const AREA = {}, EL = {};
 
   // The rings of an SVG path made of M/L/Z commands, each a list of [x, y] points.
@@ -222,6 +222,9 @@
      there, but is seldom met (a letter a country writes in a few words only).
      dial(id) -> [[text, 'hot' | 'cold'], …] shows the dial code in parts (e.g. only the prefix bold); pin(id) ->
      { x, y, ll, label } marks a place (e.g. the town the code belongs to) after the question is answered.
+     prompt 'area' outlines the item's areas on the map as the question (flying to them when they are out of view
+     or too small to see) and says ask(id), else "Which <noun> is this?": with typed, the player names a place
+     they are shown, the other way round from clicking a place they are named.
      typed(id, text) -> true | false makes the answer one to type, in a field under the prompt (a name read in
      another script, written in Latin letters): a wrong one counts like a wrong click, a shown answer is typed to
      go on, and clicks on the map answer nothing. time(id) is how many times longer than a click such an answer
@@ -532,6 +535,7 @@
   // The item under the pointer: outlined on the quiz map, tinted on the overlay.
   // (not on the street map alone: that would show its borders)
   function hover(area) {
+    if (view === 'play' && KINDS[G.kind].prompt === 'area') { hoverUse.setAttribute('d', ''); return; } // (the place asked is the only one outlined)
     const K = KINDS[activeKind()], id = area && K.primary(area);
     hoverUse.setAttribute('d', id && !plain() ? outline(K.areas[id]) : '');
   }
@@ -732,7 +736,7 @@
       }
       const units = [...byKey.values()];
       if (units.some(u => u.length > 1)) {
-        const pre = PRE[kind] && PRE[kind].sig === sigOf(units) ? PRE[kind] : null;
+        const P = PRE[kind] || PRE[KINDS[kind] && KINDS[kind].like], pre = P && P.sig === sigOf(units) ? P : null; // (a layer asked another way has the shapes of the one it is like)
         L = { units, pre, color: pre ? pre.color && Object.fromEntries(units.flatMap((u, i) => u.map(a => [a, pre.color[i]]))) : unitColors(K, units) };
       }
     }
@@ -1686,6 +1690,20 @@
     flyTo(areas);
   }
 
+  // The place asked (prompt 'area'): outlined, and flown to when it is out of view or too small to see.
+  function showAsked(areas) {
+    if (!askUse) return;
+    askUse.setAttribute('d', areas ? outline(areas) : '');
+    if (!areas || !areas.length) return;
+    const s = scale(), bs = areas.map(boxOf_);
+    const x0 = Math.min(...bs.map(b => b.x)), y0 = Math.min(...bs.map(b => b.y)), x1 = Math.max(...bs.map(b => b.x + b.width)), y1 = Math.max(...bs.map(b => b.y + b.height));
+    const inView = x0 >= vb.x && x1 <= vb.x + vb.w && y0 >= vb.y && y1 <= vb.y + vb.h;
+    if (inView && Math.max(x1 - x0, y1 - y0) * s >= 24) return;
+    // with room around it (four times its size, a twelfth of the map at least): its neighbours place it
+    const ar = base.w / base.h, w = Math.min(base.w, Math.max((x1 - x0) * 4, (y1 - y0) * 4 * ar, base.w / 12)), h = w / ar;
+    vb = clampV({ x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - h / 2, w, h }); apply();
+  }
+
   /* ---------- game ---------- */
   const G = { kind: Q.kinds[0].key, items: [], queue: [], i: 0, tries: 0, revealed: false, found: new Set(), score: 0, streak: 0, best: 0, res: [], t0: 0, retry: false, review: false, missed: [], points: 0, box: null, back: null };
   // Map play: points per answer by distance; 4,000 or more counts as close (a perfect answer for the stars).
@@ -1763,8 +1781,8 @@
     const id = G.queue[G.i], K = KINDS[G.kind];
     G.tries = 0; G.revealed = false; G.found = new Set();
     mark(null);
-    const isName = K.prompt === 'name', isText = K.prompt === 'text', isPhoto = K.prompt === 'photo';
-    $('dial').hidden = isName || isText || isPhoto; $('bigname').hidden = !isName;
+    const isArea = K.prompt === 'area', isName = K.prompt === 'name' || isArea, isText = K.prompt === 'text', isPhoto = K.prompt === 'photo';
+    $('dial').hidden = isName || isText || isPhoto; $('bigname').hidden = !isName; $('bigname').classList.toggle('asking', isArea);
     if ($('card')) $('card').hidden = !isText;
     if ($('photo')) $('photo').hidden = !isPhoto;
     const shown = isPhoto ? $('photo') : isText ? $('card') : isName ? $('bigname') : $('dial');
@@ -1778,6 +1796,7 @@
       if (next !== undefined) new Image().src = K.photo(next).src; // the next picture is there when it is asked
     }
     else if (isText) { const t = K.text(id); $('sent').textContent = t.text; $('sent').className = 'sent ' + (t.cls || ''); $('sent').lang = t.lang || ''; $('card').dataset.tag = t.tag || ''; }
+    else if (isArea) { $('bigname').textContent = K.ask ? K.ask : `Which ${K.noun[0]} is this?`; showAsked(K.areas[id]); }
     else if (isName) $('bigname').textContent = K.name(id);
     else if (K.dial) $('code').replaceChildren(...K.dial(id).map(([text, cls]) => { const s = document.createElement('span'); s.className = cls; s.textContent = text; return s; }));
     else $('code').textContent = K.short(id);
@@ -1926,7 +1945,7 @@
   function finish() {
     clearInterval(timer); clearTimeout(G.ending); const ms = performance.now() - G.t0; const n = G.res.length;
     const K = KINDS[G.kind];
-    mark(null);
+    mark(null); showAsked(null);
     for (const id of G.items) showLabel(G.kind, id);
     const complete = n === G.items.length;
     const prev = G.retry ? null : bestFor(G.kind, G.items, mapStyle);

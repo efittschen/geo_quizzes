@@ -1297,6 +1297,14 @@
       "url": "quizzes/indonesia-regions/index.html"
     },
     {
+      "id": "indonesia-names",
+      "country": "360",
+      "title": "Region Names",
+      "levels": 4,
+      "description": "A region is outlined on the map: type its name. Island groups, provinces, kabupaten and kota.",
+      "url": "quizzes/indonesia-names/index.html"
+    },
+    {
       "id": "indonesia-postcodes",
       "country": "360",
       "title": "Postcodes",

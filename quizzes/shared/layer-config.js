@@ -22,6 +22,12 @@
 //     areas      the areas of each item: '@code' (those whose field `code` is the item's id), '@codes[]' (whose list
 //                holds it), '@code^' (whose value starts with it), or a table
 //     of, lang   the same items in another language or under another label (see area-quiz.js)
+//     like       '<key>': the layer is another one asked another way: it takes that layer's groups, areas and
+//                tables, and its own say what differs (its key, label, prompt…). Its review cards are its own.
+//     typed      the answer is typed, not clicked: { answers: a table of the other names that count (a list per
+//                item; the item's name always counts), time: how many clicks' time an answer may take in a review }.
+//                Capitals, accents, spaces and punctuation don't matter, nor one letter wrong in a name of six or
+//                more (or two letters swapped), unless what is typed is another item's name. Mostly with prompt: 'area' (see area-quiz.js)
 //     groupsOnly the layer is not asked: it only cuts the layers below it into rounds (see area-quiz.js)
 //     pool       tables drawn at random: { dial: { t: pattern, e: { item: [entries] } }, w: { item: [weights] } }
 //                shows one of an item's entries each time it is asked (an example number of an area code, a town's
@@ -130,13 +136,34 @@ const layerLib = (() => {
   }
   const quizVars = (M, a) => Object.assign({ a }, M.FV[a], ...Object.values(M.kinds).map(K => areaVars(M, K, a, K.key + '.')));
 
-  const SWITCHES = ['prompt', 'hints', 'clickAll', 'merge', 'dim', 'labelPerArea', 'areaRank', 'flashArea', 'hintLabel', 'of', 'lang', 'sub', 'pickTitle', 'groupsOnly'];
+  const SWITCHES = ['prompt', 'hints', 'clickAll', 'merge', 'dim', 'labelPerArea', 'areaRank', 'flashArea', 'hintLabel', 'of', 'lang', 'sub', 'pickTitle', 'groupsOnly', 'like', 'ask'];
+  // A typed name as it is compared: no capitals, accents, spaces or punctuation ("&" is "and").
+  const plainName = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, 'and').replace(/[^\p{L}\p{N}]+/gu, '');
+  // Whether two names are one slip apart: a letter added, dropped or changed, or two letters swapped.
+  function oneOff(a, b) {
+    if (Math.abs(a.length - b.length) > 1) return false;
+    let i = 0; while (i < a.length && a[i] === b[i]) i++;
+    return a.slice(i + 1) === b.slice(i + 1) || a.slice(i) === b.slice(i + 1) || a.slice(i + 1) === b.slice(i)
+      || (a[i] === b[i + 1] && a[i + 1] === b[i] && a.slice(i + 2) === b.slice(i + 2));
+  }
+  // typed(id, text) of a layer: its items' names and other names (forms[id]: plain names).
+  function typedOf(forms) {
+    const owner = new Map();
+    for (const [id, list] of Object.entries(forms)) for (const f of list) (owner.get(f) || owner.set(f, new Set()).get(f)).add(id);
+    return (id, text) => {
+      const t = plainName(text), mine = forms[id] || [];
+      if (mine.includes(t)) return true;
+      if (owner.has(t)) return false; // another item's name, exactly
+      return t.length >= 6 && mine.some(f => f.length >= 6 && oneOff(t, f));
+    };
+  }
   function quiz(L, resolve) {
     const M = model(L, resolve);
     const at = v => typeof v !== 'string' ? v : /^\[.*\]$/.test(v) ? [resolve(v.slice(1, -1))] : resolve(v);
     // A table drawn at random (pool): one of an item's entries each time it is asked, by weight (w) if given.
     const draw = (list, w) => { let i = Math.random() * list.length | 0; if (w) { let x = Math.random() * w.reduce((s, v) => s + v, 0); i = Math.max(0, w.findIndex(v => (x -= v) < 0)); } return list[i]; };
     const kinds = L.kinds.map(k => {
+      if (k.like) { const base = L.kinds.find(b => b.key === k.like); if (base) k = { ...base, ...k }; }
       const K = layer(M, k), T = K.T, fn = t => T[t] && (id => T[t][id]);
       const out = { key: k.key, label: k.label, noun: k.noun, groups: k.groups.map(([title, sub, ids]) => ({ title, sub, ids })), areasOf: id => K.areas[id] };
       for (const s of SWITCHES) if (k[s] !== undefined) out[s] = k[s];
@@ -148,6 +175,11 @@ const layerLib = (() => {
       if (T.colors) out.unitColors = u => T.colors[u[0]];
       if (k.presets) out.presets = k.presets.map(([label, ids]) => ({ label, ids }));
       if (k.rankings) out.rankings = k.rankings.map(([label, order, expand]) => ({ label, order, ...(expand ? { expand: id => expand[id] } : {}) }));
+      if (k.typed) {
+        const more = k.typed.answers ? table(k.typed.answers, K.ids, id => itemVars(M, K, id)) : {};
+        out.typed = typedOf(Object.fromEntries(K.ids.map(id => [id, [...new Set([T.name && T.name[id], ...[].concat(more[id] || [])].filter(Boolean).map(plainName))]])));
+        const time = k.typed.time || 3; out.time = () => time;
+      }
       return out;
     });
     const g = table(L.g, M.AREAS, a => quizVars(M, a)), top = new Set(L.top || []), d = L.d || {};

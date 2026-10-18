@@ -153,6 +153,7 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
 @keyframes pop{from{transform:translateY(8px);opacity:.2}to{transform:none;opacity:1}}
 .bigname{font:700 3.2rem/1 var(--cond);letter-spacing:-.01em}
 .bigname.pop{animation:pop .35s ease-out}
+.bigname.asking{font-size:1.9rem;line-height:1.1}   /* prompt 'area': the question, not a name */
 /* the sound switch in the round's panel (a kind with say): filled while the sound is on */
 #soundBtn[aria-pressed="true"]{background:var(--btn);border-color:var(--btn);color:var(--btnink)}
 /* a typed answer (a kind with typed): the field under the prompt */
@@ -282,6 +283,7 @@ svg#map.grab{cursor:grabbing}
 #hl path{fill:none;pointer-events:none;vector-effect:non-scaling-stroke;stroke-linejoin:round;fill-rule:evenodd}
 #hoverUse{stroke:var(--ink);stroke-width:2.5}
 #ansUse{stroke:var(--ink);stroke-width:3;animation:pulse 1s ease-in-out infinite alternate}
+#hl #askUse{fill:var(--yellow);fill-opacity:.55;stroke:var(--ink);stroke-width:3}   /* the place asked (prompt 'area') */
 #ansUse[d=""]{animation:none} /* nothing shown: nothing to animate (an animation keeps the whole map being drawn) */
 @keyframes pulse{from{stroke-width:2}to{stroke-width:5}}
 #labels text{font-family:var(--cond);font-weight:700;fill:var(--ink);stroke:var(--halo);stroke-width:3px;paint-order:stroke;text-anchor:middle;dominant-baseline:central;pointer-events:none}

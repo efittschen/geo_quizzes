@@ -140,7 +140,7 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
       <g id="ctx"></g>
       <g id="regions"></g>
       <g id="borders"></g>
-      <g id="hl"><path id="hoverUse" d=""/><path id="ansUse" d=""/></g>
+      <g id="hl"><path id="askUse" d=""/><path id="hoverUse" d=""/><path id="ansUse" d=""/></g>
       <g id="labels"></g>
     </svg>
     <div class="zoom" id="zoomCtl" aria-label="Map zoom">
