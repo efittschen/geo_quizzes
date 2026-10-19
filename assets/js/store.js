@@ -2,7 +2,8 @@
 //
 //   geoquizzes.quiz.<quiz id>   one record per quiz page (its folder name, as in data/quizzes.json), with what it has of:
 //     title    the page's title (set with its first review card)
-//     moved    the old keys of cards sorted onto a map by the player: { <old key>: <look> } (see cardKeys)
+//     moved    the keys cards were moved from by the player (sorted onto a map, or converted to another):
+//              { <key>: { to: <look>, at: when } } (to null: cards were moved into that key then); see cardKeys
 //     looks    the maps the page's cards can be played on (for sorting them on the review page)
 //     layers   the names of the page's layers that have review cards: { <layer>: label } (see srs.js)
 //     stars    progress per level, Beginner first; 1 means every round of the level was played perfectly. The quiz
@@ -105,16 +106,17 @@ const STORE = (() => {
   // srs.js); one kept from before under '<kind>|<item>' that says its map goes under the key of that map (where a
   // card of the same question on the same map is there already, the two are one card: the one answered last stays).
   // One that doesn't say its map stays as it is until the player sorts it onto a map (the review page, see
-  // SRS.sort); once sorted, its old key is in the record's `moved` ({ <old key>: <look> }, kept on every browser
-  // through the online copy), and a copy of it under that key, from a browser that hasn't seen it sorted, is left
-  // out: it is the card sorted. No other card is ever left out.
+  // SRS.sort). Cards the player moves, sorting them or converting them to another map (SRS.convert), leave their
+  // key in the record's `moved` ({ <key>: { to, at } }, kept on every browser through the online copy): a copy under
+  // that key answered no later than the move, from a browser that hasn't seen it, is left out, as it is the card
+  // moved; one answered since (learned again on that map) stays. No other card is ever left out. (A move of the
+  // first version is a look alone, for an old key: a copy of it without its map is left out.)
   function cardKeys(cards, moved = {}) {
     const out = { ...cards };
     for (const k of Object.keys(out)) {
-      const bar = k.indexOf('|'), c = out[k];
-      if (k.lastIndexOf('@', bar) >= 0) continue;
-      if (moved[k] && !c.map) { delete out[k]; continue; }
-      if (!c.map) continue;
+      const bar = k.indexOf('|'), c = out[k], t = moved[k], old = k.lastIndexOf('@', bar) < 0;
+      if (t && (typeof t === 'string' ? old && !c.map : t.to && (ms(c.last) || 0) <= (ms(t.at) || 0))) { delete out[k]; continue; }
+      if (!old || !c.map) continue;
       delete out[k];
       const key = k.slice(0, bar) + '@' + c.map + (c.back ? '+' + c.back : '') + k.slice(bar);
       if (!out[key] || (ms(out[key].last) || 0) < (ms(c.last) || 0)) out[key] = c;

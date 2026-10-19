@@ -87,7 +87,11 @@ const SYNC = (() => {
     const cleared = later(mine.cleared, theirs.cleared);
     if (cleared) out.cleared = cleared;
     // the old keys of cards sorted onto a map, on either side: an old copy of them is left out (STORE.cardKeys)
-    if (mine.moved || theirs.moved) out.moved = { ...theirs.moved, ...mine.moved };
+    if (mine.moved || theirs.moved) {
+      const at = v => (typeof v === 'string' ? Infinity : when(v && v.at)); // (a move of the first version: for good)
+      out.moved = { ...theirs.moved };
+      for (const [k, v] of Object.entries(mine.moved || {})) if (!out.moved[k] || at(v) >= at(out.moved[k])) out.moved[k] = v;
+    }
     if (mine.cards || theirs.cards) {
       out.cards = {};
       for (const k of names(mine.cards, theirs.cards)) {

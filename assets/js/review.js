@@ -103,10 +103,34 @@ function render(index, nameByCode) {
         const rows = maps.map((m, i) => {
           const cell = document.createElement("td");
           cell.textContent = lookLabel(m.look, city);
-          return row(cls(i), cell, [m], [dropper(`the ${lookLabel(m.look, city)} cards of “${l.label}”`, l.key, m.look)], { id: d.id, key: l.key, look: m.look, quiz: d.quiz });
+          return row(cls(i), cell, [m], [...converter(l, m.look), dropper(`the ${lookLabel(m.look, city)} cards of “${l.label}”`, l.key, m.look)], { id: d.id, key: l.key, look: m.look, quiz: d.quiz });
         });
         if (l.unsorted) rows.push(unsortedRow(l, cls(n - 1)));
         return rows;
+      };
+      // A row of one map's cards (a map's line, or a layer's or the quiz's where all its cards are on one map) can
+      // convert them to another map of the quiz: at once where that map has no cards in the layer, else after a
+      // warning (its cards of the same questions are overwritten).
+      const converter = (l, from) => {
+        const looks = (SRS.looksOf(d.id) ?? (city ? ["free", "quiz"] : ["quiz", "overlay", "street"])).filter((x) => x !== from);
+        if (!looks.length) return [];
+        const pick = document.createElement("select");
+        pick.className = "convert";
+        pick.setAttribute("aria-label", `Convert the ${lookLabel(from, city)} cards of “${l.label}” to another map`);
+        pick.append(new Option("Convert to…", ""), ...looks.map((x) => new Option(lookLabel(x, city), x)));
+        pick.onchange = () => {
+          const to = pick.value;
+          if (!to) return;
+          const c = SRS.clash(d.id, l.key, from, to), name = (x) => lookLabel(x, city), where = d.layers.length > 1 ? `${d.quiz.title}: ${l.label}` : d.quiz.title;
+          if (c.target && !window.confirm(
+            `“${where}” already has ${c.target} ${name(to)} card${c.target === 1 ? "" : "s"}.\n\n` +
+            `Converting the ${c.moving} ${name(from)} card${c.moving === 1 ? "" : "s"} to ${name(to)} overwrites ` +
+            `${c.both ? `the ${c.both} ${name(to)} card${c.both === 1 ? "" : "s"} of the same questions with their progress` : "none of them (no questions in common)"}` +
+            `${c.target - c.both > 0 ? `; the other ${c.target - c.both} ${c.target - c.both === 1 ? "stays" : "stay"} as ${c.target - c.both === 1 ? "it is" : "they are"}` : ""}.\n\nConvert anyway?`)) { pick.value = ""; return; }
+          SRS.convert(d.id, l.key, from, to);
+          render(index, nameByCode);
+        };
+        return [pick];
       };
       // Cards from before a card was a question on one map, that don't say theirs: not asked until the player
       // picks the map they are to be reviewed on (SRS.sort), out of the maps the quiz offers.
@@ -145,9 +169,10 @@ function render(index, nameByCode) {
         const cell = document.createElement("td");
         cell.textContent = l.label;
         const cls = ["layer", maps ? "parent" : "", last ? "last" : ""].filter(Boolean).join(" ");
-        return [row(cls, cell, [l], [dropper(`“${l.label}”`, l.key)], { id: d.id, key: l.key, quiz: d.quiz }), ...(maps ? mapRows(l, true, !last) : [])];
+        return [row(cls, cell, [l], [...(maps ? [] : converter(l, l.maps[0].look)), dropper(`“${l.label}”`, l.key)], { id: d.id, key: l.key, quiz: d.quiz }), ...(maps ? mapRows(l, true, !last) : [])];
       }) : onlyMaps ? mapRows(named[0], false, false) : [];
-      return [row(several || onlyMaps ? "sum" : "", td, [d], [remove]), ...layers];
+      const one = !several && !onlyMaps && d.layers[0].maps.length === 1; // (the quiz's cards all on one map: its own line converts them)
+      return [row(several || onlyMaps ? "sum" : "", td, [d], [...(one ? converter(d.layers[0], d.layers[0].maps[0].look) : []), remove]), ...layers];
     }).flat()];
   }));
   $("decks").hidden = !decks.length;

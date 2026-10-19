@@ -185,7 +185,7 @@ const SRS = (() => {
   // question has a card of that map already, the two are one: the one answered last stays), and their old keys are
   // kept in `moved`, so that an old copy coming back from another browser is known as these.
   function sort(id, kind, look) {
-    const [map, back] = look.split('+');
+    const [map, back] = look.split('+'), at = STORE.time(Date.now());
     STORE.setQuiz(id, r => {
       for (const k of Object.keys(r.cards || {})) {
         const bar = k.indexOf('|');
@@ -193,8 +193,36 @@ const SRS = (() => {
         const c = { ...r.cards[k], map, ...(back ? { back } : {}) }, key = k.slice(0, bar) + '@' + look + k.slice(bar);
         if (!r.cards[key] || (STORE.ms(r.cards[key].last) || 0) < (STORE.ms(c.last) || 0)) r.cards[key] = c;
         delete r.cards[k];
-        (r.moved ||= {})[k] = look;
+        (r.moved ||= {})[k] = { to: look, at };
+        r.moved[key] = { to: null, at };
       }
+    });
+  }
+  // The cards of a layer on one map (from), and how many of them the questions of another map's cards (to) share.
+  function clash(id, kind, from, to) {
+    const d = deck(id), on = look => new Set(Object.keys(d.c).filter(k => kindOf(k) === kind && lookOf(k, d.c[k]) === look).map(k => k.slice(k.indexOf('|') + 1)));
+    const a = on(from), b = on(to);
+    return { moving: a.size, target: b.size, both: [...a].filter(i => b.has(i)).length };
+  }
+  // Converts a layer's cards of one map to another: they become that map's cards, with their progress; where that
+  // map has a card of the same question already, it is overwritten (the review page asks the player first). The
+  // keys moved from and into are kept in `moved` (see STORE.cardKeys), so that a copy of the old cards coming back
+  // from another browser is known as these.
+  function convert(id, kind, from, to) {
+    const [map, back] = to.split('+'), at = STORE.time(Date.now());
+    STORE.setQuiz(id, r => {
+      const cards = STORE.cardKeys(r.cards || {}, r.moved);
+      r.moved ||= {};
+      for (const k of Object.keys(cards)) {
+        if (kindOf(k) !== kind || lookOf(k, STORE.cardIn(cards[k])) !== from) continue;
+        const item = k.slice(k.indexOf('|') + 1), key = `${kind}@${to}|${item}`;
+        const { missing, back: _, ...c } = cards[k];
+        cards[key] = { ...c, map, ...(back ? { back } : {}) };
+        delete cards[k];
+        r.moved[k] = { to, at };
+        r.moved[key] = { to: null, at };
+      }
+      r.cards = cards;
     });
   }
   // The map a card is played on: its look, from its key (see above), else from what the card keeps.
@@ -355,5 +383,5 @@ const SRS = (() => {
     return n === 1 ? "tomorrow" : n < 60 ? `in ${n} days` : n < 730 ? `in ${Math.round(n / 30.4)} months` : `in ${(n / 365).toFixed(1)} years`;
   }
 
-  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, setLooks, looksOf, sort, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, overview, run, setRun, nextStop, stretch, ran, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
+  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, setLooks, looksOf, sort, clash, convert, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, overview, run, setRun, nextStop, stretch, ran, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
 })();
