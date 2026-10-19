@@ -7,7 +7,9 @@
 // map by distance) and, in a city quiz, with that background, whatever is chosen on the setup screen now. Every
 // perfect round keeps that with its cards, new ones and those on the stack already; for a card not played perfectly
 // since, the engine works the map out from the best results (see reviewModes there). Cards asked the same way stay
-// together in a review, so the map changes as seldom as it can.
+// together in a review, so the map changes as seldom as it can. The map picker stays on the map during a review:
+// a map picked there is the one for the rest of the review (`look`), its later rounds and, in a review over several
+// quizzes, the quizzes it goes on to (kept in the run), whatever their cards were played on.
 // A review over several quizzes, started on the review page or a country page, is shuffled in groups: a card can
 // only be asked on its own quiz's page, and changing page takes a moment, so a page (…?review=1) asks three of its
 // cards, picked at random, before the review moves on to another quiz, picked at random too.
@@ -49,6 +51,14 @@ window.areaReview = E => {
     for (const c in deck.c) {
       const gone = !items[c];
       if (!!deck.c[c].x !== gone) { if (gone) deck.c[c].x = 1; else delete deck.c[c].x; changed = true; }
+    }
+    // Cards from before the map they are played on was kept get the one a review asks them on (see reviewModes),
+    // so the review page can sort them by map.
+    let modeOf = null;
+    for (const c in deck.c) if (!deck.c[c].m && items[c]) {
+      const m = (modeOf ||= E.reviewModes())(...items[c], deck.c[c]);
+      deck.c[c].m = m.map; if (m.back && m.back !== 'quiz') deck.c[c].b = m.back;
+      changed = true;
     }
     if (changed) SRS.save(PAGE, deck);
     // The names of the layers with cards, for the review page, which lists each layer on its own.
@@ -102,7 +112,7 @@ window.areaReview = E => {
       res: [], total: keys.length, n: [0, 0, 0], counted: new Set(), // n: each card's first answer
       // the clock of a review over several quizzes started when the review did
       t0: performance.now() - (run && isFinite(run.t) ? Date.now() - run.t : 0),
-      asked: 0, prev: null, rounds: [],
+      asked: 0, prev: null, rounds: [], look: (run && run.look) || {}, // look: the map picked during the review
       lit: kind => SRS.all(deck).filter(c => items[c][0] === kind).flatMap(c => KINDS[kind].areas[items[c][1]]),
     };
     // Cards asked the same way stay together, in the order their ways first come up.
@@ -124,7 +134,7 @@ window.areaReview = E => {
     S.mode = mode;
     // A new round clears the panel and the map; the last answer and what was said about it stay.
     const fb = $('fb'), said = S.asked ? [fb.className, [...fb.childNodes]] : null;
-    E.start(kind, ids, { retry: true, review: true, ...mode });
+    E.start(kind, ids, { retry: true, review: true, ...mode, ...lookFor(mode) });
     G.t0 = S.t0;
     if (KINDS[kind].dim !== false) E.markOut(S.lit(kind));
     const label = $('sScore').nextElementSibling; if (label) label.textContent = 'Known';
@@ -294,5 +304,20 @@ window.areaReview = E => {
   // engine must hold the calls returned below before a round starts.)
   if (new URLSearchParams(location.search).has('review')) queueMicrotask(travel);
 
-  return { learned, asked, missed, grade, answered, finished };
+  // The map picked during the review, as far as this page has it: a map ("quiz", "overlay", "street") where its
+  // cards are asked on one, and a background where they are asked with one (a city quiz).
+  function lookFor(mode) {
+    const l = S.look, out = {};
+    if (l.map && mode.map !== 'free' && E.maps().includes(l.map)) out.map = l.map;
+    if (l.back && E.backs().includes(l.back)) out.back = l.back;
+    return out;
+  }
+  // A map picked during the review: for the rest of it, and kept in the run for the quizzes it goes on to.
+  function look(l) {
+    if (!S) return;
+    S.look = { ...S.look, ...l };
+    if (S.chain) { const r = SRS.run(); r.look = S.look; SRS.setRun(r); }
+  }
+
+  return { learned, asked, missed, grade, answered, finished, look };
 };

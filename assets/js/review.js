@@ -73,30 +73,56 @@ function render(index, nameByCode) {
       // A quiz with cards of several layers (island groups, provinces…): each layer on a line of its own, to be
       // reviewed or removed by itself. The quiz's own line is then named as the sum of them ("All - Area Codes (2 layers)"), and a layer named
       // like its quiz (the "Area codes" of "Area Codes", next to "First digit") is told apart: "Full codes".
-      const several = d.layers.length > 1;
+      // A layer with cards played on several maps (the quiz map, the street map…) has a line for each map under it;
+      // a quiz with one layer has them under its own line ("All - Area Codes (2 maps)").
+      const several = d.layers.length > 1, onlyMaps = !several && d.layers[0].maps.length > 1;
       if (several) a.textContent = `All - ${d.quiz.title} (${d.layers.length} layers)`;
+      else if (onlyMaps) a.textContent = `All - ${d.quiz.title} (${d.layers[0].maps.length} maps)`;
       const same = (label) => label.toLowerCase() === d.quiz.title.toLowerCase();
       const named = d.layers.map((l) => ({ ...l, label: !same(l.label) ? l.label : d.quiz.role === "area-codes" ? "Full codes" : `${l.label} only` }));
-      // The layers hang from the sum's line on a branch, indented under it (see .decks tr.sum, tr.layer).
-      const layers = !several ? [] : named.map((l, i) => {
-        const cell = document.createElement("td");
-        cell.textContent = l.label;
+      const city = ["cities", "cities-coverage"].includes(d.quiz.role);
+      const dropper = (what, ...part) => {
         const drop = document.createElement("button");
         drop.type = "button";
         drop.className = "linkbtn";
         drop.textContent = "Remove";
         drop.onclick = () => {
-          if (!window.confirm(`Remove “${l.label}” of “${d.title}” from the stack?`)) return;
-          SRS.remove(d.id, l.key);
+          if (!window.confirm(`Remove ${what} of “${d.title}” from the stack?`)) return;
+          SRS.remove(d.id, ...part);
           render(index, nameByCode);
         };
-        return row(i === named.length - 1 ? "layer last" : "layer", cell, [l], [drop], { id: d.id, key: l.key, quiz: d.quiz });
+        return drop;
+      };
+      // The maps of a layer, hanging from it (deep: under a layer line, else under the quiz's own line).
+      const mapRows = (l, deep, more) => l.maps.map((m, i) => {
+        const cell = document.createElement("td");
+        cell.textContent = lookLabel(m.look, city);
+        const cls = ["layer", deep ? "map" : "", deep && more ? "more" : "", i === l.maps.length - 1 ? "last" : ""].filter(Boolean).join(" ");
+        return row(cls, cell, [m], [dropper(`the ${lookLabel(m.look, city)} cards of “${l.label}”`, l.key, m.look)], { id: d.id, key: l.key, look: m.look, quiz: d.quiz });
       });
-      return [row(several ? "sum" : "", td, [d], [remove]), ...layers];
+      // The layers hang from the sum's line on a branch, indented under it (see .decks tr.sum, tr.layer).
+      const layers = several ? named.flatMap((l, i) => {
+        const last = i === named.length - 1, maps = l.maps.length > 1;
+        const cell = document.createElement("td");
+        cell.textContent = l.label;
+        const cls = ["layer", maps ? "parent" : "", last ? "last" : ""].filter(Boolean).join(" ");
+        return [row(cls, cell, [l], [dropper(`“${l.label}”`, l.key)], { id: d.id, key: l.key, quiz: d.quiz }), ...(maps ? mapRows(l, true, !last) : [])];
+      }) : onlyMaps ? mapRows(named[0], false, false) : [];
+      return [row(several || onlyMaps ? "sum" : "", td, [d], [remove]), ...layers];
     }).flat()];
   }));
   $("decks").hidden = !decks.length;
   $("empty").hidden = decks.length > 0;
+}
+
+// The name of a map cards are played on (their look, see srs.js): the quiz map, the overlay, the street map; in a
+// city quiz the map by distance or the dots, on the drawn map, the overlay or the street map.
+function lookLabel(look, city) {
+  const NAMES = { quiz: "Quiz map", overlay: "Overlay", street: "Street map" };
+  if (!look) return "Map not recorded yet";
+  const [map, back] = look.split("+");
+  if (!city && map !== "free") return NAMES[map] ?? map;
+  return (map === "free" ? "Map" : "Dots") + (back ? ` · ${NAMES[back] ?? back}` : "");
 }
 
 // The settings (see srs.js): the three times of the clock, the two limits, and the schedule: which scheduler (FSRS or

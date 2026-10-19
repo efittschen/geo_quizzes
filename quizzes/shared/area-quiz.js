@@ -1162,8 +1162,10 @@
     ['setup', 'play', 'done', 'explore'].forEach(x => $(x).hidden = x !== id);
     $('app').classList.toggle('playing', id !== 'setup');
     $('startbar').hidden = id !== 'setup';
-    $('mapSeg').hidden = id !== 'setup' || $('mapSeg').childElementCount < 2;
-    mapBar.hidden = id !== 'setup';
+    // The map picker: on the setup screen, and during a review, to change the map its cards are asked on.
+    const picking = id === 'setup' || (id === 'play' && G.review);
+    $('mapSeg').hidden = !picking || FREE || $('mapSeg').childElementCount < 2;
+    mapBar.hidden = !picking;
     mapClass('picking', id === 'setup');
     // Hint colors fade while playing and on the results, so the answer colors stand out.
     mapClass('fade', id === 'play' || id === 'done');
@@ -1227,7 +1229,7 @@
   backSeg.className = 'maps'; backSeg.hidden = !BACKS.length; backSeg.setAttribute('role', 'group'); backSeg.setAttribute('aria-label', 'Background');
   backSeg.replaceChildren(...BACKS.map(([m, t, sub]) => {
     const b = document.createElement('button'); b.type = 'button'; b.dataset.back = m; b.textContent = t; b.title = sub;
-    b.onclick = () => useBack(m);
+    b.onclick = () => (view === 'play' && G.review ? reviewLook({ back: m }) : useBack(m));
     return b;
   }));
   mapBar.append(backSeg);
@@ -1634,7 +1636,22 @@
   $('selAll').onclick = () => { KINDS[pickKind].ids.forEach(id => SEL[pickKind].add(id)); syncPicker(); };
   $('selNone').onclick = () => { SEL[pickKind].clear(); syncPicker(); };
   // The preview switches with the map choice; best scores are kept per map, so the rounds list follows too.
-  for (const b of $('mapSeg').querySelectorAll('button')) b.onclick = () => { chosenMap = b.dataset.map; if (view === 'setup') useMap(chosenMap, true); buildRounds(); };
+  for (const b of $('mapSeg').querySelectorAll('button')) b.onclick = () => {
+    if (view === 'play' && G.review) { reviewLook({ map: b.dataset.map }); return; }
+    chosenMap = b.dataset.map; if (view === 'setup') useMap(chosenMap, true); buildRounds();
+  };
+  // A review asks its cards on the maps they were last played on (see reviewModes); the picker changes that for the
+  // rest of the review, from the question on screen (area-review.js keeps it), and leaves the setup screen's choice.
+  function reviewLook(look) {
+    if (look.map) useMap(look.map, true);
+    if (look.back) showBack(look.back);
+    syncReviewPickers();
+    if (RV) RV.look(look);
+  }
+  function syncReviewPickers() {
+    pressed('mapSeg', 'map', mapStyle);
+    for (const b of backSeg.children) b.setAttribute('aria-pressed', b.dataset.back === shownBack);
+  }
   $('saveBtn').onclick = () => {
     const cur = current(); if (!cur.ids.length) return;
     saveQuiz($('saveName').value, cur.kind, cur.ids); $('saveName').value = '';
@@ -1644,6 +1661,7 @@
 
   function openSetup() {
     clearInterval(timer); clearTimeout(G.ending); useMap(chosenMap); showBack(chosenBack); clearMap();
+    pressed('mapSeg', 'map', chosenMap); for (const b of backSeg.children) b.setAttribute('aria-pressed', b.dataset.back === chosenBack);
     show('setup');
     buildPicker(); buildRounds();
     frameRound();
@@ -1773,6 +1791,7 @@
     $('ticks').replaceChildren(...G.queue.map(() => document.createElement('i')));
     setFeedback($('fb'), '', '', '');
     show('play');
+    if (review) syncReviewPickers();
     if (Q.board) frame(box);
     ask();
     timer = setInterval(() => $('sTime').textContent = fmt(performance.now() - G.t0), 500);
@@ -2049,6 +2068,7 @@
         $, Q, G, KINDS, PAGE: PAGE_ID, ROOT, RESULT_CLASS, shuffle, fmt, start, markOut, mark, pathsOf, showLabel, setFeedback, needAll, flyTo, onStreet, showAnswer,
         free: () => mapStyle === 'free', home: () => resetView(),
         reviewModes, played: () => ({ m: mapStyle, ...(shownBack !== 'quiz' ? { b: shownBack } : {}) }), // how the round on screen is played
+        maps: () => (FREE ? [] : MAPS.map(m => m[0])), backs: () => BACKS.map(b => b[0]), // what the review's map picker offers
       });
     });
   }

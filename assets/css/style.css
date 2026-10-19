@@ -148,6 +148,13 @@ main > .map-wrap:first-child{margin-top:24px}
 .decks tr.layer.last td:first-child::before{bottom:50%}
 .decks tr.layer td:first-child::after{content:"";position:absolute;left:42px;top:50%;width:16px;border-top:1.5px solid var(--line)}
 .decks tr.layer .num{font-weight:400}
+/* a layer's maps, one level further in: their own branch; the layers' line goes on past them where more follow */
+.decks tr.layer.parent td{font-weight:600}
+.decks tr.layer.map td:first-child{padding-left:92px;font-size:.88rem}
+.decks tr.layer.map td:first-child::before{left:68px;top:0}
+.decks tr.layer.map td:first-child::after{left:68px}
+.decks tr.layer.map.more td:first-child{background:linear-gradient(var(--line),var(--line)) no-repeat 42px 0/1.5px 100%}
+.decks tr.layer.map .acts .ghost.small{padding-top:3px;padding-bottom:3px}
 .decks tr.layer.last td{padding-bottom:10px}
 .decks a{text-decoration:none}
 .decks a:hover{text-decoration:underline}
