@@ -1,7 +1,8 @@
 // Review mode for the map quizzes: the spaced-repetition side of area-quiz.js, which loads this file (and the
 // schedule, ../../assets/js/srs.js) itself, so quiz pages need no changes.
 //
-// A round played perfectly puts its questions on this page's stack. "Review" on the setup screen asks the ones that
+// A round played perfectly puts its questions on this page's stack, as cards of the map it was played on: the same
+// question learned on the quiz map and on the street map is two cards, each reviewed on its map (see srs.js). "Review" on the setup screen asks the ones that
 // are due, or all of them, in shuffled order whatever their kind of question. Each card is asked the way the last
 // perfect round with it was played: on that map (the quiz map, the overlay, the street map; a city quiz's dots or its
 // map by distance) and, in a city quiz, with that background, whatever is chosen on the setup screen now. Every
@@ -37,7 +38,13 @@ window.areaReview = E => {
   const { MISSED, UNSURE, KNOWN, INSTANT } = SRS;
   const CLASS = [3, 1, 0, 0]; // answer -> the engine's result class: miss, t2, got, got
   const LEAD = 1500; // ms before the clock starts on a map that has only just appeared
-  const cardKey = (kind, id) => (KINDS[kind].cards || kind) + '|' + id; // (a kind may share another kind's cards)
+  // A card is a question on one map (see srs.js): '<kind>@<look>|<item id>'. (A kind may share another kind's cards.)
+  const lookOf = ({ m, b }) => m + (b ? '+' + b : ''); // { m, b } as E.played() gives it
+  const cardKey = (kind, id, look) => (KINDS[kind].cards || kind) + '@' + look + '|' + id;
+  const here = () => lookOf(E.played()); // the map the round on screen is played on
+  // A key's parts; and the map of a look, to play it on ({ map, back, look }).
+  const parse = key => { const bar = key.indexOf('|'), at = key.indexOf('@'), has = at >= 0 && at < bar; return { kind: key.slice(0, has ? at : bar), look: has ? key.slice(at + 1, bar) : null, id: key.slice(bar + 1) }; };
+  const modeOfLook = look => { const [map, back] = look.split('+'); return { map, back: back || 'quiz', look }; };
   const pageTitle = () => (document.querySelector('.brand h1') || {}).textContent || document.title;
   let S = null; // the review being played
   let P = null; // an ordinary round's question: { t: when it was asked, easy, fast: the "easy" and "known" times, missed }
@@ -45,25 +52,33 @@ window.areaReview = E => {
 
   // This page's stack. Cards whose question is no longer in the quiz are kept but set aside (x) until it is back.
   function stack() {
-    const deck = SRS.deck(PAGE), items = {}; // card key -> [kind, item id]
-    for (const k in KINDS) for (const id of KINDS[k].ids) items[cardKey(k, id)] ??= [k, id]; // (shared cards are asked as the kind they belong to, which comes first)
+    const deck = SRS.deck(PAGE), owner = {}; // '<cards kind>|<item id>' -> [kind, item id]
+    for (const k in KINDS) for (const id of KINDS[k].ids) owner[(KINDS[k].cards || k) + '|' + id] ??= [k, id]; // (shared cards are asked as the kind they belong to, which comes first)
     let changed = false;
+    // Cards from before a card was a question on one map ('<kind>|<id>') get the key of the map they are played
+    // on: theirs if they kept it, else the one a review would ask them on (see reviewModes). Where a card of that
+    // map is there already, the one answered last stays.
+    let modeOf = null;
+    for (const c of Object.keys(deck.c)) {
+      const p = parse(c), o = owner[p.kind + '|' + p.id];
+      if (p.look !== null || !o) continue;
+      const card = deck.c[c], m = card.m ? { map: card.m, back: card.b || 'quiz' } : (modeOf ||= E.reviewModes())(...o, card);
+      const key = cardKey(o[0], p.id, lookOf({ m: m.map, b: m.back !== 'quiz' ? m.back : null }));
+      if (!deck.c[key] || (deck.c[key].l || 0) < (card.l || 0)) deck.c[key] = { ...card, m: m.map, ...(m.back !== 'quiz' ? { b: m.back } : {}) };
+      delete deck.c[c]; changed = true;
+    }
+    // (keys SRS.deck read in their new form are written so)
+    if (Object.keys(STORE.quiz(PAGE).cards || {}).some(k => k.lastIndexOf('@', k.indexOf('|')) < 0)) changed = true;
+    const items = {}; // card key -> [kind, item id]
+    for (const c in deck.c) { const p = parse(c), o = owner[p.kind + '|' + p.id]; if (o) items[c] = o; }
     for (const c in deck.c) {
       const gone = !items[c];
       if (!!deck.c[c].x !== gone) { if (gone) deck.c[c].x = 1; else delete deck.c[c].x; changed = true; }
     }
-    // Cards from before the map they are played on was kept get the one a review asks them on (see reviewModes),
-    // so the review page can sort them by map.
-    let modeOf = null;
-    for (const c in deck.c) if (!deck.c[c].m && items[c]) {
-      const m = (modeOf ||= E.reviewModes())(...items[c], deck.c[c]);
-      deck.c[c].m = m.map; if (m.back && m.back !== 'quiz') deck.c[c].b = m.back;
-      changed = true;
-    }
     if (changed) SRS.save(PAGE, deck);
     // The names of the layers with cards, for the review page, which lists each layer on its own.
     const names = {};
-    for (const c in deck.c) { const kind = c.slice(0, c.indexOf('|')), K = KINDS[kind] || Object.values(KINDS).find(K => K.cards === kind); if (K && K.label) names[kind] = K.label; }
+    for (const c in deck.c) { const kind = parse(c).kind, K = KINDS[kind] || Object.values(KINDS).find(K => K.cards === kind); if (K && K.label) names[kind] = K.label; }
     if (Object.keys(names).length) SRS.setLayers(PAGE, names);
     return { deck, items };
   }
@@ -115,9 +130,14 @@ window.areaReview = E => {
       asked: 0, prev: null, rounds: [], look: (run && run.look) || {}, // look: the map picked during the review
       lit: kind => SRS.all(deck).filter(c => items[c][0] === kind).flatMap(c => KINDS[kind].areas[items[c][1]]),
     };
-    // Cards asked the same way stay together, in the order their ways first come up.
-    const modeOf = E.reviewModes(), ways = new Map();
-    for (const c of keys) { const m = modeOf(...items[c], deck.c[c]), k = m.map + '/' + m.back; (ways.get(k) || ways.set(k, [m, []]).get(k))[1].push(c); }
+    // Each card is asked on its own map (its look); cards of one map stay together, in the order the maps first
+    // come up. (A look this page cannot show, the street map of a page without one, goes by reviewModes.)
+    const ways = new Map(), maps = E.maps().length ? E.maps() : ['free', 'quiz'], modeOf = E.reviewModes();
+    for (const c of keys) {
+      const look = parse(c).look, ok = look && maps.includes(look.split('+')[0]);
+      const m = ok ? modeOfLook(look) : { ...modeOf(...items[c], deck.c[c]), look };
+      (ways.get(look) || ways.set(look, [m, []]).get(look))[1].push(c);
+    }
     for (const [mode, cards] of ways.values()) for (const c of cards) enqueue(...items[c], mode);
     $('app').classList.remove('moving');
     nextRound();
@@ -200,7 +220,7 @@ window.areaReview = E => {
     const k = K.time ? K.time(id) : E.needAll(K, id) ? 1 + (K.areas[id].length - 1) / 2 : 1;
     // A card asked again after a miss was just shown: answering it quickly says nothing, so it is never "easy"
     // (an "easy" time below zero), in a review and in an ordinary round of the missed ones alike.
-    const key = cardKey(G.kind, id), shown = G.review ? (S.chain ? (SRS.run().again[PAGE] || []).includes(key) : S.counted.has(key)) : G.retry;
+    const key = cardKey(G.kind, id, G.review ? S.mode.look : here()), shown = G.review ? (S.chain ? (SRS.run().again[PAGE] || []).includes(key) : S.counted.has(key)) : G.retry;
     const easy = shown ? -1 : o.easy * 1000 * k;
     if (!G.review) { P = { t: performance.now() + (G.i ? 0 : LEAD), easy, fast: o.fast * 1000 * k, missed: false }; return; }
     // The last answer must not stay on the map if this question is about the same place.
@@ -243,16 +263,16 @@ window.areaReview = E => {
   function missed(id) {
     if (!P || P.missed) return;
     P.missed = true;
-    SRS.answer(PAGE, cardKey(G.kind, id), MISSED, Date.now());
+    SRS.answer(PAGE, cardKey(G.kind, id, here()), MISSED, Date.now()); // (the card of the map on screen; none on another map counts)
   }
   // right: answered on the first try (or, in map play, close).
   function answered(id, right) {
     if (!G.review) {
       if (!right) missed(id);
-      else if (P && !P.missed && performance.now() - P.t <= P.fast) SRS.answer(PAGE, cardKey(G.kind, id), performance.now() - P.t <= P.easy ? INSTANT : KNOWN, Date.now());
+      else if (P && !P.missed && performance.now() - P.t <= P.fast) SRS.answer(PAGE, cardKey(G.kind, id, here()), performance.now() - P.t <= P.easy ? INSTANT : KNOWN, Date.now());
       return;
     }
-    const K = KINDS[G.kind], g = S.g, now = Date.now(), key = cardKey(G.kind, id);
+    const K = KINDS[G.kind], g = S.g, now = Date.now(), key = cardKey(G.kind, id, S.mode.look); // (the card asked, whatever map is picked meanwhile)
     const card = SRS.answer(PAGE, key, g, now);
     // A card's first answer in a review is the one its result and the day's count go by.
     const first = S.chain ? SRS.ran(PAGE, key, g) : !S.counted.has(key);
@@ -294,7 +314,7 @@ window.areaReview = E => {
 
   // A perfect round: its questions go on the stack, and all of them keep how it was played.
   function learned(kind, ids) {
-    const n = SRS.add(PAGE, pageTitle(), ids.map(id => cardKey(kind, id)), Date.now(), E.played());
+    const n = SRS.add(PAGE, pageTitle(), ids.map(id => cardKey(kind, id, here())), Date.now(), E.played()); // cards of this map: learned on another map, a question gets another card
     if (n) $('rLine').textContent += ` · +${n} review`;
     syncButtons();
   }

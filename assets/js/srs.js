@@ -22,11 +22,15 @@
 // Everything is kept in this browser, through store.js, which says how it is written there. Here it is:
 //   a deck, the cards of one quiz page (in the page's record, so quizzes can come and go):
 //     { t: page title, c: { '<kind>|<item id>': card } }
-//     A page's cards fall into its layers by their <kind> (a regions quiz: island groups, provinces, kabupaten),
-//     and a layer's cards by the map they are played on (their look: m, and b in a city quiz: "street",
-//     "free+overlay"; "" where none is kept): the review page lists and reviews each on its own (`layers` and their
-//     `maps`, and `kinds` of a run: "<kind>" or "<kind>@<look>"). The names of the layers are kept with the cards
-//     (the record's `layers`: { <kind>: label }), written by the quiz page.
+//     A card is a question on one map: its key is '<kind>@<look>|<item id>', the look being the map it is played
+//     on ("quiz", "overlay", "street"; in a city quiz "free" or "quiz" for the dots, with "+<background>" where that
+//     is not the drawn map: "free+street"). A question learned on two maps is two cards, each reviewed on its own
+//     map. (Cards from before have no look in their key, '<kind>|<item id>': theirs is their m and b, until their
+//     quiz page next opens and gives them the new key.) A page's cards fall into its layers by their <kind> (a
+//     regions quiz: island groups, provinces, kabupaten), and a layer's cards by their look: the review page lists
+//     and reviews each on its own (`layers` and their `maps`, and `kinds` of a run: "<kind>" or "<kind>@<look>").
+//     The names of the layers are kept with the cards (the record's `layers`: { <kind>: label }), written by the
+//     quiz page.
 //     card  { d: due (ms), i: interval in days, e: ease (SM-2), st, df: stability in days and difficulty (FSRS; a
 //             card without them gets them from i and e), l: last answered (ms), n: times it was missed in review,
 //             s: its learning step (2, 3…: a new card's first, second… step; 1: the step after a miss, if the
@@ -154,36 +158,50 @@ const SRS = (() => {
 
   /* ---------- decks: the cards of one quiz page ---------- */
   const cards = (list, as) => Object.fromEntries(Object.entries(list).map(([k, c]) => [k, as(c)]));
-  function deck(id) { const r = STORE.quiz(id); return { t: r.title || "", c: cards(r.cards || {}, STORE.cardIn) }; }
+  // A page's cards. One kept under a key without its map that knows its map is read under the key of that map (the
+  // online copy may bring such keys back from a browser that hasn't opened the quiz since): where a card of that map
+  // is there already, the one answered last counts.
+  function deck(id) {
+    const r = STORE.quiz(id), c = cards(r.cards || {}, STORE.cardIn);
+    for (const k of Object.keys(c)) {
+      const bar = k.indexOf('|'), look = lookOf(k, c[k]);
+      if (k.lastIndexOf('@', bar) >= 0 || !look) continue;
+      const key = k.slice(0, bar) + '@' + look + k.slice(bar);
+      if (!c[key] || (c[key].l || 0) < (c[k].l || 0)) c[key] = c[k];
+      delete c[k];
+    }
+    return { t: r.title || "", c };
+  }
   function save(id, d) { STORE.setQuiz(id, r => { if (d.t) r.title = d.t; r.cards = cards(d.c, STORE.cardOut); }); }
   // Takes a page's cards off the stack: all of them, those of one layer, or those of one layer played on one map.
   function remove(id, kind = null, look = null) {
     STORE.setQuiz(id, r => {
       if (kind == null) { delete r.cards; return; }
-      for (const k in r.cards || {}) if (kindOf(k) === kind && (look == null || lookOf(STORE.cardIn(r.cards[k])) === look)) delete r.cards[k];
+      for (const k in r.cards || {}) if (kindOf(k) === kind && (look == null || lookOf(k, STORE.cardIn(r.cards[k])) === look)) delete r.cards[k];
       if (r.cards && !Object.keys(r.cards).length) delete r.cards;
     });
   }
-  // The layer a card belongs to; the layers' names, as the quiz page wrote them, else made from the kind's key.
-  const kindOf = key => key.slice(0, key.indexOf('|'));
+  // The layer a card belongs to (its key up to the look or the item); the layers' names, as the quiz page wrote them,
+  // else made from the kind's key.
+  const kindOf = key => { const bar = key.indexOf('|'), at = key.indexOf('@'); return key.slice(0, at >= 0 && at < bar ? at : bar); };
   const nameOf = (id, kind) => (STORE.quiz(id).layers || {})[kind] || kind.replace(/[-_]+/g, ' ').replace(/^./, c => c.toUpperCase());
   function setLayers(id, names) {
     const was = JSON.stringify(STORE.quiz(id).layers || {});
     if (JSON.stringify(names) !== was) STORE.setQuiz(id, r => { r.layers = names; });
   }
-  // The map a card is played on: its look (see above).
-  const lookOf = c => (c.m || '') + (c.b ? '+' + c.b : '');
+  // The map a card is played on: its look, from its key (see above), else from what the card keeps.
+  const lookOf = (key, c) => { const bar = key.indexOf('|'), at = key.indexOf('@'); return at >= 0 && at < bar ? key.slice(at + 1, bar) : (c.m || '') + (c.b ? '+' + c.b : ''); };
   const LOOKS = ['quiz', 'overlay', 'street', 'free']; // their order on the review page; a card without a map last
   const lookRank = l => { const i = LOOKS.indexOf(l.split('+')[0]); return l ? (i < 0 ? LOOKS.length : i) * 10 + (l.includes('+') ? 1 : 0) : 99; };
   // A deck with only the cards of some layers, or of some layers on some maps (kinds: ["<kind>" or
   // "<kind>@<look>"]; null: all of them).
-  const fits = (kinds, k, c) => kinds.some(s => { const at = s.indexOf('@'); return at < 0 ? kindOf(k) === s : kindOf(k) === s.slice(0, at) && lookOf(c) === s.slice(at + 1); });
+  const fits = (kinds, k, c) => kinds.some(s => { const at = s.indexOf('@'); return at < 0 ? kindOf(k) === s : kindOf(k) === s.slice(0, at) && lookOf(k, c) === s.slice(at + 1); });
   const part = (d, kinds) => (kinds ? { ...d, c: Object.fromEntries(Object.entries(d.c).filter(([k, c]) => fits(kinds, k, c))) } : d);
   // A deck's layers with their numbers, in the order their first card was put on the stack; and in each, its maps.
   function layers(d, now) {
     const kinds = [...new Set(Object.keys(d.c).map(kindOf))];
     return kinds.map(key => {
-      const own = part(d, [key]), looks = [...new Set(Object.values(own.c).map(lookOf))].sort((a, b) => lookRank(a) - lookRank(b));
+      const own = part(d, [key]), looks = [...new Set(Object.entries(own.c).map(([k, c]) => lookOf(k, c)))].sort((a, b) => lookRank(a) - lookRank(b));
       return { key, label: nameOf(d.id, key), ...stats(own, now), maps: looks.map(look => ({ look, ...stats(part(d, [key + '@' + look]), now) })).filter(m => m.total) };
     }).filter(l => l.total);
   }
