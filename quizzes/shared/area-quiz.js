@@ -546,12 +546,13 @@
     if (on || tiles) withTiles(() => { tiles.streets().show(onStreet() || shownBack !== 'quiz'); apply(); });
   }
   function activeKind() { return view === 'explore' ? Q.exploreKind : view === 'setup' ? choiceKind() : G.kind; }
-  // The item under the pointer: outlined on the quiz map, tinted on the overlay.
+  // The item under the pointer: outlined on the quiz map, tinted on the overlay; in a kind with pickAll, where areas
+  // are picked one by one, the area alone.
   // (not on the street map alone: that would show its borders)
   function hover(area) {
     if (view === 'play' && KINDS[G.kind].prompt === 'area') { hoverUse.setAttribute('d', ''); return; } // (the place asked is the only one outlined)
     const K = KINDS[activeKind()], id = area && K.primary(area);
-    hoverUse.setAttribute('d', id && !plain() ? outline(K.areas[id]) : '');
+    hoverUse.setAttribute('d', !area || plain() ? '' : K.pickAll ? outline([area]) : id ? outline(K.areas[id]) : '');
   }
   function mark(areas) { ansUse.setAttribute('d', areas ? outline(areas) : ''); }
   // The shapes of some areas as one: where they make up units drawn as one shape (see `whole` below), by those.
