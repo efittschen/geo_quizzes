@@ -266,6 +266,7 @@ svg#map.grab{cursor:grabbing}
 #regions .r.got{--fill:var(--got)} #regions .r.t2{--fill:var(--t2)} #regions .r.t3{--fill:var(--t3)} #regions .r.miss{--fill:var(--miss)}
 #regions .r.ans{--fill:var(--yellow)} #regions .r.sel{--fill:var(--yellow)}
 #regions .r.found{--fill:var(--got)}
+#regions .r.pick{--fill:var(--rare)}   /* picked, not yet checked (pickAll) */
 /* right, but rare there (a kind's rare): its own color, whatever the try */
 #regions .r.rare{--fill:var(--rare)}
 #regions .r.flash{--fill:var(--bad)}

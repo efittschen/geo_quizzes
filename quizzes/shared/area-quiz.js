@@ -220,7 +220,12 @@
      map and on the overlay, with a counter on the map ("3 areas", or what areaNoun calls them: 'letters'); on the
      street map one click still counts and highlights them all. fresh: true is for areas that are the answer to many of the kind's items (a country that writes
      many letters): every question starts on a map without colors, an answer's color leaving it after a moment,
-     and the results show none. rare(id, areaId) -> true colors a right area another way (blue): the answer holds
+     and the results show none. pickAll: true asks for every area of the item at once, as a set (where a road
+     marking may be seen, in all its prefectures): a click picks an area and a second one drops it, then Check (or
+     Enter) answers with what is picked. A wrong check drops the wrong picks (flashed), keeps the right ones (green,
+     fixed) and says how many are missing, a try less; after the last one the rest is shown, and Check goes on.
+     Every area stays lit (as dim: false), and an answer's colors stay until the next question's first pick.
+     rare(id, areaId) -> true colors a right area another way (blue): the answer holds
      there, but is seldom met (a letter a country writes in a few words only).
      dial(id) -> [[text, 'hot' | 'cold'], …] shows the dial code in parts (e.g. only the prefix bold); pin(id) ->
      { x, y, ll, label } marks a place (e.g. the town the code belongs to) after the question is answered.
@@ -249,7 +254,7 @@
     const size = id => areas[id].reduce((s, a) => s + (AREA[a].size ?? AREA[a].a ?? 0) / at[a].length, 0); // (size: an area's on an equal-area map, where the quiz map is Mercator)
     const rankings = [...(k.areaRank === false ? [] : [{ label: 'largest area', order: ids.slice().sort((a, b) => size(b) - size(a)) }]), ...(k.rankings || [])];
     const many = k.noun[1], count = new Set(ids).size;
-    return { ...k, ids, areas, at, rankings, primary: k.primary || (a => (at[a] || [])[0]),
+    return { ...k, ids, areas, at, rankings, primary: k.primary || (a => (at[a] || [])[0]), ...(k.pickAll ? { dim: false } : {}),
       sub: k.sub ?? `${count.toLocaleString('en-US')} ${count === 1 ? k.noun[0] : many}`, pickTitle: k.pickTitle ?? `${many[0].toUpperCase()}${many.slice(1)} to practice` };
   };
   const KINDS = Object.fromEntries(Q.kinds.map(k => [k.key, kindOf(k)]));
@@ -681,7 +686,7 @@
     clearPin(); gFree.replaceChildren(); clearTimeout(freshTimer);
     for (const t of flashTimers.values()) clearTimeout(t);
     flashTimers.clear();
-    for (const a of AREAS) for (const p of shapesOf(a)) p.classList.remove('got', 't2', 't3', 'miss', 'ans', 'sel', 'flash', 'found', 'rare', 'out', 'pre');
+    for (const a of AREAS) for (const p of shapesOf(a)) p.classList.remove('got', 't2', 't3', 'miss', 'ans', 'sel', 'pick', 'flash', 'found', 'rare', 'out', 'pre');
     clearLabels(); labelsOut();
     mark(null);
   }
@@ -1732,7 +1737,7 @@
   }
 
   /* ---------- game ---------- */
-  const G = { kind: Q.kinds[0].key, items: [], queue: [], i: 0, tries: 0, revealed: false, found: new Set(), score: 0, streak: 0, best: 0, res: [], t0: 0, retry: false, review: false, missed: [], points: 0, box: null, back: null };
+  const G = { kind: Q.kinds[0].key, items: [], queue: [], i: 0, tries: 0, revealed: false, found: new Set(), picked: new Set(), cleared: false, score: 0, streak: 0, best: 0, res: [], t0: 0, retry: false, review: false, missed: [], points: 0, box: null, back: null };
   // Map play: points per answer by distance; 4,000 or more counts as close (a perfect answer for the stars).
   const FREE_MAX = 5000, FREE_CLOSE = 4000, FREE_LEGEND = ['4,000+', '2,500+', '1,000+', 'Under 1,000'];
   const freeClass = p => p >= FREE_CLOSE ? 0 : p >= 2500 ? 1 : p >= 1000 ? 2 : 3;
@@ -1807,8 +1812,8 @@
   }
   function ask() {
     const id = G.queue[G.i], K = KINDS[G.kind];
-    G.tries = 0; G.revealed = false; G.found = new Set();
-    mark(null);
+    G.tries = 0; G.revealed = false; G.found = new Set(); G.picked = new Set(); G.cleared = false;
+    mark(null); syncCheck();
     const isArea = K.prompt === 'area', isName = K.prompt === 'name' || isArea, isText = K.prompt === 'text', isPhoto = K.prompt === 'photo';
     $('dial').hidden = isName || isText || isPhoto; $('bigname').hidden = !isName; $('bigname').classList.toggle('asking', isArea);
     if ($('card')) $('card').hidden = !isText;
@@ -1845,8 +1850,46 @@
       const ids = KINDS[pickKind].at[area]; if (ids) toggleItems(ids); return;
     }
     if (view === 'explore') { explore(area); return; }
-    if (view === 'play' && !KINDS[G.kind].typed) answer(area);
+    if (view === 'play' && !KINDS[G.kind].typed) { if (KINDS[G.kind].pickAll) togglePick(area); else answer(area); }
   }
+  // A kind with pickAll: a click picks an area or drops it; Check answers with the picks (see KINDS).
+  const checkBtn = $('checkBtn');
+  function syncCheck() {
+    if (!checkBtn) return;
+    const K = KINDS[G.kind];
+    checkBtn.hidden = !K.pickAll;
+    checkBtn.disabled = !G.revealed && !G.picked.size;
+    checkBtn.textContent = G.revealed ? 'Next' : G.picked.size ? `Check · ${plural(G.picked.size, K.areaNoun ? [K.areaNoun.replace(/s$/, ''), K.areaNoun] : ['area', 'areas'])} picked` : 'Check';
+  }
+  function pickLabel(area, on) {
+    buildLabels(G.kind);
+    const e = AREA_ENTRY[area]; if (!e) return;
+    on ? e.shown.add('pick') : e.shown.delete('pick'); renderEntry(e);
+  }
+  function togglePick(area) {
+    if (G.revealed || G.found.has(area) || G.queue[G.i] === undefined) return; // the answer shown: Check goes on
+    // The last answer's colors and names leave the map with the first pick of the next question.
+    if (!G.cleared) { fresh(); clearLabels(); G.cleared = true; }
+    const on = !G.picked.has(area);
+    if (on) G.picked.add(area); else G.picked.delete(area);
+    for (const p of pathsOf([area])) p.classList.toggle('pick', on);
+    pickLabel(area, on);
+    syncCheck();
+  }
+  function check() {
+    const K = KINDS[G.kind], target = G.queue[G.i];
+    if (view !== 'play' || !K.pickAll || target === undefined || (!G.revealed && !G.picked.size)) return;
+    const want = K.areas[target];
+    if (G.revealed || (G.picked.size === want.length && want.every(a => G.picked.has(a)))) { answer(want[0]); return; }
+    const extra = [...G.picked].filter(a => !want.includes(a)), missing = want.filter(a => !G.picked.has(a));
+    for (const a of extra) {
+      G.picked.delete(a); pathsOf([a])[0].classList.remove('pick'); pickLabel(a, false); flashArea(a);
+    }
+    for (const a of G.picked) if (!G.found.has(a)) { G.found.add(a); const p = pathsOf([a])[0]; p.classList.remove('pick'); p.classList.add('found'); }
+    wrong([extra.length ? 'Not ' + extra.map(a => K.clicked(a, target)).join(', ') : '', missing.length ? `${missing.length} missing` : ''].filter(Boolean).join(' · '));
+    syncCheck();
+  }
+  if (checkBtn) checkBtn.onclick = check;
   // A typed answer: right, it counts as a click on the item's area; wrong, as a wrong click.
   const typedForm = $('typedForm');
   if (typedForm) typedForm.addEventListener('submit', e => {
@@ -1957,7 +2000,7 @@
       if (G.review) G.tries = RV.grade(G.tries > 0 || G.revealed); // a review grades by the clock: known, unsure or not known
       const k = RESULT_CLASS[G.tries];
       if (K.fresh) fresh();
-      for (const p of pathsOf(K.areas[target])) { p.classList.remove('ans', 'flash', 'found', ...RESULT_CLASS); p.classList.add(k); }
+      for (const p of pathsOf(K.areas[target])) { p.classList.remove('ans', 'flash', 'found', 'pick', ...RESULT_CLASS); p.classList.add(k); }
       if (K.rare) K.areas[target].forEach((a, i) => pathsOf(K.areas[target])[i].classList.toggle('rare', !!K.rare(target, a)));
       if (K.fresh) fresh(FRESH_MS);
       showLabel(G.kind, target);
@@ -2047,7 +2090,7 @@
     let line = free ? `${pct}% of ${(n * FREE_MAX).toLocaleString('en-US')} · ${G.score}/${n} close · ${fmt(ms)}` : `${pct}% · ${fmt(ms)} · streak ${G.best}`;
     if (prev && complete) line += better ? ' · new best' : free ? ` · best ${(prev.p || 0).toLocaleString('en-US')}` : ` · best ${prev.s}/${n}`;
     legendItems.forEach((li, i) => { li.lastChild.textContent = free ? FREE_LEGEND[i] : LEGEND[i]; });
-    if (legendItems[0]) legendItems[0].parentNode.hidden = !!K.fresh;
+    if (legendItems[0]) legendItems[0].parentNode.hidden = !!(K.fresh || K.pickAll);
     $('rLine').textContent = line;
     const missed = G.queue.slice(0, n).map((id, i) => [id, G.res[i]]).filter(([, t]) => t > 0)
       .sort((a, b) => K.ids.indexOf(a[0]) - K.ids.indexOf(b[0]));
@@ -2119,6 +2162,8 @@
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') return;
     if (e.key === 'Escape') { lightbox.hidden = true; return; }
+    // Enter checks the picks (pickAll); on a button, the button's own Enter does
+    if (e.key === 'Enter' && e.target.tagName !== 'BUTTON' && view === 'play' && KINDS[G.kind].pickAll) { e.preventDefault(); check(); return; }
     const zoomIn = e.key === '+' || e.key === '=', zoomOut = e.key === '-', reset = e.key === '0';
     if (zoomIn) zoomCenter(1.4); else if (zoomOut) zoomCenter(1 / 1.4); else if (reset) frameRound(true);
   });

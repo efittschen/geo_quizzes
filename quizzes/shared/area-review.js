@@ -213,8 +213,8 @@ window.areaReview = E => {
   }
   function asked() {
     const K = KINDS[G.kind], id = G.queue[G.i], o = SRS.opts();
-    // An item with several areas to click gets half the time again for each extra one; a typed answer its own time.
-    const k = K.time ? K.time(id) : E.needAll(K, id) ? 1 + (K.areas[id].length - 1) / 2 : 1;
+    // An item with several areas to click (or pick, pickAll) gets half the time again for each extra one; a typed answer its own time.
+    const k = K.time ? K.time(id) : E.needAll(K, id) || K.pickAll ? 1 + (K.areas[id].length - 1) / 2 : 1;
     // A card asked again after a miss was just shown: answering it quickly says nothing, so it is never "easy"
     // (an "easy" time below zero), in a review and in an ordinary round of the missed ones alike.
     const key = cardKey(G.kind, id, G.review ? S.mode.look : here()), shown = G.review ? (S.chain ? (SRS.run().again[PAGE] || []).includes(key) : S.counted.has(key)) : G.retry;

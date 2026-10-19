@@ -2313,6 +2313,14 @@
       "url": "quizzes/japan-power-logos/index.html"
     },
     {
+      "id": "japan-diamonds",
+      "country": "392",
+      "title": "Road Diamonds",
+      "levels": 2,
+      "description": "See a diamond road marking and pick every prefecture that paints it.",
+      "url": "quizzes/japan-diamonds/index.html"
+    },
+    {
       "id": "japan-power",
       "country": "392",
       "title": "Power Companies",
