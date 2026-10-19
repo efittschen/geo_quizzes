@@ -1,0 +1,6 @@
+/* US Bollards: each state is one area made of its area codes. Their seams take the state's own color, and the
+   state outlines (#borders) are the only lines; hovering and the shown answer tint the state instead of outlining it. */
+.r{stroke:var(--fill);stroke-width:1.5;stroke-opacity:1}
+#regions .r.out{stroke-opacity:1}
+#hoverUse{fill:var(--ink);fill-opacity:.14;stroke:none}
+#ansUse{fill:var(--ink);stroke:none;animation:tint 1s ease-in-out infinite alternate}

@@ -227,6 +227,13 @@
      prompt 'area' outlines the item's areas on the map as the question (flying to them when they are out of view
      or too small to see) and says ask(id), else "Which <noun> is this?": with typed, the player names a place
      they are shown, the other way round from clicking a place they are named.
+     choices() -> [names], with typed: the answer is picked from that list instead of spelled. What is typed only
+     narrows the list (names that start with it first, then those with a word that does, then the rest that
+     contain it); a click on a name puts it in the field (a double click answers with it at once), the arrow keys
+     move the mark, and Enter or OK answers with the name marked: typed then gets that name, so what is typed is
+     never compared letter by letter. The button by the field folds the list away, to just the name marked once
+     something is typed, and back, for every quiz (the settings' listMin).
+     A picture's cls 'blur' shows it blurred while it is asked (and when enlarged before it is answered).
      typed(id, text) -> true | false makes the answer one to type, in a field under the prompt (a name read in
      another script, written in Latin letters): a wrong one counts like a wrong click, a shown answer is typed to
      go on, and clicks on the map answer nothing. time(id) is how many times longer than a click such an answer
@@ -1678,7 +1685,7 @@
   lightbox.onclick = e => { if (e.target.tagName !== 'A') lightbox.hidden = true; };
   function zoomPhoto(p, reveal) {
     const [img, cap] = lightbox.firstChild.children, [label, link] = cap.children;
-    img.src = p.src; img.alt = p.alt || '';
+    img.src = p.src; img.alt = p.alt || ''; img.dataset.look = reveal ? '' : p.cls || ''; // (a blurred picture stays so until answered)
     cap.hidden = !reveal; label.textContent = p.label || '';
     link.hidden = !p.link; if (p.link) { link.href = p.link; link.textContent = p.linkLabel || 'Street View'; }
     lightbox.hidden = false;
@@ -1812,7 +1819,7 @@
     if (G.back) { vb = G.back; G.back = null; apply(); }
     if (isPhoto) {
       const p = K.photo(id), next = G.queue[G.i + 1];
-      $('photoImg').src = p.src; $('photoImg').alt = p.alt || '';
+      $('photoImg').src = p.src; $('photoImg').alt = p.alt || ''; $('photo').dataset.look = p.cls || '';
       $('photo').onclick = () => zoomPhoto(p, false);
       if (next !== undefined) new Image().src = K.photo(next).src; // the next picture is there when it is asked
     }
@@ -1822,6 +1829,7 @@
     else if (K.dial) $('code').replaceChildren(...K.dial(id).map(([text, cls]) => { const s = document.createElement('span'); s.className = cls; s.textContent = text; return s; }));
     else $('code').textContent = K.short(id);
     if (typedForm) { typedForm.hidden = !K.typed; if (K.typed) { $('typed').value = ''; $('typed').focus({ preventScroll: true }); } }
+    marked = 0; steered = false; syncList();
     // The optional hint under the prompt, e.g. the state a code is in; empty (and hidden) otherwise.
     const ask = $('ask'); ask.replaceChildren();
     if (K.detail && $('optDetail').checked) { const s = document.createElement('strong'); s.textContent = K.detail.text(id); ask.append(s); }
@@ -1843,10 +1851,67 @@
   const typedForm = $('typedForm');
   if (typedForm) typedForm.addEventListener('submit', e => {
     e.preventDefault();
-    const K = KINDS[G.kind], id = G.queue[G.i], text = $('typed').value.trim();
+    const K = KINDS[G.kind], id = G.queue[G.i];
+    // An answer from a list is the name marked in it, however it was sent (Enter, OK, a phone's Go): what is typed
+    // only narrows the list, it is never compared letter by letter.
+    // (with nothing typed and no name marked by the arrow keys, a stray Enter answers nothing)
+    const text = K.choices ? ($('typed').value.trim() || steered ? listed[marked] || '' : '') : $('typed').value.trim();
     if (view !== 'play' || !K.typed || id === undefined || !text) return;
-    if (K.typed(id, text)) answer(K.areas[id][0]); else { wrong(text); $('typed').select(); }
+    if (K.typed(id, text)) answer(K.areas[id][0]);
+    else { wrong(text); if (K.choices) { $('typed').value = ''; marked = 0; syncList(); } else $('typed').select(); }
   });
+  // An answer picked from a list (K.choices): what is typed narrows it, Enter or a click takes the one marked.
+  const typedList = $('typedList'), plainOf = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const listBtn = $('typedListBtn');
+  let listed = [], marked = 0, steered = false; // steered: a name marked with the arrow keys
+  let listMin = !!STORE.settings().listMin; // the list folded away: only the name marked shows, once there is one
+  function syncList() {
+    if (!typedList) return;
+    const K = KINDS[G.kind];
+    if (listBtn) listBtn.hidden = !K || !K.typed || !K.choices;
+    if (!K || !K.typed || !K.choices) { typedList.hidden = true; return; }
+    const q = plainOf($('typed').value.trim()), all = K.choices(), seen = new Set();
+    const tiers = !q ? [all] : [all.filter(n => plainOf(n).startsWith(q)), all.filter(n => plainOf(n).split(/[\s,.-]+/).some(w => w.startsWith(q))), all.filter(n => plainOf(n).includes(q))];
+    listed = tiers.flat().filter(n => !seen.has(n) && seen.add(n));
+    marked = Math.max(0, Math.min(marked, listed.length - 1));
+    const shown = !listMin ? listed.map((n, i) => [n, i]) : (q || steered) && listed.length ? [[listed[marked], marked]] : [];
+    typedList.replaceChildren(...shown.map(([n, i]) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'opt' + (i === marked ? ' on' : ''); b.textContent = n;
+      b.setAttribute('role', 'option'); b.setAttribute('aria-selected', i === marked);
+      b.onclick = () => fillChoice(n);
+      b.ondblclick = () => { fillChoice(n); typedForm.requestSubmit(); };
+      return b;
+    }));
+    typedList.hidden = listMin && !shown.length;
+    if (listBtn) {
+      listBtn.setAttribute('aria-expanded', !listMin);
+      listBtn.title = listMin ? 'Show the list' : 'Hide the list'; listBtn.setAttribute('aria-label', listBtn.title);
+    }
+  }
+  // A name clicked in the list: in the field, and marked, ready to be answered with (Enter or OK).
+  function fillChoice(n) {
+    $('typed').value = n; marked = 0; steered = true; syncList();
+    marked = Math.max(0, listed.indexOf(n)); syncList();
+    $('typed').focus({ preventScroll: true });
+  }
+  if (typedList) {
+    $('typed').addEventListener('input', () => { marked = 0; steered = false; syncList(); });
+    $('typed').addEventListener('keydown', e => {
+      const K = KINDS[G.kind];
+      if (!K || !K.choices || !listed.length) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault(); marked = (marked + (e.key === 'ArrowDown' ? 1 : -1) + listed.length) % listed.length; steered = true; syncList();
+        typedList.querySelector('.on')?.scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter') { e.preventDefault(); typedForm.requestSubmit(); }
+    });
+  }
+  if (listBtn) listBtn.onclick = () => {
+    listMin = !listMin;
+    STORE.setSettings(s => { if (listMin) s.listMin = true; else delete s.listMin; });
+    syncList();
+    typedList.querySelector('.on')?.scrollIntoView({ block: 'nearest' });
+    $('typed').focus({ preventScroll: true });
+  };
   function flash(kind, id) {
     const K = KINDS[kind], key = kind + ':' + id;
     for (const p of pathsOf(K.areas[id])) p.classList.add('flash');

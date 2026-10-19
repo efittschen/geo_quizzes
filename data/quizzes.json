@@ -1177,6 +1177,14 @@
       "url": "quizzes/us-town-names/index.html"
     },
     {
+      "id": "us-flags",
+      "country": "840",
+      "title": "State Flags",
+      "levels": 3,
+      "description": "See a state flag and pick the state, clear or blurred.",
+      "url": "quizzes/us-flags/index.html"
+    },
+    {
       "id": "us-bollards",
       "country": "840",
       "title": "Bollards",
@@ -1951,6 +1959,14 @@
       "role": "names",
       "levels": 2,
       "url": "quizzes/malaysia-town-names/index.html"
+    },
+    {
+      "id": "malaysia-flags",
+      "country": "458",
+      "title": "State Flags",
+      "levels": 2,
+      "description": "See a state or territory flag and click it on the map, clear or blurred.",
+      "url": "quizzes/malaysia-flags/index.html"
     },
     {
       "id": "peru-codes",

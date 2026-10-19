@@ -6,6 +6,9 @@
 .photo{appearance:none;display:block;width:100%;padding:0;border:1.5px solid var(--ink);border-radius:var(--radius);overflow:hidden;background:#000;cursor:zoom-in;aspect-ratio:16/10;flex:none}
 .photo img{display:block;width:100%;height:100%;object-fit:contain}
 .photo.pop img{animation:pop .35s ease-out}
+/* a blurred picture (cls 'blur'): blurred while asked, and enlarged before it is answered */
+.photo[data-look~="blur"] img{filter:blur(5px)}
+.lightbox img[data-look~="blur"]{filter:blur(16px)}
 
 .lightbox{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:16px;background:rgba(8,14,20,.92);cursor:zoom-out}
 .lightbox figure{margin:0;display:grid;gap:10px;justify-items:center;max-width:100%}
