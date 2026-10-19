@@ -12,6 +12,7 @@ const LAYERS = {
   fly: {"pad":1.6,"min":0.0375},
   street: {"bounds":[[24,123],[45.6,146]],"maxBounds":[[18,115],[50,158]]},
   hintLabel: "Color by region",
+  langsAlways: true, // every round box shows English | Kanji, not only the one picked
   exploreKind: "prefectures",
   kinds: [
     {
@@ -46,11 +47,11 @@ const LAYERS = {
     },
     {
       key: "kanji",
-      label: "Kanji",
+      label: "Prefectures (kanji)",
       noun: ["prefecture","prefectures"],
       prompt: "text",
       of: "prefectures",
-      lang: "Japanese",
+      lang: "Kanji",
       groups: [["Hokkaido","",["p01"]],["Tohoku","",["p05","p02","p07","p03","p04","p06"]],["Kanto","",["p12","p10","p08","p14","p11","p09","p13"]],["Chubu","",["p23","p18","p21","p17","p20","p15","p22","p16","p19"]],["Kinki","",["p28","p26","p24","p29","p27","p25","p30"]],["Chugoku","",["p34","p33","p32","p31","p35"]],["Shikoku","",["p38","p37","p39","p36"]],["Kyushu & Okinawa","",["p40","p46","p43","p45","p42","p44","p47","p41"]]],
       areas: {"x":{"p01":["01-hokkaido"],"p05":["05-tohoku"],"p02":["02-tohoku"],"p07":["07-tohoku"],"p03":["03-tohoku"],"p04":["04-tohoku"],"p06":["06-tohoku"],"p12":["12-tepco"],"p10":["10-tepco"],"p08":["08-tepco"],"p14":["14-tepco"],"p11":["11-tepco"],"p09":["09-tepco"],"p13":["13-tepco"],"p23":["23-chubu"],"p18":["18-kansai","18-hokuriku"],"p21":["21-chubu","21-hokuriku","21-kansai"],"p17":["17-hokuriku"],"p20":["20-chubu"],"p15":["15-tohoku"],"p22":["22-tepco","22-chubu"],"p16":["16-hokuriku"],"p19":["19-tepco"],"p28":["28-kansai","28-chugoku"],"p26":["26-kansai"],"p24":["24-chubu","24-kansai"],"p29":["29-kansai"],"p27":["27-kansai"],"p25":["25-kansai"],"p30":["30-kansai"],"p34":["34-chugoku"],"p33":["33-chugoku"],"p32":["32-chugoku"],"p31":["31-chugoku"],"p35":["35-chugoku"],"p38":["38-shikoku","38-chugoku"],"p37":["37-shikoku","37-chugoku"],"p39":["39-shikoku"],"p36":["36-shikoku"],"p40":["40-kyushu"],"p46":["46-kyushu"],"p43":["43-kyushu"],"p45":["45-kyushu"],"p42":["42-kyushu"],"p44":["44-kyushu"],"p47":["47-okinawa"],"p41":["41-kyushu"]}},
       name: {"x":{"p01":"北海道","p05":"秋田県","p02":"青森県","p07":"福島県","p03":"岩手県","p04":"宮城県","p06":"山形県","p12":"千葉県","p10":"群馬県","p08":"茨城県","p14":"神奈川県","p11":"埼玉県","p09":"栃木県","p13":"東京都","p23":"愛知県","p18":"福井県","p21":"岐阜県","p17":"石川県","p20":"長野県","p15":"新潟県","p22":"静岡県","p16":"富山県","p19":"山梨県","p28":"兵庫県","p26":"京都府","p24":"三重県","p29":"奈良県","p27":"大阪府","p25":"滋賀県","p30":"和歌山県","p34":"広島県","p33":"岡山県","p32":"島根県","p31":"鳥取県","p35":"山口県","p38":"愛媛県","p37":"香川県","p39":"高知県","p36":"徳島県","p40":"福岡県","p46":"鹿児島県","p43":"熊本県","p45":"宮崎県","p42":"長崎県","p44":"大分県","p47":"沖縄県","p41":"佐賀県"}},

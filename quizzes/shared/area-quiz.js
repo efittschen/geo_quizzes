@@ -54,6 +54,8 @@
 //                every box starts with (before any is picked: the kind marked start: true, else the kind the
 //                others follow), and a box stands in the level of the round it shows; best scores, stars and
 //                review cards stay per kind.
+//   langsAlways  true: every round box shows its languages, not only the box of the round picked (a click on one
+//                picks that round in that language)
 //   langLabel    'Country': the languages are chosen once for the whole list, in a row of their own above the
 //                rounds under this heading, instead of in each round's box (the countries of a script's words: a
 //                choice a player has to see). A round with nothing in the language chosen is left out.
@@ -1446,7 +1448,7 @@
     const on = shownOf(variants);
     if (Q.langLabel) return answerable(roundBtn(keyOf(on), on.label, '', on.kind, roundIds(on), on.random));
     const langs = () => options(variants.map(v => [langOf(v), '', v === on, () => { store('lang', langOf(v)); choice = keyOf(v); store('choice', choice); buildRounds(); frameRound(); }]));
-    return answerable(roundBtn(keyOf(on), on.label, '', on.kind, roundIds(on), on.random), ...(keyOf(on) === choice ? [langs()] : []));
+    return answerable(roundBtn(keyOf(on), on.label, '', on.kind, roundIds(on), on.random), ...(keyOf(on) === choice || Q.langsAlways ? [langs()] : []));
   }
   // A switch in a round's box, where its sub would be: one of its options is on. [label, title, on, onclick] each.
   function options(list) {

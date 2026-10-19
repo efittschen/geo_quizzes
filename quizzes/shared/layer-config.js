@@ -194,6 +194,7 @@ const layerLib = (() => {
       ...(L.geo === false ? {} : { geo: resolve(L.geo || 'GEO'), street: L.street }),
       hintLabel: L.hintLabel, exploreKind: L.exploreKind,
       ...(L.hintsDefault === undefined ? {} : { hintsDefault: L.hintsDefault }),
+      ...(L.langsAlways ? { langsAlways: true } : {}),
       explore: a => explore[a],
       kinds,
     };
