@@ -1041,12 +1041,26 @@
      paint, by its computed style, not by any rule of this engine. redraws: full redraws since the page opened (a
      move that only slides the picture is none); painted: the elements the browser paints in each of them, anywhere
      in the picture, and their outline points; in view: those of them whose box on screen meets the stage; tappable:
-     those in view that take a tap. */
-  const counter = document.createElement('div');
+     those in view that take a tap. Shown in debug mode only, which the Debug switch beside the credits turns on and
+     off, for every quiz (the settings' `debug`, see store.js); without it nothing is counted. */
+  const counter = document.createElement('div'), debugBtn = document.createElement('button');
   counter.className = 'dbg-count'; counter.setAttribute('aria-hidden', 'true');
   ($('stage').querySelector('.corner') || $('stage')).prepend(counter);
-  let counting = 0, redraws = 0;
-  function countSoon() { if (!counting) counting = setTimeout(() => { counting = 0; requestAnimationFrame(count); }, 200); }
+  debugBtn.type = 'button'; debugBtn.className = 'dbg-btn'; debugBtn.textContent = 'Debug';
+  ($('stage').querySelector('.credits') || $('stage')).prepend(debugBtn);
+  let counting = 0, redraws = 0, debugOn = !!STORE.settings().debug;
+  function countSoon() { if (debugOn && !counting) counting = setTimeout(() => { counting = 0; requestAnimationFrame(count); }, 200); }
+  function syncDebug() {
+    counter.hidden = !debugOn; debugBtn.setAttribute('aria-pressed', debugOn);
+    debugBtn.title = debugOn ? 'Debug mode on: hide the drawing counter' : 'Debug mode: show what the map draws';
+    if (debugOn) countSoon();
+  }
+  debugBtn.onclick = () => {
+    debugOn = !debugOn;
+    STORE.setSettings(s => { if (debugOn) s.debug = true; else delete s.debug; });
+    syncDebug();
+  };
+  syncDebug();
   function count() {
     const root = svg, st = $('stage').getBoundingClientRect();
     let painted = 0, points = 0, inView = 0, tappable = 0;

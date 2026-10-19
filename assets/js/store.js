@@ -29,7 +29,8 @@
 //   geoquizzes.settings         { easy, known, limit: the review clock's three times in seconds; perReview, perDay: the most
 //                                 cards in one review and in one day; sound: false once answers are no longer said
 //                                 aloud (see "sound" in area-quiz.js); listMin: true once a quiz's list of answers
-//                                 to pick from is folded away (see "choices" in area-quiz.js); the review schedule (see srs.js): scheduler
+//                                 to pick from is folded away (see "choices" in area-quiz.js); debug: true while the
+//                                 maps show their drawing counter (debug mode, see area-quiz.js); the review schedule (see srs.js): scheduler
 //                                 ("fsrs" or "sm2"), retention, steps, missStep, kept, firstInterval, ease, unsure, longest;
 //                                 open: the folders open in "All quizzes"; changed: when any but `open` last
 //                                 changed here (a time, for the online copy) }
