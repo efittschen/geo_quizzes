@@ -2377,6 +2377,15 @@
       "hidden": true
     },
     {
+      "id": "japan-kanji",
+      "scope": "Languages",
+      "country": "392",
+      "title": "Prefectures in Kanji",
+      "levels": 3,
+      "description": "Match Japan's 47 prefectures in kanji to their English names, or pick one from the other.",
+      "url": "quizzes/japan-kanji/index.html"
+    },
+    {
       "id": "languages-cyrillic",
       "scope": "Languages",
       "title": "Cyrillic to Latin",

@@ -1,0 +1,72 @@
+/* Prefectures in Kanji (quiz.js): one column, the setup, the board or the question, and the results. Barlow has no
+   kanji, so Japanese is set in Noto Sans JP. */
+.wrap{max-width:760px;margin:0 auto;padding:28px 22px 40px}
+.back{display:inline-block;margin-bottom:10px;color:var(--muted);text-decoration:none;font-size:.9rem}
+.back:hover{color:var(--ink)}
+h1{font:700 2.1rem/1 var(--cond);letter-spacing:-.01em;margin:0 0 14px}
+h2{font:600 1rem/1.2 var(--sans);color:var(--muted);margin:20px 0 8px}
+h3{font:600 .78rem/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+.lead{margin:0;color:var(--muted)}
+[lang="ja"],.ja{font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif}
+[lang="zh-Hans"],.zh{font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif}
+
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mode{appearance:none;display:flex;flex-direction:column;gap:2px;text-align:left;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius);background:var(--card);cursor:pointer}
+.mode small{color:var(--muted);font-size:.82rem}
+.mode[aria-checked="true"]{border-color:var(--ink);box-shadow:inset 4px 0 0 var(--ink)}
+.rounds{display:grid;gap:6px;margin-bottom:16px}
+.round{display:flex;justify-content:space-between;align-items:center;gap:10px;appearance:none;width:100%;text-align:left;padding:9px 12px;border:1.5px solid var(--line);border-radius:var(--radius);background:var(--card);cursor:pointer}
+.round:hover,.mode:hover{border-color:var(--ink)}
+.round[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 4px 0 0 var(--ink)}
+.round .rl{display:flex;flex-direction:column}
+.round small{color:var(--muted);font:500 .85rem/1.3 'Noto Sans JP','Hiragino Sans',sans-serif}
+.round .rs{color:var(--muted);font-size:.85rem;white-space:nowrap}
+.round.done .rs{color:var(--ok);font-weight:600}
+#startBtn{width:100%}
+
+.stats{display:flex;gap:28px}
+.stats div{display:flex;flex-direction:column}
+.stats b{font:700 1.5rem/1.1 var(--cond)}
+.stats span{color:var(--muted);font-size:.8rem}
+.bar{display:flex;gap:3px;margin:10px 0 16px}
+.bar i{flex:1;height:5px;border-radius:3px;background:var(--line)}
+.bar i.ok{background:var(--ok)} .bar i.bad{background:var(--bad)}
+
+.board{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.col{display:grid;gap:8px;align-content:start}
+.tile,.choice{appearance:none;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--radius);background:var(--card);color:var(--ink);cursor:pointer;text-align:center;font:600 1.1rem/1.2 var(--sans)}
+.tile.kanji,.choice[lang="ja"]{font:700 1.45rem/1.2 'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif}
+.tile:hover:not(:disabled),.choice:hover:not(:disabled){border-color:var(--ink)}
+.tile.sel{border-color:var(--ink);background:color-mix(in srgb,var(--yellow) 30%,var(--card))}
+.tile.ok,.choice.ok{border-color:var(--ok);background:color-mix(in srgb,var(--got) 35%,var(--card));cursor:default}
+.tile.late{border-color:var(--t3);background:color-mix(in srgb,var(--t3) 30%,var(--card));cursor:default}
+.tile.no,.choice.no{border-color:var(--bad);background:color-mix(in srgb,var(--miss) 40%,var(--card))}
+.tile:disabled,.choice:disabled{opacity:1}
+
+.prompt{font:700 clamp(2.4rem,9vw,3.6rem)/1.15 var(--cond);text-align:center;margin:8px 0 18px}
+.prompt.ja{font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choice{position:relative}
+.choice small{position:absolute;left:10px;top:8px;font:600 .72rem/1 var(--sans);color:var(--muted)}
+
+.fb{min-height:46px;margin:14px 0;padding:10px 14px;border-radius:var(--radius)}
+.fb .head{font-weight:600;margin-bottom:2px}
+.fb .names{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.fb .names .ja,.fb .names .zh{font-size:1.25rem;font-weight:700}
+.fb .names .en{font-weight:600}
+.fb .names .sep{color:var(--muted)}
+.fb .names .py{color:var(--muted);font-style:italic}
+.fb.ok{background:color-mix(in srgb,var(--got) 30%,transparent);box-shadow:inset 4px 0 0 var(--ok)}
+.fb.bad{background:color-mix(in srgb,var(--miss) 30%,transparent);box-shadow:inset 4px 0 0 var(--bad)}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.missed{list-style:none;padding:0;margin:14px 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px}
+.missed li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.missed li small{flex-basis:100%;color:var(--muted)}
+
+@media (max-width:560px){
+  .wrap{padding:16px}
+  .modes{grid-template-columns:1fr}
+  .board{gap:8px}
+  .tile{padding:10px 8px;font-size:1rem}
+  .tile.kanji{font-size:1.25rem}
+}

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prefectures in Kanji · Geo Quizzes</title>
+<meta name="description" content="Match Japan's 47 prefectures in kanji to their English names, or pick one from the other; each answer with its Chinese name and pinyin.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Noto+Sans+JP:wght@500;700&family=Noto+Sans+SC:wght@500;700&display=swap" rel="stylesheet">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="../../assets/css/base.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="../../country.html?code=392">← Japan</a>
+  <h1>Prefectures in Kanji</h1>
+
+  <section id="setup">
+    <p class="lead">Learn to read the prefecture names on Japanese signs and maps: match the kanji to the English, or pick one from the other.</p>
+    <h2>How to play</h2>
+    <div class="modes" id="modes" role="radiogroup" aria-label="How to play"></div>
+    <h2>Choose a round</h2>
+    <div class="rounds" id="rounds"></div>
+    <button class="primary" id="startBtn" type="button">Start</button>
+  </section>
+
+  <section id="play" hidden>
+    <div class="stats">
+      <div><b id="sQ"></b><span id="sQl">Pairs</span></div>
+      <div><b id="sRight">0</b><span>First try</span></div>
+      <div><b id="sTime">0:00</b><span>Time</span></div>
+    </div>
+    <div class="bar" id="bar"></div>
+    <div class="board" id="board" hidden><div class="col" id="colA"></div><div class="col" id="colB"></div></div>
+    <div class="pick" id="pick" hidden>
+      <div class="prompt" id="prompt"></div>
+      <div class="choices" id="choices"></div>
+    </div>
+    <div class="fb" id="fb" aria-live="polite"></div>
+    <div class="row"><button class="primary" id="next" type="button" hidden>Next</button><button class="ghost" id="restart" type="button">Restart</button><button class="ghost" id="end" type="button">End round</button></div>
+  </section>
+
+  <section id="result" hidden>
+    <h2 id="rTitle"></h2>
+    <p class="lead" id="rSub"></p>
+    <ul class="missed" id="missed"></ul>
+    <div class="row"><button class="primary" id="again" type="button">Play again</button><button class="ghost" id="retry" type="button">Missed ones</button><button class="ghost" id="back" type="button">Rounds</button></div>
+  </section>
+</main>
+<script src="../../assets/js/store.js"></script>
+<script src="../../assets/js/sync.js"></script>
+<script src="../../assets/js/gamepad.js"></script>
+<script src="prefectures.js"></script>
+<script src="quiz.js"></script>
+</body>
+</html>
