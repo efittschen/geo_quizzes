@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300">
+<rect width="480" height="300" fill="#dce5ea"/>
+<rect x="190" y="0" width="100" height="300" fill="#b8bcbd"/><rect x="190" y="0" width="14" height="300" fill="#a6aaab"/><rect x="276" y="0" width="14" height="300" fill="#c8cccd"/>
+<rect x="150" y="96" width="180" height="96" rx="5" fill="#cfd4d8" stroke="#555" stroke-width="2"/><circle cx="172" cy="118" r="11" fill="none" stroke="#222" stroke-width="2"/><path d="M174 109 L167 120 L173 120 L169 128 L178 116 L172 116 Z" fill="#222"/><text x="250" y="124" font-size="15" font-weight="500" font-family="Hiragino Sans,Hiragino Kaku Gothic ProN,Yu Gothic,Meiryo,Noto Sans JP,sans-serif" text-anchor="middle" fill="#111" >地方名位置</text><text x="240" y="176" font-size="40" font-weight="700" font-family="Hiragino Sans,Hiragino Kaku Gothic ProN,Yu Gothic,Meiryo,Noto Sans JP,sans-serif" text-anchor="middle" fill="#111" textLength="164" lengthAdjust="spacingAndGlyphs">12南3東4</text>
+</svg>

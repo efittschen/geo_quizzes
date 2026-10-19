@@ -2281,6 +2281,22 @@
       "url": "quizzes/japan-postcodes/index.html"
     },
     {
+      "id": "japan-poles",
+      "country": "392",
+      "title": "Pole Plates",
+      "levels": 2,
+      "description": "See the plate on a utility pole and click the region of Japan it is in.",
+      "url": "quizzes/japan-poles/index.html"
+    },
+    {
+      "id": "japan-power-logos",
+      "country": "392",
+      "title": "Power Company Logos",
+      "levels": 2,
+      "description": "See a Japanese electric utility's logo and click the region it serves.",
+      "url": "quizzes/japan-power-logos/index.html"
+    },
+    {
       "id": "japan-power",
       "country": "392",
       "title": "Power Companies",

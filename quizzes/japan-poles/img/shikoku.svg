@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300">
+<rect width="480" height="300" fill="#dce5ea"/>
+<rect x="190" y="0" width="100" height="300" fill="#b8bcbd"/><rect x="190" y="0" width="14" height="300" fill="#a6aaab"/><rect x="276" y="0" width="14" height="300" fill="#c8cccd"/>
+<rect x="190" y="256" width="100" height="22" fill="#f08a24"/><rect x="204" y="40" width="72" height="200" rx="3" fill="#fbfbf7" stroke="#555" stroke-width="2"/><path d="M222 58 l6 -6 l6 6 l-6 6 z M232 58 l6 -6 l6 6 l-6 6 z M227 66 l6 -6 l6 6 l-6 6 z" fill="#d6262b"/><text x="258" y="64" font-size="12" font-weight="500" font-family="Hiragino Sans,Hiragino Kaku Gothic ProN,Yu Gothic,Meiryo,Noto Sans JP,sans-serif" text-anchor="middle" fill="#111" >アレア</text><text x="232" y="114" font-size="22" font-weight="600" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" text-anchor="middle" fill="#111" >12</text><text x="248" y="170" font-size="14" font-weight="500" font-family="Helvetica Neue,Helvetica,Arial,sans-serif" text-anchor="middle" fill="#111" >3 4 5</text>
+</svg>

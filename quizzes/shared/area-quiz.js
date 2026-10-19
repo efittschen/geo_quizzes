@@ -623,7 +623,7 @@
     // A flashed area ('area:…' in shown) reveals everything on its label for a moment.
     const all = [...e.shown].some(s => s.startsWith('area:'));
     const text = e.fixed !== undefined ? (e.shown.size ? e.fixed : '')
-      : e.ids.filter(id => all || e.shown.has(id)).map(id => K.short(id)).join(' / ');
+      : [...new Set(e.ids.filter(id => all || e.shown.has(id)).map(id => K.short(id)))].join(' / '); // (items named alike at one spot, such as two pictures of one region's plates, once)
     if (e.fixed === undefined) e.el.textContent = text;
     e.el.classList.toggle('off', !text);
   }
