@@ -5,7 +5,9 @@
 // page opens and when it is looked at again. Without a connection everything goes on as before, and is sent later.
 //
 // Sent are the entries of store.js, each under its name ("settings", "review", "quiz.<quiz id>"), without the parts
-// that belong to one browser: a record's `last` and its paint `choice`, the settings' `open`, the review's `run`.
+// that belong to one browser: a record's `last` and its paint `choice`, a card's `missing` (a quiz page's own finding
+// that the card's question is not in the quiz it has: a browser with older code may not know a card's key, and must
+// not hide it everywhere), the settings' `open`, the review's `run`.
 //
 // Two copies of an entry become one like this (`merge`), with nothing lost that either side learned:
 //   cards      each card from the copy where it was answered last, with how it is reviewed (map, back) from the copy
@@ -55,6 +57,7 @@ const SYNC = (() => {
     if (name === 'review') { const { run, ...rest } = v; return rest; }
     const { last, ...rest } = v;
     if (rest.paint) { const { choice, ...paint } = rest.paint; if (empty(paint.best)) delete rest.paint; else rest.paint = paint; }
+    if (rest.cards) rest.cards = Object.fromEntries(Object.entries(rest.cards).map(([k, { missing, ...c }]) => [k, c]));
     return rest;
   }
 
@@ -86,9 +89,12 @@ const SYNC = (() => {
     if (mine.cards || theirs.cards) {
       out.cards = {};
       for (const k of names(mine.cards, theirs.cards)) {
-        const c = card(mine.cards?.[k], theirs.cards?.[k]);
+        let c = card(mine.cards?.[k], theirs.cards?.[k]);
+        // (whether its question is missing here is this browser's own finding, whichever copy the card comes from)
+        if (c) { const { missing, ...rest } = c; c = mine.cards?.[k]?.missing ? { ...rest, missing: true } : rest; }
         if (!cleared || when(c.last) > when(cleared)) out.cards[k] = c;
       }
+      out.cards = STORE.cardKeys(out.cards); // (a card under its old key, from a browser that hasn't moved it yet, is the card moved here)
       if (empty(out.cards)) delete out.cards;
     }
     if (mine.best || theirs.best) out.best = Object.fromEntries(names(mine.best, theirs.best).map(k => [k, result(mine.best?.[k], theirs.best?.[k])]));

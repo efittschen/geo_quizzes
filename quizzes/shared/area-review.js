@@ -67,7 +67,7 @@ window.areaReview = E => {
       if (!deck.c[key] || (deck.c[key].l || 0) < (card.l || 0)) deck.c[key] = { ...card, m: m.map, ...(m.back !== 'quiz' ? { b: m.back } : {}) };
       delete deck.c[c]; changed = true;
     }
-    // (keys SRS.deck read in their new form are written so)
+    // (keys SRS.deck read in their new form, or left out, are written so)
     if (Object.keys(STORE.quiz(PAGE).cards || {}).some(k => k.lastIndexOf('@', k.indexOf('|')) < 0)) changed = true;
     const items = {}; // card key -> [kind, item id]
     for (const c in deck.c) { const p = parse(c), o = owner[p.kind + '|' + p.id]; if (o) items[c] = o; }

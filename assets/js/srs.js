@@ -158,20 +158,9 @@ const SRS = (() => {
 
   /* ---------- decks: the cards of one quiz page ---------- */
   const cards = (list, as) => Object.fromEntries(Object.entries(list).map(([k, c]) => [k, as(c)]));
-  // A page's cards. One kept under a key without its map that knows its map is read under the key of that map (the
-  // online copy may bring such keys back from a browser that hasn't opened the quiz since): where a card of that map
-  // is there already, the one answered last counts.
-  function deck(id) {
-    const r = STORE.quiz(id), c = cards(r.cards || {}, STORE.cardIn);
-    for (const k of Object.keys(c)) {
-      const bar = k.indexOf('|'), look = lookOf(k, c[k]);
-      if (k.lastIndexOf('@', bar) >= 0 || !look) continue;
-      const key = k.slice(0, bar) + '@' + look + k.slice(bar);
-      if (!c[key] || (c[key].l || 0) < (c[k].l || 0)) c[key] = c[k];
-      delete c[k];
-    }
-    return { t: r.title || "", c };
-  }
+  // A page's cards, under the keys they have now (cards kept from before under a key without their map: see
+  // STORE.cardKeys).
+  function deck(id) { const r = STORE.quiz(id); return { t: r.title || "", c: cards(STORE.cardKeys(r.cards || {}), STORE.cardIn) }; }
   function save(id, d) { STORE.setQuiz(id, r => { if (d.t) r.title = d.t; r.cards = cards(d.c, STORE.cardOut); }); }
   // Takes a page's cards off the stack: all of them, those of one layer, or those of one layer played on one map.
   function remove(id, kind = null, look = null) {

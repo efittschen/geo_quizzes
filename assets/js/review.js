@@ -119,7 +119,7 @@ function render(index, nameByCode) {
 // city quiz the map by distance or the dots, on the drawn map, the overlay or the street map.
 function lookLabel(look, city) {
   const NAMES = { quiz: "Quiz map", overlay: "Overlay", street: "Street map" };
-  if (!look) return "Map not recorded yet";
+  if (!look) return "Map not known yet (open the quiz to sort)";
   const [map, back] = look.split("+");
   if (!city && map !== "free") return NAMES[map] ?? map;
   return (map === "free" ? "Map" : "Dots") + (back ? ` · ${NAMES[back] ?? back}` : "");

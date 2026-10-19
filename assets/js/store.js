@@ -99,6 +99,23 @@ const STORE = (() => {
   const bestOut = (b, of, name) => ({ ...(name ? { name } : {}), of, score: b.s, ms: Math.round(b.t), ...(b.p != null ? { points: b.p } : {}) });
   const bestIn = b => (b ? { s: b.score, t: b.ms, p: b.points } : null);
 
+  // A record's cards under the keys they have now. A card is a question on one map, '<kind>@<look>|<item>' (see
+  // srs.js); one kept from before under '<kind>|<item>' that says its map goes under the key of that map (where a
+  // card of the same question on the same map is there already, the two are one card: the one answered last stays).
+  // One that doesn't say its map stays as it is, until its quiz page opens and works its map out (area-review.js).
+  // No other card is ever left out.
+  function cardKeys(cards) {
+    const out = { ...cards };
+    for (const k of Object.keys(out)) {
+      const bar = k.indexOf('|'), c = out[k];
+      if (k.lastIndexOf('@', bar) >= 0 || !c.map) continue;
+      delete out[k];
+      const key = k.slice(0, bar) + '@' + c.map + (c.back ? '+' + c.back : '') + k.slice(bar);
+      if (!out[key] || (ms(out[key].last) || 0) < (ms(c.last) || 0)) out[key] = c;
+    }
+    return out;
+  }
+
   /* ---------- entries of the layout before ---------- */
   const OLD_NAMES = ['choice', 'kind', 'lang', 'map', 'topN', 'opts'];
   const OLD = /^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)?\.(?:choice|kind|lang|map|opts|saved|topN|sel|sel\..+|best\..+)$/;
@@ -184,5 +201,5 @@ const STORE = (() => {
   const listen = f => { heard = f; };
 
   carryOver();
-  return { quiz, setQuiz, quizIds, settings, setSettings, review, setReview, print, time, ms, cardOut, cardIn, bestOut, bestIn, adopt, file, restore, sync, setSync, maps, setMaps, names, entry, place, listen };
+  return { cardKeys, quiz, setQuiz, quizIds, settings, setSettings, review, setReview, print, time, ms, cardOut, cardIn, bestOut, bestIn, adopt, file, restore, sync, setSync, maps, setMaps, names, entry, place, listen };
 })();
