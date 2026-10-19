@@ -454,13 +454,23 @@
   };
   svg.addEventListener('wheel', e => { e.preventDefault(); const f = Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.0022)); zoomAt(e.clientX, e.clientY, f, vb, glide); }, { passive: false });
   $('zIn').onclick = () => zoomCenter(1.6); $('zOut').onclick = () => zoomCenter(1 / 1.6); $('zFit').onclick = () => frameRound(true);
-  window.addEventListener('resize', () => {
-    if (!stageBox().width) return;
+  // The stage changes size: the map keeps its middle and how far it is zoomed in. Not only with the window: on a
+  // phone the panel lies above the map, and grows and shrinks with what it shows (the round's question, an answer),
+  // so the stage does with it. (A finger on the map: once it lets go, see up.)
+  let stageSize = '', refitLater = false;
+  function refit() {
+    const r = stageBox(), size = r.width + 'x' + r.height;
+    if (!r.width || size === stageSize) return;
+    if (pts.size) { refitLater = true; return; }
+    stageSize = size; refitLater = false;
     const c = { x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 }; const k = vb.w / base.w;
     fit(); vb = { w: base.w * k, h: base.h * k }; vb.x = c.x - vb.w / 2; vb.y = c.y - vb.h / 2; vb = clampV(vb); apply();
-  });
+  }
+  { const r = stageBox(); stageSize = r.width + 'x' + r.height; } // (the size the map is first fitted to: nothing to do for it)
+  window.addEventListener('resize', refit);
+  if (window.ResizeObserver) new ResizeObserver(refit).observe(stage);
 
-  const pts = new Map(); let drag = null, pinch = null, downArea = null, moved = false;
+  const pts = new Map(), TAP_SLOP = 10; let drag = null, pinch = null, downArea = null, moved = false;
   svg.addEventListener('pointerdown', e => {
     svg.setPointerCapture(e.pointerId);
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -479,7 +489,8 @@
     } else if (drag) {
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
       // (the grabbing hand is for a mouse: a new cursor is a new style for every area of the map, which a finger need not wait for)
-      if (!moved && Math.hypot(dx, dy) > 6) { moved = true; if (e.pointerType === 'mouse') svg.classList.add('grab'); }
+      // (a finger wobbles more than a mouse: a tap is still a tap within TAP_SLOP pixels)
+      if (!moved && Math.hypot(dx, dy) > (e.pointerType === 'touch' ? TAP_SLOP : 6)) { moved = true; if (e.pointerType === 'mouse') svg.classList.add('grab'); }
       if (moved) { vb = clampV({ ...drag.v, x: drag.v.x - dx / drag.s, y: drag.v.y - dy / drag.s }); glide(); }
     }
   });
@@ -496,11 +507,14 @@
   }
   function up(e) {
     const had = pts.delete(e.pointerId); // false when the press began outside the map
+    // one finger of a pinch lifted: the other one goes on moving the map from where it is (it is no tap)
+    if (pinch && pts.size === 1) { const [p] = pts.values(); drag = { x: p.x, y: p.y, v: { ...vb }, s: scale() }; }
     if (pts.size < 2) pinch = null;
     if (pts.size === 0) {
       svg.classList.remove('grab');
       // the hand lets go: the picture is drawn for where the map is now (unless it is that picture already)
       if (slid || !drawn || ['x', 'y', 'w', 'h'].some(k => drawn[k] !== vb[k])) apply();
+      if (refitLater) refit(); // (the stage changed size while it was held)
       if (!moved && e.type === 'pointerup') {
         // Map play: only a plain click or tap that began on the map answers.
         if (mapStyle === 'free' && view === 'play') { if (had && (e.pointerType !== 'mouse' || e.button === 0)) answerFree(toSvg(e.clientX, e.clientY, vb)); }

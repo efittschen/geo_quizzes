@@ -39,7 +39,9 @@
 #regions .r.dot.flash{--fill:var(--bad)}
 
 @media (max-width:760px){
-  .photo{aspect-ratio:auto;height:21vh}
+  /* the picture as tall as a fifth of the screen and as wide as that makes it, in the middle: no black bars beside it,
+     and the map below gets the room they took */
+  .photo{width:auto;max-width:100%;height:19vh;height:19dvh;align-self:center}
   .feedback > .ph{width:64px}
-  .playing .panel{max-height:56vh}
+  .playing .panel{max-height:56vh;max-height:56dvh}
 }

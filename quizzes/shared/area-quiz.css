@@ -358,7 +358,8 @@ svg.streets #ctx path.inset-land{display:inline;fill:var(--land);stroke:var(--ed
 
 @media (max-width:760px){
   .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
-  .panel{border-right:0;border-bottom:1px solid var(--line);padding:14px 16px;gap:10px;max-height:52vh}
+  /* (dvh: the part of the screen the browser leaves the page, where it has one; vh counts what its bars may cover) */
+  .panel{border-right:0;border-bottom:1px solid var(--line);padding:14px 16px;gap:10px;max-height:52vh;max-height:52dvh}
   .playing .brand{display:none}
   .brand h1{font-size:1.7rem}
   .dial .code{font-size:3.6rem} .dial .p{font-size:2.6rem} .dial .rest{font-size:1.05rem}
@@ -370,7 +371,7 @@ svg.streets #ctx path.inset-land{display:inline;fill:var(--land);stroke:var(--ed
   .stats span{font-size:.72rem}
   .feedback .c{font-size:.85rem}
   .stats b{font-size:1.2rem}
-  .playing .panel{max-height:40vh}
+  .playing .panel{max-height:40vh;max-height:40dvh}
   .startbar{margin:-2px -16px 0;padding:8px 16px 10px;gap:6px}
   .folders{margin-top:-9px}
   .folders button,.folders a{padding:5px 4px 7px;font-size:.95rem}
@@ -379,6 +380,21 @@ svg.streets #ctx path.inset-land{display:inline;fill:var(--land);stroke:var(--ed
   .round{padding:6px 10px}
   .corner{width:calc(100% - 16px)}
   .note{width:1.9rem;height:1.7rem} .note::before{line-height:1.7rem}
+  /* the page itself never moves: a drag down at the top of the panel doesn't reload it, nor scroll the page */
+  html,body{overscroll-behavior:none}
+  .panel{overscroll-behavior:contain}
+  /* no zoom on a double tap of the panel (a quick second tap is a second answer); a pinch still zooms the page */
+  .app{touch-action:manipulation}
+  /* fields at 16px at least: a phone zooms the page in on a smaller one when it is tapped */
+  .save input,.topn input,.topn select{font-size:16px}
+  /* the answer's box is two lines tall at least (as most answers are), so the map under the panel keeps its size
+     from one answer to the next */
+  #play > .feedback{min-height:calc(2.9em + 14px)}
+  #play > .row .ghost{padding:5px 13px;font-size:.88rem}
+  /* the map's buttons: smaller, and the maps' bar leaves the zoom buttons their room (it wraps above them instead) */
+  .zoom button{width:36px;height:36px;font-size:1.15rem}
+  .mapbar{max-width:calc(100% - 74px)}
+  .maps button{height:34px;padding:0 10px;font-size:.84rem}
 }
 @media (prefers-reduced-motion: reduce){
   *{animation:none!important;transition:none!important}
