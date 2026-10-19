@@ -155,6 +155,9 @@ main > .map-wrap:first-child{margin-top:24px}
 .decks tr.layer.map td:first-child::after{left:68px}
 .decks tr.layer.map.more td:first-child{background:linear-gradient(var(--line),var(--line)) no-repeat 42px 0/1.5px 100%}
 .decks tr.layer.map .acts .ghost.small{padding-top:3px;padding-bottom:3px}
+/* older cards that don't say their map: the maps to sort them onto */
+.decks tr.unsorted td:first-child small{display:block;font-size:.78rem;color:var(--muted)}
+.decks tr.unsorted td:first-child{color:var(--ink)}
 .decks tr.layer.last td{padding-bottom:10px}
 .decks a{text-decoration:none}
 .decks a:hover{text-decoration:underline}

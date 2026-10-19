@@ -45,6 +45,7 @@ window.areaReview = E => {
   // A key's parts; and the map of a look, to play it on ({ map, back, look }).
   const parse = key => { const bar = key.indexOf('|'), at = key.indexOf('@'), has = at >= 0 && at < bar; return { kind: key.slice(0, has ? at : bar), look: has ? key.slice(at + 1, bar) : null, id: key.slice(bar + 1) }; };
   const modeOfLook = look => { const [map, back] = look.split('+'); return { map, back: back || 'quiz', look }; };
+  const MAPS = E.maps().length ? E.maps() : ['free', 'quiz']; // the maps this page's cards are played on (a city quiz: by distance, or the dots)
   const pageTitle = () => (document.querySelector('.brand h1') || {}).textContent || document.title;
   let S = null; // the review being played
   let P = null; // an ordinary round's question: { t: when it was asked, easy, fast: the "easy" and "known" times, missed }
@@ -55,20 +56,15 @@ window.areaReview = E => {
     const deck = SRS.deck(PAGE), owner = {}; // '<cards kind>|<item id>' -> [kind, item id]
     for (const k in KINDS) for (const id of KINDS[k].ids) owner[(KINDS[k].cards || k) + '|' + id] ??= [k, id]; // (shared cards are asked as the kind they belong to, which comes first)
     let changed = false;
-    // Cards from before a card was a question on one map ('<kind>|<id>') get the key of the map they are played
-    // on: theirs if they kept it, else the one a review would ask them on (see reviewModes). Where a card of that
-    // map is there already, the one answered last stays.
-    let modeOf = null;
-    for (const c of Object.keys(deck.c)) {
-      const p = parse(c), o = owner[p.kind + '|' + p.id];
-      if (p.look !== null || !o) continue;
-      const card = deck.c[c], m = card.m ? { map: card.m, back: card.b || 'quiz' } : (modeOf ||= E.reviewModes())(...o, card);
-      const key = cardKey(o[0], p.id, lookOf({ m: m.map, b: m.back !== 'quiz' ? m.back : null }));
-      if (!deck.c[key] || (deck.c[key].l || 0) < (card.l || 0)) deck.c[key] = { ...card, m: m.map, ...(m.back !== 'quiz' ? { b: m.back } : {}) };
-      delete deck.c[c]; changed = true;
+    // Cards from before a card was a question on one map ('<kind>|<id>') that don't say their map wait for the
+    // player to sort them onto one (on the review page): they are not asked until then. Only where this page plays
+    // on one map alone is that sorted here, as there is nothing to choose. (Those that say their map have their new
+    // key already: SRS.deck; it is written below.)
+    if (MAPS.length === 1) {
+      const kinds = new Set(Object.keys(deck.c).filter(c => parse(c).look === null && !deck.c[c].m).map(c => parse(c).kind));
+      if (kinds.size) { for (const k of kinds) SRS.sort(PAGE, k, MAPS[0]); return stack(); }
     }
-    // (keys SRS.deck read in their new form, or left out, are written so)
-    if (Object.keys(STORE.quiz(PAGE).cards || {}).some(k => k.lastIndexOf('@', k.indexOf('|')) < 0)) changed = true;
+    { const was = Object.keys(STORE.quiz(PAGE).cards || {}).sort().join(), now = Object.keys(deck.c).sort().join(); if (was !== now) changed = true; }
     const items = {}; // card key -> [kind, item id]
     for (const c in deck.c) { const p = parse(c), o = owner[p.kind + '|' + p.id]; if (o) items[c] = o; }
     for (const c in deck.c) {
@@ -80,6 +76,7 @@ window.areaReview = E => {
     const names = {};
     for (const c in deck.c) { const kind = parse(c).kind, K = KINDS[kind] || Object.values(KINDS).find(K => K.cards === kind); if (K && K.label) names[kind] = K.label; }
     if (Object.keys(names).length) SRS.setLayers(PAGE, names);
+    if (Object.keys(deck.c).length) SRS.setLooks(PAGE, MAPS); // (the maps the review page offers to sort cards onto)
     return { deck, items };
   }
 

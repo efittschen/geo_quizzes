@@ -160,7 +160,7 @@ const SRS = (() => {
   const cards = (list, as) => Object.fromEntries(Object.entries(list).map(([k, c]) => [k, as(c)]));
   // A page's cards, under the keys they have now (cards kept from before under a key without their map: see
   // STORE.cardKeys).
-  function deck(id) { const r = STORE.quiz(id); return { t: r.title || "", c: cards(STORE.cardKeys(r.cards || {}), STORE.cardIn) }; }
+  function deck(id) { const r = STORE.quiz(id); return { t: r.title || "", c: cards(STORE.cardKeys(r.cards || {}, r.moved), STORE.cardIn) }; }
   function save(id, d) { STORE.setQuiz(id, r => { if (d.t) r.title = d.t; r.cards = cards(d.c, STORE.cardOut); }); }
   // Takes a page's cards off the stack: all of them, those of one layer, or those of one layer played on one map.
   function remove(id, kind = null, look = null) {
@@ -178,6 +178,25 @@ const SRS = (() => {
     const was = JSON.stringify(STORE.quiz(id).layers || {});
     if (JSON.stringify(names) !== was) STORE.setQuiz(id, r => { r.layers = names; });
   }
+  // The maps a page's cards can be played on, as the quiz page says them (for sorting cards on the review page).
+  const looksOf = id => STORE.quiz(id).looks || null;
+  function setLooks(id, looks) { if (JSON.stringify(looksOf(id)) !== JSON.stringify(looks)) STORE.setQuiz(id, r => { r.looks = looks; }); }
+  // Sorts a layer's cards that don't say their map onto one the player picks: they become its cards (where the same
+  // question has a card of that map already, the two are one: the one answered last stays), and their old keys are
+  // kept in `moved`, so that an old copy coming back from another browser is known as these.
+  function sort(id, kind, look) {
+    const [map, back] = look.split('+');
+    STORE.setQuiz(id, r => {
+      for (const k of Object.keys(r.cards || {})) {
+        const bar = k.indexOf('|');
+        if (k.lastIndexOf('@', bar) >= 0 || kindOf(k) !== kind || r.cards[k].map) continue;
+        const c = { ...r.cards[k], map, ...(back ? { back } : {}) }, key = k.slice(0, bar) + '@' + look + k.slice(bar);
+        if (!r.cards[key] || (STORE.ms(r.cards[key].last) || 0) < (STORE.ms(c.last) || 0)) r.cards[key] = c;
+        delete r.cards[k];
+        (r.moved ||= {})[k] = look;
+      }
+    });
+  }
   // The map a card is played on: its look, from its key (see above), else from what the card keeps.
   const lookOf = (key, c) => { const bar = key.indexOf('|'), at = key.indexOf('@'); return at >= 0 && at < bar ? key.slice(at + 1, bar) : (c.m || '') + (c.b ? '+' + c.b : ''); };
   const LOOKS = ['quiz', 'overlay', 'street', 'free']; // their order on the review page; a card without a map last
@@ -191,12 +210,14 @@ const SRS = (() => {
     const kinds = [...new Set(Object.keys(d.c).map(kindOf))];
     return kinds.map(key => {
       const own = part(d, [key]), looks = [...new Set(Object.entries(own.c).map(([k, c]) => lookOf(k, c)))].sort((a, b) => lookRank(a) - lookRank(b));
-      return { key, label: nameOf(d.id, key), ...stats(own, now), maps: looks.map(look => ({ look, ...stats(part(d, [key + '@' + look]), now) })).filter(m => m.total) };
-    }).filter(l => l.total);
+      const unsorted = Object.entries(own.c).filter(([k, c]) => !c.x && !lookOf(k, c)).length; // (not asked until sorted)
+      return { key, label: nameOf(d.id, key), ...stats(own, now), unsorted, maps: looks.map(look => ({ look, ...stats(part(d, [key + '@' + look]), now) })).filter(m => m.total) };
+    }).filter(l => l.total || l.unsorted);
   }
   const decks = () => STORE.quizIds().filter(id => STORE.quiz(id).cards).map(id => ({ id, ...deck(id) }));
-  // Cards that can be asked (their question is still in the quiz), and the ones due now, longest due first.
-  const all = d => Object.keys(d.c).filter(k => !d.c[k].x);
+  // Cards that can be asked (their question is still in the quiz, and they say the map they are asked on), and the
+  // ones due now, longest due first.
+  const all = d => Object.keys(d.c).filter(k => !d.c[k].x && lookOf(k, d.c[k]));
   const due = (d, now) => all(d).filter(k => d.c[k].d <= now).sort((a, b) => d.c[a].d - d.c[b].d);
   function stats(d, now) {
     const keys = all(d), times = keys.map(k => d.c[k].d);
@@ -239,8 +260,8 @@ const SRS = (() => {
   function overview(quizzes, now) {
     const byId = new Map(quizzes.filter(q => q.url).map(q => [q.id, q]));
     return decks().filter(d => byId.has(d.id))
-      .map(d => ({ id: d.id, quiz: byId.get(d.id), title: d.t || byId.get(d.id).title, ...stats(d, now), layers: layers(d, now) }))
-      .filter(d => d.total).sort((a, b) => a.next - b.next);
+      .map(d => { const l = layers(d, now); return { id: d.id, quiz: byId.get(d.id), title: d.t || byId.get(d.id).title, ...stats(d, now), layers: l, unsorted: l.reduce((n, x) => n + x.unsorted, 0) }; })
+      .filter(d => d.total || d.unsorted).sort((a, b) => a.next - b.next);
   }
   // A review over several quizzes is shuffled in groups: a card can only be asked on its own quiz's page (its map),
   // and every change of page has to load, so a page asks a few of its cards before the review moves on to a quiz
@@ -334,5 +355,5 @@ const SRS = (() => {
     return n === 1 ? "tomorrow" : n < 60 ? `in ${n} days` : n < 730 ? `in ${Math.round(n / 30.4)} months` : `in ${(n / 365).toFixed(1)} years`;
   }
 
-  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, overview, run, setRun, nextStop, stretch, ran, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
+  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, setLooks, looksOf, sort, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, overview, run, setRun, nextStop, stretch, ran, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
 })();

@@ -75,9 +75,12 @@ function render(index, nameByCode) {
       // like its quiz (the "Area codes" of "Area Codes", next to "First digit") is told apart: "Full codes".
       // A layer with cards played on several maps (the quiz map, the street map…) has a line for each map under it;
       // a quiz with one layer has them under its own line ("All - Area Codes (2 maps)").
-      const several = d.layers.length > 1, onlyMaps = !several && d.layers[0].maps.length > 1;
+      // (a layer's cards that don't say their map yet hang from it too, on a line where the player sorts them)
+      const kids = (l) => l.maps.length > 1 || l.unsorted > 0;
+      const several = d.layers.length > 1, onlyMaps = !several && kids(d.layers[0]);
       if (several) a.textContent = `All - ${d.quiz.title} (${d.layers.length} layers)`;
-      else if (onlyMaps) a.textContent = `All - ${d.quiz.title} (${d.layers[0].maps.length} maps)`;
+      else if (onlyMaps && d.layers[0].maps.length > 1) a.textContent = `All - ${d.quiz.title} (${d.layers[0].maps.length} maps)`;
+      else if (onlyMaps) a.textContent = `All - ${d.quiz.title}`;
       const same = (label) => label.toLowerCase() === d.quiz.title.toLowerCase();
       const named = d.layers.map((l) => ({ ...l, label: !same(l.label) ? l.label : d.quiz.role === "area-codes" ? "Full codes" : `${l.label} only` }));
       const city = ["cities", "cities-coverage"].includes(d.quiz.role);
@@ -94,15 +97,51 @@ function render(index, nameByCode) {
         return drop;
       };
       // The maps of a layer, hanging from it (deep: under a layer line, else under the quiz's own line).
-      const mapRows = (l, deep, more) => l.maps.map((m, i) => {
-        const cell = document.createElement("td");
-        cell.textContent = lookLabel(m.look, city);
-        const cls = ["layer", deep ? "map" : "", deep && more ? "more" : "", i === l.maps.length - 1 ? "last" : ""].filter(Boolean).join(" ");
-        return row(cls, cell, [m], [dropper(`the ${lookLabel(m.look, city)} cards of “${l.label}”`, l.key, m.look)], { id: d.id, key: l.key, look: m.look, quiz: d.quiz });
-      });
+      const mapRows = (l, deep, more) => {
+        const maps = l.maps.length > 1 || l.unsorted ? l.maps : [], n = maps.length + (l.unsorted ? 1 : 0);
+        const cls = (i) => ["layer", deep ? "map" : "", deep && more ? "more" : "", i === n - 1 ? "last" : ""].filter(Boolean).join(" ");
+        const rows = maps.map((m, i) => {
+          const cell = document.createElement("td");
+          cell.textContent = lookLabel(m.look, city);
+          return row(cls(i), cell, [m], [dropper(`the ${lookLabel(m.look, city)} cards of “${l.label}”`, l.key, m.look)], { id: d.id, key: l.key, look: m.look, quiz: d.quiz });
+        });
+        if (l.unsorted) rows.push(unsortedRow(l, cls(n - 1)));
+        return rows;
+      };
+      // Cards from before a card was a question on one map, that don't say theirs: not asked until the player
+      // picks the map they are to be reviewed on (SRS.sort), out of the maps the quiz offers.
+      const unsortedRow = (l, cls) => {
+        const tr = document.createElement("tr");
+        tr.className = cls + " unsorted";
+        const name = document.createElement("td");
+        name.textContent = "Not sorted yet";
+        const note = document.createElement("small");
+        note.textContent = "older cards: pick the map to review them on";
+        name.append(note);
+        const empty = () => document.createElement("td");
+        const count = document.createElement("td");
+        count.className = "num";
+        count.textContent = l.unsorted;
+        const acts = document.createElement("td");
+        const box = document.createElement("div");
+        box.className = "acts";
+        const looks = SRS.looksOf(d.id) ?? (city ? ["free", "quiz"] : ["quiz", "overlay", "street"]);
+        box.append(...looks.map((look) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "ghost small";
+          b.textContent = lookLabel(look, city);
+          b.title = `Review these ${l.unsorted} cards on the ${lookLabel(look, city).toLowerCase()} from now on`;
+          b.onclick = () => { SRS.sort(d.id, l.key, look); render(index, nameByCode); };
+          return b;
+        }), dropper(`the unsorted cards of “${l.label}”`, l.key, ""));
+        acts.append(box);
+        tr.append(name, empty(), count, empty(), acts);
+        return tr;
+      };
       // The layers hang from the sum's line on a branch, indented under it (see .decks tr.sum, tr.layer).
       const layers = several ? named.flatMap((l, i) => {
-        const last = i === named.length - 1, maps = l.maps.length > 1;
+        const last = i === named.length - 1, maps = kids(l);
         const cell = document.createElement("td");
         cell.textContent = l.label;
         const cls = ["layer", maps ? "parent" : "", last ? "last" : ""].filter(Boolean).join(" ");
@@ -119,7 +158,7 @@ function render(index, nameByCode) {
 // city quiz the map by distance or the dots, on the drawn map, the overlay or the street map.
 function lookLabel(look, city) {
   const NAMES = { quiz: "Quiz map", overlay: "Overlay", street: "Street map" };
-  if (!look) return "Map not known yet (open the quiz to sort)";
+  if (!look) return "Not sorted yet";
   const [map, back] = look.split("+");
   if (!city && map !== "free") return NAMES[map] ?? map;
   return (map === "free" ? "Map" : "Dots") + (back ? ` · ${NAMES[back] ?? back}` : "");

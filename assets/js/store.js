@@ -2,6 +2,8 @@
 //
 //   geoquizzes.quiz.<quiz id>   one record per quiz page (its folder name, as in data/quizzes.json), with what it has of:
 //     title    the page's title (set with its first review card)
+//     moved    the old keys of cards sorted onto a map by the player: { <old key>: <look> } (see cardKeys)
+//     looks    the maps the page's cards can be played on (for sorting them on the review page)
 //     layers   the names of the page's layers that have review cards: { <layer>: label } (see srs.js)
 //     stars    progress per level, Beginner first; 1 means every round of the level was played perfectly. The quiz
 //              page works it out from `best` and keeps it here for the home and country pages, which show the stars
@@ -102,13 +104,17 @@ const STORE = (() => {
   // A record's cards under the keys they have now. A card is a question on one map, '<kind>@<look>|<item>' (see
   // srs.js); one kept from before under '<kind>|<item>' that says its map goes under the key of that map (where a
   // card of the same question on the same map is there already, the two are one card: the one answered last stays).
-  // One that doesn't say its map stays as it is, until its quiz page opens and works its map out (area-review.js).
-  // No other card is ever left out.
-  function cardKeys(cards) {
+  // One that doesn't say its map stays as it is until the player sorts it onto a map (the review page, see
+  // SRS.sort); once sorted, its old key is in the record's `moved` ({ <old key>: <look> }, kept on every browser
+  // through the online copy), and a copy of it under that key, from a browser that hasn't seen it sorted, is left
+  // out: it is the card sorted. No other card is ever left out.
+  function cardKeys(cards, moved = {}) {
     const out = { ...cards };
     for (const k of Object.keys(out)) {
       const bar = k.indexOf('|'), c = out[k];
-      if (k.lastIndexOf('@', bar) >= 0 || !c.map) continue;
+      if (k.lastIndexOf('@', bar) >= 0) continue;
+      if (moved[k] && !c.map) { delete out[k]; continue; }
+      if (!c.map) continue;
       delete out[k];
       const key = k.slice(0, bar) + '@' + c.map + (c.back ? '+' + c.back : '') + k.slice(bar);
       if (!out[key] || (ms(out[key].last) || 0) < (ms(c.last) || 0)) out[key] = c;

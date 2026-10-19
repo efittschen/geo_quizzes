@@ -86,6 +86,8 @@ const SYNC = (() => {
     const out = { ...theirs, ...mine };
     const cleared = later(mine.cleared, theirs.cleared);
     if (cleared) out.cleared = cleared;
+    // the old keys of cards sorted onto a map, on either side: an old copy of them is left out (STORE.cardKeys)
+    if (mine.moved || theirs.moved) out.moved = { ...theirs.moved, ...mine.moved };
     if (mine.cards || theirs.cards) {
       out.cards = {};
       for (const k of names(mine.cards, theirs.cards)) {
@@ -94,7 +96,7 @@ const SYNC = (() => {
         if (c) { const { missing, ...rest } = c; c = mine.cards?.[k]?.missing ? { ...rest, missing: true } : rest; }
         if (!cleared || when(c.last) > when(cleared)) out.cards[k] = c;
       }
-      out.cards = STORE.cardKeys(out.cards); // (a card under its old key, from a browser that hasn't moved it yet, is the card moved here)
+      out.cards = STORE.cardKeys(out.cards, out.moved); // (an old copy of a card sorted onto a map, from a browser that hasn't seen it sorted, is that card)
       if (empty(out.cards)) delete out.cards;
     }
     if (mine.best || theirs.best) out.best = Object.fromEntries(names(mine.best, theirs.best).map(k => [k, result(mine.best?.[k], theirs.best?.[k])]));
