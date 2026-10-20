@@ -184,7 +184,7 @@
           c.key = key; c.land.setAttribute('d', land.map(r => r.d).join('')); c.lines.setAttribute('d', lines.map(p => p.d).join(''));
         }
       };
-      setTimeout(() => { worldNear(pictureBox()); countSoon(); }); // (after the page's script has run, which lay may run in)
+      setTimeout(() => worldNear(pictureBox())); // (after the page's script has run, which lay may run in)
       const note = $('stage').querySelector('.note'); if (note && !/Natural Earth/.test(note.textContent)) note.append(' · World: Natural Earth');
     };
     if (typeof WORLD === 'object') lay(); else { const s = document.createElement('script'); s.src = HERE + 'world.js'; s.onload = lay; document.head.append(s); }
@@ -384,10 +384,10 @@
     cancelAnimationFrame(raf); clearTimeout(resting);
     svg.setAttribute('viewBox', `${vb.x - ahead * vb.w} ${vb.y - ahead * vb.h} ${vb.w * (1 + 2 * ahead)} ${vb.h * (1 + 2 * ahead)}`);
     if (slid) { svg.style.transform = ''; slid = false; }
-    drawn = { ...vb }; redraws++;
+    drawn = { ...vb };
     const s = scale(); if (s !== sized) sizeLabels(s); syncDetail(s);
     worldNear(pictureBox());
-    showTiles(); countSoon();
+    showTiles();
   }
   // The part of the map the picture holds (the stage's view and what is drawn ahead), [x0, y0, x1, y1] in map units.
   function pictureBox() {
@@ -1046,52 +1046,7 @@
   });
   following.observe(gR, { attributes: true, attributeFilter: ['class'], subtree: true });
   following.observe(SPARE, { attributes: true, attributeFilter: ['class'], subtree: true });
-  new MutationObserver(() => countSoon()).observe(gR, { attributes: true, attributeFilter: ['class'], subtree: true, childList: true });
-  new MutationObserver(() => countSoon()).observe(svg, { attributes: true, attributeFilter: ['class'] });
 
-  /* ---------- for finding what is slow: a counter in the map's corner, bottom right ----------
-     Taken at the moment the picture is handed to the browser to be drawn anew (apply: a full redraw), and when what
-     is drawn changes (a color, a state), from the browser's own view of every element of the map: what it has to
-     paint, by its computed style, not by any rule of this engine. redraws: full redraws since the page opened (a
-     move that only slides the picture is none); painted: the elements the browser paints in each of them, anywhere
-     in the picture, and their outline points; in view: those of them whose box on screen meets the stage; tappable:
-     those in view that take a tap. Shown in debug mode only, which the Debug switch beside the credits turns on and
-     off, for every quiz (the settings' `debug`, see store.js); without it nothing is counted. */
-  const counter = document.createElement('div'), debugBtn = document.createElement('button');
-  counter.className = 'dbg-count'; counter.setAttribute('aria-hidden', 'true');
-  ($('stage').querySelector('.corner') || $('stage')).prepend(counter);
-  debugBtn.type = 'button'; debugBtn.className = 'dbg-btn'; debugBtn.textContent = 'Debug';
-  ($('stage').querySelector('.credits') || $('stage')).prepend(debugBtn);
-  let counting = 0, redraws = 0, debugOn = !!STORE.settings().debug;
-  function countSoon() { if (debugOn && !counting) counting = setTimeout(() => { counting = 0; requestAnimationFrame(count); }, 200); }
-  function syncDebug() {
-    counter.hidden = !debugOn; debugBtn.setAttribute('aria-pressed', debugOn);
-    debugBtn.title = debugOn ? 'Debug mode on: hide the drawing counter' : 'Debug mode: show what the map draws';
-    if (debugOn) countSoon();
-  }
-  debugBtn.onclick = () => {
-    debugOn = !debugOn;
-    STORE.setSettings(s => { if (debugOn) s.debug = true; else delete s.debug; });
-    syncDebug();
-  };
-  syncDebug();
-  function count() {
-    const root = svg, st = $('stage').getBoundingClientRect();
-    let painted = 0, points = 0, inView = 0, tappable = 0;
-    for (const el of root.querySelectorAll('path, circle, line, text, polygon, rect')) {
-      const cs = getComputedStyle(el);
-      if (cs.display === 'none' || cs.visibility !== 'visible') continue;
-      const d = el.getAttribute('d'), shape = el.tagName !== 'text';
-      if (shape && el.tagName === 'path' && (!d || d.length < 5)) continue;
-      const paints = el.tagName === 'text' ? cs.display !== 'none' : !(cs.fill === 'none' && (cs.stroke === 'none' || parseFloat(cs.strokeWidth) === 0)) && parseFloat(cs.opacity) > 0;
-      const takes = cs.pointerEvents !== 'none';
-      if (!paints && !takes) continue;
-      const r = el.getBoundingClientRect(), seen = r.right >= st.left && r.left <= st.right && r.bottom >= st.top && r.top <= st.bottom && (r.width || r.height);
-      if (paints) { painted++; if (d) points += (d.match(/[MLHVCQAmlhvcqa]/g) || []).length; if (seen) inView++; }
-      if (takes && seen && el.closest('#regions')) tappable++;
-    }
-    counter.textContent = `redraws ${redraws} · painted ${painted} (${points >= 1000 ? Math.round(points / 1000) + 'k' : points} pts) · in view ${inView} · tappable ${tappable}`;
-  }
   // Each version of the outlines is worked out when it is first shown, and the other one right after it, as soon as
   // the page has nothing to do: zooming in would else stand still at FINE the first time, until it is worked out.
   const whenIdle = window.requestIdleCallback ? f => requestIdleCallback(f, { timeout: 4000 }) : f => setTimeout(f, 1500);

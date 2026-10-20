@@ -236,13 +236,6 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
    shows its tiles. The street map carries its own line, which the corner stays above. */
 .corner{position:absolute;right:0;bottom:0;z-index:1100;display:flex;flex-direction:column;align-items:flex-end;gap:8px;width:min(62%,36rem);padding-bottom:env(safe-area-inset-bottom,0px);pointer-events:none}
 .corner .zoom{position:static;margin-right:14px;pointer-events:auto}
-/* for finding what is slow: what the map draws and what can be tapped, of what lies in view (area-quiz.js) */
-.dbg-count{margin-right:14px;padding:2px 7px;border-radius:6px;background:color-mix(in srgb,var(--panel) 85%,transparent);color:var(--ink);font:600 .72rem/1.3 var(--sans);font-variant-numeric:tabular-nums;white-space:nowrap}
-.dbg-count:empty{display:none}
-/* the switch for it, beside the credits: as quiet as they are, plain ink while on */
-.dbg-btn{appearance:none;margin:0;padding:2px 8px;border:0;background:color-mix(in srgb,var(--panel) 85%,transparent);color:var(--muted);font:600 .7rem/1.35 var(--sans);cursor:pointer}
-.dbg-btn:hover{color:var(--ink)}
-.dbg-btn[aria-pressed="true"]{color:var(--ink);background:color-mix(in srgb,var(--yellow) 35%,var(--panel))}
 .credits{display:flex;align-items:flex-end}
 .credits > *{pointer-events:auto}
 .credits .osm,.note{margin:0;font-size:.7rem;line-height:1.35;color:var(--muted);background:color-mix(in srgb,var(--panel) 85%,transparent)}
