@@ -8,6 +8,7 @@
 
 const LAYERS = {
   key: "frcodes",
+  phone: true, // phone area codes: each layer of codes is played the other way round too, the code typed (layer-config.js)
   size: [1000,924],
   pad: 50,
   maxZoom: 60,

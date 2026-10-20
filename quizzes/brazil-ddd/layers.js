@@ -2,6 +2,7 @@
 
 const LAYERS = {
   key: "dddquiz",
+  phone: true, // phone area codes: each layer of codes is played the other way round too, the code typed (layer-config.js)
   map: ["DATA.ddd","c"],
   context: false,
   borders: "DATA.uf",

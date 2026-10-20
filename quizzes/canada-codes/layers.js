@@ -4,6 +4,7 @@
 
 const LAYERS = {
   key: "cacodes",
+  phone: true, // phone area codes: each layer of codes is played the other way round too, the code typed (layer-config.js)
   borders: "DATA.ent",
   size: [1200,1031],
   pad: 16,

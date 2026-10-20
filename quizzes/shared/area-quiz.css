@@ -165,6 +165,8 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
 .typed input:focus{outline:3px solid var(--yellow);outline-offset:1px}
 /* an answer picked from a list (choices): what is typed narrows it */
 .typed .primary.small{padding:7px 18px;font-size:.95rem}
+/* Give up, or Next once the answer is shown (MODES 'code'): beside OK */
+.typed .ghost.small{flex:none;padding:6px 13px;font-size:.9rem;white-space:nowrap}
 .picklist{display:flex;flex-direction:column;gap:2px;max-height:min(30vh,240px);overflow-y:auto;margin-top:6px;padding:4px;border:1.5px solid var(--line);border-radius:12px;background:var(--card)}
 .picklist .opt{appearance:none;text-align:left;padding:7px 12px;border:0;border-radius:8px;background:transparent;color:var(--ink);font:500 1rem/1.2 var(--sans);cursor:pointer}
 .picklist .opt:hover{background:color-mix(in srgb,var(--ink) 7%,transparent)}
@@ -295,7 +297,16 @@ svg#map.grab{cursor:grabbing}
 #hl path{fill:none;pointer-events:none;vector-effect:non-scaling-stroke;stroke-linejoin:round;fill-rule:evenodd}
 #hoverUse{stroke:var(--ink);stroke-width:2.5}
 #ansUse{stroke:var(--ink);stroke-width:3;animation:pulse 1s ease-in-out infinite alternate}
-#hl #askUse{fill:var(--yellow);fill-opacity:.55;stroke:var(--ink);stroke-width:3}   /* the place asked (prompt 'area') */
+#hl #askUse{fill:var(--yellow);fill-opacity:.55;stroke:none}   /* the place asked (prompt 'area'): its areas filled… */
+#hl #askLine{fill:none;stroke:var(--ink);stroke-width:3}
+/* MODES 'code': the larger area a part asked lies in, or the parts of a whole area asked, dashed */
+#hl #askCtx{fill:none;stroke:var(--ink);stroke-width:2;stroke-dasharray:7 5;stroke-linecap:round}
+#hl #askCtx.around{fill:var(--rare);fill-opacity:.45}   /* the larger area, blue, under the part asked */
+#hl #askCtx.around + #askUse{fill-opacity:.85}
+/* … and over the question, which it is */
+.bigname .scope{display:block;width:max-content;margin-bottom:6px;padding:2px 9px;border-radius:999px;font:700 .78rem/1.4 var(--sans);letter-spacing:.06em;text-transform:uppercase}
+.bigname .scope.part{background:color-mix(in srgb,var(--rare) 35%,transparent);color:var(--ink)}
+.bigname .scope.whole{background:color-mix(in srgb,var(--yellow) 45%,transparent);color:var(--ink)}   /* …and its outline, without the lines between them (one place, however many areas) */
 #ansUse[d=""]{animation:none} /* nothing shown: nothing to animate (an animation keeps the whole map being drawn) */
 @keyframes pulse{from{stroke-width:2}to{stroke-width:5}}
 #labels text{font-family:var(--cond);font-weight:700;fill:var(--ink);stroke:var(--halo);stroke-width:3px;paint-order:stroke;text-anchor:middle;dominant-baseline:central;pointer-events:none}

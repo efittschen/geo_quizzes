@@ -3,6 +3,7 @@
 
 const LAYERS = {
   key: "rucodes",
+  phone: true, // phone area codes: each layer of codes is played the other way round too, the code typed (layer-config.js)
   context: false,
   borders: "DATA.fd",
   size: [1400,778],

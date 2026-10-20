@@ -92,7 +92,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const $ = id => document.getElementById(id);
   const svg = $('map'), gR = $('regions'), gB = $('borders'), gL = $('labels');
-  const hoverUse = $('hoverUse'), ansUse = $('ansUse'), askUse = $('askUse'); // (askUse: the place asked, prompt 'area')
+  const hoverUse = $('hoverUse'), ansUse = $('ansUse'), askUse = $('askUse'), askLine = $('askLine'), askCtx = $('askCtx'); // (askUse, askLine: the place asked, prompt 'area')
   const AREA = {}, EL = {};
 
   // The rings of an SVG path made of M/L/Z commands, each a list of [x, y] points.
@@ -276,10 +276,27 @@
             where the round has too few); the switch says "<its language> → <the other's>": "Kanji → English"
      pickback  the other way round: the name, and four questions to pick from ("English → Kanji")
             (a wrong pick is a wrong try, as a wrong click; the number keys pick too)
+     code   the other way round from the map, for phone codes: the code's areas outlined on the map, its code typed.
+            Only the digits count, with or without the leading 0 (0201 or 201), as the code is written in the quiz (its
+            short name and its name; "021 · 031" is either, "(07) 2/3" 072 or 073); a form that is another code's of the
+            layer counts for neither. The keyboard is the phone's digits.
+            Codes with the same areas (overlays: 212, 646 and 332 in Manhattan) look alike outlined, so they are asked
+            together, those of the round that are still to come: "Which 3 codes are used here?". They are typed one by
+            one ("✓ 212 · 2 more") or at once, apart by commas or spaces ("212, 646 332"); any code of those areas fills a
+            place, and each code keeps its own result and review card. A code used here but over other areas as well,
+            or only in part of them (917 over all of New York City, for Manhattan), is told so and costs no try.
+            Codes over a larger area and those of its parts are told apart at a glance: a question about a part says
+            "Part of a larger area" over it and "used only in this part", the larger area drawn dashed around it; a
+            question about the larger area says "Whole area" and "used across this whole area", its parts drawn dashed
+            inside it. A round asks a place's parts before the codes over all of it (604 and 250 before the four codes
+            over all of British Columbia). The outline is the place's edge, without the lines between its areas.
+            Give up (by the field) shows the codes and goes on, the question missed; once they are shown it is Next,
+            as is Enter with nothing typed. Each question starts on a map without colors (fresh): an answer's color,
+            the second try's yellow among them, would hide the next outline where it lies over it.
      Each mode is played as a kind of its own, '<kind>~<mode>', with the kind's items and rounds: its best results (per
      map, as every kind's) and its review cards are its own, and a round played perfectly in any mode counts for the
      stars. The name answered is the kind's answer(id): the Latin name of a name in another script or form. */
-  const MODES = [['map', 'Map'], ['list', 'List'], ['type', 'Type'], ['pairs', 'Pairs'], ['pick', 'Pick'], ['pickback', 'Pick back']], PAIRS = 7;
+  const MODES = [['map', 'Map'], ['list', 'List'], ['type', 'Type'], ['pairs', 'Pairs'], ['pick', 'Pick'], ['pickback', 'Pick back'], ['code', 'Type code']], PAIRS = 7;
   // A mode's name on its switch: the picks by the languages they go between, where the kind and the one it is of say theirs.
   const modeLabel = (K, m) => {
     const mine = K.lang, theirs = KINDS[K.of] && KINDS[K.of].lang;
@@ -309,6 +326,41 @@
       return t.length >= 6 && mine.some(f => f.length >= 6 && oneOff(t, f));
     };
   }
+  // typed(id, text) of the mode 'code': the digits typed, against the forms of each code (see MODES).
+  function codeTyped(K) {
+    const forms = id => {
+      const out = new Set();
+      for (const written of [K.short ? K.short(id) : id, K.name ? K.name(id) : '']) for (let part of String(written).split('·')) {
+        const alt = part.match(/^(.*?)(\d+)\/(\d+)\s*$/); // "(07) 2/3": 072 or 073
+        for (const p of alt ? [alt[1] + alt[2], alt[1] + alt[3]] : [part]) { const d = p.replace(/\D/g, ''); if (d) { out.add(d); out.add(d.replace(/^0+(?=\d)/, '')); } }
+      }
+      return out;
+    };
+    const owners = new Map(), mine = {}, owner = new Map();
+    for (const id of new Set(K.ids)) { mine[id] = forms(id); for (const f of mine[id]) { owners.set(f, (owners.get(f) || 0) + 1); owner.set(f, id); } } // (an item in two groups is one code)
+    // codeOf(text): the code typed, if it is one of the layer's (and no other's too)
+    const codeOf = text => { const t = String(text).replace(/\D/g, ''); return t && owners.get(t) === 1 ? owner.get(t) : null; };
+    // same(id): the codes with exactly its areas (itself among them)
+    const outline = id => [...new Set(K.areas[id])].sort().join(' '), byOutline = new Map();
+    for (const id of new Set(K.ids)) { const o = outline(id); if (!byOutline.has(o)) byOutline.set(o, []); byOutline.get(o).push(id); }
+    // How each outline lies among the others: the outlines wholly inside it or across its edge (its parts), the
+    // smallest one around it (the larger area it is part of), and how many lie wholly inside it (those are asked
+    // first: 604 and 250 before the codes over all of British Columbia).
+    const sets = new Map([...byOutline.keys()].map(o => [o, new Set(o.split(' '))])), rel = new Map();
+    for (const [o, O] of sets) {
+      const parts = []; let around = null, inside = 0;
+      for (const [x, X] of sets) {
+        if (x === o) continue;
+        let n = 0; for (const a of X) if (O.has(a)) n++;
+        if (!n) continue;
+        if (n === O.size) { if (!around || X.size < around.length) around = [...X]; } else { parts.push([...X].filter(a => O.has(a))); if (n === X.size) inside++; }
+      }
+      rel.set(o, { parts, around, inside });
+    }
+    const scope = id => { const r = rel.get(outline(id)); return r.around ? 'part' : r.parts.length ? 'whole' : ''; };
+    return { typed: (id, text) => codeOf(text) === id, codeOf, same: id => byOutline.get(outline(id)), scope,
+      around: id => rel.get(outline(id)).around, parts: id => rel.get(outline(id)).parts, depth: id => rel.get(outline(id)).inside };
+  }
   for (const K of Object.values(KINDS)) {
     const answerName = K.answer || (KINDS[K.of] ? id => KINDS[K.of].name(id) : K.name);
     for (const mode of K.modes || []) {
@@ -318,6 +370,7 @@
         cards: `${K.cards || K.key}~${mode}`, label: `${K.label} · ${modeLabel(K, mode)}`, answerName,
         ...(mode === 'pairs' ? { pairs: true, typed: undefined, choices: undefined, time: () => 1.5 }
           : mode === 'pick' || mode === 'pickback' ? { choose4: mode, typed: undefined, choices: undefined, time: () => 1.5 }
+          : mode === 'code' ? { prompt: 'area', ...codeTyped(K), choices: undefined, inputMode: 'numeric', fresh: true, time: () => 3 * Math.max(1, (G.group || []).length) }
           : { typed: typedOf(forms), choices: mode === 'list' ? () => names : undefined, time: () => (mode === 'list' ? 2 : 3) }) };
     }
   }
@@ -1257,7 +1310,7 @@
   // between clicking anywhere on the map (the default) and clicking the dots instead: that is asked in the box of
   // the round picked, under its name (playRow), not on the map.
   const FREE = !!Q.free;
-  const SWITCHES = FREE || ROUNDS.some(r => r.of); // rounds with a switch in their box: Map or Dots, a language
+  const SWITCHES = FREE || ROUNDS.some(r => r.of) || Q.kinds.some(k => KINDS[k.key].modes); // rounds with a switch in their box: Map or Dots, a language, how to answer
   const MAPS = FREE ? [['free', 'Map', 'by distance'], ['quiz', 'Dots', '3 tries']]
     : [['quiz', 'Quiz map', 'with borders'], ['overlay', 'Overlay', 'borders on streets'], ['street', 'Street map', 'hard, no borders']].slice(0, Q.geo ? 3 : 1);
   let chosenMap = MAPS.some(([m]) => m === load('map')) ? load('map') : MAPS[0][0];
@@ -1831,11 +1884,36 @@
     flyTo(areas);
   }
 
+  // The outline of some areas as one place: their edges, but those two of them share (a code used across a province
+  // of two parts is one outline, not two). From these areas alone, so it costs next to nothing; where neighbours'
+  // borders don't line up, a line between them stays.
+  function outerEdges(areas) {
+    const key = (p, q) => { const a = Math.round(p[0] * QN) + ',' + Math.round(p[1] * QN), b = Math.round(q[0] * QN) + ',' + Math.round(q[1] * QN); return a < b ? a + ' ' + b : b + ' ' + a; };
+    const curved = a => /[AaCcQqSsTtHhVv]/.test(AREA[a].d); // (a tiny place drawn as a circle: its own outline, whole)
+    const rings = [...new Set(areas)].filter(a => AREA[a] && !curved(a)).flatMap(a => shapeOf(SVG_SPACE, a).rings), n = new Map();
+    for (const r of rings) { let p = r[r.length - 1]; for (const q of r) { const k = key(p, q); n.set(k, (n.get(k) || 0) + 1); p = q; } }
+    let d = '';
+    for (const r of rings) {
+      let p = r[r.length - 1], on = false;
+      for (const q of r) {
+        const keep = n.get(key(p, q)) === 1 && (p[0] !== q[0] || p[1] !== q[1]);
+        if (keep) { if (!on) d += `M${+p[0].toFixed(2)},${+p[1].toFixed(2)}`; d += `L${+q[0].toFixed(2)},${+q[1].toFixed(2)}`; }
+        on = keep; p = q;
+      }
+    }
+    return d + [...new Set(areas)].filter(a => AREA[a] && curved(a)).map(a => AREA[a].d).join('');
+  }
   // The place asked (prompt 'area'): outlined, and flown to when it is out of view or too small to see.
-  function showAsked(areas) {
+  // ctx (MODES 'code'): { around: the larger area the place is part of, tinted blue under it with its parts' lines
+  // dashed, or parts: the parts of the place that have codes of their own, dashed }; a part is shown with the larger
+  // area around it in view.
+  function showAsked(areas, ctx) {
     if (!askUse) return;
     askUse.setAttribute('d', areas ? outline(areas) : '');
+    if (askLine) askLine.setAttribute('d', areas ? outerEdges(areas) : '');
+    if (askCtx) { askCtx.setAttribute('d', areas && ctx ? (ctx.around ? outline(ctx.around) : ctx.parts.map(outerEdges).join('')) : ''); askCtx.setAttribute('class', ctx && ctx.around ? 'around' : 'parts'); }
     if (!areas || !areas.length) return;
+    if (ctx && ctx.around) areas = [...new Set([...areas, ...ctx.around])];
     const s = scale(), bs = areas.map(boxOf_);
     const x0 = Math.min(...bs.map(b => b.x)), y0 = Math.min(...bs.map(b => b.y)), x1 = Math.max(...bs.map(b => b.x + b.width)), y1 = Math.max(...bs.map(b => b.y + b.height));
     const inView = x0 >= vb.x && x1 <= vb.x + vb.w && y0 >= vb.y && y1 <= vb.y + vb.h;
@@ -1846,7 +1924,7 @@
   }
 
   /* ---------- game ---------- */
-  const G = { kind: Q.kinds[0].key, items: [], queue: [], i: 0, tries: 0, revealed: false, found: new Set(), picked: new Set(), cleared: false, score: 0, streak: 0, best: 0, res: [], t0: 0, retry: false, review: false, missed: [], points: 0, box: null, back: null };
+  const G = { kind: Q.kinds[0].key, items: [], queue: [], i: 0, tries: 0, revealed: false, found: new Set(), picked: new Set(), cleared: false, group: null, got: [], score: 0, streak: 0, best: 0, res: [], t0: 0, retry: false, review: false, missed: [], points: 0, box: null, back: null };
   // Map play: points per answer by distance; 4,000 or more counts as close (a perfect answer for the stars).
   const FREE_MAX = 5000, FREE_CLOSE = 4000, FREE_LEGEND = ['4,000+', '2,500+', '1,000+', 'Under 1,000'];
   const freeClass = p => p >= FREE_CLOSE ? 0 : p >= 2500 ? 1 : p >= 1000 ? 2 : 3;
@@ -1909,6 +1987,7 @@
     clearInterval(timer); clearTimeout(G.ending);
     if (KINDS[kind].mode && map === 'free') map = 'quiz'; // (a mode answers on the dots of a city quiz, not by distance)
     Object.assign(G, { kind, items, queue: shuffle(items), i: 0, score: 0, streak: 0, best: 0, res: [], t0: performance.now(), retry, review, points: 0, box, back: null });
+    if (KINDS[kind].depth) { const d = KINDS[kind].depth; G.queue = G.queue.map((id, n) => [id, n]).sort((x, y) => d(x[0]) - d(y[0]) || x[1] - y[1]).map(x => x[0]); } // (MODES 'code': a place's parts first, then the codes over all of it)
     syncSound();
     useMap(map); showBack(back); clearMap();
     if (box && !plain()) frame(box); // (the street map alone stays where it is: a round's box would give it away)
@@ -1922,9 +2001,25 @@
     if (KINDS[kind].pairs) pairsStart(); else ask();
     timer = setInterval(() => $('sTime').textContent = fmt(performance.now() - G.t0), 500);
   }
+  // MODES 'code': the codes of the asked one's areas that the round still has to ask, brought up to follow it, and
+  // asked with it (see MODES).
+  function together(K, id) {
+    const later = G.queue.slice(G.i + 1).filter((x, n, a) => x !== id && K.same(id).includes(x) && a.indexOf(x) === n);
+    for (const x of later) G.queue.splice(G.queue.indexOf(x, G.i + 1), 1);
+    G.queue.splice(G.i + 1, 0, ...later);
+    return [id, ...later];
+  }
+  // … its question: which codes, and whether the place is part of a larger area or the whole of one (a line over it)
+  function codeAsk(K, id) {
+    const n = G.group.length, codes = n > 1 ? `${n} ${K.noun[1]} are` : `${K.noun[0]} is`, scope = K.scope(id);
+    const q = scope === 'part' ? `Which ${codes} used only in this part?` : scope === 'whole' ? `Which ${codes} used across this whole area?` : n > 1 ? `Which ${n} ${K.noun[1]} are used here?` : `Which ${K.noun[0]} is this?`;
+    const tag = document.createElement('span'); tag.className = 'scope ' + scope; tag.textContent = scope === 'part' ? 'Part of a larger area' : scope === 'whole' ? 'Whole area' : '';
+    $('bigname').replaceChildren(...(scope ? [tag] : []), q);
+  }
   function ask() {
     const id = G.queue[G.i], K = KINDS[G.kind];
-    G.tries = 0; G.revealed = false; G.found = new Set(); G.picked = new Set(); G.cleared = false;
+    G.tries = 0; G.revealed = false; G.found = new Set(); G.picked = new Set(); G.cleared = false; G.got = [];
+    G.group = K.same ? together(K, id) : null;
     mark(null); syncCheck();
     const back = K.choose4 === 'pickback'; // (a pick back asks the name, in big letters)
     const isArea = K.prompt === 'area' && !back, isName = K.prompt === 'name' || isArea || back, isText = K.prompt === 'text' && !back, isPhoto = K.prompt === 'photo' && !back;
@@ -1942,15 +2037,21 @@
       if (next !== undefined) { new Image().src = K.photo(next).src; if (K.looks) dressAhead(K.photo(next).src); } // the next picture is there when it is asked (and drawn, in a look)
     }
     else if (isText) { const t = K.text(id); $('sent').textContent = t.text; $('sent').className = 'sent ' + (t.cls || ''); $('sent').lang = t.lang || ''; $('card').dataset.tag = t.tag || ''; }
-    else if (isArea) { $('bigname').textContent = K.ask ? K.ask : `Which ${K.noun[0]} is this?`; showAsked(K.areas[id]); }
+    else if (isArea) { if (K.same) codeAsk(K, id); else $('bigname').textContent = K.ask ? K.ask : `Which ${K.noun[0]} is this?`; showAsked(K.areas[id], K.same && { around: K.around(id), parts: K.parts(id) }); }
     else if (isName) $('bigname').textContent = back ? K.answerName(id) : K.name(id);
     else if (K.dial) $('code').replaceChildren(...K.dial(id).map(([text, cls]) => { const s = document.createElement('span'); s.className = cls; s.textContent = text; return s; }));
     else $('code').textContent = K.short(id);
-    if (typedForm) { typedForm.hidden = !K.typed; if (K.typed) { $('typed').value = ''; $('typed').focus({ preventScroll: true }); } }
-    marked = 0; steered = false; syncList(); syncPicks(id); syncLooks();
+    if (typedForm) {
+      typedForm.hidden = !K.typed;
+      if (K.inputMode) $('typed').setAttribute('inputmode', K.inputMode); else $('typed').removeAttribute('inputmode'); // (a code: the phone's digits)
+      if (K.typed) { $('typed').value = ''; $('typed').focus({ preventScroll: true }); }
+    }
+    marked = 0; steered = false; syncList(); syncPicks(id); syncLooks(); syncGiveUp();
     // The optional hint under the prompt, e.g. the state a code is in; empty (and hidden) otherwise.
     const ask = $('ask'); ask.replaceChildren();
     if (K.detail && $('optDetail').checked) { const s = document.createElement('strong'); s.textContent = K.detail.text(id); ask.append(s); }
+    if (K.same && K.same(id).length > G.group.length) ask.append((ask.childNodes.length ? ' · ' : '') + `${K.same(id).length} codes share this area: any ${G.group.length === 1 ? 'one' : G.group.length} of them`);
+    if (K.same && K.scope(id)) ask.append((ask.childNodes.length ? ' · ' : '') + (K.scope(id) === 'part' ? 'The dashed line is the larger area, which has codes of its own' : 'Its parts (dashed) have codes of their own too'));
     $('sQ').textContent = (G.i + 1) + '/' + G.queue.length;
     $('sScore').textContent = mapStyle === 'free' ? G.points.toLocaleString('en-US') : G.score; $('sStreak').textContent = G.streak;
     [...$('ticks').children].forEach((t, i) => t.classList.toggle('now', i === G.i));
@@ -2012,7 +2113,9 @@
     // only narrows the list, it is never compared letter by letter.
     // (with nothing typed and no name marked by the arrow keys, a stray Enter answers nothing)
     const text = K.choices ? ($('typed').value.trim() || steered ? listed[marked] || '' : '') : $('typed').value.trim();
+    if (K.same && view === 'play' && id !== undefined && !text && G.revealed) { giveUp(); return; } // (the codes shown: Enter goes on)
     if (view !== 'play' || !K.typed || id === undefined || !text) return;
+    if (K.same) { typedCodes(K, id, text); return; }
     if (K.typed(id, text)) answer(K.areas[id][0]);
     else { wrong(text); if (K.choices) { $('typed').value = ''; marked = 0; syncList(); } else $('typed').select(); }
   });
@@ -2088,6 +2191,76 @@
     if (e) { e.shown.add(key); renderEntry(e); }
     clearTimeout(flashTimers.get(key));
     flashTimers.set(key, setTimeout(() => { p.classList.remove('flash'); if (e) { e.shown.delete(key); renderEntry(e); } flashTimers.delete(key); }, 800));
+  }
+  // Give up (MODES 'code'): the codes shown and the question missed, then on to the next; Next once they are shown.
+  const giveUpBtn = $('giveUpBtn');
+  function syncGiveUp() {
+    if (!giveUpBtn) return;
+    const K = KINDS[G.kind]; giveUpBtn.hidden = !(view === 'play' && K && K.same);
+    giveUpBtn.textContent = G.revealed ? 'Next' : 'Give up';
+  }
+  function giveUp() {
+    const K = KINDS[G.kind], id = G.queue[G.i];
+    if (view !== 'play' || !K.same || id === undefined) return;
+    if (!G.revealed) {
+      G.revealed = true; G.tries = MAX_TRIES; G.streak = 0;
+      if (RV && !G.review) RV.missed(id); // (as a wrong answer would)
+    }
+    for (const x of [...G.group, ...K.same(id)]) if (G.got.length < G.group.length && !G.got.includes(x)) G.got.push(x);
+    answerGroup(K);
+    $('typed').focus({ preventScroll: true });
+  }
+  if (giveUpBtn) giveUpBtn.onclick = giveUp;
+  // MODES 'code': what is typed, a code or several (apart by commas, or by spaces where each part is a code: "02 42"
+  // is one code). Each code of the outline's fills a place; once all are filled the question is answered.
+  function typedCodes(K, id, text) {
+    const sibs = K.same(id), here = new Set(K.areas[id]), wrongs = [], notes = [];
+    const tokens = text.split(/[,;+&/]|\band\b/i).map(t => t.trim()).filter(Boolean)
+      .flatMap(t => (K.codeOf(t) || !/\s/.test(t) || !t.split(/\s+/).every(K.codeOf) ? [t] : t.split(/\s+/)));
+    for (const t of tokens) {
+      const x = K.codeOf(t);
+      if (x && sibs.includes(x)) { if (!G.got.includes(x)) G.got.push(x); continue; }
+      const over = x && K.areas[x].filter(a => here.has(a)).length;
+      if (over) notes.push(`${K.name(x)} is used here too, but ${over === here.size ? 'across the whole larger area' : K.areas[x].length === over ? 'only in part of it' : 'over another area'}`);
+      else wrongs.push(t);
+    }
+    $('typed').value = ''; $('typed').focus({ preventScroll: true });
+    const need = G.group.length, done = G.got.length >= need, got = G.got.map(x => K.name(x)).join(' · ');
+    if (done && (!wrongs.length || G.revealed)) { answerGroup(K); return; }
+    const rest = `${need - G.got.length} more`, all = need === sibs.length ? sibs.map(x => K.name(x)).join(' · ') : `any ${need} of ${sibs.map(x => K.name(x)).join(' · ')}`;
+    if (wrongs.length) {
+      wrong(wrongs.join(', ')); syncGiveUp(); // a try less (one for all that was typed)
+      if (done) { answerGroup(K); return; }
+      if (G.revealed) setFeedback($('fb'), 'bad', `✗ ${wrongs.join(', ')}`, [`→ ${all}`, ...(G.got.length ? [`✓ ${got} · ${rest}`] : [])]);
+      else if (G.got.length || notes.length) $('fb').append(...[...notes, ...(G.got.length ? [`✓ ${got} · ${rest}`] : [])].map(line => { const p = document.createElement('p'); p.className = 'c'; p.textContent = line; return p; }));
+      return;
+    }
+    if (notes.length) { setFeedback($('fb'), '', notes[0], [...notes.slice(1), G.got.length ? `✓ ${got} · ${rest}` : K.scope(id) === 'part' ? 'The question is the code(s) of this part only' : 'The question is the code(s) of the whole area']); return; }
+    setFeedback($('fb'), 'ok', `✓ ${got}`, G.revealed ? [rest, `→ ${all}`] : rest);
+  }
+  // The codes of an outline answered: each one its own result, tick and card, as if asked one after the other.
+  function answerGroup(K) {
+    const members = G.queue.slice(G.i, G.i + G.group.length), names = G.got.map(x => K.name(x)).join(' · ');
+    if (G.review) G.tries = RV.grade(G.tries > 0 || G.revealed); // a review grades by the clock: known, unsure or not known
+    const k = RESULT_CLASS[G.tries];
+    const title = G.revealed ? names : `✓ ${names}` + (G.tries ? ` · try ${G.tries + 1}` : '');
+    setFeedback($('fb'), G.tries === 0 ? 'ok' : 'bad', title, K.about(members[0]));
+    if (K.fresh) fresh();
+    members.forEach((m, n) => {
+      for (const p of pathsOf(K.areas[m])) { p.classList.remove('ans', 'flash', 'found', 'pick', ...RESULT_CLASS); p.classList.add(k); }
+      showLabel(G.kind, m);
+      const tick = $('ticks').children[G.i]; if (tick) { tick.classList.remove('now'); tick.classList.add(k); }
+      G.res.push(G.tries);
+      if (G.tries === 0) { G.score++; G.streak++; G.best = Math.max(G.best, G.streak); } else G.streak = 0;
+      if (RV) { if (n && !G.review && G.tries) RV.asked(); RV.answered(m, G.tries === 0); } // (each missed one counts as missed)
+      G.i++;
+    });
+    if (K.fresh) fresh(FRESH_MS);
+    if (members.length > 1) { // the review's line about each card: one, about them all
+      const fb = $('fb'), t = fb.querySelector('.t'); if (t && G.review) t.textContent = t.textContent.replace(told(K, members[members.length - 1]), names);
+      const seen = new Set(); for (const p of fb.querySelectorAll('p.c')) { if (seen.has(p.textContent)) p.remove(); else seen.add(p.textContent); }
+    }
+    if (G.i >= G.queue.length) finish(); else ask();
   }
   function answer(area) {
     const K = KINDS[G.kind], target = G.queue[G.i];

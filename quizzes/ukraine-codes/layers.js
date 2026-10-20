@@ -7,6 +7,7 @@
 
 const LAYERS = {
   key: "uacodes",
+  phone: true, // phone area codes: each layer of codes is played the other way round too, the code typed (layer-config.js)
   map: "FINE.reg",
   geo: "FINE_GEO",
   context: "FINE.ctx",

@@ -80,7 +80,7 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
       <button class="photo" id="photo" type="button" aria-label="Enlarge the picture" hidden><img id="photoImg" alt=""></button>
       <div class="bigname" id="bigname" aria-live="polite" hidden></div>
       <div class="card" id="card" hidden><p class="sent" id="sent" dir="auto" aria-live="polite"></p></div>
-      <form class="typed" id="typedForm" hidden><input type="text" id="typed" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" aria-label="Answer"><button class="listbtn" id="typedListBtn" type="button" aria-controls="typedList" aria-expanded="true" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6"/></svg></button><button class="primary small" type="submit">OK</button></form>
+      <form class="typed" id="typedForm" hidden><input type="text" id="typed" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" aria-label="Answer"><button class="listbtn" id="typedListBtn" type="button" aria-controls="typedList" aria-expanded="true" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6"/></svg></button><button class="primary small" type="submit">OK</button><button class="ghost small" id="giveUpBtn" type="button" hidden>Give up</button></form>
       <div class="picklist" id="typedList" role="listbox" aria-label="Answers to pick from" hidden></div>
       <button class="primary" id="checkBtn" type="button" hidden>Check</button>
       <div class="dial" id="dial" aria-live="polite"></div>
@@ -145,7 +145,7 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
       <g id="ctx"></g>
       <g id="regions"></g>
       <g id="borders"></g>
-      <g id="hl"><path id="askUse" d=""/><path id="hoverUse" d=""/><path id="ansUse" d=""/></g>
+      <g id="hl"><path id="askCtx" d=""/><path id="askUse" d=""/><path id="askLine" d=""/><path id="hoverUse" d=""/><path id="ansUse" d=""/></g>
       <g id="labels"></g>
     </svg>
     <div class="zoom" id="zoomCtl" aria-label="Map zoom">

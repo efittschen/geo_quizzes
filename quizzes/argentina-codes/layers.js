@@ -3,6 +3,7 @@
 
 const LAYERS = {
   key: "arcodes",
+  phone: true, // phone area codes: each layer of codes is played the other way round too, the code typed (layer-config.js)
   borders: "DATA.ent",
   size: [800,1658],
   pad: 16,

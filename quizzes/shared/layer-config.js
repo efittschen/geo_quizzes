@@ -15,6 +15,8 @@
 //     g          each area's hint-color group; d: paths that replace the map's (a tiny area drawn as a circle),
 //                top: the areas drawn above their neighbours
 //     explore    what Explore shows for an area: { code, title, sub }
+//     phone      true: the layers asked with prompt 'dial' are phone area codes (they are played the other way round
+//                too, the area outlined and its code typed: MODES 'code' in area-quiz.js)
 //   layer = { key, label, noun, prompt, groups: [[title, sub, ids]…], areas, name, short, chip, chipTitle, about,
 //             detail: [label, text], dial, text, pin, clicked, primary, areaLabel, colors (per area: the colors a
 //             group of areas may take, by its first area), presets: [[label, ids]…],
@@ -158,7 +160,7 @@ const layerLib = (() => {
     };
   }
   function quiz(L, resolve) {
-    const M = model(L, resolve);
+    const M = model(L, resolve), PHONE = L.phone === true;
     const at = v => typeof v !== 'string' ? v : /^\[.*\]$/.test(v) ? [resolve(v.slice(1, -1))] : resolve(v);
     // A table drawn at random (pool): one of an item's entries each time it is asked, by weight (w) if given.
     const draw = (list, w) => { let i = Math.random() * list.length | 0; if (w) { let x = Math.random() * w.reduce((s, v) => s + v, 0); i = Math.max(0, w.findIndex(v => (x -= v) < 0)); } return list[i]; };
@@ -168,6 +170,9 @@ const layerLib = (() => {
       const out = { key: k.key, label: k.label, noun: k.noun, groups: k.groups.map(([title, sub, ids]) => ({ title, sub, ids })), areasOf: id => K.areas[id] };
       for (const s of SWITCHES) if (k[s] !== undefined) out[s] = k[s];
       if (k.of && !k.typed) out.modes = ['list', 'type', 'pairs', 'pick', 'pickback']; // (its names picked from a list or from four, typed or matched with those of the layer it is of, and the other way round: see MODES in area-quiz.js)
+      // a layer of phone codes (LAYERS.phone) is played the other way round too: the area outlined, its code typed
+      // (MODES 'code'); not a layer of places dialled (their names have no digits)
+      else if (PHONE && k.prompt === 'dial' && !k.groupsOnly && T.short && K.ids.every(id => /\d/.test(T.short[id]))) out.modes = ['code'];
       for (const t of ['name', 'short', 'chip', 'chipTitle', 'about', 'dial', 'text', 'pin', 'chipClass', 'areaLabel']) if (T[t]) out[t] = fn(t);
       if (T.clicked) out.clicked = a => T.clicked[a];
       for (const t in k.pool || {}) if (t !== 'w') out[t] = id => { const p = k.pool[t], e = draw(p.e[id], k.pool.w && k.pool.w[id]); return p.t === undefined ? e : build(p.t, e); };
