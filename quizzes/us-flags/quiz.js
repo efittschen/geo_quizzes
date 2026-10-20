@@ -79,6 +79,11 @@ const SYMBOLS = {
   "Wisconsin": "A sailor and a miner (work on water and land) hold the arms under a badger, the state animal, and the motto \"Forward\"; 1848 is statehood.",
   "Wyoming": "A bison carrying the state seal like a brand; blue for the sky and mountains, white for purity, red for the Native peoples and the pioneers.",
 };
+// "Blue hell": the flags of an emblem on a plain blue field, the hardest to tell apart (not Wyoming's, its bison in a
+// red and white border, nor the blue ones of 2024, Minnesota's and Utah's).
+const BLUE_HELL = ['Alaska', 'Connecticut', 'Idaho', 'Indiana', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Michigan', 'Montana', 'Nebraska',
+  'Nevada', 'New Hampshire', 'New York', 'North Dakota', 'Oklahoma', 'Oregon', 'Pennsylvania', 'South Carolina', 'South Dakota', 'Vermont',
+  'Virginia', 'Wisconsin'];
 const NAME = Object.fromEntries(Object.entries(USPS).map(([name, code]) => [code, name]));
 const REGION = Object.fromEntries(CENSUS.flatMap(([region, states]) => states.map(st => [st, region])));
 const NAMES = Object.keys(USPS).sort();
@@ -114,6 +119,7 @@ const QUIZ = {
   langsAlways: true, // every round box shows Clear | Blurred
   exploreKind: 'flags',
   explore: a => ({ code: a, title: NAME[a], sub: [REGION[NAME[a]], SYMBOLS[NAME[a]]], photos: [{ src: `${DIR}${a}.jpg`, alt: 'state flag', label: NAME[a], link: '' }] }),
-  rounds: [...GROUPS.map(g => ({ kind: 'flags', label: g.title, groups: [g.title] })), { kind: 'flags', label: 'All flags' }],
+  rounds: [...GROUPS.map(g => ({ kind: 'flags', label: g.title, groups: [g.title] })), { kind: 'flags', label: 'Blue hell', ids: BLUE_HELL },
+    { kind: 'flags', label: 'All flags' }],
   kinds: [kind('flags', 'Flags', 'Clear', ''), kind('blurred', 'Blurred flags', 'Blurred', 'blur', { of: 'flags' })],
 };
