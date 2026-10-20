@@ -134,6 +134,7 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
       <div class="row">
         <button class="primary" id="startBtn" type="button">Start</button>
         <button class="ghost" id="exploreBtn" type="button">Explore</button>
+        <button class="ghost" id="learnBtn" type="button" hidden>Learn</button>
       </div>
       <p class="toast" id="toast" role="status" aria-live="polite"></p>
     </div>

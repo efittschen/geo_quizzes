@@ -352,6 +352,26 @@ svg.streets #ctx path.inset-land{display:inline;fill:var(--land);stroke:var(--ed
 .mapbar{position:absolute;left:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:1100;display:flex;flex-wrap:wrap-reverse;gap:8px;max-width:calc(100% - 28px)}
 .mapbar .maps{position:static}
 
+/* Learn (Q.learn): a sheet over the page, a card for each part of the map: a small map of the whole with the part lit,
+   what it is, its pictures (photo-quiz.css: .ph) */
+.learn{position:fixed;inset:0;z-index:1500;overflow-y:auto;overscroll-behavior:contain;background:var(--panel)}
+.learn-defs{position:absolute;width:0;height:0;overflow:hidden}
+.learn-head{position:sticky;top:0;z-index:1;display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;padding:18px 26px 14px;padding-top:max(18px,env(safe-area-inset-top,0px));background:var(--panel);border-bottom:1px solid var(--line)}
+.learn-head h2{margin:0;font:700 1.8rem/1.05 var(--cond)}
+.learn-head p{flex:1 1 18em;margin:0;color:var(--muted);font-size:.92rem}
+.learn-head button{margin-left:auto}
+.learn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;padding:18px 26px 32px;padding-bottom:max(32px,env(safe-area-inset-bottom,0px))}
+.learn-card{display:grid;grid-template-columns:150px 1fr;grid-template-rows:auto 1fr;gap:8px 14px;align-items:start;padding:14px;border:1.5px solid var(--line);border-radius:var(--radius);background:var(--card)}
+.learn-map{grid-row:1 / span 2;width:150px;height:auto;display:block}
+.learn-map use{fill:var(--land);stroke:var(--edge);stroke-width:.6}
+.learn-map use.on{fill:var(--yellow);stroke:var(--state);stroke-width:.8}
+.learn-map .ring{fill:none;stroke:var(--bad);stroke-width:2}
+.learn-text h3{margin:0;font:700 1.3rem/1.1 var(--cond)}
+.learn-text p{margin:2px 0 0;font-size:.88rem;line-height:1.35}
+.learn-text p + p{color:var(--muted)}
+.learn-photos{display:flex;flex-wrap:wrap;gap:6px}
+.learn-photos .ph{width:92px}
+
 /* a mode that answers without the map (list, type, picks; see show() in area-quiz.js): no map, the panel takes the
    page, in the middle, and everything in it is larger */
 .app.nomap{grid-template-columns:1fr;grid-template-rows:1fr}
@@ -440,6 +460,12 @@ svg.streets #ctx path.inset-land{display:inline;fill:var(--land);stroke:var(--ed
   .zoom button{width:36px;height:36px;font-size:1.15rem}
   .mapbar{max-width:calc(100% - 74px)}
   .maps button{height:34px;padding:0 10px;font-size:.84rem}
+  .learn-head{padding:12px 16px 10px;padding-top:max(12px,env(safe-area-inset-top,0px))}
+  .learn-head h2{font-size:1.5rem}
+  .learn-grid{grid-template-columns:1fr;gap:10px;padding:12px 16px 24px}
+  .learn-card{grid-template-columns:104px 1fr;padding:10px;gap:6px 12px}
+  .learn-map{width:104px}
+  .learn-photos .ph{width:80px}
 }
 @media (prefers-reduced-motion: reduce){
   *{animation:none!important;transition:none!important}

@@ -1,8 +1,9 @@
 // Japan Power Company Logos: config for ../shared/area-quiz.js. See an electric utility's logo, click the region it
 // serves. The ten utilities each serve one region (Kanto: TEPCO, Chubu: Chubu Electric…), and their marks show up
 // on poles, plates, covers and vans. The pictures (img/<utility>-<n>.jpg) are the ones of the player's reference
-// document (logos, and the marks as seen in the street), one to three per utility; NTT's, the telephone company's,
-// is left out, as it is the same everywhere. The map is the utilities' areas of ../japan-regions/data.js (field
+// documents (logos, and the marks as seen in the street; Tohoku's two and Okinawa's second from the "English Guide to
+// Regional Plates on Japanese Utility Poles"), one to three per utility; NTT's, the telephone company's, is left out,
+// as it is the same everywhere. Learn shows them all, utility by utility, with the area each serves. The map is the utilities' areas of ../japan-regions/data.js (field
 // pw: prefectures split where a border between two utilities runs through them), each utility drawn as one region.
 
 // utility (pw in data.js) -> [region, utility, Japanese name, regions served]
@@ -21,7 +22,7 @@ const UTILITIES = {
 // [picture, utility, a note on it]
 const LOGOS = [
   ['hokkaido-1', 'hokkaido', ''],
-  ['tohoku-1', 'tohoku', 'Its service area takes in Niigata too'],
+  ['tohoku-1', 'tohoku', 'Its service area takes in Niigata too'], ['tohoku-2', 'tohoku', 'Its service area takes in Niigata too'],
   ['hokuriku-1', 'hokuriku', ''], ['hokuriku-2', 'hokuriku', ''], ['hokuriku-3', 'hokuriku', 'The mark as seen in the street'],
   ['tepco-1', 'tepco', ''], ['tepco-2', 'tepco', ''], ['tepco-3', 'tepco', 'The mark as seen in the street'],
   ['chubu-1', 'chubu', ''], ['chubu-2', 'chubu', ''], ['chubu-3', 'chubu', 'The mark as seen in the street'],
@@ -29,7 +30,7 @@ const LOGOS = [
   ['chugoku-1', 'chugoku', 'E for Energia, its brand: "Energia" written on a sign is Chugoku too'], ['chugoku-2', 'chugoku', ''],
   ['shikoku-1', 'shikoku', ''], ['shikoku-2', 'shikoku', ''], ['shikoku-3', 'shikoku', 'The mark as seen in the street'],
   ['kyushu-1', 'kyushu', 'Often between 安 and 全 ("safety")'], ['kyushu-2', 'kyushu', ''], ['kyushu-3', 'kyushu', 'The mark as seen in the street; often between 安 and 全 ("safety")'],
-  ['okinawa-1', 'okinawa', ''],
+  ['okinawa-1', 'okinawa', ''], ['okinawa-2', 'okinawa', ''],
 ];
 // rounds of neighbouring utilities, each under ten logos (Beginner), then all of them
 const PARTS = [['North', ['hokkaido', 'tohoku', 'hokuriku']], ['Kanto and Chubu', ['tepco', 'chubu']], ['Kansai, Chugoku and Shikoku', ['kansai', 'chugoku', 'shikoku']], ['Kyushu and Okinawa', ['kyushu', 'okinawa']]];
@@ -54,6 +55,11 @@ const QUIZ = {
   hintLabel: '', hintsDefault: false,
   exploreKind: 'photos',
   explore: a => { const pw = PW[a]; return { code: UTILITIES[pw][0], title: nameOf(pw), sub: UTILITIES[pw][3], photos: ALL.filter(id => L[id].pw === pw).map(photo) }; },
+  // Learn: every utility with its area and all its logos, north to south
+  learn: {
+    title: 'Japan’s power companies', sub: 'Each region’s electric utility, the area it serves and its logos. Tap a logo to see it large.',
+    sections: Object.keys(UTILITIES).map(pw => ({ title: UTILITIES[pw][0], sub: [nameOf(pw), UTILITIES[pw][3]], areas: AREAS_OF[pw], photos: ALL.filter(id => L[id].pw === pw).map(photo) })),
+  },
   rounds: [...GROUPS.map(g => ({ kind: 'photos', label: g.title, groups: [g.title] })), { kind: 'photos', label: 'All logos' }],
   kinds: [{
     key: 'photos', label: 'Logos', sub: `${ALL.length} logos`, noun: ['logo', 'logos'], pickTitle: 'Logos to practice',

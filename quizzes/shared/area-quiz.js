@@ -17,6 +17,9 @@
 //   kinds        what can be asked, see KINDS below
 //   explore(areaId) -> { code, title, sub, photos }  (sub may be an array of lines; photos: pictures to show, as
 //                returned by a kind's photo(id))
+//   learn        optional { title, sub, sections: [{ title, sub, areas, photos }] } (or a function returning it): a
+//                Learn button beside Explore opens a sheet of everything to learn, one card per section: a small map
+//                of the whole with its areas lit, its title and lines (sub: a line or several), its pictures
 //   exploreList  optional { label, items: [{ label, areas, rare, code, title, sub }] }: Explore also shows one of a
 //                list at a time, picked beside Back (a language: the tiles of its letters lit, the `rare` ones of
 //                them in the color of rare answers)
@@ -1761,6 +1764,54 @@
     b.append(im); b.onclick = () => zoomPhoto(p, true);
     return b;
   }
+
+  /* ---------- Learn (Q.learn): everything to learn on one sheet ---------- */
+  // A sheet over the whole page, one card for each part of the map: where it is (a small map of the whole, the part
+  // lit), what it is, and its pictures (a click shows one large, with its label). Opened with Learn beside Explore;
+  // Close or Escape shuts it. Built when it is first opened.
+  const learnBtn = $('learnBtn');
+  let learnSheet = null;
+  function openLearn() {
+    if (!learnSheet) {
+      const L = typeof Q.learn === 'function' ? Q.learn() : Q.learn, el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+      learnSheet = el('div', 'learn'); learnSheet.id = 'learn'; learnSheet.setAttribute('role', 'dialog'); learnSheet.setAttribute('aria-modal', 'true'); learnSheet.setAttribute('aria-label', L.title || 'Learn');
+      const head = el('header', 'learn-head'), close = el('button', 'ghost small', 'Close');
+      close.type = 'button'; close.onclick = closeLearn;
+      head.append(el('h2', '', L.title || 'Learn'), ...(L.sub ? [el('p', '', L.sub)] : []), close);
+      // the map's areas once, each card's map using them (a card's map costs next to nothing more)
+      const [x0, y0, x1, y1] = HOME, box = `${x0 - PAD} ${y0 - PAD} ${x1 - x0 + 2 * PAD} ${y1 - y0 + 2 * PAD}`;
+      const defs = document.createElementNS(NS, 'svg'); defs.setAttribute('class', 'learn-defs'); defs.setAttribute('aria-hidden', 'true');
+      const all = document.createElementNS(NS, 'g'); all.id = 'learnAll';
+      for (const a of Q.areas) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', a.d); p.id = 'learn-' + a.id; p.setAttribute('vector-effect', 'non-scaling-stroke'); all.append(p); }
+      defs.append(all);
+      const use = (href, cls) => { const u = document.createElementNS(NS, 'use'); u.setAttribute('href', '#' + href); if (cls) u.setAttribute('class', cls); return u; };
+      const grid = el('div', 'learn-grid');
+      for (const s of L.sections) {
+        const card = el('section', 'learn-card'), map = document.createElementNS(NS, 'svg'), text = el('div', 'learn-text');
+        map.setAttribute('class', 'learn-map'); map.setAttribute('viewBox', box); map.setAttribute('aria-hidden', 'true');
+        map.append(use('learnAll', 'base'), ...(s.areas || []).map(a => use('learn-' + a, 'on')));
+        // a part too small to see lit on so small a map (islands far out): a ring around it as well
+        const parts = (s.areas || []).map(a => AREA[a]).filter(Boolean), side = Math.max(x1 - x0, y1 - y0);
+        if (parts.length) {
+          const r = A => Math.sqrt(A.a || 0) / 2, bx0 = Math.min(...parts.map(A => A.lx - r(A))), bx1 = Math.max(...parts.map(A => A.lx + r(A))), by0 = Math.min(...parts.map(A => A.ly - r(A))), by1 = Math.max(...parts.map(A => A.ly + r(A)));
+          if (Math.max(bx1 - bx0, by1 - by0) < side * 0.08) {
+            const ring = document.createElementNS(NS, 'circle'); ring.setAttribute('class', 'ring'); ring.setAttribute('vector-effect', 'non-scaling-stroke');
+            ring.setAttribute('cx', (bx0 + bx1) / 2); ring.setAttribute('cy', (by0 + by1) / 2); ring.setAttribute('r', side * 0.06);
+            map.append(ring);
+          }
+        }
+        text.append(el('h3', '', s.title), ...[].concat(s.sub || []).map(line => el('p', '', line)));
+        const photos = el('div', 'learn-photos'); photos.append(...(s.photos || []).map(thumb));
+        card.append(map, text, photos); grid.append(card);
+      }
+      learnSheet.append(defs, head, grid);
+      document.body.append(learnSheet);
+    }
+    learnSheet.hidden = false; learnSheet.scrollTop = 0;
+    learnSheet.querySelector('.learn-head button').focus({ preventScroll: true });
+  }
+  function closeLearn() { if (learnSheet) learnSheet.hidden = true; if (learnBtn) learnBtn.focus({ preventScroll: true }); }
+  if (learnBtn) { learnBtn.hidden = !Q.learn; learnBtn.onclick = openLearn; }
   // Q.flyAnswer: a shown answer the view doesn't show (outside it, or a speck) is flown to; the next question
   // returns to the view before. A review does the same on every map for an answer outside the view, since it keeps
   // the view from question to question.
@@ -2537,7 +2588,7 @@
   $('eBack').onclick = openSetup;
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') return;
-    if (e.key === 'Escape') { lightbox.hidden = true; return; }
+    if (e.key === 'Escape') { if (lightbox.hidden && learnSheet && !learnSheet.hidden) closeLearn(); lightbox.hidden = true; return; }
     // 1–4 pick one of four (choose4)
     if (/^[1-4]$/.test(e.key) && view === 'play' && KINDS[G.kind].choose4) { const o = picksEl.children[+e.key - 1]; if (o && !o.disabled) o.click(); return; }
     // Enter checks the picks (pickAll); on a button, the button's own Enter does
