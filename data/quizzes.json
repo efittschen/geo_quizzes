@@ -1969,6 +1969,13 @@
       "url": "quizzes/malaysia-flags/index.html"
     },
     {
+      "id": "malaysia-rulers",
+      "country": "458",
+      "title": "Rulers",
+      "levels": 1,
+      "url": "quizzes/malaysia-rulers/index.html"
+    },
+    {
       "id": "peru-codes",
       "country": "604",
       "title": "Area Codes",
