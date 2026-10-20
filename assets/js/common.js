@@ -11,6 +11,10 @@ function countryUrl(code) {
 function quizCountries(quiz) {
   return [].concat(quiz.country ?? []);
 }
+// The two-letter code of a quiz's (first) country, where space is short: BR. The countries that have quizzes, from
+// the coverage data's table (data/coverage/home.json); a quiz without a country has none.
+const COUNTRY_CODES = {"032":"AR","036":"AU","040":"AT","050":"BD","064":"BT","068":"BO","076":"BR","100":"BG","116":"KH","124":"CA","144":"LK","152":"CL","170":"CO","218":"EC","246":"FI","250":"FR","276":"DE","288":"GH","300":"GR","348":"HU","356":"IN","360":"ID","380":"IT","392":"JP","398":"KZ","404":"KE","410":"KR","458":"MY","484":"MX","512":"OM","516":"NA","524":"NP","554":"NZ","566":"NG","578":"NO","600":"PY","604":"PE","608":"PH","616":"PL","620":"PT","642":"RO","643":"RU","686":"SN","704":"VN","710":"ZA","724":"ES","752":"SE","764":"TH","792":"TR","804":"UA","826":"GB","840":"US"};
+const quizCode = (quiz) => COUNTRY_CODES[quizCountries(quiz)[0]] ?? null;
 
 // A quiz about the whole world or a whole continent has a `scope` instead ("World", or the continent's name as in
 // the index's `continents`). Its page lists the quizzes of that scope (country.html?area=<scope>).

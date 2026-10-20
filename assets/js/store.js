@@ -6,6 +6,7 @@
 //              { <key>: { to: <look>, at: when } } (to null: cards were moved into that key then); see cardKeys
 //     looks    the maps the page's cards can be played on (for sorting them on the review page)
 //     layers   the names of the page's layers that have review cards: { <layer>: label } (see srs.js)
+//     called   what its review cards are called on the review page: { "<layer>|<item>": [question, more] } (see srs.js)
 //     stars    progress per level, Beginner first; 1 means every round of the level was played perfectly. The quiz
 //              page works it out from `best` and keeps it here for the home and country pages, which show the stars
 //              without loading the quiz.

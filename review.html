@@ -26,9 +26,21 @@
 
     <section>
       <h2>Stack</h2>
+      <div class="view-pick" id="view-pick" role="group" aria-label="View" hidden>
+        <button type="button" class="ghost small" data-view="tree" aria-pressed="true">By quiz</button>
+        <button type="button" class="ghost small" data-view="due" aria-pressed="false">By due</button>
+      </div>
+      <div class="tree" id="due-list" hidden>
+        <table class="decks stack due-list">
+          <colgroup><col class="c-due"><col><col><col class="c-grades"></colgroup>
+          <thead><tr><th class="num">Due</th><th>Card</th><th>Quiz</th><th></th></tr></thead>
+          <tbody id="due-rows"></tbody>
+        </table>
+      </div>
       <div class="tree" id="decks" hidden>
-        <table class="decks">
-          <thead><tr><th>Quiz</th><th class="num">Due</th><th class="num">Learned</th><th class="next">Next</th><th></th></tr></thead>
+        <table class="decks stack">
+          <colgroup><col><col class="c-due"><col class="c-learned"><col class="c-acts"></colgroup>
+          <thead><tr><th>Quiz</th><th class="num">Due</th><th class="num learned">Learned</th><th></th></tr></thead>
           <tbody id="deck-rows"></tbody>
         </table>
       </div>

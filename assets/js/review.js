@@ -6,6 +6,64 @@
 
 const $ = (id) => document.getElementById(id);
 const BACK = "review.html";
+// The stack's two views ("tree": by place and quiz, down to every card; "due": every card by when it is due), and
+// the tree's branches the player opened or closed, kept while the page shows its numbers anew: places start open
+// (their quizzes show), everything under a quiz closed.
+let VIEW = "tree";
+const FLIPPED = new Set();
+const isOpen = (node) => node.startsWith("p:") !== FLIPPED.has(node);
+// A card's interval, short: 12 d, 1.5 y.
+const span = (days) => (days >= 365 ? `${(days / 365).toFixed(1)} y` : days >= 1 ? `${Math.round(days)} d` : days > 0 ? `${Math.max(1, Math.round(days * 24))} h` : "");
+// When a card is due, short, for the stack on a phone: now, 40 min, 5 h, 9 d, 3 mo, 1.5 y (days as SRS.until counts them).
+function dueShort(ts, now) {
+  if (ts <= now) return "now";
+  const n = SRS.days(now, ts), m = Math.ceil((ts - now) / 60000);
+  if (n < 1) return m < 60 ? `${m} min` : `${Math.round(m / 60)} h`;
+  return n < 60 ? `${n} d` : n < 730 ? `${Math.round(n / 30.4)} mo` : `${(n / 365).toFixed(1)} y`;
+}
+// When something is due, as the stack says it: "in 9 days", or on a phone "9 d" (see .due-short).
+function dueWhen(ts, now) {
+  const out = document.createDocumentFragment(), long = document.createElement("span"), short = document.createElement("span");
+  long.className = "due-long"; long.textContent = SRS.until(ts, now);
+  short.className = "due-short"; short.textContent = dueShort(ts, now);
+  out.append(long, short);
+  return out;
+}
+// Country names too long for the stack, in their usual short form.
+const SHORT_NAMES = { "United States of America": "USA", "United Kingdom": "UK", "United Arab Emirates": "UAE" };
+// A city quiz (its maps: by distance, or the dots), and the maps a quiz's cards can be on, as its page says them.
+const cityOf = (d) => ["cities", "cities-coverage"].includes(d.quiz.role);
+const looksOf = (d) => SRS.looksOf(d.id) ?? (cityOf(d) ? ["free", "quiz"] : ["quiz", "overlay", "street"]);
+// A row's actions behind ⋯ (a select: on a phone its own list): groups of [label, value] under their headings, then
+// Remove where there is remove(); act(value) or remove() does it and says whether anything changed, and changed()
+// follows if so.
+function moreMenu(what, groups, act, remove = null, changed = () => {}) {
+  const pick = document.createElement("select");
+  pick.className = "more";
+  pick.title = "More";
+  pick.setAttribute("aria-label", `More: ${what}`);
+  pick.append(new Option("⋯", ""), ...groups.filter(([, items]) => items.length).map(([heading, items]) => {
+    const group = document.createElement("optgroup");
+    group.label = heading;
+    group.append(...items.map(([label, value]) => new Option(label, `do:${value}`)));
+    return group;
+  }), ...(remove ? [new Option("Remove", "remove")] : []));
+  pick.onchange = () => {
+    const v = pick.value;
+    pick.value = "";
+    if (v === "remove" ? remove() : v && act(v.slice(3))) changed();
+  };
+  return pick;
+}
+// A card's name in a cell: the question, and what more the quiz says of it, smaller (short: the question alone; all
+// of it on hover either way).
+function cardCell(called, c, short = false) {
+  const td = document.createElement("td"), [ask, more] = called[`${c.kind}|${c.item}`] ?? [c.item];
+  td.title = more ? `${ask} · ${more}` : ask;
+  td.append(ask);
+  if (more && !short) { const small = document.createElement("small"); small.textContent = more; td.append(" ", small); }
+  return td;
+}
 
 function render(index, nameByCode) {
   const now = Date.now();
@@ -26,11 +84,52 @@ function render(index, nameByCode) {
   if (result) $("review-go").after(result);
 
   // Countries (or areas like South Asia, or the world or a continent as a whole) with their quizzes, most due first.
-  const places = new Map();
+  const places = new Map(), placeOf = new Map();
   for (const d of decks) {
-    const place = d.quiz.area ?? d.quiz.scope ?? nameByCode.get(quizCountries(d.quiz)[0]) ?? d.title;
+    const country = nameByCode.get(quizCountries(d.quiz)[0]), place = d.quiz.area ?? d.quiz.scope ?? (country && (SHORT_NAMES[country] ?? country)) ?? d.title;
     places.set(place, [...(places.get(place) ?? []), d]);
+    placeOf.set(d.id, place);
   }
+  for (const b of document.querySelectorAll("#view-pick button")) b.setAttribute("aria-pressed", b.dataset.view === VIEW);
+  $("view-pick").hidden = !decks.length;
+  $("decks").hidden = !decks.length || VIEW !== "tree";
+  $("due-list").hidden = !decks.length || VIEW !== "due";
+  $("empty").hidden = decks.length > 0;
+  if (VIEW === "due") { renderDue(decks, placeOf, now); return; }
+  // The tree: each row a branch (node) under another (parent), shown while every branch above it is open.
+  const parents = new Map();
+  const showTree = () => {
+    const open = (node) => { for (let n = node; n; n = parents.get(n)) if (!isOpen(n)) return false; return true; };
+    for (const tr of $("deck-rows").children) {
+      tr.hidden = !!tr.dataset.parent && !open(tr.dataset.parent);
+      const twist = tr.dataset.node && tr.querySelector(".twist");
+      if (twist) { twist.setAttribute("aria-expanded", isOpen(tr.dataset.node)); twist.setAttribute("aria-label", isOpen(tr.dataset.node) ? "Close" : "Open"); }
+    }
+  };
+  const redraw = () => render(index, nameByCode);
+  // Converting cards to another map (jobs: [quiz id, kind, look, to], see SRS.convert): where a question then has two
+  // cards on that map, the one answered last stays, asked first.
+  const converting = (what, label, jobs) => {
+    const c = jobs.map(([id, kind, look, to]) => SRS.clash(id, kind, look, to)).reduce((s, x) => ({ moving: s.moving + x.moving, merged: s.merged + x.merged }), { moving: 0, merged: 0 });
+    const n = (k, one) => `${k} ${one}${k === 1 ? "" : "s"}`;
+    if (c.merged && !window.confirm(`${what} → ${label}: ${n(c.moving, "card")}\n${n(c.merged, "question")} with two cards there: the one answered last stays\n\nConvert?`)) return false;
+    for (const [id, kind, look, to] of jobs) SRS.convert(id, kind, look, to);
+    return true;
+  };
+  const tree = (tr, node, parent = null) => {
+    if (parent) tr.dataset.parent = parent;
+    if (node) {
+      tr.dataset.node = node;
+      if (parent) parents.set(node, parent);
+      const twist = document.createElement("button");
+      twist.type = "button";
+      twist.className = "twist";
+      twist.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg>';
+      twist.onclick = () => { if (FLIPPED.has(node)) FLIPPED.delete(node); else FLIPPED.add(node); showTree(); };
+      tr.firstElementChild.prepend(twist);
+    }
+    return tr;
+  };
   const row = (cls, head, list, extra = [], layer = null) => {
     const tr = document.createElement("tr");
     tr.className = cls;
@@ -41,9 +140,9 @@ function render(index, nameByCode) {
       tr.append(td);
     };
     tr.append(head);
-    cell(sum(list, "due"), sum(list, "due") ? "num due" : "num");
-    cell(sum(list, "total"), "num");
-    cell(SRS.until(Math.min(...list.map((d) => d.next)), now), "next");
+    const next = Math.min(...list.map((d) => d.next)); // (when the soonest of its cards is due)
+    cell(dueWhen(next, now), next <= now ? "num due" : "num");
+    cell(sum(list, "total"), "num learned");
     const acts = document.createElement("div");
     acts.className = "acts";
     acts.append(...(reviewButtons(index, layer ? [layer.quiz] : list.map((d) => d.quiz), BACK, true, layer) ?? []), ...extra);
@@ -55,135 +154,145 @@ function render(index, nameByCode) {
     const th = document.createElement("th");
     th.scope = "rowgroup";
     th.textContent = place;
-    return [row("place", th, list), ...list.map((d) => {
+    th.title = place;
+    const P = `p:${place}`;
+    // A place's ⋯: its quizzes' maps (a city quiz's apart, its "quiz" being the dots), each converting the cards of
+    // the quizzes that have it; or all of them off the stack.
+    const targets = new Map(), kindOfQuiz = (d) => (cityOf(d) ? "c" : "a");
+    for (const d of list) for (const x of looksOf(d)) targets.set(`${kindOfQuiz(d)}:${x}`, lookLabel(x, cityOf(d)));
+    const ORDER = ["a:quiz", "a:overlay", "a:street", "c:free", "c:quiz"], rank = (k) => (ORDER.indexOf(k) + 1 || 99);
+    const placeMenu = moreMenu(`“${place}”`, [["Convert to", [...targets].sort((a, b) => rank(a[0]) - rank(b[0])).map(([k, label]) => [label, k])]], (k) => {
+      const [q, x] = k.split(":");
+      return converting(`“${place}”`, targets.get(k), list.filter((d) => kindOfQuiz(d) === q && looksOf(d).includes(x)).map((d) => [d.id, null, null, x]));
+    }, () => {
+      if (!window.confirm(`Remove “${place}” from the stack?`)) return false;
+      for (const d of list) SRS.remove(d.id);
+      return true;
+    }, redraw);
+    return [tree(row("place", th, list, [placeMenu]), P), ...list.map((d) => {
+      const Q = `q:${d.id}`, cards = SRS.cardList(d.id).sort((a, b) => a.due - b.due), called = STORE.quiz(d.id).called || {};
+      // A container's cards, each on a line of its own (depth: how far in; lines: the branches above that go on past
+      // them, at those offsets).
+      const cardRows = (list, parent, depth, lines = []) => list.map((c) => {
+        const tr = document.createElement("tr");
+        tr.className = `cardline d${depth}`;
+        const name = cardCell(called, c);
+        if (lines.length) name.style.setProperty("--lines", lines.map((x) => `linear-gradient(var(--line),var(--line)) no-repeat ${x}px 0/1.5px 100%`).join(","));
+        const cell = (text, cls) => { const td = document.createElement("td"); td.textContent = text; if (cls) td.className = cls; return td; };
+        const due = cell("", c.due <= now ? "num due" : "num");
+        due.append(dueWhen(c.due, now));
+        tr.append(name, due, cell(span(c.interval), "num learned"), cell(""));
+        return tree(tr, null, parent);
+      });
       const td = document.createElement("td");
       const a = document.createElement("a");
       a.href = quizUrl(d.quiz);
       a.textContent = d.quiz.title;
+      td.title = d.quiz.title;
       td.append(a);
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.className = "linkbtn";
-      remove.textContent = "Remove";
-      remove.onclick = () => {
-        if (!window.confirm(`Remove “${d.title}” from the stack?`)) return;
-        SRS.remove(d.id);
-        render(index, nameByCode);
-      };
       // A quiz with cards of several layers (island groups, provinces…): each layer on a line of its own, to be
-      // reviewed or removed by itself. The quiz's own line is then named as the sum of them ("All - Area Codes (2 layers)"), and a layer named
+      // reviewed or removed by itself. The quiz's own line is then the sum of them, and a layer named
       // like its quiz (the "Area codes" of "Area Codes", next to "First digit") is told apart: "Full codes".
       // A layer with cards played on several maps (the quiz map, the street map…) has a line for each map under it;
-      // a quiz with one layer has them under its own line ("All - Area Codes (2 maps)").
-      // (a layer's cards that don't say their map yet hang from it too, on a line where the player sorts them)
-      const kids = (l) => l.maps.length > 1 || l.unsorted > 0;
+      // a quiz with one layer has them under its own line.
+      const kids = (l) => l.maps.length > 1;
       const several = d.layers.length > 1, onlyMaps = !several && kids(d.layers[0]);
-      if (several) a.textContent = `All - ${d.quiz.title} (${d.layers.length} layers)`;
-      else if (onlyMaps && d.layers[0].maps.length > 1) a.textContent = `All - ${d.quiz.title} (${d.layers[0].maps.length} maps)`;
-      else if (onlyMaps) a.textContent = `All - ${d.quiz.title}`;
       const same = (label) => label.toLowerCase() === d.quiz.title.toLowerCase();
       const named = d.layers.map((l) => ({ ...l, label: !same(l.label) ? l.label : d.quiz.role === "area-codes" ? "Full codes" : `${l.label} only` }));
       const city = ["cities", "cities-coverage"].includes(d.quiz.role);
-      const dropper = (what, ...part) => {
-        const drop = document.createElement("button");
-        drop.type = "button";
-        drop.className = "linkbtn";
-        drop.textContent = "Remove";
-        drop.onclick = () => {
-          if (!window.confirm(`Remove ${what} of “${d.title}” from the stack?`)) return;
-          SRS.remove(d.id, ...part);
-          render(index, nameByCode);
-        };
-        return drop;
+      // A quiz's, a layer's or a map's ⋯ (kind and look null for all of them): its cards converted to another map of
+      // the quiz (here: the maps they are on now; one alone is not offered), or taken off the stack.
+      const menu = (what, kind, look, here) => {
+        const to = looksOf(d).filter((x) => !(here.length === 1 && here[0] === x));
+        return moreMenu(what, [["Convert to", to.map((x) => [lookLabel(x, city), x])]], (x) => converting(what, lookLabel(x, city), [[d.id, kind, look, x]]), () => {
+          if (!window.confirm(`Remove ${what} from the stack?`)) return false;
+          SRS.remove(d.id, kind, look);
+          return true;
+        }, redraw);
       };
       // The maps of a layer, hanging from it (deep: under a layer line, else under the quiz's own line).
       const mapRows = (l, deep, more) => {
-        const maps = l.maps.length > 1 || l.unsorted ? l.maps : [], n = maps.length + (l.unsorted ? 1 : 0);
+        const maps = l.maps.length > 1 ? l.maps : [], n = maps.length;
         const cls = (i) => ["layer", deep ? "map" : "", deep && more ? "more" : "", i === n - 1 ? "last" : ""].filter(Boolean).join(" ");
-        const rows = maps.map((m, i) => {
-          const cell = document.createElement("td");
+        const rows = maps.flatMap((m, i) => {
+          const cell = document.createElement("td"), M = `m:${d.id}|${l.key}|${m.look}`, parent = deep ? `l:${d.id}|${l.key}` : Q;
           cell.textContent = lookLabel(m.look, city);
-          return row(cls(i), cell, [m], [...converter(l, m.look), dropper(`the ${lookLabel(m.look, city)} cards of “${l.label}”`, l.key, m.look)], { id: d.id, key: l.key, look: m.look, quiz: d.quiz });
+          const lines = [...(deep && more ? [42] : []), ...(i < n - 1 ? [deep ? 68 : 42] : [])];
+          return [tree(row(cls(i), cell, [m], [menu(`“${d.title}”, ${several ? `${l.label}, ` : ""}${lookLabel(m.look, city)}`, l.key, m.look, [m.look])], { id: d.id, key: l.key, look: m.look, quiz: d.quiz }), M, parent),
+            ...cardRows(cards.filter((c) => c.kind === l.key && c.look === m.look), M, deep ? 3 : 2, lines)];
         });
-        if (l.unsorted) rows.push(unsortedRow(l, cls(n - 1)));
         return rows;
-      };
-      // A row of one map's cards (a map's line, or a layer's or the quiz's where all its cards are on one map) can
-      // convert them to another map of the quiz: at once where that map has no cards in the layer, else after a
-      // warning (its cards of the same questions are overwritten).
-      const converter = (l, from) => {
-        const looks = (SRS.looksOf(d.id) ?? (city ? ["free", "quiz"] : ["quiz", "overlay", "street"])).filter((x) => x !== from);
-        if (!looks.length) return [];
-        const pick = document.createElement("select");
-        pick.className = "convert";
-        pick.setAttribute("aria-label", `Convert the ${lookLabel(from, city)} cards of “${l.label}” to another map`);
-        pick.append(new Option("Convert to…", ""), ...looks.map((x) => new Option(lookLabel(x, city), x)));
-        pick.onchange = () => {
-          const to = pick.value;
-          if (!to) return;
-          const c = SRS.clash(d.id, l.key, from, to), name = (x) => lookLabel(x, city), where = d.layers.length > 1 ? `${d.quiz.title}: ${l.label}` : d.quiz.title;
-          if (c.target && !window.confirm(
-            `“${where}” already has ${c.target} ${name(to)} card${c.target === 1 ? "" : "s"}.\n\n` +
-            `Converting the ${c.moving} ${name(from)} card${c.moving === 1 ? "" : "s"} to ${name(to)} overwrites ` +
-            `${c.both ? `the ${c.both} ${name(to)} card${c.both === 1 ? "" : "s"} of the same questions with their progress` : "none of them (no questions in common)"}` +
-            `${c.target - c.both > 0 ? `; the other ${c.target - c.both} ${c.target - c.both === 1 ? "stays" : "stay"} as ${c.target - c.both === 1 ? "it is" : "they are"}` : ""}.\n\nConvert anyway?`)) { pick.value = ""; return; }
-          SRS.convert(d.id, l.key, from, to);
-          render(index, nameByCode);
-        };
-        return [pick];
-      };
-      // Cards from before a card was a question on one map, that don't say theirs: not asked until the player
-      // picks the map they are to be reviewed on (SRS.sort), out of the maps the quiz offers.
-      const unsortedRow = (l, cls) => {
-        const tr = document.createElement("tr");
-        tr.className = cls + " unsorted";
-        const name = document.createElement("td");
-        name.textContent = "Not sorted yet";
-        const note = document.createElement("small");
-        note.textContent = "older cards: pick the map to review them on";
-        name.append(note);
-        const empty = () => document.createElement("td");
-        const count = document.createElement("td");
-        count.className = "num";
-        count.textContent = l.unsorted;
-        const acts = document.createElement("td");
-        const box = document.createElement("div");
-        box.className = "acts";
-        const looks = SRS.looksOf(d.id) ?? (city ? ["free", "quiz"] : ["quiz", "overlay", "street"]);
-        box.append(...looks.map((look) => {
-          const b = document.createElement("button");
-          b.type = "button";
-          b.className = "ghost small";
-          b.textContent = lookLabel(look, city);
-          b.title = `Review these ${l.unsorted} cards on the ${lookLabel(look, city).toLowerCase()} from now on`;
-          b.onclick = () => { SRS.sort(d.id, l.key, look); render(index, nameByCode); };
-          return b;
-        }), dropper(`the unsorted cards of “${l.label}”`, l.key, ""));
-        acts.append(box);
-        tr.append(name, empty(), count, empty(), acts);
-        return tr;
       };
       // The layers hang from the sum's line on a branch, indented under it (see .decks tr.sum, tr.layer).
       const layers = several ? named.flatMap((l, i) => {
         const last = i === named.length - 1, maps = kids(l);
         const cell = document.createElement("td");
-        cell.textContent = l.label;
-        const cls = ["layer", maps ? "parent" : "", last ? "last" : ""].filter(Boolean).join(" ");
-        return [row(cls, cell, [l], [...(maps ? [] : converter(l, l.maps[0].look)), dropper(`“${l.label}”`, l.key)], { id: d.id, key: l.key, quiz: d.quiz }), ...(maps ? mapRows(l, true, !last) : [])];
-      }) : onlyMaps ? mapRows(named[0], false, false) : [];
-      const one = !several && !onlyMaps && d.layers[0].maps.length === 1; // (the quiz's cards all on one map: its own line converts them)
-      return [row(several || onlyMaps ? "sum" : "", td, [d], [...(one ? converter(d.layers[0], d.layers[0].maps[0].look) : []), remove]), ...layers];
+        cell.textContent = cell.title = l.label;
+        const cls = ["layer", maps ? "parent" : "", last ? "last" : ""].filter(Boolean).join(" "), L = `l:${d.id}|${l.key}`;
+        return [tree(row(cls, cell, [l], [menu(`“${d.title}”, ${l.label}`, l.key, null, l.maps.map((m) => m.look))], { id: d.id, key: l.key, quiz: d.quiz }), L, Q),
+          ...(maps ? mapRows(l, true, !last) : cardRows(cards.filter((c) => c.kind === l.key), L, 2, last ? [] : [42]))];
+      }) : onlyMaps ? mapRows(named[0], false, false) : cardRows(cards, Q, 1);
+      return [tree(row(several || onlyMaps ? "sum" : "", td, [d], [menu(`“${d.title}”`, null, null, [...new Set(d.layers.flatMap((l) => l.maps.map((m) => m.look)))])]), Q, P), ...layers];
     }).flat()];
   }));
-  $("decks").hidden = !decks.length;
-  $("empty").hidden = decks.length > 0;
+  showTree();
+}
+
+// The other view: every card on the stack by when it is due, soonest first, with the quiz it is in (and its layer
+// and map, where the quiz has cards of several).
+function renderDue(decks, placeOf, now) {
+  const rows = decks.flatMap((d) => {
+    const called = STORE.quiz(d.id).called || {}, cards = SRS.cardList(d.id), city = ["cities", "cities-coverage"].includes(d.quiz.role);
+    // (a layer named like its quiz, its main one, is not named again: "Brazil · Area Codes", not "… · Area codes")
+    const layerOf = new Map(d.layers.filter((l) => l.label.toLowerCase() !== d.quiz.title.toLowerCase()).map((l) => [l.key, l.label])), maps = new Set(cards.map((c) => c.look)).size > 1;
+    return cards.map((c) => ({ c, d, called, within: [...(d.layers.length > 1 ? [layerOf.get(c.kind)] : []), ...(maps && c.look ? [lookLabel(c.look, city)] : [])].filter(Boolean) }));
+  }).sort((a, b) => a.c.due - b.c.due || a.d.quiz.title.localeCompare(b.d.quiz.title));
+  $("due-rows").replaceChildren(...rows.map(({ c, d, called, within }) => {
+    const tr = document.createElement("tr");
+    const due = document.createElement("td");
+    due.className = c.due <= now ? "num due" : "num";
+    due.append(dueWhen(c.due, now));
+    // the place, the quiz (a link to it), and its layer and map
+    const quiz = document.createElement("td"), a = document.createElement("a"), place = document.createElement("small"), rest = document.createElement("small");
+    a.href = quizUrl(d.quiz);
+    a.textContent = d.quiz.title;
+    place.className = "q-place";
+    place.textContent = `${placeOf.get(d.id)} · `;
+    // (on a phone the country's code instead of its name: BR · Area Codes)
+    const code = document.createElement("small");
+    code.className = "q-code";
+    const where = placeOf.get(d.id), short = Object.values(SHORT_NAMES).includes(where); // (USA, UK, UAE as they are: not US, GB, AE)
+    code.textContent = `${(!short && quizCode(d.quiz)) || where} · `;
+    rest.textContent = within.map((w) => ` · ${w}`).join("");
+    quiz.append(place, code, a, rest);
+    // When the player wants it asked, given by hand: now, sooner or later (SRS.reschedule), its history kept and
+    // no answer counted. The row stays where it is, with its new time, until the list is shown anew.
+    // (as buttons where there is room, else behind ⋯: see .grades)
+    const grades = document.createElement("td"), box = document.createElement("div"), WHEN = [["Now", "now"], ["Sooner", "sooner"], ["Later", "later"]];
+    box.className = "acts grades";
+    const move = (how) => {
+      const at = Date.now(), card = SRS.reschedule(d.id, c.key, how, at);
+      if (card) { due.className = card.d <= at ? "num due" : "num"; due.replaceChildren(dueWhen(card.d, at)); }
+      return false; // (the row stays where it is)
+    };
+    box.append(...WHEN.map(([label, how]) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "ghost small";
+      b.textContent = label;
+      b.onclick = () => move(how);
+      return b;
+    }), moreMenu(cardCell(called, c).title, [["Review", WHEN]], move));
+    grades.append(box);
+    tr.append(due, cardCell(called, c, true), quiz, grades);
+    return tr;
+  }));
 }
 
 // The name of a map cards are played on (their look, see srs.js): the quiz map, the overlay, the street map; in a
 // city quiz the map by distance or the dots, on the drawn map, the overlay or the street map.
 function lookLabel(look, city) {
   const NAMES = { quiz: "Quiz map", overlay: "Overlay", street: "Street map" };
-  if (!look) return "Not sorted yet";
   const [map, back] = look.split("+");
   if (!city && map !== "free") return NAMES[map] ?? map;
   return (map === "free" ? "Map" : "Dots") + (back ? ` · ${NAMES[back] ?? back}` : "");
@@ -245,6 +354,38 @@ function initData() {
     if (!STORE.restore(file)) return alert("Not a Geo Quizzes file");
     location.reload();
   });
+}
+
+// Two things only a card's quiz page knows (see area-review.js): what the card is called (the record's `called`), and,
+// for a card from before a card was a question on one map that doesn't say its map, which map that is (the one
+// worked out from the best results, by the page's own rounds). So each quiz page with a card that lacks either is
+// opened here out of sight (…?cards), one after another, and says when it is done (or 20 s pass); the list is shown
+// anew after each. Once: from then on the cards have both, and the quiz page keeps them up to date. (Cards whose
+// question is no longer in the quiz, `missing`, wait for it to be back.)
+async function fillIn(index, shown) {
+  const urls = new Map(index.quizzes.filter((q) => q.url).map((q) => [q.id, q.url]));
+  const lacking = (id) => {
+    const r = STORE.quiz(id), named = r.called || {};
+    return Object.entries(r.cards || {}).some(([k, c]) => {
+      const bar = k.indexOf("|"), at = k.lastIndexOf("@", bar), item = (at < 0 ? k.slice(0, bar) : k.slice(0, at)) + k.slice(bar);
+      return !c.missing && ((at < 0 && !c.map) || !named[item]);
+    });
+  };
+  for (const id of STORE.quizIds().filter((id) => urls.has(id) && lacking(id))) {
+    await new Promise((done) => {
+      const frame = document.createElement("iframe");
+      frame.setAttribute("aria-hidden", "true");
+      frame.tabIndex = -1;
+      frame.style.cssText = "position:fixed;left:-10000px;top:0;width:1024px;height:768px;border:0;visibility:hidden";
+      const end = () => { clearTimeout(timer); window.removeEventListener("message", heard); frame.remove(); done(); };
+      const heard = (event) => { if (event.source === frame.contentWindow && event.data === "geoquizzes:cards") end(); };
+      const timer = setTimeout(end, 20000);
+      window.addEventListener("message", heard);
+      frame.src = urls.get(id) + "?cards=1";
+      document.body.append(frame);
+    });
+    shown();
+  }
 }
 
 // "Google street map" (see gmaps.js): the player's own Google Maps key, kept in this browser, and whether it answers.
@@ -318,8 +459,10 @@ async function init() {
     const [index, world] = await Promise.all([loadIndex(), json(WORLD_URL).catch(() => null)]);
     const nameByCode = new Map((world?.objects.countries.geometries ?? []).map((g) => [g.id, g.properties.name]));
     render(index, nameByCode);
+    fillIn(index, () => render(index, nameByCode));
+    for (const b of document.querySelectorAll("#view-pick button")) b.onclick = () => { VIEW = b.dataset.view; render(index, nameByCode); };
     // Cards come due while the page is open (a new card after a minute), here or in another tab.
-    refresh = () => { if (!document.hidden) render(index, nameByCode); };
+    refresh = () => { if (!document.hidden && VIEW !== "due") render(index, nameByCode); }; // (by due: not sorted anew under the player)
     document.addEventListener("visibilitychange", refresh);
     setInterval(refresh, 15000);
   } catch (err) {

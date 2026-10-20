@@ -1205,6 +1205,7 @@
     ? { proj: Q.proj, kpu: Q.kpu, areas: Q.areas.filter(a => Q.geo && Q.geo[a.id]).map(a => ({ d: a.d, lat: Q.geo[a.id].lab[0], lng: Q.geo[a.id].lab[1], x: a.lx, y: a.ly })) } : null);
   let waiting = null; // what to do once the script is there
   function withTiles(then) {
+    if (window.parent !== window && new URLSearchParams(location.search).has('cards')) return; // (opened out of sight by the review page: no map is looked at)
     if (tiles) return then();
     if (waiting) return waiting.push(then);
     waiting = [then];

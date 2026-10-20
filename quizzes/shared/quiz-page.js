@@ -15,7 +15,9 @@
 document.write(`<script src="${new URL('../../assets/js/store.js', document.currentScript.src).href}"><\/script>`);
 // With it sync.js, the online copy of a player who named one. What it takes in shows when the page is loaded again,
 // which it does by itself as long as the page wasn't touched; not during a round.
-document.write(`<script src="${new URL('../../assets/js/sync.js', document.currentScript.src).href}"><\/script>`);
+// (Not in a page the review page opens out of sight to give old review cards their map, ?cards: it talks to the
+// online copy itself.)
+if (window.parent === window || !new URLSearchParams(location.search).has('cards')) document.write(`<script src="${new URL('../../assets/js/sync.js', document.currentScript.src).href}"><\/script>`);
 window.addEventListener('geoquizzes:fresh', e => { if (document.getElementById('setup')?.hidden) e.preventDefault(); });
 // And gmaps.js: Google's map as the street map, for a player who named a key of their own on the review page.
 document.write(`<script src="${new URL('../../assets/js/gmaps.js', document.currentScript.src).href}"><\/script>`);

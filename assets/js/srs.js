@@ -25,8 +25,10 @@
 //     A card is a question on one map: its key is '<kind>@<look>|<item id>', the look being the map it is played
 //     on ("quiz", "overlay", "street"; in a city quiz "free" or "quiz" for the dots, with "+<background>" where that
 //     is not the drawn map: "free+street"). A question learned on two maps is two cards, each reviewed on its own
-//     map. (Cards from before have no look in their key, '<kind>|<item id>': theirs is their m and b, until their
-//     quiz page next opens and gives them the new key.) A page's cards fall into its layers by their <kind> (a
+//     map. (Cards from before have no look in their key, '<kind>|<item id>': one that keeps its m and b is that
+//     map's card, under the new key once its quiz page next opens. One without is given a map by its quiz page
+//     when it next opens, once: the one worked out from the best results (reviewModes in area-quiz.js); until then
+//     it counts and is reviewed like any card.) A page's cards fall into its layers by their <kind> (a
 //     regions quiz: island groups, provinces, kabupaten), and a layer's cards by their look: the review page lists
 //     and reviews each on its own (`layers` and their `maps`, and `kinds` of a run: "<kind>" or "<kind>@<look>").
 //     The names of the layers are kept with the cards (the record's `layers`: { <kind>: label }), written by the
@@ -178,18 +180,25 @@ const SRS = (() => {
     const was = JSON.stringify(STORE.quiz(id).layers || {});
     if (JSON.stringify(names) !== was) STORE.setQuiz(id, r => { r.layers = names; });
   }
+  // What a page's cards are called on the review page (the record's `called`: { '<kind>|<item id>': [question,
+  // more] }), written by the quiz page, which alone knows. (`names` held a longer form before: gone with it.)
+  function setNames(id, names) {
+    const r = STORE.quiz(id), was = JSON.stringify(r.called || {});
+    if (JSON.stringify(names) !== was || r.names) STORE.setQuiz(id, r => { r.called = names; delete r.names; });
+  }
   // The maps a page's cards can be played on, as the quiz page says them (for sorting cards on the review page).
   const looksOf = id => STORE.quiz(id).looks || null;
   function setLooks(id, looks) { if (JSON.stringify(looksOf(id)) !== JSON.stringify(looks)) STORE.setQuiz(id, r => { r.looks = looks; }); }
-  // Sorts a layer's cards that don't say their map onto one the player picks: they become its cards (where the same
+  // Sorts a layer's cards that don't say their map onto one (items: a Set of item ids, only those): they become its
+  // cards (where the same
   // question has a card of that map already, the two are one: the one answered last stays), and their old keys are
   // kept in `moved`, so that an old copy coming back from another browser is known as these.
-  function sort(id, kind, look) {
+  function sort(id, kind, look, items = null) {
     const [map, back] = look.split('+'), at = STORE.time(Date.now());
     STORE.setQuiz(id, r => {
       for (const k of Object.keys(r.cards || {})) {
         const bar = k.indexOf('|');
-        if (k.lastIndexOf('@', bar) >= 0 || kindOf(k) !== kind || r.cards[k].map) continue;
+        if (k.lastIndexOf('@', bar) >= 0 || kindOf(k) !== kind || r.cards[k].map || (items && !items.has(k.slice(bar + 1)))) continue;
         const c = { ...r.cards[k], map, ...(back ? { back } : {}) }, key = k.slice(0, bar) + '@' + look + k.slice(bar);
         if (!r.cards[key] || (STORE.ms(r.cards[key].last) || 0) < (STORE.ms(c.last) || 0)) r.cards[key] = c;
         delete r.cards[k];
@@ -198,26 +207,35 @@ const SRS = (() => {
       }
     });
   }
-  // The cards of a layer on one map (from), and how many of them the questions of another map's cards (to) share.
+  // What converting some cards to another map (see convert) does: how many cards move, and how many questions then
+  // have two cards or more on that map (of which one stays).
   function clash(id, kind, from, to) {
-    const d = deck(id), on = look => new Set(Object.keys(d.c).filter(k => kindOf(k) === kind && lookOf(k, d.c[k]) === look).map(k => k.slice(k.indexOf('|') + 1)));
-    const a = on(from), b = on(to);
-    return { moving: a.size, target: b.size, both: [...a].filter(i => b.has(i)).length };
+    const d = deck(id), on = new Map(); let moving = 0;
+    for (const k of Object.keys(d.c)) {
+      const look = lookOf(k, d.c[k]), moves = look !== to && (from == null || look === from);
+      if ((kind != null && kindOf(k) !== kind) || (!moves && look !== to)) continue;
+      if (moves) moving++;
+      const q = kindOf(k) + k.slice(k.indexOf('|'));
+      on.set(q, (on.get(q) || 0) + 1);
+    }
+    return { moving, merged: [...on.values()].filter(n => n > 1).length };
   }
-  // Converts a layer's cards of one map to another: they become that map's cards, with their progress; where that
-  // map has a card of the same question already, it is overwritten (the review page asks the player first). The
-  // keys moved from and into are kept in `moved` (see STORE.cardKeys), so that a copy of the old cards coming back
-  // from another browser is known as these.
+  // Converts cards to another map (to): those of one layer (kind; null: all of them) on one map (from; null: on any
+  // other). They become that map's cards, with their progress; where a question then has two cards on that map (one
+  // there already, or from two maps), the one answered last stays, as wherever cards become one (the review page
+  // asks the player first). The keys moved from and into are kept in `moved` (see STORE.cardKeys), so that a copy of
+  // the old cards coming back from another browser is known as these.
   function convert(id, kind, from, to) {
     const [map, back] = to.split('+'), at = STORE.time(Date.now());
     STORE.setQuiz(id, r => {
       const cards = STORE.cardKeys(r.cards || {}, r.moved);
       r.moved ||= {};
       for (const k of Object.keys(cards)) {
-        if (kindOf(k) !== kind || lookOf(k, STORE.cardIn(cards[k])) !== from) continue;
-        const item = k.slice(k.indexOf('|') + 1), key = `${kind}@${to}|${item}`;
+        const look = lookOf(k, STORE.cardIn(cards[k]));
+        if ((kind != null && kindOf(k) !== kind) || look === to || (from != null && look !== from)) continue;
+        const key = `${kindOf(k)}@${to}|${k.slice(k.indexOf('|') + 1)}`;
         const { missing, back: _, ...c } = cards[k];
-        cards[key] = { ...c, map, ...(back ? { back } : {}) };
+        if (!cards[key] || (STORE.ms(cards[key].last) || 0) < (STORE.ms(c.last) || 0)) cards[key] = { ...c, map, ...(back ? { back } : {}) };
         delete cards[k];
         r.moved[k] = { to, at };
         r.moved[key] = { to: null, at };
@@ -238,15 +256,17 @@ const SRS = (() => {
     const kinds = [...new Set(Object.keys(d.c).map(kindOf))];
     return kinds.map(key => {
       const own = part(d, [key]), looks = [...new Set(Object.entries(own.c).map(([k, c]) => lookOf(k, c)))].sort((a, b) => lookRank(a) - lookRank(b));
-      const unsorted = Object.entries(own.c).filter(([k, c]) => !c.x && !lookOf(k, c)).length; // (not asked until sorted)
-      return { key, label: nameOf(d.id, key), ...stats(own, now), unsorted, maps: looks.map(look => ({ look, ...stats(part(d, [key + '@' + look]), now) })).filter(m => m.total) };
-    }).filter(l => l.total || l.unsorted);
+      // (a card that doesn't say its map, until its quiz page gives it one, is in the layer's numbers only)
+      return { key, label: nameOf(d.id, key), ...stats(own, now), maps: looks.filter(Boolean).map(look => ({ look, ...stats(part(d, [key + '@' + look]), now) })).filter(m => m.total) };
+    }).filter(l => l.total);
   }
   const decks = () => STORE.quizIds().filter(id => STORE.quiz(id).cards).map(id => ({ id, ...deck(id) }));
-  // Cards that can be asked (their question is still in the quiz, and they say the map they are asked on), and the
-  // ones due now, longest due first.
-  const all = d => Object.keys(d.c).filter(k => !d.c[k].x && lookOf(k, d.c[k]));
+  // Cards that can be asked (their question is still in the quiz), and the ones due now, longest due first.
+  const all = d => Object.keys(d.c).filter(k => !d.c[k].x);
   const due = (d, now) => all(d).filter(k => d.c[k].d <= now).sort((a, b) => d.c[a].d - d.c[b].d);
+  // A page's cards that can be asked, each with its layer, map, item, when it is due and its interval (days): the
+  // review page's lists of cards.
+  const cardList = id => { const d = deck(id); return all(d).map(k => ({ key: k, kind: kindOf(k), look: lookOf(k, d.c[k]), item: k.slice(k.indexOf('|') + 1), due: d.c[k].d, interval: d.c[k].i })); };
   function stats(d, now) {
     const keys = all(d), times = keys.map(k => d.c[k].d);
     return { total: keys.length, due: times.filter(t => t <= now).length, next: times.reduce((m, t) => Math.min(m, t), Infinity) };
@@ -276,6 +296,31 @@ const SRS = (() => {
     if (n || (on && keys.length)) save(id, d);
     return n;
   }
+  // A card's due day moved by hand (the review page's "By due"), without an answer: its history (last answer, misses,
+  // difficulty or ease) stays, and its interval becomes one that fits the new day, as if it had been the interval
+  // all along. how: 'now', due today, the interval being the days since the last answer; 'sooner', half the
+  // interval, counted from the last answer (today if that day has passed); 'later', twice the interval. For FSRS the
+  // stability is the one whose interval that is (with the target retention, the chance of recalling the card has
+  // then fallen to it on the new day), so the next answer is worked out from there. A card still in its steps only
+  // has its time moved: to now, half or twice as far off. Not counted as a review.
+  function reschedule(id, key, how, now) {
+    const d = deck(id), card = d.c[key];
+    if (!card) return null;
+    if (card.s) card.d = how === 'now' ? now : now + Math.max(0, card.d - now) * (how === 'sooner' ? 0.5 : 2);
+    else {
+      const o = opts(), fsrs = o.algo === "fsrs", passed = Math.max(1, days(card.l, now));
+      if (fsrs) recollect(card);
+      // (FSRS: the interval a stability stands for, unrounded, and the stability that stands for an interval)
+      const toRetain = (o.retain / 100) ** (1 / DECAY) - 1, ivlOf = st => st / FACTOR * toRetain, stOf = ivl => ivl * FACTOR / toRetain;
+      const was = fsrs ? ivlOf(card.st) : card.i;
+      let ivl = how === 'now' ? passed : within(Math.round(was * (how === 'sooner' ? 0.5 : 2)), 1, o.max), due = dayStart(card.l, ivl);
+      if (how === 'now' || due <= now) { ivl = passed; due = now; }
+      card.i = ivl; card.d = due;
+      if (fsrs) card.st = Math.max(MIN_STABILITY, stOf(ivl));
+    }
+    save(id, d);
+    return card;
+  }
   function answer(id, key, g, now) {
     const d = deck(id), card = d.c[key];
     if (!card) return null;
@@ -288,8 +333,8 @@ const SRS = (() => {
   function overview(quizzes, now) {
     const byId = new Map(quizzes.filter(q => q.url).map(q => [q.id, q]));
     return decks().filter(d => byId.has(d.id))
-      .map(d => { const l = layers(d, now); return { id: d.id, quiz: byId.get(d.id), title: d.t || byId.get(d.id).title, ...stats(d, now), layers: l, unsorted: l.reduce((n, x) => n + x.unsorted, 0) }; })
-      .filter(d => d.total || d.unsorted).sort((a, b) => a.next - b.next);
+      .map(d => ({ id: d.id, quiz: byId.get(d.id), title: d.t || byId.get(d.id).title, ...stats(d, now), layers: layers(d, now) }))
+      .filter(d => d.total).sort((a, b) => a.next - b.next);
   }
   // A review over several quizzes is shuffled in groups: a card can only be asked on its own quiz's page (its map),
   // and every change of page has to load, so a page asks a few of its cards before the review moves on to a quiz
@@ -383,5 +428,5 @@ const SRS = (() => {
     return n === 1 ? "tomorrow" : n < 60 ? `in ${n} days` : n < 730 ? `in ${Math.round(n / 30.4)} months` : `in ${(n / 365).toFixed(1)} years`;
   }
 
-  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, setLooks, looksOf, sort, clash, convert, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, overview, run, setRun, nextStop, stretch, ran, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
+  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, setNames, cardList, reschedule, setLooks, looksOf, sort, clash, convert, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, overview, run, setRun, nextStop, stretch, ran, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
 })();
