@@ -2584,19 +2584,23 @@
     syncList(); syncPicks(null); syncLooks(); $('ask').replaceChildren();
     pairsBoard();
   }
-  // The next board: the next PAIRS questions of the queue (each tile knows its place in it), both sides shuffled.
+  // The next board: the next PAIRS questions of the queue (each tile knows its place in it), and beside them as many
+  // names as a board holds: theirs, and others that match none of them (of the round first, then of the kind), so the
+  // last of a board is never left to match itself, nor a review's two or three cards. Both sides shuffled.
   function pairsBoard() {
     const K = KINDS[G.kind], from = G.next, upto = Math.min(G.queue.length, from + PAIRS), places = [];
     for (let i = from; i < upto; i++) places.push(i);
     G.next = upto; G.left = places.length; G.sel = null; G.wrongs = new Map();
-    const tile = (i, side) => {
+    const tile = (i, side, name) => {
       const b = document.createElement('button'); b.type = 'button'; b.dataset.i = i; b.dataset.side = side;
-      if (side === 'q') b.append(pairsAsk(K, G.queue[i])); else b.textContent = K.answerName(G.queue[i]);
+      if (side === 'q') { b.append(pairsAsk(K, G.queue[i])); b.style.gridColumn = '1'; } else { b.textContent = b.dataset.name = name; b.style.gridColumn = '2'; }
       b.onclick = () => pairsPick(b);
       return b;
     };
-    const qs = shuffle(places).map(i => tile(i, 'q')), as = shuffle(places).map(i => tile(i, 'a'));
-    pairsEl.replaceChildren(...qs.flatMap((q, n) => [q, as[n]]));
+    const mine = new Set(places.map(i => K.answerName(G.queue[i])));
+    const others = [...new Set([...shuffle(G.items), ...shuffle(K.ids)].map(K.answerName))].filter(n => !mine.has(n)).slice(0, Math.max(0, PAIRS - mine.size));
+    const qs = shuffle(places).map(i => tile(i, 'q')), as = shuffle([...places.map(i => [i, K.answerName(G.queue[i])]), ...others.map(n => [-1, n])]).map(([i, n]) => tile(i, 'a', n));
+    pairsEl.replaceChildren(...qs, ...as); // (each in its column, row by row)
     pairsEl.scrollTop = 0;
     G.i = from; pairsStats();
     if (RV) RV.asked();
@@ -2613,17 +2617,18 @@
     const first = G.sel; G.sel = null; first.classList.remove('sel');
     const K = KINDS[G.kind], q = first.dataset.side === 'q' ? first : b, a = q === first ? b : first;
     const qi = +q.dataset.i, ai = +a.dataset.i, target = G.queue[qi];
-    if (K.answerName(target) !== K.answerName(G.queue[ai])) {
+    if (K.answerName(target) !== a.dataset.name) {
       for (const t of [q, a]) { t.classList.add('no'); setTimeout(() => t.classList.remove('no'), 600); }
-      for (const i of [qi, ai]) G.wrongs.set(i, (G.wrongs.get(i) || 0) + 1);
+      for (const i of ai >= 0 ? [qi, ai] : [qi]) G.wrongs.set(i, (G.wrongs.get(i) || 0) + 1); // (a name of no question: against the question alone)
       G.streak = 0; $('sStreak').textContent = 0;
-      setFeedback($('fb'), 'bad', `✗ ${K.answerName(G.queue[ai])}`, '');
+      setFeedback($('fb'), 'bad', `✗ ${a.dataset.name}`, '');
       return;
     }
     const tries = Math.min(G.wrongs.get(qi) || 0, MAX_TRIES);
     for (const t of [q, a]) { t.disabled = true; t.classList.add(RESULT_CLASS[tries]); }
     pairsSettle(qi, tries);
-    if (--G.left === 0) { if (G.next < G.queue.length) setTimeout(pairsBoard, 450); else G.ending = setTimeout(finish, 450); }
+    // (the last board done: the round is through, as after its last question, not ended early: see G.i in a review's finished)
+    if (--G.left === 0) { if (G.next < G.queue.length) setTimeout(pairsBoard, 450); else G.ending = setTimeout(() => { G.i = G.queue.length; finish(); }, 450); }
     else if (RV) { G.i = qi; RV.asked(); } // (a review's clock: from one pair to the next)
   }
   // A question matched, as answer() takes one on the map: its areas colored by its tries, its result, what is said.

@@ -420,7 +420,7 @@ svg.streets #ctx path.inset-land{display:inline;fill:var(--land);stroke:var(--ed
 .picks button.no{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 18%,var(--card));cursor:default;color:var(--muted)}
 .picks button.ans{border-color:var(--ink);background:color-mix(in srgb,var(--yellow) 35%,var(--card))}
 /* pairs (a kind's mode, see MODES in area-quiz.js): questions and names in two columns, over the map */
-.pairs{position:absolute;inset:0;z-index:1200;display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;align-content:start;padding:16px;overflow-y:auto;background:var(--panel)}
+.pairs{position:absolute;inset:0;z-index:1200;display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:row dense;gap:8px 10px;align-content:start;padding:16px;overflow-y:auto;background:var(--panel)}
 .pairs button{appearance:none;display:flex;align-items:center;justify-content:center;min-height:46px;padding:8px 12px;border:1.5px solid var(--line);border-radius:var(--radius);background:var(--card);color:var(--ink);font:600 1rem/1.2 var(--sans);text-align:center;cursor:pointer;transition:border-color .12s,background .12s}
 .pairs button:hover:not(:disabled){border-color:var(--ink)}
 .pairs button.sel{border-color:var(--ink);background:color-mix(in srgb,var(--yellow) 30%,var(--card))}
