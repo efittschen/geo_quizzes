@@ -4,6 +4,7 @@
     "036": "Oceania",
     "040": "Europe",
     "050": "Asia",
+    "056": "Europe",
     "064": "Asia",
     "068": "South America",
     "076": "South America",
@@ -32,6 +33,7 @@
     "512": "Asia",
     "516": "Africa",
     "524": "Asia",
+    "528": "Europe",
     "554": "Oceania",
     "566": "Africa",
     "578": "Europe",
@@ -47,6 +49,7 @@
     "710": "Africa",
     "724": "Europe",
     "752": "Europe",
+    "756": "Europe",
     "764": "Asia",
     "792": "Asia",
     "804": "Europe",
@@ -71,6 +74,13 @@
       "levels": 2,
       "description": "Find Brazil's 27 states on the map, by name.",
       "url": "quizzes/brazil-states/index.html"
+    },
+    {
+      "id": "brazil-flags",
+      "country": "076",
+      "title": "State Flags",
+      "levels": 2,
+      "url": "quizzes/brazil-flags/index.html"
     },
     {
       "id": "russia-codes",
@@ -195,6 +205,13 @@
       "url": "quizzes/canada-provinces/index.html"
     },
     {
+      "id": "canada-flags",
+      "country": "124",
+      "title": "Province Flags",
+      "levels": 2,
+      "url": "quizzes/canada-flags/index.html"
+    },
+    {
       "id": "canada-postcodes",
       "country": "124",
       "title": "Postal Codes",
@@ -221,6 +238,13 @@
       "url": "quizzes/australia-states/index.html"
     },
     {
+      "id": "australia-flags",
+      "country": "036",
+      "title": "State Flags",
+      "levels": 1,
+      "url": "quizzes/australia-flags/index.html"
+    },
+    {
       "id": "australia-postcodes",
       "country": "036",
       "title": "Postcodes",
@@ -245,6 +269,13 @@
       "levels": 2,
       "description": "Find Argentina's 23 provinces and the City of Buenos Aires on the map, by name.",
       "url": "quizzes/argentina-provinces/index.html"
+    },
+    {
+      "id": "argentina-flags",
+      "country": "032",
+      "title": "Province Flags",
+      "levels": 2,
+      "url": "quizzes/argentina-flags/index.html"
     },
     {
       "id": "turkey-codes",
@@ -383,6 +414,13 @@
       "role": "regions",
       "levels": 2,
       "url": "quizzes/ecuador-regions/index.html"
+    },
+    {
+      "id": "ecuador-flags",
+      "country": "218",
+      "title": "Province Flags",
+      "levels": 2,
+      "url": "quizzes/ecuador-flags/index.html"
     },
     {
       "id": "ecuador-codes",
@@ -721,6 +759,13 @@
       "url": "quizzes/austria-regions/index.html"
     },
     {
+      "id": "austria-flags",
+      "country": "040",
+      "title": "State Flags",
+      "levels": 1,
+      "url": "quizzes/austria-flags/index.html"
+    },
+    {
       "id": "austria-postcodes",
       "country": "040",
       "title": "Postcodes",
@@ -1001,6 +1046,13 @@
       "url": "quizzes/france-town-names/index.html"
     },
     {
+      "id": "france-flags",
+      "country": "250",
+      "title": "Regional Flags",
+      "levels": 3,
+      "url": "quizzes/france-flags/index.html"
+    },
+    {
       "id": "thailand-codes",
       "country": "764",
       "title": "Area Codes",
@@ -1273,6 +1325,13 @@
       "url": "quizzes/colombia-regions/index.html"
     },
     {
+      "id": "colombia-flags",
+      "country": "170",
+      "title": "Department Flags",
+      "levels": 3,
+      "url": "quizzes/colombia-flags/index.html"
+    },
+    {
       "id": "colombia-codes",
       "country": "170",
       "title": "Area Codes",
@@ -1391,6 +1450,13 @@
       "role": "regions",
       "levels": 3,
       "url": "quizzes/spain-regions/index.html"
+    },
+    {
+      "id": "spain-flags",
+      "country": "724",
+      "title": "Regional Flags",
+      "levels": 2,
+      "url": "quizzes/spain-flags/index.html"
     },
     {
       "id": "spain-iso",
@@ -1793,6 +1859,13 @@
       "url": "quizzes/italy-regions/index.html"
     },
     {
+      "id": "italy-flags",
+      "country": "380",
+      "title": "Regional Flags",
+      "levels": 2,
+      "url": "quizzes/italy-flags/index.html"
+    },
+    {
       "id": "italy-postcodes",
       "country": "380",
       "title": "Postcodes",
@@ -1887,6 +1960,13 @@
       "role": "names",
       "levels": 3,
       "url": "quizzes/germany-town-names/index.html"
+    },
+    {
+      "id": "germany-flags",
+      "country": "276",
+      "title": "State Flags",
+      "levels": 2,
+      "url": "quizzes/germany-flags/index.html"
     },
     {
       "id": "malaysia-codes",
@@ -1990,6 +2070,13 @@
       "role": "regions",
       "levels": 2,
       "url": "quizzes/peru-regions/index.html"
+    },
+    {
+      "id": "peru-flags",
+      "country": "604",
+      "title": "Regional Flags",
+      "levels": 2,
+      "url": "quizzes/peru-flags/index.html"
     },
     {
       "id": "peru-roads",
@@ -2216,6 +2303,27 @@
       "url": "quizzes/sweden-town-names/index.html"
     },
     {
+      "id": "switzerland-flags",
+      "country": "756",
+      "title": "Canton Flags",
+      "levels": 2,
+      "url": "quizzes/switzerland-flags/index.html"
+    },
+    {
+      "id": "belgium-flags",
+      "country": "056",
+      "title": "Flags",
+      "levels": 2,
+      "url": "quizzes/belgium-flags/index.html"
+    },
+    {
+      "id": "netherlands-flags",
+      "country": "528",
+      "title": "Province Flags",
+      "levels": 2,
+      "url": "quizzes/netherlands-flags/index.html"
+    },
+    {
       "id": "poland-codes",
       "country": "616",
       "title": "Area Codes",
@@ -2382,6 +2490,13 @@
       "role": "regions",
       "levels": 4,
       "url": "quizzes/united-kingdom-regions/index.html"
+    },
+    {
+      "id": "united-kingdom-flags",
+      "country": "826",
+      "title": "Flags",
+      "levels": 3,
+      "url": "quizzes/united-kingdom-flags/index.html"
     },
     {
       "id": "united-kingdom-postcodes",
