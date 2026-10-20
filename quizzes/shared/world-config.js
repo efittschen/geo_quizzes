@@ -394,6 +394,7 @@ const QUIZ = (() => {
     }),
     flags: () => { const items = flagItems(); return facts(items, {
       key: 'flags', label: 'Flags', noun: ['flag', 'flags'], prompt: 'photo', photo: flag, areaRank: false,
+      modes: ['list', 'type', 'pairs'], answers: it => items[it].map(id => W[id].n), looks: true,
       short: it => W[items[it].slice().sort(bySize)[0]].i2, chip: it => it.toUpperCase(),
     }); },
     domains: () => coded(invert(id => FACTS.tld[id]), { key: 'domains', label: 'Domains', noun: ['domain', 'domains'] }),

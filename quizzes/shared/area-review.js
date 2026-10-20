@@ -250,7 +250,8 @@ window.areaReview = E => {
     if (!G.review) { P = { t: performance.now() + (G.i ? 0 : LEAD), easy, fast: o.fast * 1000 * k, missed: false }; return; }
     // The last answer must not stay on the map if this question is about the same place.
     if (S.prev && K.areas[id].some(a => S.prev.areas.includes(a))) unmark();
-    Object.assign(S, { t: performance.now() + (S.asked ? 0 : LEAD), easy, fast: o.fast * 1000 * k, limit: o.limit * 1000 * k, late: false });
+    // (pairs: the clock runs from one pair matched to the next, and nothing is shown for running out of time)
+    Object.assign(S, { t: performance.now() + (S.asked ? 0 : LEAD), easy, fast: o.fast * 1000 * k, limit: K.pairs ? Infinity : o.limit * 1000 * k, late: false });
     if (!S.asked) E.home();
     showStats();
     bar.hidden = false;
@@ -275,7 +276,7 @@ window.areaReview = E => {
     if (!E.free()) for (const p of E.pathsOf(rest)) p.classList.add('ans');
     if (E.onStreet()) E.flyTo(K.areas[id]); else E.showAnswer(rest);
     E.mark(rest);
-    E.setFeedback($('fb'), 'bad', '✗ Time', `→ ${K.name(id)}`);
+    E.setFeedback($('fb'), 'bad', '✗ Time', `→ ${E.told(K, id)}`);
   }
   // The engine asks for the answer's result class when a question is done; wrong = a wrong click or a shown answer.
   function grade(wrong) {
@@ -307,7 +308,7 @@ window.areaReview = E => {
     S.prev = { kind: G.kind, id, areas: K.areas[id], cls: E.RESULT_CLASS[CLASS[g]] };
     const fb = $('fb'), t = fb.querySelector('.t');
     fb.className = 'feedback ' + ['bad', 'unsure', 'ok', 'ok'][g];
-    if (t) t.textContent = g === MISSED ? K.name(id) : `✓ ${K.name(id)} · ${S.secs.toFixed(1)} s`;
+    if (t) t.textContent = g === MISSED ? E.told(K, id) : `✓ ${E.told(K, id)} · ${S.secs.toFixed(1)} s`;
     if (card) { const p = document.createElement('p'); p.className = 'c'; p.textContent = `Next ${SRS.until(card.d, now)}`; fb.append(p); }
     if (g === MISSED && !S.chain) {
       // It comes back at the end of the review: in this round if it is the last one, else in a later one.

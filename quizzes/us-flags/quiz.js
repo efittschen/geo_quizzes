@@ -1,5 +1,6 @@
 // US State Flags: config for ../shared/area-quiz.js. See a state's flag, name the state: picked from a list that what
-// is typed narrows ("new" leaves New Hampshire, New Jersey, New Mexico, New York), so nothing has to be spelled. The
+// is typed narrows ("new" leaves New Hampshire, New Jersey, New Mexico, New York), so nothing has to be spelled (the
+// mode a page starts in), or clicked on the map, typed, or matched in pairs (see MODES in area-quiz.js). The
 // state lights up on the map once it is named. Two ways to see the flags, each a round box's switch: Clear, and
 // Blurred (the picture blurred until answered: the colors and the layout, not the seal's detail). Each has its own
 // best results and its own review cards. The flags (img/<USPS>.jpg) are those of Wikimedia Commons (public domain),
@@ -90,7 +91,6 @@ const STATE_AREAS = Object.keys(USPS).map(st => {
 
 const DIR = new URL('img/', document.currentScript.src).href;
 const GROUPS = CENSUS.map(([title, states]) => ({ title, sub: '', ids: states }));
-const plain = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z]/g, '');
 // A way to see the flags: Clear, or Blurred (cls 'blur', see area-quiz.js), each a kind of its own.
 const kind = (key, label, lang, cls, more = {}) => ({
   key, label, lang, sub: `${NAMES.length} flags`, noun: ['flag', 'flags'], pickTitle: 'Flags to practice',
@@ -100,7 +100,7 @@ const kind = (key, label, lang, cls, more = {}) => ({
   short: st => USPS[st], name: st => st, about: st => [REGION[st], SYMBOLS[st]],
   clicked: a => NAME[a],
   prompt: 'photo', photo: st => ({ src: `${DIR}${USPS[st]}.jpg`, alt: 'state flag', label: st, cls, link: '' }),
-  typed: (st, text) => plain(text) === plain(st), choices: () => NAMES, time: () => 3,
+  modes: ['list', 'type', 'pairs'], defaultMode: 'list', looks: true,
   chip: st => USPS[st], chipTitle: st => st,
   ...more,
 });

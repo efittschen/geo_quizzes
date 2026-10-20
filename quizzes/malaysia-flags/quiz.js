@@ -55,6 +55,7 @@ const kind = (key, label, lang, cls, more = {}) => ({
   short: id => id, name: id => NAME[id], about: id => [KIND(id), SYMBOLS[id]],
   clicked: a => NAME[a],
   prompt: 'photo', photo: id => flag(id, cls),
+  modes: ['list', 'type', 'pairs'], looks: true,
   chip: id => NAME[id], chipTitle: id => KIND(id),
   ...more,
 });

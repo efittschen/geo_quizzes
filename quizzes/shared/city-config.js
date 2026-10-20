@@ -94,6 +94,7 @@ const QUIZ = (() => {
   ];
   if (LOCAL.length && !TYPED) kinds.push(kind('local', LOCAL, {
     label: O.lang, lang: O.lang, of: 'en', sub: `${LOCAL.length} cities`,
+    modes: ['type', 'pairs', 'pick', 'pickback'], answers: id => [latin(id), BY[id].en], // (typed in Latin letters, matched with them, picked from four, or the other way round: see MODES in area-quiz.js)
     prompt: 'text', text: id => ({ text: fullLocal(id), lang: BY[id].lang, cls: 'city' }),
     name: fullLocal, short: id => BY[id].local,
     clicked: a => BY[a].local ? `${fullLocal(a)} · ${latin(a)}` : fullEn(a),

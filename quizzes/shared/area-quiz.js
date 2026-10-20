@@ -245,7 +245,11 @@
      may take on the review's clock.
      say(id) -> { text, lang } has the answer said aloud once it is given: see "sound" below.
      cards: '<kind>' gives a kind the review cards of another one, whose questions it shares (a country's words
-     among the words of all countries): a word learned in one is learned in the other. */
+     among the words of all countries): a word learned in one is learned in the other.
+     modes: ['list', 'type', 'pairs'] (any of them) are ways to answer besides clicking the map: see MODES below.
+     answer(id) is the name answered in them (default: the name in the kind it is `of`, else its own name), answers(id)
+     more names that count when typed; defaultMode the one a page starts in before one is picked.
+     looks: true (a kind of flag pictures) offers the flags waving or hanging, not only flat: see LOOKS below. */
   const kindOf = k => {
     const ids = k.groups.flatMap(g => g.ids);
     const areas = Object.fromEntries(ids.map(id => [id, k.areasOf(id)]));
@@ -258,6 +262,62 @@
       sub: k.sub ?? `${count.toLocaleString('en-US')} ${count === 1 ? k.noun[0] : many}`, pickTitle: k.pickTitle ?? `${many[0].toUpperCase()}${many.slice(1)} to practice` };
   };
   const KINDS = Object.fromEntries(Q.kinds.map(k => [k.key, kindOf(k)]));
+
+  /* ---------- ways to answer: on the map, or (a kind's modes) from a list, typed, or in pairs ----------
+     list   the name picked from a list of all the kind's names, narrowed by what is typed (see choices)
+     type   the name typed (see typed)
+     pairs  a board of questions and names, up to PAIRS pairs at a time, to match: a question and its name, picked one
+            after the other; a wrong pair counts against both and flashes. A round bigger than a board is played board
+            after board. The map lies under the board, and shows the answers once the round is over.
+     pick   the question as asked, and four names to pick from (its own and three of the round's, or of the kind's
+            where the round has too few); the switch says "<its language> → <the other's>": "Kanji → English"
+     pickback  the other way round: the name, and four questions to pick from ("English → Kanji")
+            (a wrong pick is a wrong try, as a wrong click; the number keys pick too)
+     Each mode is played as a kind of its own, '<kind>~<mode>', with the kind's items and rounds: its best results (per
+     map, as every kind's) and its review cards are its own, and a round played perfectly in any mode counts for the
+     stars. The name answered is the kind's answer(id): the Latin name of a name in another script or form. */
+  const MODES = [['map', 'Map'], ['list', 'List'], ['type', 'Type'], ['pairs', 'Pairs'], ['pick', 'Pick'], ['pickback', 'Pick back']], PAIRS = 7;
+  // A mode's name on its switch: the picks by the languages they go between, where the kind and the one it is of say theirs.
+  const modeLabel = (K, m) => {
+    const mine = K.lang, theirs = KINDS[K.of] && KINDS[K.of].lang;
+    if (mine && theirs && (m === 'pick' || m === 'pickback')) return m === 'pick' ? `${mine} → ${theirs}` : `${theirs} → ${mine}`;
+    return MODES.find(x => x[0] === m)[1];
+  };
+  // A question as words (a pick's or a pair's): its text in its script, its name, or its code.
+  const askText = (K, id) => (K.prompt === 'text' ? K.text(id).text : K.prompt === 'name' || K.prompt === 'area' ? K.name(id) : K.chip(id));
+  // A typed name as it is compared: no capitals, accents, spaces or punctuation ("&" is "and"); and whether two such
+  // names are one slip apart (a letter added, dropped or changed, or two letters swapped).
+  const plainName = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, 'and').replace(/[^\p{L}\p{N}]+/gu, '');
+  function oneOff(a, b) {
+    if (Math.abs(a.length - b.length) > 1) return false;
+    let i = 0; while (i < a.length && a[i] === b[i]) i++;
+    return a.slice(i + 1) === b.slice(i + 1) || a.slice(i) === b.slice(i + 1) || a.slice(i + 1) === b.slice(i)
+      || (a[i] === b[i + 1] && a[i + 1] === b[i] && a.slice(i + 2) === b.slice(i + 2));
+  }
+  // typed(id, text) from each item's names (forms[id], plain): one of them, or one slip from one of six letters or
+  // more, unless what is typed is another item's name.
+  function typedOf(forms) {
+    const owner = new Map();
+    for (const [id, list] of Object.entries(forms)) for (const f of list) (owner.get(f) || owner.set(f, new Set()).get(f)).add(id);
+    return (id, text) => {
+      const t = plainName(text), mine = forms[id] || [];
+      if (mine.includes(t)) return true;
+      if (owner.has(t)) return false;
+      return t.length >= 6 && mine.some(f => f.length >= 6 && oneOff(t, f));
+    };
+  }
+  for (const K of Object.values(KINDS)) {
+    const answerName = K.answer || (KINDS[K.of] ? id => KINDS[K.of].name(id) : K.name);
+    for (const mode of K.modes || []) {
+      const forms = Object.fromEntries(K.ids.map(id => [id, [...new Set([answerName(id), ...[].concat(K.answers ? K.answers(id) : [])].filter(Boolean).map(plainName))]]));
+      const names = [...new Set(K.ids.map(answerName))].sort((a, b) => a.localeCompare(b));
+      KINDS[`${K.key}~${mode}`] = { ...K, key: `${K.key}~${mode}`, base: K.key, mode, of: undefined, modes: undefined, clickAll: false, pickAll: false,
+        cards: `${K.cards || K.key}~${mode}`, label: `${K.label} · ${modeLabel(K, mode)}`, answerName,
+        ...(mode === 'pairs' ? { pairs: true, typed: undefined, choices: undefined, time: () => 1.5 }
+          : mode === 'pick' || mode === 'pickback' ? { choose4: mode, typed: undefined, choices: undefined, time: () => 1.5 }
+          : { typed: typedOf(forms), choices: mode === 'list' ? () => names : undefined, time: () => (mode === 'list' ? 2 : 3) }) };
+    }
+  }
 
   /* ---------- rounds: ready-made quizzes, grouped by how many items they ask ---------- */
   const TIERS = [[10, 'Beginner'], [30, 'Intermediate'], [60, 'Hard'], [Infinity, 'Expert']];
@@ -1157,6 +1217,11 @@
   let view = 'setup';
   function show(id) {
     view = id;
+    pairsEl.hidden = !(id === 'play' && KINDS[G.kind] && KINDS[G.kind].pairs);
+    // A mode that answers without the map (a list, typing, four to pick from) has none, while playing and on its
+    // results: the panel takes the page, everything in it larger (see .nomap).
+    $('app').classList.toggle('nomap', (id === 'play' || id === 'done') && !!KINDS[G.kind] && ['list', 'type', 'pick', 'pickback'].includes(KINDS[G.kind].mode));
+    if (id !== 'play') looksEl.hidden = true;
     ['setup', 'play', 'done', 'explore'].forEach(x => $(x).hidden = x !== id);
     $('app').classList.toggle('playing', id !== 'setup');
     $('startbar').hidden = id !== 'setup';
@@ -1349,7 +1414,7 @@
   // data file.
   const bestKey = (kind, ids, map) => `${kind}/${map}/${STORE.print(ids)}`;
   const bestFor = (kind, ids, map = chosenMap) => STORE.bestIn((record().best || {})[bestKey(kind, ids, map)]);
-  const nameOf = (kind, ids) => { const p = STORE.print(ids), r = ROUNDS.find(r => r.kind === kind && !r.random && STORE.print(roundIds(r)) === p); return r ? r.label : (SAVED.find(q => q.kind === kind && STORE.print(q.ids) === p) || {}).name; };
+  const nameOf = (kind, ids) => { kind = KINDS[kind].base || kind; const p = STORE.print(ids), r = ROUNDS.find(r => r.kind === kind && !r.random && STORE.print(roundIds(r)) === p); return r ? r.label : (SAVED.find(q => q.kind === kind && STORE.print(q.ids) === p) || {}).name; };
   const keepBest = (kind, ids, map, best) => keep(r => { (r.best ||= {})[bestKey(kind, ids, map)] = STORE.bestOut(best, ids.length, nameOf(kind, ids)); });
   { // results taken over from the layout before came without a name: those of this page's rounds get theirs
     const best = record().best || {}, unnamed = [];
@@ -1399,8 +1464,8 @@
   };
   function levelProgress(folder) { // of one folder's rounds, or of all
     const rounds = ROUNDS.filter(r => !r.random && (!folder || folderOf(r.kind) === folder)).map(r => {
-      const ids = roundIds(r);
-      const best = Math.max(0, ...['quiz', 'overlay', 'street', 'free'].map(map => { const b = bestFor(r.kind, ids, map); return b ? b.s / ids.length : 0; }));
+      const ids = roundIds(r), kinds = [r.kind, ...(KINDS[r.kind].modes || []).map(m => `${r.kind}~${m}`)]; // (in any mode)
+      const best = Math.max(0, ...kinds.flatMap(k => ['quiz', 'overlay', 'street', 'free'].map(map => { const b = bestFor(k, ids, map); return b ? b.s / ids.length : 0; })));
       return { tier: tierOf(ids.length), best };
     });
     if (!rounds.length) return [];
@@ -1432,8 +1497,8 @@
     const n = document.createElement('span'); n.className = 'n'; n.textContent = plural(ids.length, KINDS[kind].noun);
     b.append(t, n);
     if (sub) { const s = document.createElement('small'); s.textContent = sub; b.append(s); }
-    const free = chosenMap === 'free';
-    const best = !random && (free ? ['free'] : ['quiz', 'overlay', 'street']).map(map => bestFor(kind, ids, map)).filter(Boolean).sort((x, y) => y.s - x.s)[0];
+    const played = playKind(kind), free = chosenMap === 'free' && played === kind; // (its best in the mode picked)
+    const best = !random && (free ? ['free'] : ['quiz', 'overlay', 'street']).map(map => bestFor(played, ids, map)).filter(Boolean).sort((x, y) => y.s - x.s)[0];
     if (best) { const e = document.createElement('span'); e.className = 'best'; e.textContent = (best.s === ids.length ? '✓ ' : '') + (free ? (best.p || 0).toLocaleString('en-US') : `${best.s}/${ids.length}`); b.append(e); }
     b.onclick = () => choose(key);
     return b;
@@ -1459,10 +1524,18 @@
   }
   // City quizzes: how to answer, on the map by distance or on the dots. Asked in the box of the round picked.
   const playRow = () => options(MAPS.map(([m, t, sub]) => [t, sub, m === chosenMap, () => { chosenMap = m; if (view === 'setup') useMap(chosenMap, true); buildRounds(); }]));
+  // How to answer (MODES): the mode picked last on this page, where the kind offers it, else the kind's own first one
+  // (defaultMode), else the map. A switch in the box of the round picked, where its kind offers more than the map.
+  let chosenMode = load('mode');
+  const modesOf = kind => ['map', ...(KINDS[kind].modes || [])];
+  const modeFor = kind => { const m = modesOf(kind), d = KINDS[kind].defaultMode; return m.includes(chosenMode) ? chosenMode : m.includes(d) ? d : 'map'; };
+  const playKind = kind => (modeFor(kind) === 'map' ? kind : `${kind}~${modeFor(kind)}`);
+  const modeRow = kind => { const row = options(modesOf(kind).map(m => [modeLabel(KINDS[kind], m), '', m === modeFor(kind), () => { chosenMode = m; store('mode', m); buildRounds(); }])); row.classList.add('modes'); return row; };
   // The box of the round picked, with its switches (its languages; how to answer). A box with buttons in it is a
   // group, not a button itself.
   function answerable(b, ...rows) {
-    if (FREE && b.dataset.choice === choice) rows.push(playRow());
+    if (b.dataset.choice === choice && modesOf(choiceKind()).length > 1) rows.push(modeRow(choiceKind()));
+    if (FREE && b.dataset.choice === choice && modeFor(choiceKind()) === 'map') rows.push(playRow());
     if (!rows.length) return b;
     const box = document.createElement('div'), kids = [...b.childNodes], best = n => n.classList && n.classList.contains('best'), side = document.createElement('span');
     box.className = b.className; box.dataset.choice = b.dataset.choice; box.setAttribute('role', 'group'); box.setAttribute('aria-label', kids[0].textContent);
@@ -1738,6 +1811,8 @@
   countEl.className = 'count'; countEl.hidden = true; countEl.setAttribute('aria-live', 'polite');
   $('stage').appendChild(countEl);
   const needAll = (K, id) => K.clickAll && !plain() && K.areas[id].length > 1;
+  // An answer's name as it is told: in a mode, with the name answered where that is another (福島県 · Fukushima).
+  const told = (K, id) => (K.answerName && K.answerName(id) !== K.name(id) ? `${K.name(id)} · ${K.answerName(id)}` : K.name(id));
   const remaining = (K, id) => K.areas[id].filter(a => !G.found.has(a));
   function updateCount() {
     const K = KINDS[G.kind], id = G.queue[G.i];
@@ -1781,6 +1856,7 @@
   // setup screen.
   function start(kind, items, { retry = false, review = false, box = null, map = chosenMap, back = chosenBack } = {}) {
     clearInterval(timer); clearTimeout(G.ending);
+    if (KINDS[kind].mode && map === 'free') map = 'quiz'; // (a mode answers on the dots of a city quiz, not by distance)
     Object.assign(G, { kind, items, queue: shuffle(items), i: 0, score: 0, streak: 0, best: 0, res: [], t0: performance.now(), retry, review, points: 0, box, back: null });
     syncSound();
     useMap(map); showBack(back); clearMap();
@@ -1792,14 +1868,15 @@
     show('play');
     if (review) syncReviewPickers();
     if (Q.board) frame(box);
-    ask();
+    if (KINDS[kind].pairs) pairsStart(); else ask();
     timer = setInterval(() => $('sTime').textContent = fmt(performance.now() - G.t0), 500);
   }
   function ask() {
     const id = G.queue[G.i], K = KINDS[G.kind];
     G.tries = 0; G.revealed = false; G.found = new Set(); G.picked = new Set(); G.cleared = false;
     mark(null); syncCheck();
-    const isArea = K.prompt === 'area', isName = K.prompt === 'name' || isArea, isText = K.prompt === 'text', isPhoto = K.prompt === 'photo';
+    const back = K.choose4 === 'pickback'; // (a pick back asks the name, in big letters)
+    const isArea = K.prompt === 'area' && !back, isName = K.prompt === 'name' || isArea || back, isText = K.prompt === 'text' && !back, isPhoto = K.prompt === 'photo' && !back;
     $('dial').hidden = isName || isText || isPhoto; $('bigname').hidden = !isName; $('bigname').classList.toggle('asking', isArea);
     if ($('card')) $('card').hidden = !isText;
     if ($('photo')) $('photo').hidden = !isPhoto;
@@ -1809,17 +1886,17 @@
     if (G.back) { vb = G.back; G.back = null; apply(); }
     if (isPhoto) {
       const p = K.photo(id), next = G.queue[G.i + 1];
-      $('photoImg').src = p.src; $('photoImg').alt = p.alt || ''; $('photo').dataset.look = p.cls || '';
-      $('photo').onclick = () => zoomPhoto(p, false);
-      if (next !== undefined) new Image().src = K.photo(next).src; // the next picture is there when it is asked
+      showPicture(p); $('photoImg').alt = p.alt || ''; $('photo').dataset.look = p.cls || '';
+      $('photo').onclick = () => zoomPhoto({ ...p, src: G.shownSrc || p.src }, false); // (enlarged as it is shown)
+      if (next !== undefined) { new Image().src = K.photo(next).src; if (K.looks) dressAhead(K.photo(next).src); } // the next picture is there when it is asked (and drawn, in a look)
     }
     else if (isText) { const t = K.text(id); $('sent').textContent = t.text; $('sent').className = 'sent ' + (t.cls || ''); $('sent').lang = t.lang || ''; $('card').dataset.tag = t.tag || ''; }
     else if (isArea) { $('bigname').textContent = K.ask ? K.ask : `Which ${K.noun[0]} is this?`; showAsked(K.areas[id]); }
-    else if (isName) $('bigname').textContent = K.name(id);
+    else if (isName) $('bigname').textContent = back ? K.answerName(id) : K.name(id);
     else if (K.dial) $('code').replaceChildren(...K.dial(id).map(([text, cls]) => { const s = document.createElement('span'); s.className = cls; s.textContent = text; return s; }));
     else $('code').textContent = K.short(id);
     if (typedForm) { typedForm.hidden = !K.typed; if (K.typed) { $('typed').value = ''; $('typed').focus({ preventScroll: true }); } }
-    marked = 0; steered = false; syncList();
+    marked = 0; steered = false; syncList(); syncPicks(id); syncLooks();
     // The optional hint under the prompt, e.g. the state a code is in; empty (and hidden) otherwise.
     const ask = $('ask'); ask.replaceChildren();
     if (K.detail && $('optDetail').checked) { const s = document.createElement('strong'); s.textContent = K.detail.text(id); ask.append(s); }
@@ -1835,7 +1912,7 @@
       const ids = KINDS[pickKind].at[area]; if (ids) toggleItems(ids); return;
     }
     if (view === 'explore') { explore(area); return; }
-    if (view === 'play' && !KINDS[G.kind].typed) { if (KINDS[G.kind].pickAll) togglePick(area); else answer(area); }
+    if (view === 'play' && !KINDS[G.kind].typed && !KINDS[G.kind].pairs && !KINDS[G.kind].choose4) { if (KINDS[G.kind].pickAll) togglePick(area); else answer(area); }
   }
   // A kind with pickAll: a click picks an area or drops it; Check answers with the picks (see KINDS).
   const checkBtn = $('checkBtn');
@@ -1992,7 +2069,7 @@
       const tick = $('ticks').children[G.i]; tick.classList.remove('now'); tick.classList.add(k);
       G.res.push(G.tries);
       if (G.tries === 0) { G.score++; G.streak++; G.best = Math.max(G.best, G.streak); } else G.streak = 0;
-      const title = G.revealed ? K.name(target) : `✓ ${K.name(target)}` + (G.tries ? ` · try ${G.tries + 1}` : '');
+      const title = G.revealed ? told(K, target) : `✓ ${told(K, target)}` + (G.tries ? ` · try ${G.tries + 1}` : '');
       setFeedback($('fb'), G.tries === 0 ? 'ok' : 'bad', title, K.about(target));
       if (K.photo) $('fb').prepend(thumb(K.photo(target)));
       if (K.pin) showPin(K.pin(target));
@@ -2010,7 +2087,7 @@
   function wrong(what) {
     const K = KINDS[G.kind], target = G.queue[G.i];
     if (G.revealed) {
-      setFeedback($('fb'), 'bad', `✗ ${what}`, `→ ${K.name(target)}`);
+      setFeedback($('fb'), 'bad', `✗ ${what}`, `→ ${told(K, target)}`);
       return;
     }
     G.tries++;
@@ -2026,9 +2103,323 @@
       mark(rest);
       if (plain()) flyTo(K.areas[target]);
       else showAnswer(rest);
-      setFeedback($('fb'), 'bad', `✗ ${what}`, `→ ${K.name(target)}`);
+      setFeedback($('fb'), 'bad', `✗ ${what}`, `→ ${told(K, target)}`);
     }
   }
+  /* ---------- how a flag is seen (a kind's looks: flag pictures) ----------
+     Flat as it is, Waving on its pole in the wind, Hanging limp from it, or Mixed (one of the three for each
+     picture): a still picture drawn anew for each question, its waves and folds at random, the flag cut into thin
+     strips that are moved, narrowed and shaded, in front of a sky and its pole. Only how the picture is shown: cards
+     and results are the same in every look. A switch under the picture while playing; kept for the page. */
+  const LOOKS = [['flat', 'Flat'], ['waving', 'Waving'], ['hanging', 'Hanging'], ['mixed', 'Mixed']];
+  let flagLook = LOOKS.some(([l]) => l === load('look')) ? load('look') : 'flat';
+  // picture -> a canvas of it to cut strips from: drawn whole first (Firefox cuts an SVG's parts wrongly), an SVG at the
+  // size of its viewBox (it has no other), and a photo of a flag without the even margin around it (a letterbox).
+  const sources = new Map();
+  function source(src) {
+    if (!sources.has(src)) sources.set(src, (async () => {
+      const svg = /\.svg(\?|$)/.test(src);
+      let url = src;
+      if (svg) {
+        const text = await (await fetch(src)).text(), vb = text.match(/viewBox="\s*[-\d.]+[\s,]+[-\d.]+[\s,]+([\d.]+)[\s,]+([\d.]+)/);
+        url = URL.createObjectURL(new Blob([/<svg[^>]*\swidth=/.test(text) || !vb ? text : text.replace('<svg', `<svg width="${vb[1]}" height="${vb[2]}"`)], { type: 'image/svg+xml' }));
+      }
+      const img = new Image(); img.src = url; await img.decode();
+      const w = img.naturalWidth || 640, h = img.naturalHeight || 480, cv = document.createElement('canvas');
+      cv.width = w; cv.height = h; cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      return svg ? cv : trimmed(cv);
+    })());
+    return sources.get(src);
+  }
+  // A picture without the margin of one even color all around it, where it has one (a flag drawn into a larger frame).
+  function trimmed(cv) {
+    const w = cv.width, h = cv.height, d = cv.getContext('2d').getImageData(0, 0, w, h).data;
+    const same = (x, y) => { const i = (y * w + x) * 4; return Math.abs(d[i] - d[0]) + Math.abs(d[i + 1] - d[1]) + Math.abs(d[i + 2] - d[2]) < 30; };
+    const row = y => { for (let x = 0; x < w; x++) if (!same(x, y)) return false; return true; };
+    const col = x => { for (let y = 0; y < h; y++) if (!same(x, y)) return false; return true; };
+    if (!(row(0) && row(h - 1) && col(0) && col(w - 1))) return cv;
+    let t = 0, b = h - 1, l = 0, r = w - 1;
+    while (t < h / 3 && row(t)) t++; while (b > h * 2 / 3 && row(b)) b--; while (l < w / 3 && col(l)) l++; while (r > w * 2 / 3 && col(r)) r--;
+    const out = document.createElement('canvas'); out.width = r - l + 1; out.height = b - t + 1;
+    out.getContext('2d').drawImage(cv, l, t, out.width, out.height, 0, 0, out.width, out.height);
+    return out;
+  }
+  // A flag as cloth, by physics: the model of three.js's former cloth example (Verlet integration, distance constraints
+  // between neighbouring points of a grid, pinned points, gravity, a gusting wind). The edge at the pole is pinned along
+  // it; the cloth is let go and simulated until it settles (no wind: it hangs) or for a while in the wind (it waves),
+  // then seen from a little below at an angle around the pole, lit by the sun and the sky, and drawn as triangles of the
+  // flag picture, the far ones first, its light and shade softened over it. Self-contained, as it also runs in a worker:
+  // pic a canvas or bitmap of the flag, W and H the picture's size, small for a pairs tile, make(w, h) a canvas.
+  function clothDraw(pic, look, W, H, make) {
+    const r = Math.random, small = W < 400, nw = pic.width, nh = pic.height;
+    const NX = small ? 16 : 22, NY = Math.max(small ? 6 : 8, Math.round(NX * nh / nw)), N = NX * NY;
+    const X = new Float64Array(N * 3), O = new Float64Array(N * 3), pinned = new Uint8Array(N), id = (i, j) => j * NX + i;
+    for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) { const k = id(i, j) * 3; X[k] = i; X[k + 1] = -j; X[k + 2] = (r() - 0.5) * 0.01; if (i === 0) pinned[id(i, j)] = 1; }
+    O.set(X);
+    const CA = [], CB = [], CR = [], CK = [];
+    const link = (a, b, k) => { CA.push(a); CB.push(b); CR.push(Math.hypot(X[a * 3] - X[b * 3], X[a * 3 + 1] - X[b * 3 + 1], X[a * 3 + 2] - X[b * 3 + 2])); CK.push(k); };
+    for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
+      if (i + 1 < NX) link(id(i, j), id(i + 1, j), 1);
+      if (j + 1 < NY) link(id(i, j), id(i, j + 1), 1);
+      if (i + 1 < NX && j + 1 < NY) { link(id(i, j), id(i + 1, j + 1), 1); link(id(i + 1, j), id(i, j + 1), 1); }
+      if (i + 2 < NX) link(id(i, j), id(i + 2, j), 0.15); // (a little stiffness against bending)
+      if (j + 2 < NY) link(id(i, j), id(i, j + 2), 0.15);
+    }
+    const waving = look === 'waving', wind = waving ? 80 + r() * 60 : 0, steps = waving ? 220 : 260, dt2 = 0.016 * 0.016;
+    const g = -9.8 * (waving ? 6 : 12), damp = waving ? 0.985 : 0.965, poleR = 0.25, gust = r() * 100, M = CA.length; // (no wind: settles sooner)
+    for (let s = 0; s < steps; s++) {
+      const t = s * 0.016 + gust;
+      for (let k = 0; k < N; k++) {
+        if (pinned[k]) continue;
+        const i = k % NX, j = (k / NX) | 0, b = k * 3;
+        let fx = 0, fz = 0;
+        if (wind) { const w = wind * (0.75 + 0.25 * Math.sin(t * 1.3 + i * 0.25) + 0.15 * Math.sin(t * 3.1 + j * 0.4)); fx = w; fz = w * 0.35 * Math.sin(t * 2 + i * 0.5 + j * 0.3); }
+        for (let q = 0; q < 3; q++) { const x = X[b + q], v = (x - O[b + q]) * damp; O[b + q] = x; X[b + q] = x + v + (q === 0 ? fx : q === 1 ? g : fz) * dt2; }
+      }
+      for (let it = 0; it < 4; it++) {
+        for (let c = 0; c < M; c++) {
+          const a = CA[c] * 3, b = CB[c] * 3, dx = X[b] - X[a], dy = X[b + 1] - X[a + 1], dz = X[b + 2] - X[a + 2];
+          const len = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1e-6, f = (len - CR[c]) / len * 0.5 * CK[c];
+          if (!pinned[CA[c]]) { X[a] += dx * f; X[a + 1] += dy * f; X[a + 2] += dz * f; }
+          if (!pinned[CB[c]]) { X[b] -= dx * f; X[b + 1] -= dy * f; X[b + 2] -= dz * f; }
+        }
+        for (let k = 0; k < N; k++) { if (pinned[k]) continue; const b = k * 3, h = Math.hypot(X[b], X[b + 2]); if (h < poleR) { const m = poleR / (h || 1e-6); X[b] *= m; X[b + 2] *= m; } }
+      }
+    }
+    // the view: from a little below, at an angle around the pole
+    const yaw = (r() - 0.5) * 1.6, pitch = 0.12 + r() * 0.15, light = [0.45, 0.65, 0.6];
+    const cam = (x, y, z) => { const x1 = x * Math.cos(yaw) - z * Math.sin(yaw), z1 = x * Math.sin(yaw) + z * Math.cos(yaw); return [x1, y * Math.cos(pitch) - z1 * Math.sin(pitch), y * Math.sin(pitch) + z1 * Math.cos(pitch)]; };
+    const V = []; for (let k = 0; k < N; k++) V.push(cam(X[k * 3], X[k * 3 + 1], X[k * 3 + 2]));
+    const poleTop = cam(0, 1.2, 0), poleBot = cam(0, -NY * 3.5, 0);
+    let minX = poleTop[0], maxX = poleTop[0], minY = poleTop[1], maxY = poleTop[1];
+    for (const v of V) { minX = Math.min(minX, v[0]); maxX = Math.max(maxX, v[0]); minY = Math.min(minY, v[1]); maxY = Math.max(maxY, v[1]); }
+    const sc = Math.min(W * 0.8 / (maxX - minX || 1), H * 0.82 / (maxY - minY || 1)), ox = W / 2 - (minX + maxX) / 2 * sc, oy = H * 0.08 + maxY * sc;
+    const scr = v => [ox + v[0] * sc, oy - v[1] * sc];
+    const cv = make(W, H), ctx = cv.getContext('2d');
+    const sky = ctx.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, '#b4c9da'); sky.addColorStop(1, '#e6ecf0');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+    const [tx, ty] = scr(poleTop), by = scr(poleBot)[1], pw = Math.max(small ? 3 : 4, sc * poleR * 1.6);
+    const pole = ctx.createLinearGradient(tx - pw / 2, 0, tx + pw / 2, 0); pole.addColorStop(0, '#5f666c'); pole.addColorStop(0.5, '#d6dade'); pole.addColorStop(1, '#5a6166');
+    const drawPole = c => { c.fillStyle = pole; c.fillRect(tx - pw / 2, ty, pw, Math.max(by, H) - ty); c.fillStyle = '#8e969b'; c.beginPath(); c.arc(tx, ty, pw * 0.8, 0, 2 * Math.PI); c.fill(); };
+    // the flag smaller (cheaper to cut from); the cloth on a layer of its own, and its light on another
+    const k0 = Math.min(1, (small ? 200 : 360) / nw), src = make(Math.round(nw * k0), Math.round(nh * k0));
+    src.getContext('2d').drawImage(pic, 0, 0, src.width, src.height);
+    const layer = make(W, H), lc = layer.getContext('2d'), shade = make(W, H), sh = shade.getContext('2d');
+    // each point's light: from the tilt of the cloth around it (either side lit alike), sun and sky
+    const lightAt = new Float64Array(N), P = k => [X[k * 3], X[k * 3 + 1], X[k * 3 + 2]];
+    for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
+      const e = P(id(Math.min(NX - 1, i + 1), j)), w = P(id(Math.max(0, i - 1), j)), n = P(id(i, Math.max(0, j - 1))), so = P(id(i, Math.min(NY - 1, j + 1)));
+      const u = [e[0] - w[0], e[1] - w[1], e[2] - w[2]], v = [so[0] - n[0], so[1] - n[1], so[2] - n[2]];
+      const nx = u[1] * v[2] - u[2] * v[1], ny = u[2] * v[0] - u[0] * v[2], nz = u[0] * v[1] - u[1] * v[0], nl = Math.hypot(nx, ny, nz) || 1;
+      lightAt[id(i, j)] = 0.42 + 0.68 * Math.abs((nx * light[0] + ny * light[1] + nz * light[2]) / nl);
+    }
+    const tris = [];
+    for (let j = 0; j + 1 < NY; j++) for (let i = 0; i + 1 < NX; i++) {
+      const a = id(i, j), b = id(i + 1, j), c = id(i + 1, j + 1), d = id(i, j + 1);
+      const su = i / (NX - 1) * src.width, sv = j / (NY - 1) * src.height, su2 = (i + 1) / (NX - 1) * src.width, sv2 = (j + 1) / (NY - 1) * src.height;
+      tris.push([[a, b, c], [[su, sv], [su2, sv], [su2, sv2]]], [[a, c, d], [[su, sv], [su2, sv2], [su, sv2]]]);
+    }
+    const depth = t => (V[t[0][0]][2] + V[t[0][1]][2] + V[t[0][2]][2]) / 3;
+    tris.sort((x, y) => depth(x) - depth(y));
+    let poleDrawn = false;
+    for (const t of tris) {
+      if (!poleDrawn && depth(t) > 0) { drawPole(lc); poleDrawn = true; }
+      const d = t[0].map(q => scr(V[q])), s = t[1];
+      const cx = (d[0][0] + d[1][0] + d[2][0]) / 3, cy = (d[0][1] + d[1][1] + d[2][1]) / 3;
+      const gg = d.map(([x, y]) => { const dx = x - cx, dy = y - cy, m = Math.hypot(dx, dy) || 1; return [x + dx / m * 0.7, y + dy / m * 0.7]; }); // (a little larger: no seams)
+      const [[x0, y0], [x1, y1], [x2, y2]] = s, [[X0, Y0], [X1, Y1], [X2, Y2]] = d;
+      const den = x0 * (y1 - y2) + x1 * (y2 - y0) + x2 * (y0 - y1); if (!den) continue;
+      const ma = (X0 * (y1 - y2) + X1 * (y2 - y0) + X2 * (y0 - y1)) / den, mc = (X0 * (x2 - x1) + X1 * (x0 - x2) + X2 * (x1 - x0)) / den;
+      const me = (X0 * (x1 * y2 - x2 * y1) + X1 * (x2 * y0 - x0 * y2) + X2 * (x0 * y1 - x1 * y0)) / den;
+      const mb = (Y0 * (y1 - y2) + Y1 * (y2 - y0) + Y2 * (y0 - y1)) / den, md = (Y0 * (x2 - x1) + Y1 * (x0 - x2) + Y2 * (x1 - x0)) / den;
+      const mf = (Y0 * (x1 * y2 - x2 * y1) + Y1 * (x2 * y0 - x0 * y2) + Y2 * (x0 * y1 - x1 * y0)) / den;
+      lc.save(); lc.beginPath(); lc.moveTo(gg[0][0], gg[0][1]); lc.lineTo(gg[1][0], gg[1][1]); lc.lineTo(gg[2][0], gg[2][1]); lc.closePath(); lc.clip();
+      lc.setTransform(ma, mb, mc, md, me, mf); lc.drawImage(src, 0, 0); lc.restore();
+      // its light as a grey: 128 leaves the cloth as it is, darker shades it, lighter lights it
+      const gv = Math.round(Math.max(0, Math.min(255, (lightAt[t[0][0]] + lightAt[t[0][1]] + lightAt[t[0][2]]) / 3 * 128)));
+      sh.fillStyle = 'rgb(' + gv + ',' + gv + ',' + gv + ')'; sh.beginPath(); sh.moveTo(gg[0][0], gg[0][1]); sh.lineTo(gg[1][0], gg[1][1]); sh.lineTo(gg[2][0], gg[2][1]); sh.closePath(); sh.fill();
+    }
+    if (!poleDrawn) drawPole(lc);
+    // the light softened (drawn small and back up), kept to the cloth, laid over it as an overlay
+    const tiny = make(Math.max(1, W >> 2), Math.max(1, H >> 2)), soft = make(W, H), so = soft.getContext('2d');
+    tiny.getContext('2d').drawImage(shade, 0, 0, tiny.width, tiny.height);
+    so.imageSmoothingEnabled = true; so.drawImage(tiny, 0, 0, W, H);
+    so.globalCompositeOperation = 'destination-in'; so.drawImage(shade, 0, 0);
+    lc.globalCompositeOperation = 'overlay'; lc.drawImage(soft, 0, 0); lc.globalCompositeOperation = 'source-over';
+    ctx.drawImage(layer, 0, 0);
+    return cv;
+  }
+  // The cloth is worked out away from the page, in a worker (on a slow phone it takes a moment, which must not stop the
+  // page), where the browser has one; else on the page itself.
+  let clothWorker = null, clothJobs = 0;
+  const clothWaiting = new Map();
+  function clothPicture(pic, look, W, H) {
+    if (clothWorker === null) {
+      try {
+        if (typeof OffscreenCanvas !== 'function') throw new Error('no OffscreenCanvas');
+        const code = `const clothDraw = ${clothDraw.toString()};\nonmessage = async e => { const { id, pic, look, W, H } = e.data; try { const cv = clothDraw(pic, look, W, H, (w, h) => new OffscreenCanvas(w, h)); postMessage({ id, blob: await cv.convertToBlob({ type: 'image/jpeg', quality: 0.88 }) }); } catch (err) { postMessage({ id, error: String(err) }); } };`;
+        clothWorker = new Worker(URL.createObjectURL(new Blob([code], { type: 'text/javascript' })));
+        clothWorker.onmessage = e => { const w = clothWaiting.get(e.data.id); clothWaiting.delete(e.data.id); if (w) { if (e.data.error) w.reject(new Error(e.data.error)); else w.resolve(URL.createObjectURL(e.data.blob)); } };
+      } catch (err) { clothWorker = false; }
+    }
+    if (!clothWorker) {
+      const cv = clothDraw(pic, look, W, H, (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; });
+      return Promise.resolve(cv.toDataURL('image/jpeg', 0.88));
+    }
+    return createImageBitmap(pic).then(bitmap => new Promise((resolve, reject) => {
+      const id = ++clothJobs; clothWaiting.set(id, { resolve, reject });
+      clothWorker.postMessage({ id, pic: bitmap, look, W, H }, [bitmap]);
+    }));
+  }
+  async function dressFlag(src, look, small = false) {
+    if (look === 'mixed') look = ['flat', 'waving', 'hanging'][Math.random() * 3 | 0];
+    if (look === 'flat') return src;
+    return clothPicture(await source(src), look, small ? 320 : 640, small ? 200 : 400);
+  }
+  // A flag drawn ahead (the next question's), taken when it is asked; drawn anew each time it is asked again.
+  const drawnAhead = new Map();
+  function dressAhead(src) {
+    if (flagLook === 'flat' || drawnAhead.has(src)) return;
+    const look = flagLook, job = dressFlag(src, look).catch(() => src);
+    drawnAhead.set(src, { look, job });
+  }
+  function dressed(src) {
+    const a = drawnAhead.get(src); drawnAhead.delete(src);
+    return a && a.look === flagLook ? a.job : dressFlag(src, flagLook).catch(() => src);
+  }
+  // A picture into an img, in the look picked (flat at once, else once drawn); the last one asked for wins.
+  function dressInto(im, K, small = false) {
+    const src = im.dataset.src, token = (im.dataset.token = String(+(im.dataset.token || 0) + 1));
+    const put = url => { if (im.src.startsWith('blob:') && im.src !== url) URL.revokeObjectURL(im.src); im.src = url; im.style.visibility = ''; }; // (a drawing replaced is let go)
+    if (!K.looks || flagLook === 'flat') { put(src); return Promise.resolve(src); }
+    im.style.visibility = 'hidden';
+    return (small ? dressFlag(src, flagLook, true).catch(() => src) : dressed(src)).then(url => { if (im.dataset.token === token) put(url); return url; });
+  }
+  function showPicture(p) {
+    const im = $('photoImg'); im.dataset.src = p.src; G.shownSrc = p.src;
+    dressInto(im, KINDS[G.kind]).then(url => { if (im.dataset.src === p.src) G.shownSrc = url; });
+  }
+  const looksEl = document.createElement('div');
+  looksEl.className = 'looks'; looksEl.hidden = true; looksEl.setAttribute('role', 'group'); looksEl.setAttribute('aria-label', 'Look');
+  looksEl.append(...LOOKS.map(([l, t]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.dataset.look = l; b.textContent = t;
+    b.onclick = () => {
+      flagLook = l; store('look', l); syncLooks();
+      // the picture on screen drawn again in it (or the board's)
+      if (KINDS[G.kind].pairs) for (const im of pairsEl.querySelectorAll('img[data-src]')) dressInto(im, KINDS[G.kind], true);
+      else if (KINDS[G.kind].photo && G.queue[G.i] !== undefined) showPicture(KINDS[G.kind].photo(G.queue[G.i]));
+    };
+    return b;
+  }));
+  $('photo').after(looksEl);
+  function syncLooks() {
+    looksEl.hidden = !(view === 'play' && KINDS[G.kind] && KINDS[G.kind].looks);
+    for (const b of looksEl.children) b.setAttribute('aria-pressed', b.dataset.look === flagLook);
+  }
+
+  /* ---------- picks (MODES 'pick', 'pickback'): four to pick from, under the question ---------- */
+  const picksEl = document.createElement('div');
+  picksEl.className = 'picks'; picksEl.hidden = true; $('dial').after(picksEl);
+  function syncPicks(id) {
+    const K = KINDS[G.kind];
+    picksEl.hidden = !K || !K.choose4 || id == null;
+    if (picksEl.hidden) { picksEl.replaceChildren(); return; }
+    const back = K.choose4 === 'pickback', word = x => (back ? askText(K, x) : K.answerName(x)), right = word(id);
+    const others = list => shuffle([...new Set(list.filter(x => x !== id).map(word))].filter(t => t !== right));
+    let pool = others(G.items); if (pool.length < 3) pool = [...new Set([...pool, ...others(K.ids)])];
+    picksEl.replaceChildren(...shuffle([right, ...pool.slice(0, 3)]).map(t => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = t;
+      if (back && K.prompt === 'text' && K.text(id).lang) b.lang = K.text(id).lang;
+      b.onclick = () => {
+        if (view !== 'play' || b.disabled) return;
+        if (t === right) { answer(K.areas[id][0]); return; }
+        if (G.revealed) return; // (the answer shown: only it goes on)
+        b.disabled = true; b.classList.add('no');
+        wrong(t);
+        if (G.revealed) for (const o of picksEl.children) o.classList.toggle('ans', o.textContent === right);
+      };
+      return b;
+    }));
+  }
+
+  /* ---------- pairs (MODES): questions and names on a board over the map, matched one pair after another ---------- */
+  // (one grid of two columns, questions left and names right, row by row: a row is as high as its taller tile)
+  const pairsEl = document.createElement('div');
+  pairsEl.className = 'pairs'; pairsEl.hidden = true; $('stage').append(pairsEl);
+  // A question as it stands on its tile: its picture, its text in its script, its name or its code.
+  function pairsAsk(K, id) {
+    if (K.prompt === 'photo') { const p = K.photo(id), im = document.createElement('img'); im.alt = p.alt || ''; im.dataset.look = p.cls || ''; im.dataset.src = p.src; dressInto(im, K, true); return im; }
+    const s = document.createElement('span');
+    s.textContent = askText(K, id); if (K.prompt === 'text' && K.text(id).lang) s.lang = K.text(id).lang;
+    return s;
+  }
+  function pairsStart() {
+    G.next = 0; G.left = 0;
+    for (const id of ['dial', 'bigname', 'card', 'photo']) if ($(id)) $(id).hidden = true;
+    if (typedForm) typedForm.hidden = true;
+    syncList(); syncPicks(null); syncLooks(); $('ask').replaceChildren();
+    pairsBoard();
+  }
+  // The next board: the next PAIRS questions of the queue (each tile knows its place in it), both sides shuffled.
+  function pairsBoard() {
+    const K = KINDS[G.kind], from = G.next, upto = Math.min(G.queue.length, from + PAIRS), places = [];
+    for (let i = from; i < upto; i++) places.push(i);
+    G.next = upto; G.left = places.length; G.sel = null; G.wrongs = new Map();
+    const tile = (i, side) => {
+      const b = document.createElement('button'); b.type = 'button'; b.dataset.i = i; b.dataset.side = side;
+      if (side === 'q') b.append(pairsAsk(K, G.queue[i])); else b.textContent = K.answerName(G.queue[i]);
+      b.onclick = () => pairsPick(b);
+      return b;
+    };
+    const qs = shuffle(places).map(i => tile(i, 'q')), as = shuffle(places).map(i => tile(i, 'a'));
+    pairsEl.replaceChildren(...qs.flatMap((q, n) => [q, as[n]]));
+    pairsEl.scrollTop = 0;
+    G.i = from; pairsStats();
+    if (RV) RV.asked();
+  }
+  function pairsStats() {
+    $('sQ').textContent = `${G.res.filter(t => t !== undefined).length}/${G.queue.length}`;
+    $('sScore').textContent = G.score; $('sStreak').textContent = G.streak;
+  }
+  // A tile picked: the first of a pair is marked; the second, from the other side, matches it or not. A name that two
+  // questions share matches either.
+  function pairsPick(b) {
+    if (b.disabled || view !== 'play') return;
+    if (!G.sel || G.sel.dataset.side === b.dataset.side) { if (G.sel) G.sel.classList.remove('sel'); G.sel = b; b.classList.add('sel'); return; }
+    const first = G.sel; G.sel = null; first.classList.remove('sel');
+    const K = KINDS[G.kind], q = first.dataset.side === 'q' ? first : b, a = q === first ? b : first;
+    const qi = +q.dataset.i, ai = +a.dataset.i, target = G.queue[qi];
+    if (K.answerName(target) !== K.answerName(G.queue[ai])) {
+      for (const t of [q, a]) { t.classList.add('no'); setTimeout(() => t.classList.remove('no'), 600); }
+      for (const i of [qi, ai]) G.wrongs.set(i, (G.wrongs.get(i) || 0) + 1);
+      G.streak = 0; $('sStreak').textContent = 0;
+      setFeedback($('fb'), 'bad', `✗ ${K.answerName(G.queue[ai])}`, '');
+      return;
+    }
+    const tries = Math.min(G.wrongs.get(qi) || 0, MAX_TRIES);
+    for (const t of [q, a]) { t.disabled = true; t.classList.add(RESULT_CLASS[tries]); }
+    pairsSettle(qi, tries);
+    if (--G.left === 0) { if (G.next < G.queue.length) setTimeout(pairsBoard, 450); else G.ending = setTimeout(finish, 450); }
+    else if (RV) { G.i = qi; RV.asked(); } // (a review's clock: from one pair to the next)
+  }
+  // A question matched, as answer() takes one on the map: its areas colored by its tries, its result, what is said.
+  function pairsSettle(qi, tries) {
+    const K = KINDS[G.kind], target = G.queue[qi];
+    G.i = qi; G.tries = tries;
+    if (G.review) G.tries = RV.grade(tries > 0);
+    const k = RESULT_CLASS[G.tries];
+    for (const p of pathsOf(K.areas[target])) { p.classList.remove('ans', 'flash', 'found', 'pick', ...RESULT_CLASS); p.classList.add(k); }
+    showLabel(G.kind, target);
+    const tick = $('ticks').children[qi]; if (tick) tick.classList.add(k);
+    G.res[qi] = G.tries;
+    if (G.tries === 0) { G.score++; G.streak++; G.best = Math.max(G.best, G.streak); } else G.streak = 0;
+    setFeedback($('fb'), G.tries === 0 ? 'ok' : 'bad', `${G.tries === 0 ? '✓ ' : ''}${told(K, target)}`, K.about(target));
+    if (K.photo) $('fb').prepend(thumb(K.photo(target)));
+    say(target);
+    pairsStats();
+    if (RV) RV.answered(target, G.tries === 0);
+  }
+
   // Map play: one click anywhere answers. The city appears in the color of the points, joined to the click.
   function answerFree(p) {
     const K = KINDS[G.kind], target = G.queue[G.i], now = performance.now();
@@ -2057,7 +2448,7 @@
     if (G.i >= G.queue.length) { $('sScore').textContent = G.points.toLocaleString('en-US'); G.ending = setTimeout(finish, 1500); } else ask();
   }
   function finish() {
-    clearInterval(timer); clearTimeout(G.ending); const ms = performance.now() - G.t0; const n = G.res.length;
+    clearInterval(timer); clearTimeout(G.ending); const ms = performance.now() - G.t0; const n = G.res.filter(t => t !== undefined).length; // (pairs: in any order)
     const K = KINDS[G.kind];
     mark(null); showAsked(null);
     for (const id of G.items) showLabel(G.kind, id);
@@ -2077,7 +2468,7 @@
     legendItems.forEach((li, i) => { li.lastChild.textContent = free ? FREE_LEGEND[i] : LEGEND[i]; });
     if (legendItems[0]) legendItems[0].parentNode.hidden = !!(K.fresh || K.pickAll);
     $('rLine').textContent = line;
-    const missed = G.queue.slice(0, n).map((id, i) => [id, G.res[i]]).filter(([, t]) => t > 0)
+    const missed = G.queue.map((id, i) => [id, G.res[i]]).filter(([, t]) => t > 0)
       .sort((a, b) => K.ids.indexOf(a[0]) - K.ids.indexOf(b[0]));
     $('chips').replaceChildren(...missed.map(([id, t]) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'chip ' + RESULT_CLASS[t];
@@ -2131,7 +2522,7 @@
   }
 
   /* ---------- buttons & keys ---------- */
-  $('startBtn').onclick = () => { const cur = current(); if (cur.ids.length) start(cur.kind, cur.ids, { box: cur.box }); };
+  $('startBtn').onclick = () => { const cur = current(); if (cur.ids.length) start(playKind(cur.kind), cur.ids, { box: cur.box }); };
   $('exploreBtn').onclick = () => {
     useMap(chosenMap); clearMap(); show('explore');
     if (!plain()) showAllLabels(Q.exploreKind);
@@ -2147,6 +2538,8 @@
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') return;
     if (e.key === 'Escape') { lightbox.hidden = true; return; }
+    // 1–4 pick one of four (choose4)
+    if (/^[1-4]$/.test(e.key) && view === 'play' && KINDS[G.kind].choose4) { const o = picksEl.children[+e.key - 1]; if (o && !o.disabled) o.click(); return; }
     // Enter checks the picks (pickAll); on a button, the button's own Enter does
     if (e.key === 'Enter' && e.target.tagName !== 'BUTTON' && view === 'play' && KINDS[G.kind].pickAll) { e.preventDefault(); check(); return; }
     const zoomIn = e.key === '+' || e.key === '=', zoomOut = e.key === '-', reset = e.key === '0';
@@ -2162,7 +2555,7 @@
     const script = src => new Promise(done => { const s = document.createElement('script'); s.src = src; s.onload = done; document.head.append(s); });
     script(ROOT + 'assets/js/srs.js').then(() => script(new URL('area-review.js', here).href)).then(() => {
       RV = areaReview({
-        $, Q, G, KINDS, PAGE: PAGE_ID, ROOT, RESULT_CLASS, shuffle, fmt, start, markOut, mark, pathsOf, showLabel, setFeedback, needAll, flyTo, onStreet, showAnswer,
+        $, Q, G, KINDS, PAGE: PAGE_ID, ROOT, RESULT_CLASS, shuffle, fmt, start, told, markOut, mark, pathsOf, showLabel, setFeedback, needAll, flyTo, onStreet, showAnswer,
         free: () => mapStyle === 'free', home: () => resetView(),
         reviewModes, played: () => ({ m: mapStyle, ...(shownBack !== 'quiz' ? { b: shownBack } : {}) }), // how the round on screen is played
         maps: () => (FREE ? [] : MAPS.map(m => m[0])), backs: () => BACKS.map(b => b[0]), // what the review's map picker offers

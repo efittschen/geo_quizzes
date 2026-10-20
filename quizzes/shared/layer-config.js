@@ -167,6 +167,7 @@ const layerLib = (() => {
       const K = layer(M, k), T = K.T, fn = t => T[t] && (id => T[t][id]);
       const out = { key: k.key, label: k.label, noun: k.noun, groups: k.groups.map(([title, sub, ids]) => ({ title, sub, ids })), areasOf: id => K.areas[id] };
       for (const s of SWITCHES) if (k[s] !== undefined) out[s] = k[s];
+      if (k.of && !k.typed) out.modes = ['list', 'type', 'pairs', 'pick', 'pickback']; // (its names picked from a list or from four, typed or matched with those of the layer it is of, and the other way round: see MODES in area-quiz.js)
       for (const t of ['name', 'short', 'chip', 'chipTitle', 'about', 'dial', 'text', 'pin', 'chipClass', 'areaLabel']) if (T[t]) out[t] = fn(t);
       if (T.clicked) out.clicked = a => T.clicked[a];
       for (const t in k.pool || {}) if (t !== 'w') out[t] = id => { const p = k.pool[t], e = draw(p.e[id], k.pool.w && k.pool.w[id]); return p.t === undefined ? e : build(p.t, e); };
