@@ -32,7 +32,7 @@ a{color:inherit}
 .muted{color:var(--muted)}
 
 /* buttons: primary is the one main action, ghost everything else */
-.primary,.ghost{display:inline-flex;align-items:center;justify-content:center;gap:6px;appearance:none;border-radius:999px;cursor:pointer;text-decoration:none;font-weight:600}
+.primary,.ghost{display:inline-flex;align-items:center;justify-content:center;gap:6px;appearance:none;border-radius:var(--radius);cursor:pointer;text-decoration:none;font-weight:600}
 .primary{border:0;background:var(--btn);color:var(--btnink);padding:12px 22px}
 .primary:hover{filter:brightness(1.12)}
 .primary:disabled{opacity:.4;cursor:default;filter:none}

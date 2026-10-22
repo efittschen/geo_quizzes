@@ -120,8 +120,9 @@
     if (!pan) {
       const el = hit(x, y);
       if (!el.closest(MAP)) return false;
-      pan = { x, y, x0: x, y0: y, compat: true };
-      pan.compat = fire(el, 'pointerdown', x, y);
+      // (a map drawn on, a Draw question of the map quizzes, moves with the middle button: its left one draws)
+      pan = { x, y, x0: x, y0: y, compat: true, init: el.closest('svg.sketch') ? { button: 1, buttons: 4 } : {} };
+      pan.compat = fire(el, 'pointerdown', x, y, pan.init);
       if (pan.compat) fire(el, 'mousedown', x, y);
     }
     pan.x -= dx; pan.y -= dy;

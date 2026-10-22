@@ -130,7 +130,7 @@
   }
   function ask() {
     const it = BY[G.queue[G.i]];
-    G.answered = false;
+    G.answered = false; G.at = performance.now();
     $('word').textContent = it.w; $('answer').value = ''; $('answer').readOnly = false; $('go').textContent = 'Check';
     $('fb').className = 'fb'; $('fb').textContent = '';
     $('sQ').textContent = `${G.i + 1}/${G.queue.length}`; $('sRight').textContent = G.right; $('sTime').textContent = fmt(Date.now() - G.t0);
@@ -143,6 +143,8 @@
     const ok = it.re.test(clean(typed));
     G.answered = true;
     if (ok) G.right++; else G.missed.push(it.w);
+    // the answer log (assets/js/answers.js): the word, typed; a Retry round's answers are replays
+    if (typeof ANSWERS === 'object') ANSWERS.add({ quiz: PAGE_ID, kind: 'words', item: it.w, mode: 'type', replay: !G.round, r: ok ? 0 : 3, ms: performance.now() - G.at, given: ok ? [] : ['"' + typed.trim()], names: { [it.w]: `${it.w} · ${it.lat}` }, layer: 'Words' });
     $('bar').children[G.i].className = ok ? 'ok' : 'bad';
     $('fb').className = 'fb ' + (ok ? 'ok' : 'bad');
     $('fb').innerHTML = `<b></b><span></span>`;

@@ -86,9 +86,19 @@ body{overflow:hidden}
 .round .langs button + button{border-left:1.5px solid var(--btn)}
 .round .langs button:hover{color:var(--ink)}
 .round .langs button[aria-pressed="true"]{background:var(--btn);color:var(--btnink)}
+/* one of a set (languages, ways to answer): pills in one shaded track, the one picked filled */
+.round .langs:not(.helps){gap:2px;padding:2px;border:0;border-radius:14px;background:color-mix(in srgb,var(--btn) 10%,transparent);overflow:visible}
+.round .langs:not(.helps) button,.round .langs:not(.helps) button + button{border:0;border-radius:999px}
+/* the options (helpRow): yes or no each: a square box, ticked when on, never filled like a set's pick */
+.round .langs.helps{border:0;overflow:visible;gap:5px;flex-wrap:wrap}
+.round .langs.helps button,.round .langs.helps button + button{position:relative;display:inline-flex;align-items:center;gap:6px;padding:1px 10px 1px 6px;border:1.5px solid color-mix(in srgb,var(--btn) 45%,transparent);border-radius:999px}
+.round .langs.helps button::before{content:"";flex:none;width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;box-sizing:border-box}
+.round .langs.helps button[aria-pressed="true"]{background:transparent;color:var(--ink);border-color:var(--btn)}
+.round .langs.helps button[aria-pressed="true"]::before{background:var(--btn);border-color:var(--btn)}
+.round .langs.helps button[aria-pressed="true"]::after{content:"";position:absolute;left:10px;top:50%;width:3px;height:6px;border:solid var(--btnink);border-width:0 1.5px 1.5px 0;transform:translate(-1px,-62%) rotate(45deg)}
+.round .langs.helps[hidden]{display:none}
 /* the ways to answer (MODES): each its own pill, on as many lines as they need */
-.round .langs.modes{display:flex;flex-wrap:wrap;gap:4px;max-width:100%;border:0;border-radius:0;overflow:visible}
-.round .langs.modes button,.round .langs.modes button + button{border:1.5px solid var(--btn);border-radius:999px}
+.round .langs.modes{display:inline-flex;flex-wrap:wrap;max-width:100%}
 /* the same choice made once for the whole list (Q.langLabel): a row of its own above the rounds */
 .langs.list{display:flex;flex-wrap:wrap;gap:6px}
 .langs.list button{appearance:none;padding:5px 13px;border:1.5px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);font:600 .92rem/1.2 var(--sans);cursor:pointer}
@@ -223,6 +233,19 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
 .rv-timer::before,.rv-timer::after{content:"";position:absolute;z-index:1;top:0;bottom:0;width:2px;background:var(--panel)}
 .rv-timer::before{left:var(--easy,87%)} .rv-timer::after{left:var(--known,60%)}
 .feedback.unsure{border-left-color:var(--yellow)}
+/* a replay's rating (area-review.js): Easy, Good, Hard in a column over the map at its right edge, in the middle (clear
+   of the zoom buttons under it), each with its key; Hard (the default) filled, and beside them the bar that runs down
+   to Hard. Where the map is hidden (.nomap), at the screen's right edge. */
+.rv-rate{position:absolute;right:14px;top:max(80px,min(50%,calc(100% - 215px)));transform:translateY(-50%);z-index:1300;display:flex;gap:8px;align-items:stretch}
+body > .rv-rate{position:fixed;top:50%}
+.rv-rate div{display:flex;flex-direction:column;gap:8px}
+.rv-rate button{appearance:none;display:flex;justify-content:space-between;align-items:center;gap:12px;min-width:96px;padding:10px 14px;border:1.5px solid var(--ink);border-radius:var(--radius);background:var(--panel);color:var(--ink);font:600 1rem/1.2 var(--sans);box-shadow:var(--shadow);cursor:pointer}
+.rv-rate button:hover{background:color-mix(in srgb,var(--ink) 8%,var(--panel))}
+.rv-rate button.def{border-color:var(--btn);background:var(--btn);color:var(--btnink)}
+.rv-rate button.def:hover{filter:brightness(1.12)}
+.rv-rate kbd{font:inherit;opacity:.55}
+.rv-rate span{display:flex;width:6px;border-radius:3px;background:color-mix(in srgb,var(--ink) 15%,transparent);overflow:hidden}
+.rv-rate span i{flex:1;background:var(--yellow);transform-origin:bottom}
 .reviewing #restartBtn,.reviewing #againBtn,.reviewing #retryBtn,.reviewing .legend li:nth-child(3){display:none}
 /* a review is several rounds shown as one: it has its own ticks, and its results count cards, not the last round */
 #rvTicks,.reviewing #ticks,.reviewing #missWrap{display:none}
@@ -234,6 +257,11 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
 .info .dial .code{font-size:5rem}
 .info .dial .p{font-size:3.4rem}
 .info .dial.multi .code{font-size:3rem} .info .dial.multi .p{font-size:2.2rem}
+/* My stats (area-stats.js): a place never asked is grey, and can be clicked too; its layer picked beside Back */
+svg#map.mine #regions .r.out{pointer-events:auto}
+.dots.mine #regions .r.out{visibility:visible}
+.legend .out{background:color-mix(in oklab,var(--land) 45%,var(--sea));box-shadow:inset 0 0 0 1px var(--line)}
+#sPick{flex:1;min-width:0;padding:9px 12px;border:1.5px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);font:inherit;font-weight:500}
 /* Explore's list (exploreList), beside Back */
 #ePick{flex:1;min-width:0;padding:9px 12px;border:1.5px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);font:inherit;font-weight:500}
 /* the map's corner, bottom right: the zoom buttons and, under them, the credits. The page's list (.note) is a © that
@@ -303,6 +331,9 @@ svg#map.grab{cursor:grabbing}
 #hl #askCtx{fill:none;stroke:var(--ink);stroke-width:2;stroke-dasharray:7 5;stroke-linecap:round}
 #hl #askCtx.around{fill:var(--rare);fill-opacity:.45}   /* the larger area, blue, under the part asked */
 #hl #askCtx.around + #askUse{fill-opacity:.85}
+/* a dot asked (a city, MODES 'name'): a yellow ring around it, the dot itself in ink */
+#hl #askUse.dot{fill:none;stroke:var(--yellow);stroke-width:30px;stroke-linecap:round;stroke-opacity:.85}
+#hl #askLine.dot{stroke:var(--ink);stroke-width:12px;stroke-linecap:round;stroke-opacity:1}
 /* … and over the question, which it is */
 .bigname .scope{display:block;width:max-content;margin-bottom:6px;padding:2px 9px;border-radius:999px;font:700 .78rem/1.4 var(--sans);letter-spacing:.06em;text-transform:uppercase}
 .bigname .scope.part{background:color-mix(in srgb,var(--rare) 35%,transparent);color:var(--ink)}
@@ -404,6 +435,7 @@ svg.streets #ctx path.inset-land{display:inline;fill:var(--land);stroke:var(--ed
   .app.nomap .panel,.app.nomap.playing .panel{max-height:none;padding-top:18px;gap:14px}
   .app.nomap .bigname{font-size:3rem}
   .app.nomap .photo{height:30vh;height:30dvh}
+  .app.nomap .shape{height:30vh;height:30dvh}
   .app.nomap .sent{font-size:2.6rem}
   .app.nomap .picks button{min-height:56px;font-size:1.15rem}
 }
@@ -431,6 +463,34 @@ svg.streets #ctx path.inset-land{display:inline;fill:var(--land);stroke:var(--ed
 .pairs button img{display:block;max-width:100%;max-height:64px;border-radius:4px}
 .pairs button img[data-look~="blur"]{filter:blur(4px)}
 .pairs button[data-side="q"] span{font-size:1.15rem}
+/* draw (a kind's mode, see MODES in area-quiz.js): the tools under the question, Outline | Brush first */
+.drawbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.drawbar .tools{display:inline-flex;margin-right:auto;border:1.5px solid var(--btn);border-radius:999px;overflow:hidden}
+.drawbar .tools button{appearance:none;padding:5px 14px;border:0;background:transparent;color:var(--ink);font:600 .88rem/1.2 var(--sans);cursor:pointer}
+.drawbar .tools button + button{border-left:1.5px solid var(--btn)}
+.drawbar .tools button[aria-pressed="true"]{background:var(--btn);color:var(--btnink)}
+.drawbar .ghost.small{padding:5px 12px}
+.drawbar .primary{padding:9px 26px}
+.drawbar button:disabled{opacity:.4;cursor:default}
+/* … the drawing: yellow, half see-through, its pieces as one (as the town names' painting); the piece being drawn on a
+   canvas of its own over the map; the last question's drawing paler over its answer */
+svg#map.sketch{cursor:crosshair}
+svg#map.sketch.space{cursor:grab}
+svg#map.sketch.grab{cursor:grabbing}
+#sketch{opacity:.5;pointer-events:none}
+#sketch path.outline{fill:var(--yellow);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+#sketch path.brush{fill:none;stroke:var(--yellow);stroke-linecap:round;stroke-linejoin:round}   /* (its width: the brush's, in map units) */
+#sketch.old{opacity:.4}
+.sketch-live{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+/* shape (a kind's mode, see MODES in area-quiz.js): the place alone, filled, its outline around it, scaled to its box;
+   once answered, in the color of the answer */
+.shape{display:block;width:100%;height:min(44vh,440px);height:min(44dvh,440px);flex:none}
+.shape svg{display:block;width:100%;height:100%;overflow:visible}
+.shape .fill path{--fill:color-mix(in srgb,var(--yellow) 55%,var(--card));fill:var(--fill);stroke:var(--fill);stroke-width:1;fill-rule:evenodd;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.shape .line{fill:none;fill-rule:evenodd;stroke:var(--ink);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.shape.got .fill path{--fill:var(--got)} .shape.t2 .fill path{--fill:var(--t2)} .shape.t3 .fill path{--fill:var(--t3)} .shape.miss .fill path{--fill:var(--miss)}
+.shape.pop{animation:pop .35s ease-out}
+.feedback .pct{font:700 1.7rem/1.1 var(--cond);color:var(--ink);font-variant-numeric:tabular-nums}
 
 @media (max-width:760px){
   .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
@@ -448,6 +508,13 @@ svg.streets #ctx path.inset-land{display:inline;fill:var(--land);stroke:var(--ed
   .feedback .c{font-size:.85rem}
   .stats b{font-size:1.2rem}
   .playing .panel{max-height:40vh;max-height:40dvh}
+  /* Name it (MODES in area-quiz.js): a little more room for the list, and the answer right under the field, where
+     it is seen above the list (the panel scrolls) */
+  .naming.playing .panel{max-height:46vh;max-height:46dvh}
+  .naming #play > *{order:2}
+  .naming #play > .bigname,.naming #play > .typed{order:0}
+  .naming #play > .ask,.naming #play > .rv-timer,.naming #play > .feedback{order:1}
+  .naming .picklist{max-height:24vh;max-height:24dvh}
   .startbar{margin:-2px -16px 0;padding:8px 16px 10px;gap:6px}
   .folders{margin-top:-9px}
   .folders button,.folders a{padding:5px 4px 7px;font-size:.95rem}
@@ -471,6 +538,18 @@ svg.streets #ctx path.inset-land{display:inline;fill:var(--land);stroke:var(--ed
   .zoom button{width:36px;height:36px;font-size:1.15rem}
   .mapbar{max-width:calc(100% - 74px)}
   .maps button{height:34px;padding:0 10px;font-size:.84rem}
+  /* (four maps: a little tighter, and slid sideways where even so they don't fit) */
+  .maps{max-width:100%;overflow-x:auto;scrollbar-width:none}
+  .maps::-webkit-scrollbar{display:none}
+  .maps button{padding:0 8px;flex:none}
+  /* Draw's tools in one row: the map keeps its room */
+  .drawbar{flex-wrap:nowrap;gap:5px}
+  .drawbar .tools button{padding:5px 10px}
+  .drawbar .ghost.small{padding:4px 9px}
+  .drawbar .primary{padding:6px 16px}
+  .rv-rate{right:10px;gap:6px}
+  .rv-rate div{gap:6px}
+  .rv-rate button{min-width:84px;padding:8px 11px;font-size:.92rem}
   .learn-head{padding:12px 16px 10px;padding-top:max(12px,env(safe-area-inset-top,0px))}
   .learn-head h2{font-size:1.5rem}
   .learn-grid{grid-template-columns:1fr;gap:10px;padding:12px 16px 24px}

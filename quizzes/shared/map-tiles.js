@@ -15,7 +15,12 @@
      tiles.streets().show(on)   the street map, at the back of the stage (the standard OpenStreetMap tiles): a canvas
                                 drawn from them, or on a Mercator map the tiles themselves (see sheets); its credit
                                 stands on the map meanwhile. On a Mercator map, a player who named a Google Maps key
-                                of their own (assets/js/gmaps.js) gets Google's tiles instead, laid as they come
+                                of their own (assets/js/gmaps.js), or ticked Google Maps (unofficial), gets Google's
+                                tiles instead, laid as they come
+     tiles.bare().show(on)      the bare map: the street map without any borders, nor the names of states and
+                                countries (OpenStreetMap's tiles with them taken out, see BARE_TILES; Google's drawn
+                                without them)
+     tiles.street(look)         shows the street map as it looks, 'street' or 'bare', and hides the other (null: both)
      tiles.coverage(dir, meta).show(on)   Street View coverage (data/coverage and its meta.json, see the README), a
                                 canvas over the map, blended into it
      tiles.insets               { box, land }: SVG paths of the insets' frames and of the land in them. An inset
@@ -23,6 +28,90 @@
                                 stays drawn, and no coverage is laid on it. Frames: `inset` in cities.js (a path of
                                 boxes) or, for Albers USA, d3's own; else the land around the cities that are off the
                                 projection. Of an area map: the areas that are off the projection. */
+/* The bare map's pictures of OpenStreetMap's tiles: BARE_TILES(address) -> a promise of the address of the tile with
+   its borders taken out (shared/bare-tiles.js), or of null where it did not come. Each tile is asked for as the
+   street map asks for it, as a picture (with the page's address as its referrer: OpenStreetMap answers a request
+   without one with its "Access blocked" tile), anonymously, so that it can be read (OpenStreetMap sends its tiles to
+   any page: Access-Control-Allow-Origin: *), LOADING at a time, the newest asked for first (they are where the map
+   is now). Its pixels are done in workers (WORKERS of them), or, where a worker cannot draw, on the page itself, one
+   at a time. Each is kept for the rest of the visit as a picture of the page's own (an object URL, a PNG of some 30
+   to 140 kB): the last KEEP asked for. One that did not come, or came as the blocked tile, is not kept, and not asked
+   for again for AGAIN ms. */
+const BARE_TILES = (() => {
+  const HERE = document.currentScript.src.replace(/[^/]*$/, ''), KEEP = 200, LOADING = 8, AGAIN = 30000;
+  const WORKERS = Math.max(1, Math.min(3, (navigator.hardwareConcurrency || 2) - 1));
+  const kept = new Map(), failed = new Map(), waiting = [], asked = new Map(), ready = [];   // address -> promise, or when it failed; [{ url, done }], newest last; id -> job; loaded jobs
+  let pool = null, ids = 0, loading = 0, onPage = null, paging = false;
+  const zoomOf = url => +(url.match(/\/(\d+)\/\d+\/\d+\.png/) || [])[1];
+  const fail = job => { failed.set(job.url, Date.now()); job.done(null); };
+  // the pictures, newest first
+  function load() {
+    while (loading < LOADING && waiting.length) {
+      const job = waiting.pop(), img = new Image(); loading++;
+      img.crossOrigin = 'anonymous'; img.decoding = 'async';
+      img.onload = () => { loading--; job.img = img; ready.push(job); work(); load(); };
+      img.onerror = () => { loading--; fail(job); load(); };
+      img.src = job.url;
+    }
+  }
+  // their pixels, in a worker if one is free
+  function work() {
+    if (!pool) {
+      pool = [];
+      if (typeof Worker === 'function' && typeof OffscreenCanvas === 'function' && typeof createImageBitmap === 'function') for (let k = 0; k < WORKERS; k++) {
+        try { const w = new Worker(HERE + 'bare-tiles.js'); w.n = 0; w.onmessage = answer; w.onerror = () => broke(w); pool.push(w); } catch (err) { break; }
+      }
+    }
+    if (!pool.length) return page();
+    for (const w of pool) while (w.n < 2 && ready.length) {
+      const job = ready.pop(), id = ++ids; asked.set(id, { ...job, w }); w.n++;
+      createImageBitmap(job.img).then(pic => w.postMessage({ id, pic, z: zoomOf(job.url) }, [pic]), () => { asked.delete(id); w.n--; fail(job); work(); });
+    }
+  }
+  function answer(e) {
+    const { id, blob, cannot } = e.data, job = asked.get(id); if (!job) return;
+    if (cannot) return broke(job.w);   // (a worker that cannot draw: on the page instead)
+    asked.delete(id); job.w.n--;
+    if (blob) job.done(URL.createObjectURL(blob)); else fail(job);
+    work();
+  }
+  // A worker that failed: what it was given goes back, to the others or to the page.
+  function broke(w) {
+    pool = pool.filter(o => o !== w); w.terminate();
+    for (const [id, job] of asked) if (job.w === w) { asked.delete(id); ready.push({ url: job.url, done: job.done, img: job.img }); }
+    work();
+  }
+  // On the page: bare-tiles.js loaded as a script (BARE), a tile at a time.
+  async function page() {
+    if (paging || !ready.length) return;
+    paging = true;
+    await (onPage ||= new Promise(ok => { if (typeof BARE === 'function') return ok(); const s = document.createElement('script'); s.src = HERE + 'bare-tiles.js'; s.onload = s.onerror = ok; document.head.append(s); }));
+    const job = ready.pop(), img = job.img;
+    const src = await new Promise(done => {
+      try {
+        const cv = document.createElement('canvas'); cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+        const cx = cv.getContext('2d', { willReadFrequently: true }); cx.drawImage(img, 0, 0);
+        const px = cx.getImageData(0, 0, cv.width, cv.height);
+        if (BARE.blocked(px.data, cv.width, cv.height)) return done(null);
+        BARE(px.data, cv.width, cv.height, zoomOf(job.url)); cx.putImageData(px, 0, 0);
+        cv.toBlob(b => done(b ? URL.createObjectURL(b) : null), 'image/png');
+      } catch (err) { done(null); }
+    });
+    if (src) job.done(src); else fail(job);
+    paging = false; setTimeout(page, 0);
+  }
+  return url => {
+    let p = kept.get(url);
+    if (p) { kept.delete(url); kept.set(url, p); return p; }   // (the last asked for, last)
+    if (Date.now() - (failed.get(url) || -Infinity) < AGAIN) return Promise.resolve(null);
+    p = new Promise(done => waiting.push({ url, done }));
+    kept.set(url, p);
+    p.then(src => { if (!src && kept.get(url) === p) kept.delete(url); });
+    for (const [u, q] of kept) { if (kept.size <= KEEP) break; kept.delete(u); q.then(src => src && URL.revokeObjectURL(src)); }
+    load();
+    return p;
+  };
+})();
 function mapTiles(stage, C, AHEAD = 192) {
   if (!C.proj || !C.kpu || !/^(conicEqualArea|albersUsa|mercator)$/.test(C.proj.type)) return null;
   const OSM = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', RAD = Math.PI / 180;
@@ -85,7 +174,8 @@ function mapTiles(stage, C, AHEAD = 192) {
   let want = null;
   const layers = [];
   // A layer of tiles: { id, over (on top of the map, else at the back of the stage), size (of a tile, in pixels),
-  // minZ, maxZ, url(z, x, y) -> its address or null where there is none, shown(on) }
+  // minZ, maxZ, url(z, x, y) -> its address or null where there is none, pic(address) -> a promise of the address of
+  // the picture to show for it, or of null (optional: else the tile itself), shown(on) }
   function layer(L) {
     if (merc) return sheets(L);
     const SIZE = L.size, MAX_Z = L.maxZ, cv = document.createElement('canvas'), ctx = cv.getContext('2d');
@@ -97,7 +187,10 @@ function mapTiles(stage, C, AHEAD = 192) {
       if (!url) return Promise.resolve(null);
       if (!pics.has(url)) {
         if (pics.size > ROOM) for (const k of [...pics.keys()].slice(0, ROOM >> 1)) pics.delete(k);
-        pics.set(url, new Promise(done => { const img = new Image(); img.onload = () => done(img); img.onerror = () => done(null); img.src = url; }));
+        pics.set(url, new Promise(done => {
+          const img = new Image(); img.onload = () => done(img); img.onerror = () => done(null);
+          if (L.pic) L.pic(url).then(src => { if (src) img.src = src; else { pics.delete(url); done(null); } }); else img.src = url;
+        }));
       }
       return pics.get(url);
     };
@@ -215,7 +308,8 @@ function mapTiles(stage, C, AHEAD = 192) {
         img.style.width = img.style.height = s.px + 1 + 'px';
         s.wait++;
         img.onload = img.onerror = () => { img.onload = img.onerror = null; if (!img.naturalWidth) { img.remove(); if (L.failed) L.failed(); } if (!--s.wait && s === sheet && old) { old.el.remove(); old = null; } };
-        img.src = url; s.el.append(img); s.tiles.set(key, img);
+        if (L.pic) L.pic(url).then(src => { if (src) img.src = src; else { if (s.tiles.get(key) === img) s.tiles.delete(key); if (img.onerror) img.onerror(); } }); else img.src = url;
+        s.el.append(img); s.tiles.set(key, img);
       }
       // the tiles more than a stage away go (the browser keeps the pictures for a while: coming back loads none)
       for (const [key, img] of s.tiles) { const [c, r] = key.split(',').map(Number); if (c < c0 - (c1 - c0) || c > c1 + (c1 - c0) || r < r0 - (r1 - r0) || r > r1 + (r1 - r0)) { if (img) img.remove(); s.tiles.delete(key); } }
@@ -234,47 +328,68 @@ function mapTiles(stage, C, AHEAD = 192) {
     layers.push(me);
     return me;
   }
-  let streets = null, coverage = null, owed = null; // owed: asks Google for the credit of the tiles in view
+  // The street map as it looks: 'street' (its tiles as they are) or 'bare' (with the borders taken out); and for each,
+  // whether it is shown and, with Google's tiles, what asks Google for the credit of the tiles in view.
+  const looks = {}, shown = {}, owed = {};
+  let credit = null, osm = null, coverage = null;
+  function street(look) {
+    if (looks[look]) return looks[look];
+    // one credit for both: in the page's list, and on the map itself unless the page shows it anyway
+    if (!credit) {
+      credit = said(' · Street map ' + OSM + ' contributors'); osm = credits && !credits.querySelector('.osm') ? document.createElement('span') : null;
+      if (osm) { osm.className = 'osm'; osm.innerHTML = OSM; osm.hidden = true; credits.prepend(osm); }
+    }
+    let text = OSM + ' contributors';
+    const credited = html => { text = html; if (shown[look]) { credit.innerHTML = ' · Street map ' + html; if (osm) osm.innerHTML = html; } };
+    const FROM_OSM = (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+    // Google's map, for a player with a key of their own (gmaps.js), on a Mercator map only: there its tiles lie
+    // as they come, not redrawn. Until its session answers there are no tiles; without an answer, or after a few
+    // tiles refused (the key's quota used up, the key restricted), OpenStreetMap's are asked for instead. The bare
+    // map's session has Google draw it without borders; OpenStreetMap's tiles have them taken out (BARE_TILES). The
+    // same with Google's public tile address (no key, the box "Google Maps (unofficial)" ticked, see gmaps.js).
+    let from = FROM_OSM, google = null, refused = 0, me = null;
+    const back = fault => { google = null; owed[look] = null; GMAPS.failed(fault); from = FROM_OSM; credited(OSM + ' contributors'); me.reset(); };
+    if (merc && typeof GMAPS === 'object' && (GMAPS.key() || GMAPS.unofficial())) {
+      from = () => null;
+      GMAPS.tiles(look === 'bare').then(g => {
+        if (!g) { from = FROM_OSM; me.reset(); return; }
+        google = g; from = (z, x, y) => g.url.replace('{z}', z).replace('{x}', x).replace('{y}', y).replace('{s}', (x + y) % 4);
+        credited('&copy; Google'); me.reset();
+        if (!g.copyright) return;   // (Google's public tile address, unofficial: no credit asked for beyond its name)
+        // The copyright Google asks to be shown for the tiles in view, once the map rests.
+        let timer = 0;
+        owed[look] = () => {
+          clearTimeout(timer);
+          timer = setTimeout(async () => {
+            if (!want || google !== g) return;
+            const a = invert(want.x, want.y), b = invert(want.x + stage.clientWidth / want.k, want.y + stage.clientHeight / want.k);
+            if (!a || !b) return;
+            const z = Math.max(0, Math.min(19, Math.round(Math.log2(want.k * C.proj.k * 360 / 256))));
+            const text = await g.copyright({ north: a[0], south: b[0], east: b[1], west: a[1] }, z);
+            if (text && google === g) credited(text.replace(/[<>&]/g, ''));
+          }, 1200);
+        };
+        if (shown[look]) owed[look]();
+      });
+    }
+    return looks[look] = me = layer({ id: look === 'bare' ? 'bare' : 'streets', size: 256, minZ: 1, maxZ: 19, url: (z, x, y) => from(z, x, y),
+      pic: look === 'bare' ? url => (url.startsWith('https://tile.openstreetmap.org/') ? BARE_TILES(url) : Promise.resolve(url)) : null,
+      failed() { if (google && ++refused >= 3) back('Tiles refused'); },
+      shown(yes) {
+        shown[look] = yes;
+        if (yes) credited(text);
+        const any = shown.street || shown.bare;
+        credit.hidden = !any; if (osm) osm.hidden = !any; stage.classList.toggle('streets', !!any);
+        if (yes && owed[look]) owed[look]();
+      } });
+  }
   return {
     insets,
-    view(x, y, k) { want = { x, y, k }; for (const l of layers) l.moved(); if (owed) owed(); },
-    streets() {
-      if (streets) return streets;
-      const credit = said(' · Street map ' + OSM + ' contributors'), osm = credits && !credits.querySelector('.osm') ? document.createElement('span') : null;
-      if (osm) { osm.className = 'osm'; osm.innerHTML = OSM; osm.hidden = true; credits.prepend(osm); }   // on the map itself, unless the page shows it anyway
-      const credited = html => { credit.innerHTML = ' · Street map ' + html; if (osm) osm.innerHTML = html; };
-      const FROM_OSM = (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
-      // Google's map, for a player with a key of their own (gmaps.js), on a Mercator map only: there its tiles lie
-      // as they come, not redrawn. Until its session answers there are no tiles; without an answer, or after a few
-      // tiles refused (the key's quota used up, the key restricted), OpenStreetMap's are asked for instead.
-      let from = FROM_OSM, google = null, refused = 0;
-      const back = fault => { google = null; owed = null; GMAPS.failed(fault); from = FROM_OSM; credited(OSM + ' contributors'); streets.reset(); };
-      if (merc && typeof GMAPS === 'object' && GMAPS.key()) {
-        from = () => null;
-        GMAPS.tiles().then(g => {
-          if (!g) { from = FROM_OSM; streets.reset(); return; }
-          google = g; from = (z, x, y) => g.url.replace('{z}', z).replace('{x}', x).replace('{y}', y);
-          credited('&copy; Google'); streets.reset();
-          // The copyright Google asks to be shown for the tiles in view, once the map rests.
-          let timer = 0;
-          owed = () => {
-            clearTimeout(timer);
-            timer = setTimeout(async () => {
-              if (!want || google !== g) return;
-              const a = invert(want.x, want.y), b = invert(want.x + stage.clientWidth / want.k, want.y + stage.clientHeight / want.k);
-              if (!a || !b) return;
-              const z = Math.max(0, Math.min(19, Math.round(Math.log2(want.k * C.proj.k * 360 / 256))));
-              const text = await g.copyright({ north: a[0], south: b[0], east: b[1], west: a[1] }, z);
-              if (text && google === g) credited(text.replace(/[<>&]/g, ''));
-            }, 1200);
-          };
-          owed();
-        });
-      }
-      return streets = layer({ id: 'streets', size: 256, minZ: 1, maxZ: 19, url: (z, x, y) => from(z, x, y),
-        failed() { if (google && ++refused >= 3) back('Tiles refused'); },
-        shown(yes) { credit.hidden = !yes; if (osm) osm.hidden = !yes; stage.classList.toggle('streets', yes); } });
-    },
+    view(x, y, k) { want = { x, y, k }; for (const l of layers) l.moved(); for (const l in owed) if (owed[l] && shown[l]) owed[l](); },
+    streets: () => street('street'),
+    bare: () => street('bare'),
+    // The street map shown as it looks ('street' or 'bare'), the other hidden; null: neither.
+    street(look) { for (const l of ['street', 'bare']) if (l !== look && looks[l]) looks[l].show(false); if (look) street(look).show(true); },
     coverage(dir, meta) {
       if (coverage) return coverage;
       const have = Object.fromEntries(Object.entries(meta.tiles).map(([z, l]) => [z, new Set(l)]));

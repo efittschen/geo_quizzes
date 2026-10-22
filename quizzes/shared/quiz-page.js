@@ -13,6 +13,8 @@
 // What the site keeps in the browser goes through assets/js/store.js, which every script after this one relies on:
 // it is loaded from here, in place and before them, so a page does not have to name it.
 document.write(`<script src="${new URL('../../assets/js/store.js', document.currentScript.src).href}"><\/script>`);
+// And answers.js, the log of every answer given (before sync.js, which sends it to the online copy too).
+document.write(`<script src="${new URL('../../assets/js/answers.js', document.currentScript.src).href}"><\/script>`);
 // With it sync.js, the online copy of a player who named one. What it takes in shows when the page is loaded again,
 // which it does by itself as long as the page wasn't touched; not during a round.
 // (Not in a page the review page opens out of sight to give old review cards their map, ?cards: it talks to the
@@ -73,6 +75,7 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
         <label class="toggle" id="optColorsWrap"><input type="checkbox" id="optColors" checked> <span id="optColorsText"></span></label>
         <label class="toggle" id="optDetailWrap"><input type="checkbox" id="optDetail"> <span id="optDetailText"></span></label>
         <label class="toggle" id="optLettersWrap" hidden><input type="checkbox" id="optLetters"> <span id="optLettersText"></span></label>
+        <label class="toggle" id="optHardWrap"><input type="checkbox" id="optHard"> <span>Hard mode</span></label>
       </div>
     </section>
 

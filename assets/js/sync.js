@@ -11,7 +11,9 @@
 //
 // Two copies of an entry become one like this (`merge`), with nothing lost that either side learned:
 //   cards      each card from the copy where it was answered last, with how it is reviewed (map, back) from the copy
-//              where it was last played perfectly (played); none from before the stack was removed (`cleared`)
+//              where it was last played perfectly (played); none from before the stack was removed (`cleared`), and
+//              none that `moved` says was moved away or made one with others since it was last answered (see
+//              STORE.cardKeys): those are left out of each copy before the two are compared
 //   best       each round's better result
 //   paint      each round's higher number
 //   stars      from the copy where they changed last (`changed`); if one doesn't say, the higher of each
@@ -20,6 +22,10 @@
 //   settings   from the copy that changed last; if one doesn't say, the settings of both
 //   review     the later day's count, or the higher one of the same day
 // Where nothing says which is newer, the online copy's is taken, so all browsers come to the same.
+// The answer log (answers.js) is sent too, in its chunks (a browser's answers of a day), each an entry of its own,
+// "quiz._log.<chunk id>", which the script stores as it stores a quiz's record (it needs no change for them). Only the
+// browser a chunk is named after adds to it, so two copies of a chunk become the longer one: every browser ends up with
+// the chunks of all of them, each answer once. Which chunks the online copy has is noted in the log, not here.
 //
 // The script counts the changes it takes: its revision. A browser asks for what changed after the revision it saw
 // last, and sends its own changes along with that revision. They are taken only if none of those entries changed
@@ -38,6 +44,7 @@ const SYNC = (() => {
   const APP = 'geo-quizzes', WHAT = /^(settings|review|quiz\.[\w.-]+)$/;
   const WAIT = 2000, APART = 20000, RETRY = 60000; // a change is sent 2 s after it; the two talk at most every 20 s; after a failure, again in a minute
   const WEB_APP = /^https:\/\/script\.google\.com\/(a\/macros\/[^/]+|macros)\/s\/[\w-]+\/exec$/;
+  const LOG = typeof ANSWERS === 'object' ? ANSWERS : null; // the answer log (answers.js, loaded before this file)
 
   /* ---------- two copies become one ---------- */
   const when = t => STORE.ms(t) || 0, empty = v => !Object.keys(v || {}).length;
@@ -94,10 +101,13 @@ const SYNC = (() => {
     }
     if (mine.cards || theirs.cards) {
       out.cards = {};
-      for (const k of names(mine.cards, theirs.cards)) {
-        let c = card(mine.cards?.[k], theirs.cards?.[k]);
+      // (each copy's cards as the moves of both leave them first: a copy of a card made one with others on another
+      // browser must not win over the card they became for having been answered later)
+      const own = STORE.cardKeys(mine.cards || {}, out.moved), their = STORE.cardKeys(theirs.cards || {}, out.moved);
+      for (const k of names(own, their)) {
+        let c = card(own[k], their[k]);
         // (whether its question is missing here is this browser's own finding, whichever copy the card comes from)
-        if (c) { const { missing, ...rest } = c; c = mine.cards?.[k]?.missing ? { ...rest, missing: true } : rest; }
+        if (c) { const { missing, ...rest } = c; c = own[k]?.missing ? { ...rest, missing: true } : rest; }
         if (!cleared || when(c.last) > when(cleared)) out.cards[k] = c;
       }
       out.cards = STORE.cardKeys(out.cards, out.moved); // (an old copy of a card sorted onto a map, from a browser that hasn't seen it sorted, is that card)
@@ -166,6 +176,9 @@ const SYNC = (() => {
 
   // Sends what is not there as it is here, takes in what changed there, and so on until both hold the same (a few
   // rounds at most: the second sends what the first one's merges left to say). Returns whether entries here changed.
+  // The answer log (answers.js) goes along as entries of their own, a chunk each ("quiz._log.<id>", which the script
+  // takes as it takes a quiz's record): a chunk the online copy lacks answers of is sent, every chunk there that this
+  // browser hasn't seen is taken into its log, the longer of two copies kept. answers.js notes what was sent.
   async function talk(leaving) {
     let fresh = false;
     for (let round = 0; round < 5; round++) {
@@ -175,16 +188,23 @@ const SYNC = (() => {
         const v = sent(name, STORE.entry(name)), p = print(v);
         if (!empty(v) && p !== seen[name]) { items[name] = v; prints[name] = p; }
       }
+      const log = LOG ? await LOG.outgoing() : [];
+      for (const c of log) items[c.name] = c.value;
       if (round && empty(items)) break;
       const out = await ask(url, rev, empty(items) ? null : items, leaving);
       if (STORE.sync().url !== url) break; // another link was set meanwhile, or none
       const taken = out.ok ? prints : {};
+      if (LOG && out.rev < rev) await LOG.resend(); // (the copy was emptied, or is another one: see below)
+      else if (LOG && out.ok && log.length) await LOG.sent(log);
+      const chunks = [];
       for (const [name, theirs] of Object.entries(out.items || {})) {
+        if (LOG && LOG.isLog(name)) { chunks.push([name.slice(LOG.SYNCED.length), theirs]); continue; }
         if (!WHAT.test(name) || !theirs || typeof theirs !== 'object') continue;
         const mine = STORE.entry(name), merged = merge(name, mine, theirs);
         if (text(merged) !== text(mine)) { STORE.place(name, merged); fresh = true; }
         taken[name] = print(sent(name, theirs));
       }
+      if (chunks.length) await LOG.take(chunks, true);
       // A revision below the one seen last: the copy was emptied, or the link now leads to another one.
       STORE.setSync(s => { s.seen = { ...(out.rev < rev ? {} : s.seen), ...taken }; s.rev = out.rev; });
     }
@@ -215,6 +235,7 @@ const SYNC = (() => {
     url = url.trim();
     if (!WEB_APP.test(url) && !/^http:\/\/(localhost|127\.0\.0\.1)[:/]/.test(url)) return 'Not a web app link';
     STORE.setSync(s => { for (const k in s) delete s[k]; s.url = url; });
+    if (LOG) await LOG.resend(); // (a link set anew may be another copy: it is told of every answer)
     await run();
     return STORE.sync().fault || null;
   }
@@ -225,6 +246,7 @@ const SYNC = (() => {
   }
 
   STORE.listen(() => { unsent = true; soon(WAIT); });
+  if (LOG) LOG.listen(why => { if (why === 'written') { unsent = true; soon(WAIT); } }); // (answers written to the log here)
   for (const type of ['pointerdown', 'keydown']) window.addEventListener(type, () => { touched = true; }, { capture: true, passive: true });
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) { touched = false; soon(); }

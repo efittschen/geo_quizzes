@@ -2,10 +2,12 @@
 // schedule, ../../assets/js/srs.js) itself, so quiz pages need no changes.
 //
 // A round played perfectly puts its questions on this page's stack, as cards of the map it was played on: the same
-// question learned on the quiz map and on the street map is two cards, each reviewed on its map (see srs.js). "Review" on the setup screen asks the ones that
+// question learned on the quiz map and on the street map is two cards, each reviewed on its map (see srs.js). With
+// "Cards per map" off (a setting on the review page) it is one card, answered on any map, and moved to the map of a
+// perfect round if that is harder (SRS.add, SRS.keyOf). "Review" on the setup screen asks the ones that
 // are due, or all of them, in shuffled order whatever their kind of question. Each card is asked the way the last
-// perfect round with it was played: on that map (the quiz map, the overlay, the street map; a city quiz's dots or its
-// map by distance) and, in a city quiz, with that background, whatever is chosen on the setup screen now. Every
+// perfect round with it was played: on that map (the quiz map, the overlay, the street map, the bare map; a city quiz's
+// dots or its map by distance) and, in a city quiz, with that background, whatever is chosen on the setup screen now. Every
 // perfect round keeps that with its cards, new ones and those on the stack already; for a card not played perfectly
 // since, the engine works the map out from the best results (see reviewModes there). Cards asked the same way stay
 // together in a review, so the map changes as seldom as it can. The map picker stays on the map during a review:
@@ -19,19 +21,24 @@
 //   good   (known)      right on the first click within the "known" time
 //   hard   (unsure)     right on the first click, but slower
 //   again  (not known)  a wrong click (the answer shows at once: no second try), or the time limit runs out
-// A question that wasn't known comes back at the end of the review until it is answered right, and those answers
-// count like any other, except that they are never "easy": the answer was just shown. Only the last answer
+// A question that wasn't known comes back at the end of the review until it is answered right. Such a replay was just
+// shown, so the clock only tells right from wrong: answered right, it is rated by hand, Easy, Good or Hard in a column
+// over the map (the keys 4, 3, 2, Anki's numbers; Enter: Hard), Hard when the bar beside them runs out (RATE_TIME),
+// and nothing goes on until then; answered wrong, it is not known again. Every answer counts for the card's schedule;
+// only a card's first answer counts for the review's result and the day's count. Only the last answer
 // stays colored on the map, and the areas of everything learned so far stay lit (not just the ones asked), so the
 // map gives nothing away. The review starts from the whole map, and from then on the map stays where the player has
 // it; an answer shown outside the view is flown to, and the next question returns. On a page that has only just
 // appeared, the first question's clock starts a moment late. A review asks 50 cards at most, and the due ones only
 // until 200 cards have been reviewed that day (both are settings on the review page).
 //
-// Ordinary rounds count too, quietly (no clock is shown), for questions already on the stack: a wrong click, the
-// first one already, is "not known", and a first-try answer within the "known" time is "known" (or "instantly").
-// A slower right answer changes nothing.
+// Ordinary rounds count too, quietly (no clock is shown), for questions already on the stack (the card of the map
+// played on; with "Cards per map" off the question's card on any map): a wrong click, the first one already, is
+// "not known", and a first-try answer within the "known" time is "known" (or "instantly"). A slower right answer
+// changes nothing. In the Retry round of the missed ones, a right answer is a replay: rated by hand, as in a review.
 //
-// The engine calls learned (after a perfect round), asked, missed, grade, answered and finished; E is what it shares.
+// The engine calls learned (after a perfect round), asked, missed, grade, answered, after and finished, and asks
+// rating (a rating open: nothing is answered); E is what it shares.
 
 window.areaReview = E => {
   const { $, Q, G, KINDS, PAGE, ROOT } = E;
@@ -41,6 +48,7 @@ window.areaReview = E => {
   // A card is a question on one map (see srs.js): '<kind>@<look>|<item id>'. (A kind may share another kind's cards.)
   const lookOf = ({ m, b }) => m + (b ? '+' + b : ''); // { m, b } as E.played() gives it
   const cardKey = (kind, id, look) => (KINDS[kind].cards || kind) + '@' + look + '|' + id;
+  const cardFor = (kind, id, look) => SRS.keyOf(PAGE, cardKey(kind, id, look)); // the card an answer there goes to (with "Cards per map" off: on any map)
   const here = () => lookOf(E.played()); // the map the round on screen is played on
   // A key's parts; and the map of a look, to play it on ({ map, back, look }).
   const parse = key => { const bar = key.indexOf('|'), at = key.indexOf('@'), has = at >= 0 && at < bar; return { kind: key.slice(0, has ? at : bar), look: has ? key.slice(at + 1, bar) : null, id: key.slice(bar + 1) }; };
@@ -85,6 +93,7 @@ window.areaReview = E => {
       const run = SRS.run(), moved = STORE.quiz(PAGE).moved || {};
       const renamed = k => (parse(k).look === null && moved[k] && moved[k].to ? k.replace('|', '@' + moved[k].to + '|') : k);
       if (run.left[PAGE] || run.again[PAGE]) { for (const list of [run.left, run.again]) if (list[PAGE]) list[PAGE] = list[PAGE].map(renamed); SRS.setRun(run); }
+      if (!SRS.opts().perMap) SRS.single(PAGE); // ("Cards per map" off: one card a question, see srs.js)
       return stack();
     }
     { const was = Object.keys(STORE.quiz(PAGE).cards || {}).sort().join(), now = Object.keys(deck.c).sort().join(); if (was !== now) changed = true; }
@@ -240,12 +249,15 @@ window.areaReview = E => {
     S.prev = null;
   }
   function asked() {
+    rate(UNSURE, false); // (a rating left open by a round begun anew: Hard)
     const K = KINDS[G.kind], id = G.queue[G.i], o = SRS.opts();
-    // An item with several areas to click (or pick, pickAll) gets half the time again for each extra one; a typed answer its own time.
+    // An item with several areas to click (or pick, pickAll) gets half the time again for each extra one; a typed answer
+    // or a drawing its own time (a mode's, see MODES in area-quiz.js: a drawing six clicks').
     const k = K.time ? K.time(id) : E.needAll(K, id) || K.pickAll ? 1 + (K.areas[id].length - 1) / 2 : 1;
-    // A card asked again after a miss was just shown: answering it quickly says nothing, so it is never "easy"
-    // (an "easy" time below zero), in a review and in an ordinary round of the missed ones alike.
-    const key = cardKey(G.kind, id, G.review ? S.mode.look : here()), shown = G.review ? (S.chain ? (SRS.run().again[PAGE] || []).includes(key) : S.counted.has(key)) : G.retry;
+    // A card asked again after a miss was just shown: answering it quickly says nothing, so it is never "easy" by the
+    // clock (an "easy" time below zero), in a review and in an ordinary round of the missed ones alike; answered right,
+    // it is rated by hand (rate).
+    const key = cardFor(G.kind, id, G.review ? S.mode.look : here()), shown = G.review ? (S.chain ? (SRS.run().again[PAGE] || []).includes(key) : S.counted.has(key)) : G.retry;
     const easy = shown ? -1 : o.easy * 1000 * k;
     if (!G.review) { P = { t: performance.now() + (G.i ? 0 : LEAD), easy, fast: o.fast * 1000 * k, missed: false }; return; }
     // The last answer must not stay on the map if this question is about the same place.
@@ -260,7 +272,7 @@ window.areaReview = E => {
   }
   function tick() {
     if (!G.review || $('play').hidden) { bar.hidden = true; return; }
-    if (G.i < G.queue.length && !G.revealed) {
+    if (G.i < G.queue.length && !G.revealed && !R) { // (no clock while a replay is rated: the next question isn't asked yet)
       const t = performance.now() - S.t;
       fill.style.transform = `scaleX(${Math.min(1, Math.max(0, 1 - t / S.limit))})`;
       bar.classList.toggle('slow', t > S.fast);
@@ -268,7 +280,7 @@ window.areaReview = E => {
     }
     raf = requestAnimationFrame(tick);
   }
-  // Out of time: the answer shows, as after a wrong click, and a click on it moves on.
+  // Out of time: the answer shows, as after a wrong click, and a click on it moves on (a drawing: Done).
   function timeUp() {
     const K = KINDS[G.kind], id = G.queue[G.i];
     S.late = true; G.revealed = true;
@@ -277,6 +289,7 @@ window.areaReview = E => {
     if (E.onStreet()) E.flyTo(K.areas[id]); else E.showAnswer(rest);
     E.mark(rest);
     E.setFeedback($('fb'), 'bad', '✗ Time', `→ ${E.told(K, id)}`);
+    E.syncDraw();
   }
   // The engine asks for the answer's result class when a question is done; wrong = a wrong click or a shown answer.
   function grade(wrong) {
@@ -289,19 +302,25 @@ window.areaReview = E => {
   function missed(id) {
     if (!P || P.missed) return;
     P.missed = true;
-    SRS.answer(PAGE, cardKey(G.kind, id, here()), MISSED, Date.now()); // (the card of the map on screen; none on another map counts)
+    SRS.answer(PAGE, cardFor(G.kind, id, here()), MISSED, Date.now()); // (the card of the map on screen; none on another map counts, unless "Cards per map" is off)
   }
   // right: answered on the first try (or, in map play, close).
   function answered(id, right) {
     if (!G.review) {
+      const key = cardFor(G.kind, id, here()), c = SRS.deck(PAGE).c[key];
       if (!right) missed(id);
-      else if (P && !P.missed && performance.now() - P.t <= P.fast) SRS.answer(PAGE, cardKey(G.kind, id, here()), performance.now() - P.t <= P.easy ? INSTANT : KNOWN, Date.now());
+      else if (G.retry) { if (c && !c.x && P && !P.missed) pend.push(key); } // (the Retry round: a replay, rated by hand)
+      else if (P && !P.missed && performance.now() - P.t <= P.fast) SRS.answer(PAGE, key, performance.now() - P.t <= P.easy ? INSTANT : KNOWN, Date.now());
       return;
     }
-    const K = KINDS[G.kind], g = S.g, now = Date.now(), key = cardKey(G.kind, id, S.mode.look); // (the card asked, whatever map is picked meanwhile)
-    const card = SRS.answer(PAGE, key, g, now);
-    // A card's first answer in a review is the one its result and the day's count go by.
-    const first = S.chain ? SRS.ran(PAGE, key, g) : !S.counted.has(key);
+    const K = KINDS[G.kind], g = S.g, now = Date.now(), key = cardFor(G.kind, id, S.mode.look); // (the card asked, whatever map is picked meanwhile)
+    // A card's first answer in a review is graded by the clock, and it alone counts for the review's result and the day's
+    // count. Asked again at the end after a miss (a replay): answered right, it is rated by hand (rate); wrong, not known
+    // again (the user's rule, 2026-10-21).
+    const first = S.chain ? SRS.ran(PAGE, key, g) : !S.counted.has(key), replay = !first && g !== MISSED;
+    G.replay = !first; // (for the answer log, which the engine writes after this)
+    const card = replay ? null : SRS.answer(PAGE, key, g, now);
+    if (replay) pend.push(key);
     S.counted.add(key); S.res.push(g); S.asked++;
     if (first) { S.n[Math.min(g, KNOWN)]++; SRS.reviewed(now); }
     if (S.prev) unmark();
@@ -309,7 +328,7 @@ window.areaReview = E => {
     const fb = $('fb'), t = fb.querySelector('.t');
     fb.className = 'feedback ' + ['bad', 'unsure', 'ok', 'ok'][g];
     if (t) t.textContent = g === MISSED ? E.told(K, id) : `✓ ${E.told(K, id)} · ${S.secs.toFixed(1)} s`;
-    if (card) { const p = document.createElement('p'); p.className = 'c'; p.textContent = `Next ${SRS.until(card.d, now)}`; fb.append(p); }
+    if (card) nextLine(card, now);
     if (g === MISSED && !S.chain) {
       // It comes back at the end of the review: in this round if it is the last one, else in a later one.
       // (A review over several quizzes has noted it, and asks it again at its own end.)
@@ -319,13 +338,72 @@ window.areaReview = E => {
     queueMicrotask(() => {
       if (!G.review) return;
       showStats(); // after the engine has written its own numbers
-      // Map play waits a moment before a round's results; with more to ask, here or on another page, go on at once.
-      if (G.i < G.queue.length || $('play').hidden) return;
+      // Map play waits a moment before a round's results; with more to ask, here or on another page, go on at once
+      // (a replay being rated: once it is, see after).
+      if (R || G.i < G.queue.length || $('play').hidden) return;
       if (S.rounds.length) nextRound(); else if (S.chain) leave();
     });
   }
 
+  // A card's next time, under its answer (once, where an answer covers several cards: a code's outline).
+  function nextLine(card, now) {
+    const fb = $('fb'), text = `Next ${SRS.until(card.d, now)}`;
+    if ([...fb.querySelectorAll('p.c')].some(p => p.textContent === text)) return;
+    const p = document.createElement('p'); p.className = 'c'; p.textContent = text; fb.append(p);
+  }
+
+  /* ---------- a replay's rating, by hand ---------- */
+  // A replay answered right (see answered): Easy, Good or Hard, a column of buttons over the map at its right edge (at
+  // the screen's where a mode hides the map), Hard the default (Enter), the keys 4, 3, 2 as in Anki (on them), and a
+  // bar beside them that runs out in RATE_TIME: then it is Hard. The question doesn't move on (to the next one, the round's end,
+  // the next page of a review) until the rating is given; nothing is answered meanwhile (rating). Several cards
+  // answered at once (a code's outline) take one rating.
+  const RATE_TIME = 4000; // ms
+  const rateBox = document.createElement('div'); rateBox.className = 'rv-rate'; rateBox.setAttribute('role', 'group'); rateBox.setAttribute('aria-label', 'Rating');
+  const rateCol = document.createElement('div'), rateBar = document.createElement('span'), rateFill = document.createElement('i');
+  rateCol.append(...[['Easy', INSTANT, '4'], ['Good', KNOWN, '3'], ['Hard', UNSURE, '2']].map(([label, g, key]) => {
+    const b = document.createElement('button'), k = document.createElement('kbd'); b.type = 'button'; b.onclick = () => rate(g);
+    k.textContent = key; b.append(label, k);
+    if (g === UNSURE) { b.className = 'def'; b.title = 'Enter'; }
+    return b;
+  }));
+  rateBar.append(rateFill); rateBox.append(rateBar, rateCol);
+  let pend = []; // replays answered right, to be rated: their card keys
+  let R = null; // the rating open: { keys, go: what comes next, end: when it runs out, timer, raf }
+  // The engine, after an answer: go on (go) at once, or once the replays among it are rated.
+  function after(go) {
+    if (!pend.length) { go(); return; }
+    R = { keys: pend, go, end: performance.now() + RATE_TIME };
+    pend = [];
+    (document.querySelector('.app.nomap') ? document.body : $('stage')).append(rateBox);
+    R.timer = setTimeout(() => rate(UNSURE), RATE_TIME);
+    const run = () => { if (!R) return; rateFill.style.transform = `scaleY(${Math.max(0, (R.end - performance.now()) / RATE_TIME)})`; R.raf = requestAnimationFrame(run); };
+    run();
+  }
+  // The rating (g) given to the replays; on: then go on (not where the round has gone on without it: Restart, End
+  // round, leaving the page; the rating is Hard then).
+  function rate(g, on = true) {
+    const r = R || (pend.length ? { keys: pend } : null);
+    if (!r) return;
+    R = null; pend = [];
+    clearTimeout(r.timer); cancelAnimationFrame(r.raf);
+    rateBox.remove();
+    const now = Date.now();
+    for (const key of r.keys) { const card = SRS.answer(PAGE, key, g, now, true); if (card && G.review && on) nextLine(card, now); } // (the player's own rating)
+    if (on && r.go) r.go();
+  }
+  // The keys: 4, 3, 2, and Enter for Hard (unless on one of the three); ahead of the page's own (2 is no pick then).
+  addEventListener('keydown', e => {
+    if (!R || e.ctrlKey || e.metaKey || e.altKey) return;
+    const g = e.key === 'Enter' ? (rateBox.contains(e.target) ? null : UNSURE) : { 2: UNSURE, 3: KNOWN, 4: INSTANT }[e.key];
+    if (g == null) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (!e.repeat) rate(g);
+  }, true);
+  addEventListener('pagehide', () => rate(UNSURE, false));
+
   function finished() {
+    rate(UNSURE, false); // (End round while a replay is rated: Hard)
     syncButtons();
     if (!G.review || S.leaving) return;
     const ended = G.i < G.queue.length; // "End round"
@@ -340,7 +418,7 @@ window.areaReview = E => {
 
   // A perfect round: its questions go on the stack, and all of them keep how it was played.
   function learned(kind, ids) {
-    const n = SRS.add(PAGE, pageTitle(), ids.map(id => cardKey(kind, id, here())), Date.now(), E.played()); // cards of this map: learned on another map, a question gets another card
+    const n = SRS.add(PAGE, pageTitle(), ids.map(id => cardKey(kind, id, here())), Date.now(), E.played()); // cards of this map: learned on another map, a question gets another card (with "Cards per map" off not: see SRS.add)
     if (n) $('rLine').textContent += ` · +${n} review`;
     syncButtons();
   }
@@ -352,7 +430,7 @@ window.areaReview = E => {
   // engine must hold the calls returned below before a round starts.)
   if (new URLSearchParams(location.search).has('review')) queueMicrotask(travel);
 
-  // The map picked during the review, as far as this page has it: a map ("quiz", "overlay", "street") where its
+  // The map picked during the review, as far as this page has it: a map ("quiz", "overlay", "street", "bare") where its
   // cards are asked on one, and a background where they are asked with one (a city quiz).
   function lookFor(mode) {
     const l = S.look, out = {};
@@ -367,5 +445,5 @@ window.areaReview = E => {
     if (S.chain) { const r = SRS.run(); r.look = S.look; SRS.setRun(r); }
   }
 
-  return { learned, asked, missed, grade, answered, finished, look };
+  return { learned, asked, missed, grade, answered, after, rating: () => !!R, finished, look };
 };

@@ -1,5 +1,6 @@
 // Review page: what is on the stack (see srs.js), by country and quiz, each with buttons to review it (the whole
-// world at the top), the settings: the clock's times, the limits per review and per day and the schedule, and "Your data":
+// world at the top), the settings: the clock's times, the limits per review and per day, "Cards per map" and the
+// schedule, and "Your data":
 // what this browser keeps, as a file to download or put back, and "Online copy": a place of the player's own where their
 // browsers meet (see sync.js). Only quizzes listed in data/quizzes.json are shown; the stack of a quiz
 // that left the list is kept.
@@ -33,7 +34,7 @@ function dueWhen(ts, now) {
 const SHORT_NAMES = { "United States of America": "USA", "United Kingdom": "UK", "United Arab Emirates": "UAE" };
 // A city quiz (its maps: by distance, or the dots), and the maps a quiz's cards can be on, as its page says them.
 const cityOf = (d) => ["cities", "cities-coverage"].includes(d.quiz.role);
-const looksOf = (d) => SRS.looksOf(d.id) ?? (cityOf(d) ? ["free", "quiz"] : ["quiz", "overlay", "street"]);
+const looksOf = (d) => SRS.looksOf(d.id) ?? (cityOf(d) ? ["free", "quiz"] : ["quiz", "overlay", "street", "bare"]);
 // A row's actions behind ⋯ (a select: on a phone its own list): groups of [label, value] under their headings, then
 // Remove where there is remove(); act(value) or remove() does it and says whether anything changed, and changed()
 // follows if so.
@@ -160,7 +161,7 @@ function render(index, nameByCode) {
     // the quizzes that have it; or all of them off the stack.
     const targets = new Map(), kindOfQuiz = (d) => (cityOf(d) ? "c" : "a");
     for (const d of list) for (const x of looksOf(d)) targets.set(`${kindOfQuiz(d)}:${x}`, lookLabel(x, cityOf(d)));
-    const ORDER = ["a:quiz", "a:overlay", "a:street", "c:free", "c:quiz"], rank = (k) => (ORDER.indexOf(k) + 1 || 99);
+    const ORDER = ["a:quiz", "a:overlay", "a:street", "a:bare", "c:free", "c:quiz"], rank = (k) => (ORDER.indexOf(k) + 1 || 99);
     const placeMenu = moreMenu(`“${place}”`, [["Convert to", [...targets].sort((a, b) => rank(a[0]) - rank(b[0])).map(([k, label]) => [label, k])]], (k) => {
       const [q, x] = k.split(":");
       return converting(`“${place}”`, targets.get(k), list.filter((d) => kindOfQuiz(d) === q && looksOf(d).includes(x)).map((d) => [d.id, null, null, x]));
@@ -289,24 +290,25 @@ function renderDue(decks, placeOf, now) {
   }));
 }
 
-// The name of a map cards are played on (their look, see srs.js): the quiz map, the overlay, the street map; in a
-// city quiz the map by distance or the dots, on the drawn map, the overlay or the street map.
+// The name of a map cards are played on (their look, see srs.js): the quiz map, the overlay, the street map, the bare
+// map; in a city quiz the map by distance or the dots, on the drawn map, the overlay, the street map or the bare map.
 function lookLabel(look, city) {
-  const NAMES = { quiz: "Quiz map", overlay: "Overlay", street: "Street map" };
+  const NAMES = { quiz: "Quiz map", overlay: "Overlay", street: "Street map", bare: "Bare map" };
   const [map, back] = look.split("+");
   if (!city && map !== "free") return NAMES[map] ?? map;
   return (map === "free" ? "Map" : "Dots") + (back ? ` · ${NAMES[back] ?? back}` : "");
 }
 
-// The settings (see srs.js): the three times of the clock, the two limits, and the schedule: which scheduler (FSRS or
-// SM-2), and its options, with the names they have in Anki; only those of the chosen scheduler show.
-// onChange: the limits change the buttons.
-function initSettings(onChange) {
+// The settings (see srs.js): the three times of the clock, the two limits, "Cards per map", and the schedule: which
+// scheduler (FSRS or SM-2), and its options, with the names they have in Anki; only those of the chosen scheduler show.
+// onChange: the limits change the buttons; onCards: "Cards per map" turned off has made a question's cards one.
+function initSettings(onChange, onCards) {
   const NUMBERS = ["easy", "fast", "limit", "round", "day", "retain", "restep", "keep", "first", "ease", "hard", "max"];
   const SCHEDULE = ["algo", "steps", ...NUMBERS.slice(5)];
   const show = () => {
     const o = SRS.opts();
     for (const key of NUMBERS) $(key).value = o[key];
+    $("perMap").checked = o.perMap;
     $("algo").value = o.algo;
     $("steps").value = o.steps.join(" "); // minutes, one step after the other: "1 10"
     for (const label of document.querySelectorAll("[data-algo]")) label.hidden = label.dataset.algo !== o.algo;
@@ -325,16 +327,22 @@ function initSettings(onChange) {
     onChange();
   };
   for (const key of ["algo", "steps", ...NUMBERS]) $(key).addEventListener("change", save);
+  // (turned off: a question's cards on several maps become one at once; turned on: they stay one)
+  $("perMap").addEventListener("change", (event) => {
+    SRS.setOpts({ perMap: event.target.checked });
+    if (!event.target.checked) { SRS.single(); onCards(); }
+  });
   $("defaults").addEventListener("click", () => { SRS.resetOpts(SCHEDULE); show(); });
   show();
   return show;
 }
 
 // "Your data": everything the site keeps in this browser as one file to download, and the way back: a file put in
-// place of what is kept here (see store.js for both, and for what the file holds).
+// place of what is kept here (see store.js for both, and for what the file holds), its answers joining the log's.
 function initData() {
-  $("download").addEventListener("click", () => {
+  $("download").addEventListener("click", async () => {
     const file = STORE.file();
+    if (typeof ANSWERS === "object") file.answers = await ANSWERS.file();
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([JSON.stringify(file, null, 1)], { type: "application/json" }));
     link.download = `geo-quizzes-${file.saved.slice(0, 10)}.json`;
@@ -352,6 +360,7 @@ function initData() {
     if (file?.app !== "geo-quizzes" || !(file.quizzes || file.data)) return alert("Not a Geo Quizzes file");
     if (!confirm("Replace what is saved here?")) return;
     if (!STORE.restore(file)) return alert("Not a Geo Quizzes file");
+    if (typeof ANSWERS === "object" && file.answers) await ANSWERS.load(file.answers);
     location.reload();
   });
 }
@@ -388,8 +397,11 @@ async function fillIn(index, shown) {
   }
 }
 
-// "Google street map" (see gmaps.js): the player's own Google Maps key, kept in this browser, and whether it answers.
+// "Google street map" (see gmaps.js): the player's own Google Maps key, kept in this browser, and whether it answers;
+// and, for a player without one, the box "Google Maps (unofficial)" (Google's public tile address), kept there too.
 function initMaps() {
+  $("maps-unofficial").checked = GMAPS.wanted();
+  $("maps-unofficial").addEventListener("change", (event) => GMAPS.setUnofficial(event.target.checked));
   const show = (busy) => {
     const { key, fault, at } = GMAPS.state();
     $("maps-key").readOnly = !!key;
@@ -448,8 +460,8 @@ function initOnline(onFresh) {
 }
 
 async function init() {
-  let refresh = () => {};
-  const showSettings = initSettings(() => refresh());
+  let refresh = () => {}, redraw = () => {};
+  const showSettings = initSettings(() => refresh(), () => redraw());
   initData();
   initOnline(() => { showSettings(); refresh(); });
   initMaps();
@@ -459,6 +471,8 @@ async function init() {
     const [index, world] = await Promise.all([loadIndex(), json(WORLD_URL).catch(() => null)]);
     const nameByCode = new Map((world?.objects.countries.geometries ?? []).map((g) => [g.id, g.properties.name]));
     render(index, nameByCode);
+    redraw = () => render(index, nameByCode); // (cards made one: in either view)
+    if (typeof initStats === "function") initStats(index, nameByCode); // the Stats tab (stats.js)
     fillIn(index, () => render(index, nameByCode));
     for (const b of document.querySelectorAll("#view-pick button")) b.onclick = () => { VIEW = b.dataset.view; render(index, nameByCode); };
     // Cards come due while the page is open (a new card after a minute), here or in another tab.

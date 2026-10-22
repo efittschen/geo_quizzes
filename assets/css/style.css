@@ -207,9 +207,91 @@ main > .map-wrap:first-child{margin-top:24px}
 .timer-opts input{width:4.6em;margin:0 4px;padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;background:transparent;color:var(--ink);font:inherit}
 .timer-opts input[type=url],.timer-opts input[type=password]{width:26em;max-width:100%;margin:0}
 .timer-opts input[readonly]{color:var(--muted)}
+.timer-opts .toggle input{width:18px;height:18px;margin:0;padding:0;border:0}
 .steps{margin-top:12px;color:var(--muted);font-size:.92rem}
 .steps summary{width:fit-content;cursor:pointer}
 .steps ol{margin:8px 0 0;padding-left:1.5em;line-height:1.8}
+
+/* Review page: its two tabs, Review and Stats; Stats (stats.js): tiles, charts, lists, and a question's card */
+.tabs{margin:18px 0 0}
+.tabs button[aria-selected="true"]{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 7%,transparent)}
+/* chart colors: the series, right and wrong (wrong also a cross, right a dot), each checked against its card's color */
+.stats-page,.stat-card,.chart-tip{--chart:#2E6DA4;--c-ok:#1E8757;--c-bad:#D2433B}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) :is(.stats-page,.stat-card,.chart-tip){--chart:#4B8AD6;--c-ok:#22A06B;--c-bad:#E5604E}}
+:root[data-theme="dark"] :is(.stats-page,.stat-card,.chart-tip){--chart:#4B8AD6;--c-ok:#22A06B;--c-bad:#E5604E}
+.stats-page > section.first h2{display:none}
+.stats-page > section.first{margin-top:24px}
+.strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.strip .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:0 8px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card)}
+.strip h3,.stat-card h3{grid-column:1 / -1;margin:0 0 6px;font:600 .78rem/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.strip .tile{min-width:0}
+.strip .tile b{display:block;font:600 1.5rem/1.15 var(--sans);white-space:nowrap}
+.strip .tile span{font-size:.82rem;color:var(--muted)}
+.chart-head{margin:0 0 8px;color:var(--muted)}
+.chart-head b{font:600 1.5rem/1 var(--sans);color:var(--ink);margin-right:2px}
+.chart-box{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:6px 4px 0;overflow:hidden}
+.chart{display:block;max-width:100%;height:auto;overflow:visible}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .tick{fill:var(--muted);font:500 11px var(--sans);font-variant-numeric:tabular-nums}
+.chart .bar{fill:var(--chart)}
+.chart .hit{fill:transparent;cursor:default}
+.chart .line{fill:none;stroke:var(--chart);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.chart .dot{fill:var(--chart);stroke:var(--card);stroke-width:2}
+.chart .dot.ok{fill:var(--c-ok)}
+.chart .dot.re{fill:var(--card);stroke:var(--c-ok);stroke-width:1.5}
+.chart .cross{fill:none;stroke:var(--c-bad);stroke-width:2.4;stroke-linecap:round}
+.chart .cross.re{stroke-width:1.5}
+.chart .target{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 3}
+.chart-key{display:flex;flex-wrap:wrap;gap:4px 16px;margin:8px 0 0;padding:0;list-style:none;font-size:.85rem;color:var(--muted)}
+.chart-key li{display:flex;align-items:center;gap:6px}
+.chart-key i{width:10px;height:10px;border-radius:50%;background:var(--c-ok)}
+.chart-key i.k-bad{border-radius:0;background:linear-gradient(45deg,transparent 42%,var(--c-bad) 42% 58%,transparent 58%),linear-gradient(-45deg,transparent 42%,var(--c-bad) 42% 58%,transparent 58%)}
+.chart-key i.k-re{background:none;border:1.5px solid var(--c-ok);width:8px;height:8px}
+.chart-tip{position:fixed;z-index:100;display:flex;flex-direction:column;padding:6px 10px;border-radius:8px;background:var(--panel);color:var(--ink);border:1.5px solid var(--ink);font-size:.85rem;white-space:nowrap;box-shadow:var(--shadow);pointer-events:none}
+.chart-tip span{color:var(--muted)}
+.empty.small{padding:16px 20px}
+.stats-page .view-pick{margin-bottom:10px}
+.stats-list{table-layout:auto}
+.stats-list th,.stats-list td{padding-top:6px;padding-bottom:6px}
+.stats-list .place th{font:700 1.05rem/1.2 var(--cond)}
+.stats-list td small,.stats-quizzes td small{color:var(--muted);font-size:.82rem}
+.stats-list .num,.stats-quizzes .num{white-space:nowrap}
+.acts-cell{text-align:right;white-space:nowrap;width:1%}
+.stats-page a.ghost.small,.stat-card a.ghost.small{padding:2px 12px;font-size:.84rem}
+a.ghost.off{opacity:.45;pointer-events:none}
+.linkish{appearance:none;border:0;background:none;padding:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.linkish:hover{text-decoration:underline}
+.linkish.twisty::before{content:"";display:inline-block;width:7px;height:7px;margin:0 8px 2px -14px;border:solid var(--muted);border-width:0 2px 2px 0;transform:rotate(-45deg);transition:transform .15s}
+.linkish.twisty[aria-expanded="true"]::before{transform:rotate(45deg)}
+.mixups .arrow{color:var(--muted)}
+.stats-quizzes{table-layout:fixed}
+.stats-quizzes thead th.num{width:96px} .stats-quizzes thead th.last{width:100px}
+.stats-quizzes td,.stats-quizzes th{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stats-quizzes tr.place th{font:700 1.2rem/1.1 var(--cond)}
+.stats-quizzes tr.place td{font-weight:600}
+.stats-quizzes tr.quiz td:first-child{padding-left:36px}
+.stats-quizzes tr.sub td{border-top:0;padding-top:3px;padding-bottom:3px;font-size:.88rem}
+.stats-quizzes tr.sub td:first-child{padding-left:56px}
+.stats-quizzes .due{font-weight:700}
+.stat-card{width:min(720px,94vw);max-height:90vh;padding:16px 18px 18px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);color:var(--ink);box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.stat-card::backdrop{background:rgba(10,20,30,.55)}
+.stat-card header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.stat-card header b{display:block;font:700 1.6rem/1.1 var(--cond)}
+.stat-card header small{color:var(--muted)}
+.stat-card h3{margin:16px 0 6px}
+.stat-card .answers td{font-size:.88rem}
+.decks.stats-list.answers tr td:first-child,.decks.stats-list.mixups tr td:first-child{padding-left:8px}
+.stat-card .answers .ok{color:var(--c-ok)} .stat-card .answers .bad{color:var(--c-bad)}
+.stat-card .acts{display:flex;justify-content:flex-end;margin-top:14px}
+@media (max-width:760px){.strip{grid-template-columns:1fr}}
+@media (max-width:520px){
+  .stats-quizzes .hide-s{display:none}
+  .stats-quizzes thead th.num{width:64px;padding-left:4px;padding-right:6px;letter-spacing:0}
+  .mixups td small{display:block}
+  .stats-quizzes tr.quiz td:first-child{padding-left:24px}
+  .stats-quizzes tr.sub td:first-child{padding-left:36px}
+  .stat-card{padding:12px}
+}
 
 /* Multiple-choice quiz page */
 .quiz-page{max-width:720px}

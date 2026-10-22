@@ -22,7 +22,13 @@
     <section>
       <h1>Review</h1>
       <div class="review-go" id="review-go"></div>
+      <div class="view-pick tabs" id="tabs" role="tablist" aria-label="Page">
+        <button type="button" class="ghost small" role="tab" data-tab="review" aria-selected="true">Review</button>
+        <button type="button" class="ghost small" role="tab" data-tab="stats" aria-selected="false">Stats</button>
+      </div>
     </section>
+
+    <div class="stats-page" id="stats" hidden></div>
 
     <section>
       <h2>Stack</h2>
@@ -62,6 +68,7 @@
         <label>Cards per review <input type="number" id="round" min="1" step="1" inputmode="numeric"></label>
         <label>Cards per day <input type="number" id="day" min="1" step="1" inputmode="numeric"></label>
         <span id="today"></span>
+        <label class="toggle"><input type="checkbox" id="perMap"> Cards per map</label>
       </div>
     </section>
 
@@ -97,6 +104,7 @@
         <button type="button" class="ghost small" id="maps-on">Use</button>
         <button type="button" class="ghost small" id="maps-off" hidden>Remove</button>
         <span id="maps-state"></span>
+        <label class="toggle"><input type="checkbox" id="maps-unofficial"> Google Maps (unofficial)</label>
       </div>
       <details class="steps">
         <summary>Setup</summary>
@@ -107,7 +115,7 @@
           <li>Quotas → a daily limit, so the free amount is never passed</li>
           <li>The key → above, in every browser. It stays in the browser: it is not part of the online copy or the data file.</li>
         </ol>
-        <p class="muted">With a key, the street map and the overlay of the quizzes are Google’s, with English names. Without one, or when Google refuses it, they are OpenStreetMap’s. The coverage page stays on OpenStreetMap.</p>
+        <p class="muted">With a key, the street map, the overlay and the bare map of the quizzes are Google’s, with English names. Without one, or when Google refuses it, they are OpenStreetMap’s. The coverage page stays on OpenStreetMap.</p>
       </details>
     </section>
 
@@ -134,11 +142,13 @@
   </main>
 
   <script src="assets/js/store.js"></script>
+  <script src="assets/js/answers.js"></script>
   <script src="assets/js/sync.js"></script>
   <script src="assets/js/gmaps.js"></script>
   <script src="assets/js/common.js"></script>
   <script src="assets/js/srs.js"></script>
   <script src="assets/js/review.js"></script>
+  <script src="assets/js/stats.js"></script>
   <script src="assets/js/gamepad.js"></script>
 </body>
 </html>

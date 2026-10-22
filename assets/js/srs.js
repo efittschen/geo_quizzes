@@ -8,13 +8,17 @@
 // scheduler, SM-2, is the other choice in the settings: fixed factors (good × the card's ease, hard × 1.2).
 // Both take a card through the steps the way Anki does: again goes back to the first step, hard repeats the step,
 // good moves on, easy ends them. Every answer counts, whenever it is given: there is no waiting for a step to be
-// due, and a card asked again after a miss is answered for real.
+// due. A card missed and asked again (a replay: at the end of the same review, or in an ordinary round's Retry) was
+// just shown: answered right, it is rated by hand, hard (the default, also when none is picked in time), good or easy;
+// wrong, it is not known again (area-review.js). Only a card's first answer in a review counts for the review's result and the day's
+// count.
 // A review asks the cards that are due, or all of them ("refresh everything").
 // Answers are rated by the clock instead of by buttons (see quizzes/shared/area-review.js), with Anki's four ratings:
 //   again  (not known)  a wrong click, or no answer before the time limit
 //   hard   (unsure)     right on the first click, but slower than the "known" time
 //   good   (known)      right on the first click within the "known" time
-//   easy   (instantly)  right on the first click within the "easy" time
+//   easy   (instantly)  right on the first click within the "easy" time, and only the card's first answer of the day
+// A replay answered right by buttons instead: Hard, Good, Easy.
 // Ordinary rounds count too, for cards on the stack: a wrong click is not known, a quick first-try answer known.
 // One review asks at most 50 cards, and at 200 cards reviewed in a day the due ones wait for the next day; both
 // limits are settings. Putting new cards on the stack has no limit: players arrive knowing a lot already.
@@ -23,9 +27,17 @@
 //   a deck, the cards of one quiz page (in the page's record, so quizzes can come and go):
 //     { t: page title, c: { '<kind>|<item id>': card } }
 //     A card is a question on one map: its key is '<kind>@<look>|<item id>', the look being the map it is played
-//     on ("quiz", "overlay", "street"; in a city quiz "free" or "quiz" for the dots, with "+<background>" where that
+//     on ("quiz", "overlay", "street", "bare"; in a city quiz "free" or "quiz" for the dots, with "+<background>" where that
 //     is not the drawn map: "free+street"). A question learned on two maps is two cards, each reviewed on its own
-//     map. (Cards from before have no look in their key, '<kind>|<item id>': one that keeps its m and b is that
+//     map. With "Cards per map" off (a setting, `perMap`; the user's choice, 2026-10-21, others keep it on) a question
+//     has one card per way of answering it (its kind: Map, List, Type, Pairs, Draw… each their own, '<kind>~list'),
+//     whatever map it is played on: answers on any map count for it, in ordinary rounds and reviews; a perfect round
+//     gives a card only to a question that has none, and moves the card it has to its map if that is harder (quiz,
+//     overlay, street, bare; in a city quiz the dots before the map by distance, each on the drawn map, the overlay,
+//     the street map, the bare map: `hardness`). A question's cards on several maps (from before, or from another
+//     browser) become one when the setting is turned off, and on every page that opens with it off (`single`).
+//     Turned on again, they stay one, and perfect rounds on other maps make cards of their own again.
+//     (Cards from before have no look in their key, '<kind>|<item id>': one that keeps its m and b is that
 //     map's card, under the new key once its quiz page next opens. One without is given a map by its quiz page
 //     when it next opens, once: the one worked out from the best results (reviewModes in area-quiz.js); until then
 //     it counts and is reviewed like any card.) A page's cards fall into its layers by their <kind> (a
@@ -38,10 +50,11 @@
 //             s: its learning step (2, 3…: a new card's first, second… step; 1: the step after a miss, if the
 //             settings have one; none once it is in review), x: 1 while its question is missing from the quiz,
 //             m, b, p: how the last perfect round with it was played, which is how it is reviewed: the map
-//             ("quiz", "overlay", "street", or in a city quiz "quiz" for the dots and "free" for the map by
-//             distance), a city quiz's background if it wasn't the drawn map ("overlay", "street"), and when (ms) }
+//             ("quiz", "overlay", "street", "bare", or in a city quiz "quiz" for the dots and "free" for the map by
+//             distance), a city quiz's background if it wasn't the drawn map ("overlay", "street", "bare"), and when (ms) }
 //   the settings  { easy, fast, limit }: seconds for "easy", for "known" and for the time limit;
 //                 { round, day }: the most cards one review asks, and the most reviewed in a day;
+//                 perMap: false where "Cards per map" is off (see above);
 //                 the schedule, named as in Anki's options: { algo: "fsrs" or "sm2", retain: FSRS's target
 //                 retention in %, steps: a new card's learning steps in minutes,
 //                 restep: the relearning step after a miss in minutes (0: none), max: the longest interval in days,
@@ -59,7 +72,7 @@ const SRS = (() => {
   const DAY = 864e5, MINUTE = 6e4;
   const ROLLOVER = 4; // a day starts at 4 am, as in Anki
   const MIN_EASE = 1.3, EASY_BONUS = 1.3, EASY_DAYS = 4; // SM-2, as in Anki: the least ease, and what easy adds
-  const OPTS = { easy: 2, fast: 6, limit: 15, round: 50, day: 200, algo: "fsrs", retain: 90, steps: [1, 10], restep: 10, keep: 50, first: 1, ease: 250, hard: 120, max: 36500 };
+  const OPTS = { easy: 2, fast: 6, limit: 15, round: 50, day: 200, perMap: true, algo: "fsrs", retain: 90, steps: [1, 10], restep: 10, keep: 50, first: 1, ease: 250, hard: 120, max: 36500 };
 
 
   // Start (4 am) of the day ts falls in, or of the day n days later: by the calendar, so clock changes don't shift it.
@@ -243,9 +256,67 @@ const SRS = (() => {
       r.cards = cards;
     });
   }
+  /* ---------- "Cards per map" off: one card a question, whatever the map ---------- */
+  // How hard a map is (a look): the quiz map, the overlay, the street map, the bare map; in a city quiz the dots before
+  // the map by distance, each on the drawn map, the overlay, the street map, the bare map (as EASIEST in area-quiz.js,
+  // and the backgrounds' picker). A card without a map is the easiest.
+  const hardness = look => { const [map, back] = look.split('+'); return LOOKS.indexOf(map) * 10 + Math.max(0, LOOKS.indexOf(back)); };
+  const question = key => kindOf(key) + key.slice(key.indexOf('|')); // '<kind>|<item id>'
+  const copies = (d, key) => Object.keys(d.c).filter(k => question(k) === question(key)); // a question's cards, on any map
+  // A question's card (key: the question on the map it is played on): that map's, else its card on another map (the
+  // hardest, while it has several), else null.
+  const cardOf = (d, key) => (d.c[key] ? key : copies(d, key).sort((a, b) => hardness(lookOf(b, d.c[b])) - hardness(lookOf(a, d.c[a])))[0] || null);
+  // The card an answer goes to (key: the question on the map it is played on): that map's, or with "Cards per map"
+  // off the question's card on whatever map; key where there is none.
+  const keyOf = (id, key) => (opts().perMap ? key : cardOf(deck(id), key) || key);
+  // How well a card is learned, to pick one of a question's cards: FSRS its stability, SM-2 its interval.
+  function learnt(c) { if (opts().algo !== "fsrs") return c.i || 0; const x = { ...c }; recollect(x); return x.st; }
+  // Makes cards of a question one, under one key (into: Map of that key -> [the cards' keys]), in the page's record:
+  // its schedule (due, interval, ease, stability, difficulty, step, last answered, misses) that of the card learned
+  // best (of two alike, the one answered last), its map the key's, and when it was last played perfectly that of the
+  // card that was there, if one was. The keys left are kept in `moved`, and the key they went to with when its card
+  // was last answered (see STORE.cardKeys), so that a copy of any of them from a browser that hasn't seen this is known
+  // as this card; a review on its way knows them by the new key. The answer log keeps their answers as they were.
+  function join(id, into) {
+    if (!into.size) return;
+    const at = STORE.time(Date.now()), gone = new Map(); // key left -> key gone to
+    STORE.setQuiz(id, r => {
+      const cards = STORE.cardKeys(r.cards || {}, r.moved);
+      r.moved ||= {};
+      for (const [to, from] of into) {
+        const have = from.filter(k => cards[k]).map(k => [k, STORE.cardIn(cards[k])]);
+        if (!have.length) continue;
+        const [best] = have.sort(([, a], [, b]) => learnt(b) - learnt(a) || (b.l || 0) - (a.l || 0))[0];
+        const look = lookOf(to, {}), [map, back] = look.split('+'), there = cards[to], { map: _, back: __, played, ...c } = cards[best];
+        cards[to] = { ...c, map, ...(back ? { back } : {}), ...(there && there.played ? { played: there.played } : {}) };
+        for (const [k] of have) if (k !== to) { delete cards[k]; r.moved[k] = { to: look, at }; gone.set(k, to); }
+        r.moved[to] = { to: null, at, ...(c.last ? { last: c.last } : {}) };
+      }
+      r.cards = cards;
+    });
+    const run = STORE.review().run;
+    if (!run || !gone.size) return;
+    let renamed = false;
+    for (const list of [run.left, run.again]) if (list && list[id]) {
+      const keys = [...new Set(list[id].map(k => gone.get(k) || k))];
+      if (keys.join() !== list[id].join()) { list[id] = keys; renamed = true; }
+    }
+    if (renamed) setRun(run);
+  }
+  // A question's cards on several maps made one (see join), on the hardest map of those it was played perfectly on
+  // (p), else of them all: those of one page, or of every page. (Cards that don't say their map wait for their quiz
+  // page to give them one: see sort.)
+  function single(id = null) {
+    if (id == null) { for (const q of STORE.quizIds()) if (STORE.quiz(q).cards) single(q); return; }
+    const d = deck(id), by = new Map(), into = new Map();
+    for (const k of Object.keys(d.c)) if (lookOf(k, d.c[k])) by.set(question(k), [...(by.get(question(k)) || []), k]);
+    const harder = (a, b) => (hardness(lookOf(b, d.c[b])) > hardness(lookOf(a, d.c[a])) ? b : a);
+    for (const keys of by.values()) if (keys.length > 1) { const played = keys.filter(k => d.c[k].p); into.set((played.length ? played : keys).reduce(harder), keys); }
+    join(id, into);
+  }
   // The map a card is played on: its look, from its key (see above), else from what the card keeps.
   const lookOf = (key, c) => { const bar = key.indexOf('|'), at = key.indexOf('@'); return at >= 0 && at < bar ? key.slice(at + 1, bar) : (c.m || '') + (c.b ? '+' + c.b : ''); };
-  const LOOKS = ['quiz', 'overlay', 'street', 'free']; // their order on the review page; a card without a map last
+  const LOOKS = ['quiz', 'overlay', 'street', 'bare', 'free']; // their order on the review page; a card without a map last
   const lookRank = l => { const i = LOOKS.indexOf(l.split('+')[0]); return l ? (i < 0 ? LOOKS.length : i) * 10 + (l.includes('+') ? 1 : 0) : 99; };
   // A deck with only the cards of some layers, or of some layers on some maps (kinds: ["<kind>" or
   // "<kind>@<look>"]; null: all of them).
@@ -285,8 +356,21 @@ const SRS = (() => {
   const reviewed = now => { const n = today(now) + 1; STORE.setReview(r => { r.day = { date: STORE.time(dayStart(now)), reviewed: n }; }); };
   // Put questions on the stack (those not on it yet), at a new card's first step: due in a minute. Returns how many.
   // on: how their round, a perfect one, was played ({ m, b }): kept with every one of its cards, those on the stack
-  // already too, since a card is reviewed the way it was last played perfectly.
+  // already too, since a card is reviewed the way it was last played perfectly. With "Cards per map" off, a question
+  // with a card on another map gets none: its card moves to this map if this one is harder (see join), and is left as
+  // it is if not.
   function add(id, title, keys, now, on = null) {
+    if (!opts().perMap) {
+      const had = deck(id), into = new Map();
+      keys = keys.filter(k => {
+        const was = cardOf(had, k);
+        if (!was || was === k) return true;
+        if (hardness(lookOf(k, {})) <= hardness(lookOf(was, had.c[was]))) return false;
+        into.set(k, copies(had, k));
+        return true;
+      });
+      join(id, into);
+    }
     const d = deck(id); let n = 0;
     for (const k of keys) {
       if (!d.c[k]) { d.c[k] = fresh(now); n++; }
@@ -321,10 +405,16 @@ const SRS = (() => {
     save(id, d);
     return card;
   }
-  function answer(id, key, g, now) {
+  // chosen: a rating the player gave (a replay's buttons), not the clock's. The clock gives "easy" only to a card's
+  // first answer of the day: answered again the same day (a round played again, a review after a round) it was just
+  // seen, and is "known" at most (the user's rule, 2026-10-21: quick repeats had pushed cards months ahead).
+  function answer(id, key, g, now, chosen = false) {
     const d = deck(id), card = d.c[key];
     if (!card) return null;
+    if (!chosen && g === INSTANT && card.l != null && dayStart(card.l) === dayStart(now)) g = KNOWN;
+    const step = card.s; // (its rating and new interval go into the answer log, with whether it was being learned)
     grade(card, g, now); save(id, d);
+    if (typeof ANSWERS === "object") ANSWERS.graded(id, key, g, card, step);
     return card;
   }
 
@@ -402,7 +492,7 @@ const SRS = (() => {
   }
 
   // The settings' names in store.js.
-  const KEPT_AS = [["easy", "easy"], ["fast", "known"], ["limit", "limit"], ["round", "perReview"], ["day", "perDay"], ["algo", "scheduler"], ["retain", "retention"],
+  const KEPT_AS = [["easy", "easy"], ["fast", "known"], ["limit", "limit"], ["round", "perReview"], ["day", "perDay"], ["perMap", "perMap"], ["algo", "scheduler"], ["retain", "retention"],
     ["steps", "steps"], ["restep", "missStep"], ["keep", "kept"], ["first", "firstInterval"], ["ease", "ease"], ["hard", "unsure"], ["max", "longest"]];
   function opts() {
     const kept = STORE.settings(), o = { ...OPTS };
@@ -412,6 +502,7 @@ const SRS = (() => {
     if (!(o.limit > o.fast)) o.limit = Math.max(OPTS.limit, o.fast * 2);
     if (!(o.easy >= 0 && o.easy < o.fast)) o.easy = Math.min(OPTS.easy, o.fast / 2); // 0: no answer is "easy"
     if (o.algo !== "sm2") o.algo = "fsrs";
+    if (typeof o.perMap !== "boolean") o.perMap = OPTS.perMap;
     if (!Array.isArray(o.steps) || !o.steps.every(m => m > 0)) o.steps = OPTS.steps;
     sane("retain", 70, 97); sane("restep", 0); sane("keep", 0, 100); sane("first", 1); sane("ease", MIN_EASE * 100); sane("hard", 50); sane("max", 1);
     return o;
@@ -428,5 +519,10 @@ const SRS = (() => {
     return n === 1 ? "tomorrow" : n < 60 ? `in ${n} days` : n < 730 ? `in ${Math.round(n / 30.4)} months` : `in ${(n / 365).toFixed(1)} years`;
   }
 
-  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, setNames, cardList, reschedule, setLooks, looksOf, sort, clash, convert, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, overview, run, setRun, nextStop, stretch, ran, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
+  // A page that opens with "Cards per map" off makes a question's cards on several maps one (those from another
+  // browser too), and so when the online copy brings some while it is open (sync.js).
+  if (!opts().perMap) single();
+  addEventListener("geoquizzes:fresh", () => { if (!opts().perMap) single(); });
+
+  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, setNames, cardList, reschedule, setLooks, looksOf, sort, clash, convert, keyOf, single, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, overview, run, setRun, nextStop, stretch, ran, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
 })();

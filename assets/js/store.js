@@ -2,8 +2,10 @@
 //
 //   geoquizzes.quiz.<quiz id>   one record per quiz page (its folder name, as in data/quizzes.json), with what it has of:
 //     title    the page's title (set with its first review card)
-//     moved    the keys cards were moved from by the player (sorted onto a map, or converted to another):
-//              { <key>: { to: <look>, at: when } } (to null: cards were moved into that key then); see cardKeys
+//     moved    the keys cards were moved from by the player (sorted onto a map, or converted to another), or as a
+//              question's cards became one ("Cards per map" off, see srs.js):
+//              { <key>: { to: <look>, at: when } } (to null: cards were moved into that key then; last: when the
+//              card a question's cards became there was last answered); see cardKeys
 //     looks    the maps the page's cards can be played on (for sorting them on the review page)
 //     layers   the names of the page's layers that have review cards: { <layer>: label } (see srs.js)
 //     called   what its review cards are called on the review page: { "<layer>|<item>": [question, more] } (see srs.js)
@@ -32,24 +34,31 @@
 //                                 aloud (see "sound" in area-quiz.js); listMin: true once a quiz's list of answers
 //                                 to pick from is folded away (see "choices" in area-quiz.js); the review schedule (see srs.js): scheduler
 //                                 ("fsrs" or "sm2"), retention, steps, missStep, kept, firstInterval, ease, unsure, longest;
-//                                 open: the folders open in "All quizzes"; changed: when any but `open` last
+//                                 perMap: false where "Cards per map" is off (a question's cards on several maps are
+//                                 one, see srs.js); open: the folders open in "All quizzes"; changed: when any but `open` last
 //                                 changed here (a time, for the online copy) }
 //   geoquizzes.review           { day: { date, reviewed }: cards reviewed today; run: a review in progress (srs.js) }
 //   geoquizzes.sync             the online copy, if the player named one (see sync.js): its link and what was seen
 //                                 of it. It belongs to this browser: no data file holds it, and none replaces it.
 //   geoquizzes.maps             the player's own Google Maps key, if they named one (see gmaps.js): { key, session,
-//                                 expiry, at, fault }. It too belongs to this browser alone: the online copy does not
-//                                 take it, no data file holds it, and none replaces it.
+//                                 expiry, bare: { session, expiry } (the bare map's), unofficial: true where the box
+//                                 "Google Maps (unofficial)" is ticked, at, fault }. It too belongs to this browser
+//                                 alone: the online copy does not take it, no data file holds it, and none replaces it.
+//   geoquizzes.answers          answers given as a page closed, not yet in the answer log: the next page to open
+//                                 writes them there. The log itself, every answer given in a quiz, is in IndexedDB
+//                                 (assets/js/answers.js says how); the online copy takes it in chunks (sync.js).
 //
-// The data file of the review page ("Your data") is these entries as they are:
-//   { app: "geo-quizzes", version: 2, saved, settings, review, quizzes: { <quiz id>: record }, older }
+// The data file of the review page ("Your data") is these entries as they are, and the answer log's chunks:
+//   { app: "geo-quizzes", version: 2, saved, settings, review, quizzes: { <quiz id>: record }, older, answers }
+// Put back, the file's entries take the place of these, and its chunks join the log (each the longer of two copies:
+// see answers.js), so no answer is lost or counted twice.
 //
 // Before, the same things lay in many small entries: stars, cards and settings under other "geoquizzes." names, and a
 // quiz's results and choices under a short name of its own ("idregions.best.…"). Entries of the first kind are
 // carried over when this file loads; those of the second by their quiz page when it next opens (`adopt`), since only
 // the page knows its short name. Until then they are the `older` part of a data file, so nothing is left behind.
 const STORE = (() => {
-  const P = 'geoquizzes.', QUIZ = P + 'quiz.', SETTINGS = P + 'settings', REVIEW = P + 'review', SYNC = P + 'sync', MAPS = P + 'maps';
+  const P = 'geoquizzes.', QUIZ = P + 'quiz.', SETTINGS = P + 'settings', REVIEW = P + 'review', SYNC = P + 'sync', MAPS = P + 'maps', SPILL = P + 'answers';
   const keys = () => { const out = []; try { for (let i = 0; i < localStorage.length; i++) out.push(localStorage.key(i)); } catch (e) {} return out; };
   const parse = key => { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } };
   const drop = key => { try { localStorage.removeItem(key); } catch (e) {} };
@@ -81,7 +90,7 @@ const STORE = (() => {
     if (stack && !r.cards) r.cleared = now();
     put(QUIZ + id, tidy(r)); told();
   }
-  const quizIds = () => keys().filter(k => k.startsWith(QUIZ)).map(k => k.slice(QUIZ.length)).sort();
+  const quizIds = () => keys().filter(k => k.startsWith(QUIZ) && !k.startsWith(QUIZ + '_log.')).map(k => k.slice(QUIZ.length)).sort(); // (not the answer log's chunks, see answers.js)
   const settings = () => get(SETTINGS);
   const setSettings = f => change(SETTINGS, s => { const was = JSON.stringify({ ...s, open: 0 }); f(s); if (JSON.stringify({ ...s, open: 0 }) !== was) s.changed = now(); });
   const review = () => get(REVIEW), setReview = f => change(REVIEW, f);
@@ -111,13 +120,15 @@ const STORE = (() => {
   // SRS.sort). Cards the player moves, sorting them or converting them to another map (SRS.convert), leave their
   // key in the record's `moved` ({ <key>: { to, at } }, kept on every browser through the online copy): a copy under
   // that key answered no later than the move, from a browser that hasn't seen it, is left out, as it is the card
-  // moved; one answered since (learned again on that map) stays. No other card is ever left out. (A move of the
-  // first version is a look alone, for an old key: a copy of it without its map is left out.)
+  // moved; one answered since (learned again on that map) stays. The key a question's cards became one under (SRS.join)
+  // also says when that card was last answered (`last`): another copy under it answered no later than that is one of
+  // the cards it was made of, and is left out too. No other card is ever left out. (A move of the first version is a
+  // look alone, for an old key: a copy of it without its map is left out.)
   function cardKeys(cards, moved = {}) {
     const out = { ...cards };
     for (const k of Object.keys(out)) {
       const bar = k.indexOf('|'), c = out[k], t = moved[k], old = k.lastIndexOf('@', bar) < 0;
-      if (t && (typeof t === 'string' ? old && !c.map : t.to && (ms(c.last) || 0) <= (ms(t.at) || 0))) { delete out[k]; continue; }
+      if (t && (typeof t === 'string' ? old && !c.map : (ms(c.last) || 0) <= (ms(t.at) || 0) && (t.to || (t.last != null && ms(c.last) !== ms(t.last))))) { delete out[k]; continue; }
       if (!old || !c.map) continue;
       delete out[k];
       const key = k.slice(0, bar) + '@' + c.map + (c.back ? '+' + c.back : '') + k.slice(bar);
@@ -129,11 +140,11 @@ const STORE = (() => {
   /* ---------- entries of the layout before ---------- */
   const OLD_NAMES = ['choice', 'kind', 'lang', 'map', 'topN', 'opts'];
   const OLD = /^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)?\.(?:choice|kind|lang|map|opts|saved|topN|sel|sel\..+|best\..+)$/;
-  const isOld = key => OLD.test(key) || (key.startsWith(P) && !key.startsWith(QUIZ) && key !== SETTINGS && key !== REVIEW && key !== SYNC && key !== MAPS);
+  const isOld = key => OLD.test(key) || (key.startsWith(P) && !key.startsWith(QUIZ) && key !== SETTINGS && key !== REVIEW && key !== SYNC && key !== MAPS && key !== SPILL);
   // Those under "geoquizzes.": stars, cards, drawings, settings, the review's state.
   function carryOver() {
     for (const key of keys()) {
-      if (!key.startsWith(P) || key.startsWith(QUIZ) || key === SETTINGS || key === REVIEW || key === SYNC || key === MAPS) continue;
+      if (!key.startsWith(P) || key.startsWith(QUIZ) || key === SETTINGS || key === REVIEW || key === SYNC || key === MAPS || key === SPILL) continue;
       const name = key.slice(P.length), v = parse(key) || {};
       if (name.startsWith('rating.')) { if (Array.isArray(v.levels)) setQuiz(name.slice(7), r => { r.stars = v.levels; }); }
       else if (name.startsWith('srs.deck.')) setQuiz(name.slice(9), r => { if (v.t) r.title = v.t; r.cards = Object.fromEntries(Object.entries(v.c || {}).map(([k, c]) => [k, cardOut(c)])); });
@@ -185,7 +196,7 @@ const STORE = (() => {
   function restore(f) {
     const first = f?.app === 'geo-quizzes' && f.version === 1 && f.data && typeof f.data === 'object'; // the file format before
     if (!first && !(f?.app === 'geo-quizzes' && f.quizzes && typeof f.quizzes === 'object')) return false;
-    for (const key of keys()) if ((key.startsWith(P) && key !== SYNC && key !== MAPS) || OLD.test(key)) drop(key);
+    for (const key of keys()) if ((key.startsWith(P) && key !== SYNC && key !== MAPS && key !== SPILL) || OLD.test(key)) drop(key);
     const raw = (entries, text) => { for (const [key, v] of Object.entries(entries || {})) if (isOld(key)) { try { localStorage.setItem(key, text ? v : JSON.stringify(v)); } catch (e) {} } };
     if (first) { raw(f.data, false); raw(f.raw, true); }
     else {

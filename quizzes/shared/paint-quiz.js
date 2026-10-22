@@ -14,8 +14,8 @@
    Explore shows a round without the quiz: all its parts on the map and in a list, one at a time with its places.
 
    The map behind is the drawn one or, by the picker on the map, the street map in the same projection
-   (map-tiles.js): with the region borders on it (overlay) or alone. A switch beside the picker lays Street View
-   coverage on top of any of them (the layer of the Coverage page).
+   (map-tiles.js): with the region borders on it (overlay), alone, or bare (without its own borders either). A switch
+   beside the picker lays Street View coverage on top of any of them (the layer of the Coverage page).
 
    Data: NAMES (names.js, made by tools/townnames.mjs) on the map of the country's city quiz (CITIES, its cities.js).
    With ?trace in the address the places show from the start, the parts come in their listed order, and every
@@ -348,7 +348,7 @@
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
   /* ---------- the map behind, and coverage on top ---------- */
-  const BACKS = [['quiz', 'Quiz map', 'drawn'], ['overlay', 'Overlay', 'borders on streets'], ['street', 'Street map', 'no borders']];
+  const BACKS = [['quiz', 'Quiz map', 'drawn'], ['overlay', 'Overlay', 'borders on streets'], ['street', 'Street map', 'no borders'], ['bare', 'Bare map', 'no borders at all']];
   const mapBar = el('div', 'mapbar'), backSeg = el('div', 'maps'), coverSeg = el('div', 'maps'), coverBtn = el('button', null, 'Coverage');
   backSeg.setAttribute('role', 'group'); backSeg.setAttribute('aria-label', 'Map');
   backSeg.replaceChildren(...BACKS.map(([m, t, sub]) => { const b = el('button', null, t); b.type = 'button'; b.dataset.back = m; b.title = sub; b.onclick = () => useBack(m); return b; }));
@@ -367,7 +367,7 @@
   function useBack(m) {
     back = m; if (saved.map !== m) { saved.map = m; keep(); }
     for (const b of backSeg.children) b.setAttribute('aria-pressed', b.dataset.back === m);
-    if (m !== 'quiz' || tiles) withTiles(() => { tiles.streets().show(back !== 'quiz'); fit(); });
+    if (m !== 'quiz' || tiles) withTiles(() => { tiles.street(back === 'quiz' ? null : back === 'bare' ? 'bare' : 'street'); fit(); });
   }
   // Street View coverage over the map: the layer of the Coverage page (data/coverage, see the README).
   const COVER = HERE + '../../data/coverage';
@@ -413,7 +413,7 @@
   }
   function start(round, ids) {
     ids = [...ids]; if (!TRACE) ids.sort(() => Math.random() - 0.5);
-    G = { round, ids, at: -1, results: [], counts: ids.length === round.ids.length };
+    G = { round, ids, at: -1, results: [], counts: ids.length === round.ids.length && !round.practice, retry: ids.length < round.ids.length };
     screen('play'); next();
   }
   function ticks() {
@@ -422,6 +422,7 @@
   function next() {
     if (++G.at >= G.ids.length) return finish();
     part = N.parts[G.ids[G.at]]; asked = Math.floor(Math.random() * part.names.length);   // names come with the first places only
+    G.t = performance.now();
     mask = new Uint8Array(N.gw * N.gh); strokes = []; shown = false;
     const [a, m, z] = split(part.names[asked], part), mark = el('b', null, m);
     $('pname').replaceChildren(...(TRACE ? [part.label] : [a, mark, z]));
@@ -438,6 +439,8 @@
     for (let i = 0; i < part.x.length; i++) if (mask[Math.min(N.gh - 1, Math.max(0, Math.floor(part.y[i] / N.cell))) * N.gw + Math.min(N.gw - 1, Math.max(0, Math.floor(part.x[i] / N.cell)))]) hit++;
     const cover = hit / part.x.length, share = painted / N.total, score = Math.round(100 * Math.max(0, Math.min(1, (cover - share) / (part.cover / 100 - part.painted / 100)))), ok = score >= PASS;
     G.results.push({ i: G.ids[G.at], score, ok });
+    // the answer log (assets/js/answers.js): the part painted, its score; a Retry round's answers are replays
+    if (typeof ANSWERS === 'object' && !TRACE) ANSWERS.add({ quiz: PAGE_ID, kind: 'parts', item: part.label, look: back, mode: 'paint', replay: G.retry, r: ok ? 0 : 3, ms: performance.now() - G.t, v: score, names: { [part.label]: part.label }, layer: 'Names' });
     $('sCover').textContent = Math.round(cover * 100) + '%'; $('sPaint').textContent = pct(share); $('sScore').textContent = score;
     $('sGood').textContent = `${G.results.filter(x => x.ok).length}/${G.results.length}`;
     const fb = $('fb'); fb.className = 'feedback ' + (ok ? 'ok' : 'bad'); fb.replaceChildren(el('p', 't', ok ? 'Accepted' : `Under ${PASS}`));
@@ -508,4 +511,14 @@
   menu();
   useBack(BACKS.some(([m]) => m === saved.map) ? saved.map : 'quiz');
   useCover(!!saved.cover);
+  // ?practice=parts&items=…&map=…: a round of exactly those parts, on that map, at once (the review page's Practice,
+  // see assets/js/stats.js); its result is no round's best
+  {
+    const p = new URLSearchParams(location.search), want = (p.get('items') || '').split(',').map(x => { try { return decodeURIComponent(x); } catch (e) { return x; } });
+    const ids = N.parts.map((q, i) => (want.includes(q.label) ? i : -1)).filter(i => i >= 0);
+    if (p.get('practice') === 'parts' && ids.length) {
+      if (BACKS.some(([m]) => m === p.get('map'))) useBack(p.get('map'));
+      start({ id: 'practice', label: p.get('name') || 'Practice', ids, practice: true }, ids);
+    }
+  }
 })();

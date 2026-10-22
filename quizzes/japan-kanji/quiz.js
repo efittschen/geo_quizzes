@@ -114,7 +114,7 @@
     };
     $('colA').replaceChildren(...shuffle(ids).map(id => tile(id, 'kanji')));
     $('colB').replaceChildren(...shuffle(ids).map(id => tile(id, 'en')));
-    G.board = ids;
+    G.board = ids; G.at = performance.now(); G.gave = new Map();
   }
   function choose(b) {
     if (b.disabled) return;
@@ -123,6 +123,7 @@
     if (a.dataset.id === b.dataset.id) {
       for (const t of [a, b]) { t.disabled = true; t.classList.add(G.wrong.has(t.dataset.id) ? 'late' : 'ok'); }
       G.done.add(a.dataset.id); stats();
+      logged(a.dataset.id, 'pairs', G.wrong.has(a.dataset.id) ? 1 : 0, G.gave.get(a.dataset.id)); G.at = performance.now();
       says('ok', '✓ Right', a.dataset.id);
       if (G.board.every(id => G.done.has(id))) {
         G.i += G.board.length;
@@ -130,6 +131,7 @@
       }
     } else {
       mark(a.dataset.id, true); mark(b.dataset.id, true);
+      for (const [x, y] of [[a, b], [b, a]]) (G.gave.get(x.dataset.id) || G.gave.set(x.dataset.id, []).get(x.dataset.id)).push(y.dataset.id);
       for (const t of [a, b]) { t.classList.add('no'); setTimeout(() => t.classList.remove('no'), 600); }
       const kanji = a.dataset.side === 'kanji' ? a : b, other = kanji === a ? b : a;
       says('bad', `✕ Not ${BY[other.dataset.id].en}:`, kanji.dataset.id);
@@ -150,6 +152,12 @@
       return b;
     }));
     $('next').hidden = true; $('fb').textContent = ''; $('fb').className = 'fb';
+    G.at = performance.now();
+  }
+  // The answer log (assets/js/answers.js): a prefecture answered, and what it was taken for; a Retry round's are replays.
+  function logged(id, mode, r, given = []) {
+    if (typeof ANSWERS !== 'object') return;
+    ANSWERS.add({ quiz: PAGE_ID, kind: 'prefectures', item: id, mode, replay: !G.round, r, ms: performance.now() - G.at, given, names: Object.fromEntries([id, ...given].map(x => [x, `${BY[x].kanji} · ${BY[x].en}`])), layer: 'Prefectures' });
   }
   const k2eOf = b => (G.mode === 'k2e' ? BY[b.dataset.id].en : BY[b.dataset.id].kanji); // what a choice said
   function pick(b) {
@@ -157,6 +165,7 @@
     if ($('choices').classList.contains('answered')) return;
     const right = b.dataset.id === id;
     mark(id, !right); G.done.add(id); stats();
+    logged(id, G.mode === 'k2e' ? 'pick' : 'pickback', right ? 0 : 3, right ? [] : [b.dataset.id]);
     for (const c of $('choices').children) { c.disabled = true; if (c.dataset.id === id) c.classList.add('ok'); }
     if (!right) b.classList.add('no');
     const p = BY[id];
