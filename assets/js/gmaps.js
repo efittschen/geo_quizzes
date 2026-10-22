@@ -1,6 +1,6 @@
 // Google's map as the street map, for a player who names a key of their own (the review page, "Google street map"),
-// or, without one, who ticks "Google Maps (unofficial)" there (see unofficial below). Otherwise, and whenever Google
-// does not answer, the street map is OpenStreetMap's as before.
+// or, without one or when the key does not answer, who ticks "Google Maps (unofficial)" there (see unofficial below).
+// Otherwise, and whenever Google does not answer, the street map is OpenStreetMap's as before.
 //
 // The key is a Google Maps Platform API key with the Map Tiles API enabled. It lies in this browser only (store.js,
 // `geoquizzes.maps`): no file of the site holds it, the online copy does not take it, and neither does the data file.
@@ -14,9 +14,12 @@
 //   GMAPS.key()                the key, or ''
 //   GMAPS.set(key)             names the key ('' removes it) and tries it: resolves to what is wrong, or null
 //   GMAPS.tiles(bare)          resolves to { url: a tile address with {z}, {x}, {y}, copyright(bounds, zoom) } or, without a
-//                              key or without an answer, null (the fault is then in GMAPS.state()); bare: the bare map's
-//   GMAPS.failed(why)          a page tells that tiles did not come: the session is dropped, the fault kept (unofficial:
-//                              dropped for the rest of the visit)
+//                              key or without an answer, null (the fault is then in GMAPS.state()); bare: the bare map's.
+//                              A key that does not answer gives way to the public tile address where the box is ticked
+//   GMAPS.failed(why, unofficial)  a page tells that tiles did not come: the key's session is dropped, the fault kept; the
+//                              public tile address's (unofficial: true, or no key) is dropped for the rest of the visit
+//   GMAPS.fallback(bare)       the public tile address's tiles, where the box is ticked and they have not failed this
+//                              visit, else null: what a page turns to when the key's tiles are refused
 //   GMAPS.state()              { key, fault, at: when the key last answered (ms) }
 //   GMAPS.unofficial()         whether the street map is Google's by its public tile address (no key, the box ticked)
 //   GMAPS.wanted()             whether the box is ticked; GMAPS.setUnofficial(on) ticks it or not
@@ -70,10 +73,11 @@ const GMAPS = (() => {
   const dropped = () => { try { return sessionStorage.getItem(OFF) === '1'; } catch (err) { return false; } };
   const unofficial = () => !key() && !!get().unofficial && !dropped();
   function setUnofficial(on) { STORE.setMaps(m => { if (on) m.unofficial = true; else delete m.unofficial; }); try { sessionStorage.removeItem(OFF); } catch (err) {} }
+  const fallback = (bare = false) => (get().unofficial && !dropped() ? { url: UNOFFICIAL + (bare ? APISTYLE : ''), unofficial: true } : null);
   async function tiles(bare = false) {
-    if (unofficial()) return { url: UNOFFICIAL + (bare ? APISTYLE : ''), unofficial: true };
+    if (unofficial()) return fallback(bare);
     const k = key(), s = await session(bare);
-    if (!s) return null;
+    if (!s) return fallback(bare); // (a key that does not answer: the public address where the box is ticked)
     const auth = `session=${encodeURIComponent(s)}&key=${encodeURIComponent(k)}`;
     return {
       url: `${API}/v1/2dtiles/{z}/{x}/{y}?${auth}`,
@@ -87,8 +91,8 @@ const GMAPS = (() => {
       },
     };
   }
-  function failed(fault) {
-    if (!key()) { try { sessionStorage.setItem(OFF, '1'); } catch (err) {} return; }   // (unofficial: OpenStreetMap for the rest of the visit)
+  function failed(fault, pub = false) {
+    if (pub || !key()) { try { sessionStorage.setItem(OFF, '1'); } catch (err) {} return; }   // (unofficial: OpenStreetMap for the rest of the visit)
     STORE.setMaps(m => { if (!m.key) return; delete m.session; delete m.expiry; delete m.bare; m.fault = fault; });
   }
   async function set(k) {
@@ -99,5 +103,5 @@ const GMAPS = (() => {
     await session();
     return get().fault || null;
   }
-  return { key, set, tiles, failed, state, unofficial, setUnofficial, wanted: () => !!get().unofficial };
+  return { key, set, tiles, fallback, failed, state, unofficial, setUnofficial, wanted: () => !!get().unofficial };
 })();

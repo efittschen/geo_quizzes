@@ -307,7 +307,7 @@ function mapTiles(stage, C, AHEAD = 192) {
         img.style.left = Math.round(((c * SIZE - s.cx) * s.unit - s.mx) * s.B) + 'px'; img.style.top = Math.round(((r * SIZE - s.cy) * s.unit - s.my) * s.B) + 'px';
         img.style.width = img.style.height = s.px + 1 + 'px';
         s.wait++;
-        img.onload = img.onerror = () => { img.onload = img.onerror = null; if (!img.naturalWidth) { img.remove(); if (L.failed) L.failed(); } if (!--s.wait && s === sheet && old) { old.el.remove(); old = null; } };
+        img.onload = img.onerror = () => { img.onload = img.onerror = null; if (!img.naturalWidth) { img.remove(); if (L.failed) L.failed(url); } if (!--s.wait && s === sheet && old) { old.el.remove(); old = null; } };
         if (L.pic) L.pic(url).then(src => { if (src) img.src = src; else { if (s.tiles.get(key) === img) s.tiles.delete(key); if (img.onerror) img.onerror(); } }); else img.src = url;
         s.el.append(img); s.tiles.set(key, img);
       }
@@ -346,35 +346,44 @@ function mapTiles(stage, C, AHEAD = 192) {
     // as they come, not redrawn. Until its session answers there are no tiles; without an answer, or after a few
     // tiles refused (the key's quota used up, the key restricted), OpenStreetMap's are asked for instead. The bare
     // map's session has Google draw it without borders; OpenStreetMap's tiles have them taken out (BARE_TILES). The
-    // same with Google's public tile address (no key, the box "Google Maps (unofficial)" ticked, see gmaps.js).
+    // same with Google's public tile address (the box "Google Maps (unofficial)" ticked, see gmaps.js): without a key,
+    // or once the key's session or tiles are refused; only when those fail too does OpenStreetMap's map come.
     let from = FROM_OSM, google = null, refused = 0, me = null;
-    const back = fault => { google = null; owed[look] = null; GMAPS.failed(fault); from = FROM_OSM; credited(OSM + ' contributors'); me.reset(); };
+    // Google's tiles (by the key or the public address): their credit, and the one Google asks for those in view.
+    const use = g => {
+      google = g; refused = 0; from = (z, x, y) => g.url.replace('{z}', z).replace('{x}', x).replace('{y}', y).replace('{s}', (x + y) % 4);
+      credited('&copy; Google'); owed[look] = null; me.reset();
+      if (!g.copyright) return;   // (Google's public tile address, unofficial: no credit asked for beyond its name)
+      // The copyright Google asks to be shown for the tiles in view, once the map rests.
+      let timer = 0;
+      owed[look] = () => {
+        clearTimeout(timer);
+        timer = setTimeout(async () => {
+          if (!want || google !== g) return;
+          const a = invert(want.x, want.y), b = invert(want.x + stage.clientWidth / want.k, want.y + stage.clientHeight / want.k);
+          if (!a || !b) return;
+          const z = Math.max(0, Math.min(19, Math.round(Math.log2(want.k * C.proj.k * 360 / 256))));
+          const text = await g.copyright({ north: a[0], south: b[0], east: b[1], west: a[1] }, z);
+          if (text && google === g) credited(text.replace(/[<>&]/g, ''));
+        }, 1200);
+      };
+      if (shown[look]) owed[look]();
+    };
+    // Tiles refused: the key's give way to the public address's where the box is ticked; those, to OpenStreetMap's.
+    const back = fault => {
+      const pub = !!(google && google.unofficial), next = pub ? null : GMAPS.fallback(look === 'bare');
+      GMAPS.failed(fault, pub); google = null; owed[look] = null;
+      if (next) { use(next); return; }
+      from = FROM_OSM; credited(OSM + ' contributors'); me.reset();
+    };
     if (merc && typeof GMAPS === 'object' && (GMAPS.key() || GMAPS.unofficial())) {
       from = () => null;
-      GMAPS.tiles(look === 'bare').then(g => {
-        if (!g) { from = FROM_OSM; me.reset(); return; }
-        google = g; from = (z, x, y) => g.url.replace('{z}', z).replace('{x}', x).replace('{y}', y).replace('{s}', (x + y) % 4);
-        credited('&copy; Google'); me.reset();
-        if (!g.copyright) return;   // (Google's public tile address, unofficial: no credit asked for beyond its name)
-        // The copyright Google asks to be shown for the tiles in view, once the map rests.
-        let timer = 0;
-        owed[look] = () => {
-          clearTimeout(timer);
-          timer = setTimeout(async () => {
-            if (!want || google !== g) return;
-            const a = invert(want.x, want.y), b = invert(want.x + stage.clientWidth / want.k, want.y + stage.clientHeight / want.k);
-            if (!a || !b) return;
-            const z = Math.max(0, Math.min(19, Math.round(Math.log2(want.k * C.proj.k * 360 / 256))));
-            const text = await g.copyright({ north: a[0], south: b[0], east: b[1], west: a[1] }, z);
-            if (text && google === g) credited(text.replace(/[<>&]/g, ''));
-          }, 1200);
-        };
-        if (shown[look]) owed[look]();
-      });
+      GMAPS.tiles(look === 'bare').then(g => { if (g) use(g); else { from = FROM_OSM; me.reset(); } });
     }
     return looks[look] = me = layer({ id: look === 'bare' ? 'bare' : 'streets', size: 256, minZ: 1, maxZ: 19, url: (z, x, y) => from(z, x, y),
       pic: look === 'bare' ? url => (url.startsWith('https://tile.openstreetmap.org/') ? BARE_TILES(url) : Promise.resolve(url)) : null,
-      failed() { if (google && ++refused >= 3) back('Tiles refused'); },
+      // (only tiles of the source in use count: those still on their way from the one before may fail after it is left)
+      failed(url) { if (google && String(url).startsWith(google.url.slice(0, google.url.indexOf('{'))) && ++refused >= 3) back('Tiles refused'); },
       shown(yes) {
         shown[look] = yes;
         if (yes) credited(text);
