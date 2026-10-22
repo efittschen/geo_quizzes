@@ -75,6 +75,8 @@ const QUIZ = (() => {
     for (const [label, titles] of S.words.mixes || []) MIXES.push([label, uniq(GROUPS.filter(g => titles.includes(g.title)).flatMap(g => g.ids))]);
   }
   const ALL = Object.keys(ITEM);
+  // the countries with words of their own (Words: Assamese has letters of its own but no words yet)
+  const SAID = WORDS ? TAGS.filter(t => ALL.some(id => (ITEM[id].langs || []).includes(t))) : TAGS;
   // An item's tiles, by what stands for them: the label of its answer, or (alphabets) an area and each of its letters.
   const tilesOf = id => ITEM[id].tiles || [ITEM[id].tile];
   // A capital and its small letter, or the letter alone where it has no capital of its own (ß, ı).
@@ -82,13 +84,18 @@ const QUIZ = (() => {
   const labelOf = key => (ABC ? both(key.slice(key.indexOf(':') + 1)) : key);
   const onCircle = f => (/^\p{M}/u.test(f) ? CIRCLE + f : f); // a mark is shown on the dotted circle
   const written = id => ITEM[id].forms.map(onCircle).join(' ');
-  // A letter is asked as a capital or a small one, a word as a sign may write it: Аптека, АПТЕКА, аптека.
+  // A letter is asked as a capital or a small one, a word as a sign may write it: Аптека, АПТЕКА, аптека. In capitals a
+  // word is written as its language writes them (Greek drops its accents: ΛΕΩΦΟΡΟΣ). Georgian is asked as written: its
+  // capitals (Mtavruli) are not among its letters.
   const cap = s => s[0].toUpperCase() + s.slice(1);
   const shown = id => {
     const [word] = ITEM[id].forms;
     if (!WORDS) return onCircle(pick(ITEM[id].forms));
-    return word !== word.toLowerCase() ? word : pick([word, cap(word), word.toUpperCase()]);
+    if (S.script === 'geor' || word !== word.toLowerCase()) return word;
+    return pick([word, cap(word), upper(word)]);
   };
+  // (not toLocaleUpperCase('el'): Firefox keeps the accents)
+  const upper = w => (S.script === 'grek' ? w.toUpperCase().normalize('NFD').replace(/́/g, '').normalize('NFC') : w.toUpperCase());
   // What is said with a letter: its note, and a place written with it (SCRIPT.eg, made by tools/builds/languages).
   const eg = id => { const e = (S.eg || {})[id]; return e ? `${e[0]} · ${e[1]}` : ''; };
   // Said aloud: the letter (a mark on the script's carrier consonant) and its place, or the word.
@@ -183,8 +190,8 @@ const QUIZ = (() => {
     about: id => [[ITEM[id].letters.filter(c => !ITEM[id].rare.has(c)).join(' '), ITEM[id].rare.size ? `rare: ${[...ITEM[id].rare].join(' ')}` : ''].filter(Boolean).join(' · '), ITEM[id].note],
     chip: name, chipTitle: id => `${ITEM[id].tag} · ${ITEM[id].letters.join(' ')}`,
   })] : !WORDS ? [kind('letters', ALL, { label: 'Letters' })]
-    : TAGS.length < 2 ? [kind('all', ALL, { label: 'Words' })]
-      : [kind('all', ALL, { label: 'Words', lang: (S.pick || [])[1] || 'All countries' }), ...TAGS.map((t, i) => kind(t, ALL.filter(id => ITEM[id].langs.includes(t)), {
+    : SAID.length < 2 ? [kind('all', ALL, { label: 'Words' })]
+      : [kind('all', ALL, { label: 'Words', lang: (S.pick || [])[1] || 'All countries' }), ...SAID.map((t, i) => kind(t, ALL.filter(id => ITEM[id].langs.includes(t)), {
         label: short(t), lang: short(t), of: 'all', cards: 'all', start: !i,
         say: id => ({ ...say(id), lang: ITEM[id].t || t }), // in a country's round, a word is said in that country's language
       }))];
@@ -222,7 +229,7 @@ const QUIZ = (() => {
     context: BLOCKS.length > 1 ? BLOCKS.map(b => `M${b.box[0] - GAP},${b.box[1] - GAP}H${b.box[2] + GAP}V${b.box[3] + GAP}H${b.box[0] - GAP}z`).join('') : undefined, // each block on a ground of its own
     size: [LAYOUT.W, LAYOUT.H], pad: 16, maxZoom: 8, labelScale: .2, fly: { pad: 1.4, min: .25 },
     hintLabel: '', hintsDefault: false,
-    langLabel: WORDS && TAGS.length > 1 ? (S.pick || [])[0] || 'Country' : undefined,
+    langLabel: WORDS && SAID.length > 1 ? (S.pick || [])[0] || 'Country' : undefined,
     exploreKind: KEY,
     exploreList: ABC ? { label: 'Language', items: byLanguage() } : undefined,
     explore: a => {

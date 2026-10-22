@@ -17,13 +17,15 @@
 //     explore    what Explore shows for an area: { code, title, sub }
 //     phone      true: the layers asked with prompt 'dial' are phone area codes (they are played the other way round
 //                too, the area outlined and its code typed: MODES 'code' in area-quiz.js)
+//     plates     true: the same for licence plate codes, of letters as well as digits (Romania's CJ, Russia's 77)
 //   layer = { key, label, noun, prompt, groups: [[title, sub, ids]…], areas, name, short, chip, chipTitle, about,
 //             detail: [label, text], dial, text, pin, clicked, primary, areaLabel, colors (per area: the colors a
 //             group of areas may take, by its first area), presets: [[label, ids]…],
 //             rankings: [[label, order]…], of, lang, and the engine's switches (hints, clickAll, merge, dim…) }
 //     areas      the areas of each item: '@code' (those whose field `code` is the item's id), '@codes[]' (whose list
 //                holds it), '@code^' (whose value starts with it), or a table
-//     of, lang   the same items in another language or under another label (see area-quiz.js)
+//     of, lang   the same items in another language or under another label (see area-quiz.js); names in another
+//                script (prompt 'text') are read in its Type mode where the page loads their script (../shared/reading.js)
 //     like       '<key>': the layer is another one asked another way: it takes that layer's groups, areas and
 //                tables, and its own say what differs (its key, label, prompt…). Its review cards are its own.
 //     typed      the answer is typed, not clicked: { answers: a table of the other names that count (a list per
@@ -160,7 +162,7 @@ const layerLib = (() => {
     };
   }
   function quiz(L, resolve) {
-    const M = model(L, resolve), PHONE = L.phone === true;
+    const M = model(L, resolve), PHONE = L.phone === true, PLATES = L.plates === true;
     const at = v => typeof v !== 'string' ? v : /^\[.*\]$/.test(v) ? [resolve(v.slice(1, -1))] : resolve(v);
     // A table drawn at random (pool): one of an item's entries each time it is asked, by weight (w) if given.
     const draw = (list, w) => { let i = Math.random() * list.length | 0; if (w) { let x = Math.random() * w.reduce((s, v) => s + v, 0); i = Math.max(0, w.findIndex(v => (x -= v) < 0)); } return list[i]; };
@@ -173,6 +175,7 @@ const layerLib = (() => {
       // a layer of phone codes (LAYERS.phone) is played the other way round too: the area outlined, its code typed
       // (MODES 'code'); not a layer of places dialled (their names have no digits)
       else if (PHONE && k.prompt === 'dial' && !k.groupsOnly && T.short && K.ids.every(id => /\d/.test(T.short[id]))) out.modes = ['code'];
+      else if (PLATES && k.prompt === 'dial' && !k.groupsOnly && T.short) { out.modes = ['code']; out.plates = true; }
       for (const t of ['name', 'short', 'chip', 'chipTitle', 'about', 'dial', 'text', 'pin', 'chipClass', 'areaLabel']) if (T[t]) out[t] = fn(t);
       if (T.clicked) out.clicked = a => T.clicked[a];
       for (const t in k.pool || {}) if (t !== 'w') out[t] = id => { const p = k.pool[t], e = draw(p.e[id], k.pool.w && k.pool.w[id]); return p.t === undefined ? e : build(p.t, e); };
@@ -185,6 +188,18 @@ const layerLib = (() => {
         const more = k.typed.answers ? table(k.typed.answers, K.ids, id => itemVars(M, K, id)) : {};
         out.typed = typedOf(Object.fromEntries(K.ids.map(id => [id, [...new Set([T.name && T.name[id], ...[].concat(more[id] || [])].filter(Boolean).map(plainName))]])));
         const time = k.typed.time || 3; out.time = () => time;
+      }
+      // a layer of names in another script: its Type mode reads them (READING.name), where the page loads the files
+      // of their scripts and ../shared/reading.js (tools/builds/languages writes them in)
+      if (out.modes && out.modes.includes('type') && k.prompt === 'text' && T.text && typeof READING === 'object') {
+        const read = {}, ofName = id => ((M.kinds[k.of] || {}).T || {}).name?.[id];
+        for (const id of K.ids) { const t = T.text[id], r = t && READING.name(t.text, t.lang); if (r) read[id] = r; }
+        if (Object.keys(read).length) out.typeMode = {
+          text: id => (read[id] ? { ...T.text[id], cls: read[id].face() } : T.text[id]),
+          typed: (id, text) => (read[id] && read[id].accepts(text, [ofName(id)].filter(Boolean))) || undefined, // (else the usual check)
+          say: id => T.text[id] && { text: T.text[id].text, lang: T.text[id].lang },
+          time: id => 1 + String(T.text[id]?.text || '').length / 4, // a click's time for reading, and as much again for every four letters
+        };
       }
       return out;
     });

@@ -21,6 +21,8 @@
 //   title      from the copy with the card answered last
 //   settings   from the copy that changed last; if one doesn't say, the settings of both
 //   review     the later day's count, or the higher one of the same day
+//   gone       a record another page's took in (STORE: a page that is no more): the mark alone, from the copy that
+//              says so first, whatever the other holds, so it never comes back
 // Where nothing says which is newer, the online copy's is taken, so all browsers come to the same.
 // The answer log (answers.js) is sent too, in its chunks (a browser's answers of a day), each an entry of its own,
 // "quiz._log.<chunk id>", which the script stores as it stores a quiz's record (it needs no change for them). Only the
@@ -90,6 +92,7 @@ const SYNC = (() => {
   const later = (a, b) => (when(a) > when(b) ? a : b);
 
   function record(mine, theirs) {
+    if (mine.gone || theirs.gone) return { gone: !theirs.gone || (mine.gone && when(mine.gone.at) <= when(theirs.gone.at)) ? mine.gone : theirs.gone };
     const out = { ...theirs, ...mine };
     const cleared = later(mine.cleared, theirs.cleared);
     if (cleared) out.cleared = cleared;

@@ -29,6 +29,8 @@
 //     paint    a town-name quiz's results: { best: { <round>: places right }, choice }
 //     changed  when `stars` and `custom` last changed here: { stars, custom } (times), and
 //     cleared  when the stack was last removed: what a merge with the online copy goes by (see sync.js)
+//     gone     the page is no more and another page's record took this one in: { to: <that quiz id>, at: when }; the
+//              record is then this mark alone (see takeIn)
 //   geoquizzes.settings         { easy, known, limit: the review clock's three times in seconds; perReview, perDay: the most
 //                                 cards in one review and in one day; sound: false once answers are no longer said
 //                                 aloud (see "sound" in area-quiz.js); listMin: true once a quiz's list of answers
@@ -185,6 +187,51 @@ const STORE = (() => {
     });
   }
 
+  /* ---------- records taken into others ---------- */
+  // A page that is no more, whose record another page's takes in (TAKEN: { <its id>: [<that page's id>, the language
+  // named there] }): its cards, best results, own quizzes, card names and moves, each under the layer it is there, and
+  // merged as two copies are (sync.js: a card from where it was answered last, the better result); its layers' names
+  // until that page writes its own. Its record is left as a mark alone (`gone`), which a merge keeps over any copy
+  // (sync.js), so the online copy never brings it back. Done as this file loads, on every page, and once a data file
+  // is put back; a record with more than the mark is taken in again.
+  // 2026-10-21: the Reading pages (<country>-reading), now the Type mode of the city quiz's names in their script (its
+  // layer 'local': names was local~type, names~<mode> local~<mode>).
+  const TAKEN = Object.fromEntries(('oman=Arabic|bangladesh=Bangla|cambodia=Khmer|kazakhstan=Kazakh|bulgaria=Bulgarian|south-korea=Korean|sri-lanka=Sinhala & Tamil|'
+    + 'thailand=Thai|russia=Russian|india=Local script|india-telugu=Telugu|india-kannada=Kannada|india-malayalam=Malayalam|india-gujarati=Gujarati|'
+    + 'india-gurmukhi=Gurmukhi|india-odia=Odia|ukraine=Ukrainian|israel=Hebrew|taiwan=Chinese|serbia=Serbian|north-macedonia=Macedonian|cyprus=Greek|'
+    + 'georgia=Georgian|kyrgyzstan=Kyrgyz|mongolia=Mongolian|tunisia=Arabic|bosnia-and-herzegovina=Cyrillic|laos=Lao|jordan=Arabic|lebanon=Arabic|'
+    + 'qatar=Arabic|united-arab-emirates=Arabic|palestine=Arabic|bhutan=Dzongkha|nepal=Nepali|japan=Japanese|greece=Greek')
+    .split('|').map(r => r.split('=')).map(([c, lang]) => [`${c}-reading`, [`${c}-cities`, lang]]));
+  const MODE_NAMES = { type: 'Type', pairs: 'Pairs', pick: 'Pick', pickback: 'Pick back' };
+  // (a round's better result, as sync.js has it)
+  function better(a, b) {
+    if (!a || !b) return a || b;
+    const points = a.points != null || b.points != null, ahead = points ? (a.points || 0) - (b.points || 0) : a.score - b.score;
+    const [won, lost] = ahead > 0 || (ahead === 0 && a.ms < b.ms) ? [a, b] : [b, a];
+    return { ...won, score: Math.max(a.score, b.score), ...(won.name || lost.name ? { name: won.name || lost.name } : {}) };
+  }
+  function takeIn() {
+    for (const id of quizIds()) {
+      const T = TAKEN[id], r = T ? quiz(id) : {};
+      if (!T || Object.keys(r).every(k => k === 'gone')) continue;
+      const [to, lang] = T, as = k => (k === 'names' ? 'local~type' : k.startsWith('names~') ? 'local' + k.slice(5) : k);
+      const key = k => { const bar = k.indexOf('|'), at = k.indexOf('@'), end = at >= 0 && at < bar ? at : bar; return as(k.slice(0, end)) + k.slice(end); }; // ('<layer>[@<map>]|<item>')
+      setQuiz(to, t => {
+        const after = ms(t.cleared) || 0; // (none from before the stack there was removed)
+        for (const [k, c] of Object.entries(r.cards || {})) {
+          const there = (t.cards || {})[key(k)];
+          if ((ms(c.last) || 0) > after && (!there || (ms(there.last) || 0) < (ms(c.last) || 0))) (t.cards ||= {})[key(k)] = c;
+        }
+        for (const [k, b] of Object.entries(r.best || {})) { const k2 = as(k.slice(0, k.indexOf('/'))) + k.slice(k.indexOf('/')); (t.best ||= {})[k2] = better(b, t.best[k2]); }
+        for (const part of ['moved', 'called']) for (const [k, v] of Object.entries(r[part] || {})) (t[part] ||= {})[key(k)] ??= v;
+        for (const k of Object.keys(r.layers || {})) { const mode = as(k).split('~')[1]; (t.layers ||= {})[as(k)] ??= mode ? `${lang} · ${MODE_NAMES[mode] || mode}` : lang; }
+        const mine = (r.custom || []).map(q => ({ ...q, kind: as(q.kind).split('~')[0] })).filter(q => !(t.custom || []).some(p => JSON.stringify(p) === JSON.stringify(q)));
+        if (mine.length) t.custom = [...(t.custom || []), ...mine];
+      });
+      put(QUIZ + id, { gone: { to, at: r.gone?.at || now() } }); told();
+    }
+  }
+
   /* ---------- the data file ---------- */
   function file() {
     const older = {};
@@ -205,7 +252,7 @@ const STORE = (() => {
       put(REVIEW, f.review && typeof f.review === 'object' ? f.review : {});
       for (const [id, record] of Object.entries(f.quizzes)) if (record && typeof record === 'object') put(QUIZ + id, tidy(record));
     }
-    carryOver();
+    carryOver(); takeIn();
     change(SYNC, s => { for (const k in s) if (k !== 'url') delete s[k]; }); // the online copy is compared anew
     return true;
   }
@@ -221,6 +268,6 @@ const STORE = (() => {
   const place = (name, v) => put(P + name, name.startsWith('quiz.') ? tidy(v) : v);
   const listen = f => { heard = f; };
 
-  carryOver();
+  carryOver(); takeIn();
   return { cardKeys, quiz, setQuiz, quizIds, settings, setSettings, review, setReview, print, time, ms, cardOut, cardIn, bestOut, bestIn, adopt, file, restore, sync, setSync, maps, setMaps, names, entry, place, listen };
 })();

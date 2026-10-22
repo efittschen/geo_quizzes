@@ -400,14 +400,6 @@
       "url": "quizzes/bangladesh-town-names/index.html"
     },
     {
-      "id": "bangladesh-reading",
-      "country": "050",
-      "title": "Reading",
-      "role": "reading",
-      "levels": 4,
-      "url": "quizzes/bangladesh-reading/index.html"
-    },
-    {
       "id": "ecuador-regions",
       "country": "218",
       "title": "Regions",
@@ -501,14 +493,6 @@
       "role": "names",
       "levels": 1,
       "url": "quizzes/kazakhstan-town-names/index.html"
-    },
-    {
-      "id": "kazakhstan-reading",
-      "country": "398",
-      "title": "Reading",
-      "role": "reading",
-      "levels": 4,
-      "url": "quizzes/kazakhstan-reading/index.html"
     },
     {
       "id": "paraguay-regions",
@@ -637,14 +621,6 @@
       "role": "cities",
       "levels": 4,
       "url": "quizzes/bulgaria-cities/index.html"
-    },
-    {
-      "id": "bulgaria-reading",
-      "country": "100",
-      "title": "Reading",
-      "role": "reading",
-      "levels": 4,
-      "url": "quizzes/bulgaria-reading/index.html"
     },
     {
       "id": "hungary-codes",
@@ -1173,14 +1149,6 @@
       "url": "quizzes/russia-town-names/index.html"
     },
     {
-      "id": "russia-reading",
-      "country": "643",
-      "title": "Reading",
-      "role": "reading",
-      "levels": 4,
-      "url": "quizzes/russia-reading/index.html"
-    },
-    {
       "id": "us-road-grid",
       "country": "840",
       "title": "Road Grid",
@@ -1571,14 +1539,6 @@
       "url": "quizzes/india-town-names/index.html"
     },
     {
-      "id": "india-reading",
-      "country": "356",
-      "title": "Reading",
-      "role": "reading",
-      "levels": 4,
-      "url": "quizzes/india-reading/index.html"
-    },
-    {
       "id": "canada-markers",
       "country": "124",
       "title": "Kilometre Markers",
@@ -1729,14 +1689,6 @@
       "role": "names",
       "levels": 2,
       "url": "quizzes/ukraine-town-names/index.html"
-    },
-    {
-      "id": "ukraine-reading",
-      "country": "804",
-      "title": "Reading",
-      "role": "reading",
-      "levels": 4,
-      "url": "quizzes/ukraine-reading/index.html"
     },
     {
       "id": "norway-codes",

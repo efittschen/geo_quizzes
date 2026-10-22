@@ -6,7 +6,7 @@
 // alike (आ is a, ई i), and the hard (retroflex) letters like the soft ones (ट and त both ta). A consonant carries
 // an a, which a vowel mark replaces and ् takes off; at the end of a word it is mostly not spoken (कानपुर Kanpur).
 // A word's reading is how it is said, in Hindi; Nepali keeps the a more often.
-const SCRIPT = {
+var SCRIPT = {
   name: 'Devanagari', script: 'deva', unicode: 'Devanagari', faces: 5, inherent: 'a', carrier: 'क',
   pick: ['Region', 'All regions'],
   langs: {
@@ -135,3 +135,5 @@ const SCRIPT = {
 };
 // A place written with each letter (made by tools/builds/languages/build.mjs: run it again, don't edit).
 SCRIPT.eg = {"अ":["अलीगढ़","Aligarh"],"आ":["आगरा","Agra"],"इ":["इचलकरंजी","Ichalkaranji"],"ई":["मुंबई","Mumbai"],"उ":["उल्हासनगर","Ulhasnagar"],"ऊ":["मऊ","Mau"],"क":["कानपुर","Kanpur"],"ख":["गोरखपुर","Gorakhpur"],"ग":["सांगली","Sangli"],"च":["पिंपरी चिंचवड","Pimpri-Chinchwad"],"छ":["छत्रपती संभाजीनगर","Chhatrapati Sambhajinagar"],"ज":["जयपुर","Jaipur"],"झ":["झाँसी","Jhansi"],"ट":["पटना","Patna"],"ठ":["ठाणे","Thane"],"ड":["डोंबिवली","Dombivli"],"ण":["पुणे","Pune"],"त":["अमरावती","Amravati"],"थ":["मथुरा","Mathura"],"द":["नांदेड","Nanded"],"ध":["धनबाद","Dhanbad"],"न":["बीकानेर","Bikaner"],"प":["सहारनपुर","Saharanpur"],"फ":["फरीदाबाद","Faridabad"],"ब":["जबलपुर","Jabalpur"],"भ":["भोपाल","Bhopal"],"म":["अजमेर","Ajmer"],"य":["कल्याण","Kalyan"],"र":["बोकारो","Bokaro"],"ल":["सोलापूर","Solapur"],"व":["वसई-विरार","Vasai-Virar"],"श":["नाशिक","Nashik"],"स":["वाराणसी","Varanasi"],"ह":["कोल्हापूर","Kolhapur"],"ळ":["धुळे","Dhule"],"ख़":["फ़र्रूख़ाबाद","Farrukhabad"],"ज़":["मुज़फ़्फ़र नगर","Muzaffarnagar"],"फ़":["फ़िरोज़ाबाद","Firozabad"],"ड़":["भीलवाड़ा","Bhilwara"],"ढ़":["चण्डीगढ़","Chandigarh"],"ा":["कोटा","Kota"],"ि":["भिलाई","Bhilai"],"ी":["लोनी","Loni"],"ु":["रायपुर","Raipur"],"ू":["नागपूर","Nagpur"],"े":["जमशेदपुर","Jamshedpur"],"ै":["उज्जैन","Ujjain"],"ो":["जोधपुर","Jodhpur"],"ं":["भिवंडी","Bhiwandi"],"ँ":["राँची","Ranchi"],"्":["अहिल्यानगर","Ahilyanagar"],"त्र":["छत्रपती संभाजीनगर","Chhatrapati Sambhajinagar"],"श्र":["श्रीगंगानगर","Sri Ganganagar"],"प्र":["प्रयागराज","Prayagraj"],"ग्र":["गुरुग्राम","Gurugram"],"द्र":["चंद्रपूर","Chandrapur"]};
+// (one of the scripts the page loaded: ../shared/reading.js reads names in each)
+(globalThis.ALL_SCRIPTS ||= []).push(SCRIPT);

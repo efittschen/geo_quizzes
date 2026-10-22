@@ -5,9 +5,12 @@
 // Munich; the English name is said with the answer). Where the local language is written in another script than
 // Latin, the page names it (CITY_OPTS.lang) and the kind 'local' asks the name in that language and script: every
 // round then offers both languages in its box (see area-quiz.js), the local one with the round's cities that have
-// such a name. Rounds take the cities in list
-// order: largest first, or the order cities.js names in CITIES.order (e.g. 'signs': the order players meet them on
-// direction signs). Custom quizzes group them by region and can take the top N by that order or by population.
+// such a name. Its Type mode is reading (typeMode, see area-quiz.js), where the page loads the files of the scripts
+// its names are written in and ./reading.js (tools/builds/languages writes them in): the name is shown in another
+// typeface of its script each time, typed in Latin letters (the name on the map, the English one, or any spelling
+// its letters allow; a slip in a long name, as in every Type), and said aloud once answered. Rounds take the cities
+// in list order: largest first, or the order cities.js names in CITIES.order (e.g. 'signs': the order players meet
+// them on direction signs). Custom quizzes group them by region and can take the top N by that order or by population.
 // Cities that share a name are asked with their region ("Portland, Oregon").
 //
 // Map play (QUIZ.free, see area-quiz.js): the click is turned into a place on Earth with the map's own projection
@@ -21,6 +24,8 @@
 //   CITY_OPTS = { key, lang: 'Thai', top: [8, 25, 50, 100] }
 //     key         localStorage prefix (default <iso3>cities)
 //     lang        the local language, when its script is not Latin: 'Thai', 'Russian', 'Local script' (India)
+//     latin       what the Latin names are, the other half of that switch (default 'English'): 'French' where the
+//                 Latin names are French (Tunisia), 'Latin' where they are the country's own Latin spelling (Serbia)
 //     names       the language(s) of the country's signs, when written in Latin letters: 'de', ['fr']. A city whose
 //                 local name (cities.js: local, lang) is in one of them is asked by it instead of its English name.
 //                 Not for a second language of a country (Swedish in Finland, Māori in New Zealand): there the
@@ -29,11 +34,6 @@
 //     list        another list of cities on the country's map: { order, list }, from a file of the page's own. The
 //                 page then loads the country's cities.js for the map and the regions, and this list replaces
 //                 its cities (us-cities-coverage: the cities picked by Street View coverage).
-//     typed       the country's Reading page (its script's file and ./reading.js are loaded before, see there):
-//                 the language its names are read in ('ru': a key of SCRIPT.langs). The cities with a name in that
-//                 script are shown in it, each time in another typeface, and the answer is typed in Latin letters:
-//                 the name on the map, or any spelling its letters allow. The city then shows on the map and its
-//                 name is said aloud. The page asks nothing else, and has no map play.
 
 const QUIZ = (() => {
   if (typeof MERCATOR === 'object') MERCATOR.cities(CITIES); // the map in Web Mercator, every part at its real place (mercator.js)
@@ -59,8 +59,8 @@ const QUIZ = (() => {
   const fullLocal = id => DUP_LOCAL[BY[id].local] > 1 ? `${BY[id].local}, ${region(id)}` : BY[id].local;
   const capitals = ids => ids.filter(id => /^PPL[CA]$/.test(BY[id].fc));
   const sizes = O.top || [8, 25, 50, 100];
-  const TYPED = O.typed ? ALL.filter(id => BY[id].local && new RegExp(`\\p{Script=${SCRIPT.unicode}}`, 'u').test(BY[id].local)) : null;
-  const READ = O.typed ? READING.of(O.typed) : null;
+  // How each local name is read, where the page loaded its script (READING.name)
+  const READ = typeof READING === 'object' ? Object.fromEntries(LOCAL.map(id => [id, READING.name(BY[id].local, BY[id].lang)]).filter(e => e[1])) : {};
 
   const kind = (key, ids, extra) => ({
     key, noun: ['city', 'cities'], pickTitle: 'Cities to practice',
@@ -75,30 +75,26 @@ const QUIZ = (() => {
     ...extra,
   });
 
-  const kinds = TYPED ? [
-    kind('names', TYPED, {
-      label: 'Names', sub: `${TYPED.length} names`, noun: ['name', 'names'], pickTitle: 'Names to practice',
-      prompt: 'text', text: id => ({ text: BY[id].local, lang: BY[id].lang, cls: READING.face(BY[id].local) }),
-      typed: (id, text) => READ.accepts(BY[id].local, text, [BY[id].en, latin(id)]),
-      say: id => ({ text: BY[id].local, lang: BY[id].lang }),
-      time: id => 1 + BY[id].local.length / 4, // a click's time for reading, and as much again for every four letters to type
-      name: id => `${BY[id].local} · ${latin(id)}`, short: latin,
-      clicked: a => fullEn(a), chip: id => BY[id].local, chipTitle: id => `${latin(id)} · ${region(id)}`,
-    }),
-  ] : [
+  const kinds = [
     kind('en', ALL, {
-      label: 'English', lang: 'English', sub: `${ALL.length} cities`,
+      label: O.latin || 'English', lang: O.latin || 'English', sub: `${ALL.length} cities`,
       prompt: 'name', name: fullEn, short: latin,
       clicked: a => fullEn(a), chip: fullEn,
     }),
   ];
-  if (LOCAL.length && !TYPED) kinds.push(kind('local', LOCAL, {
+  if (LOCAL.length) kinds.push(kind('local', LOCAL, {
     label: O.lang, lang: O.lang, of: 'en', sub: `${LOCAL.length} cities`,
     modes: ['type', 'pairs', 'pick', 'pickback'], answers: id => [latin(id), BY[id].en], // (typed in Latin letters, matched with them, picked from four, or the other way round: see MODES in area-quiz.js)
     prompt: 'text', text: id => ({ text: fullLocal(id), lang: BY[id].lang, cls: 'city' }),
     name: fullLocal, short: id => BY[id].local,
     clicked: a => BY[a].local ? `${fullLocal(a)} · ${latin(a)}` : fullEn(a),
     chip: fullLocal, chipTitle: id => `${latin(id)} · ${region(id)}`,
+    ...(Object.keys(READ).length ? { typeMode: {
+      text: id => ({ text: fullLocal(id), lang: BY[id].lang, cls: READ[id] ? READ[id].face() : 'city' }),
+      typed: (id, text) => (READ[id] && READ[id].accepts(text, [latin(id), BY[id].en])) || undefined, // (else the usual check: a slip in a long name)
+      say: id => ({ text: BY[id].local, lang: BY[id].lang }),
+      time: id => 1 + BY[id].local.length / 4, // a click's time for reading, and as much again for every four letters to type
+    } } : {}),
   }));
 
   // Hint colors by region from the shared palette (--h1…--h24): each region takes the color least used among its
@@ -173,22 +169,19 @@ const QUIZ = (() => {
     },
   };
 
-  const rounds = TYPED ? [
-    ...sizes.filter(n => n < TYPED.length).map(n => ({ kind: 'names', label: `Top ${n}`, top: n })),
-    { kind: 'names', label: 'All names' },
-  ] : [
+  const rounds = [
     ...sizes.filter(n => n < ALL.length).map(n => ({ kind: 'en', label: `Top ${n}`, top: n })),
     { kind: 'en', label: 'All cities' },
   ];
 
   return {
     key: O.key || C.iso3.toLowerCase() + 'cities',
-    areas: C.list.filter(c => !TYPED || TYPED.includes(c.id)).map(c => ({ id: c.id, d: `M${c.x},${c.y}l0,0`, lx: c.x, ly: c.y, a: 1, g: c.adm })),
+    areas: C.list.map(c => ({ id: c.id, d: `M${c.x},${c.y}l0,0`, lx: c.x, ly: c.y, a: 1, g: c.adm })),
     borders: [],
     context: C.ctx, world: !!C.world, proj: C.proj, // (world: the map lies on the plain map of the world, by its projection: see mercator.js)
     base: { land: C.land, lines: C.lines },
     dots: true,
-    free: TYPED ? undefined : free,
+    free,
     streets: C,
     size: [C.w, C.h], pad: 16, maxZoom: 40, labelScale: 0.25, fly: { pad: 1.6, min: 1.5 / 40 },
     hintLabel: 'Color by region',

@@ -1,8 +1,8 @@
 // Cyrillic: its letters as each country reads them, and the words of their signs, for the script quizzes
 // (../shared/reading.js says how this is written; ../shared/lang-config.js makes the Letters and Words quizzes of
-// it, ../shared/city-config.js the Reading quiz of a country). The countries are those written in Cyrillic that
-// have Street View: Russia, Ukraine, Bulgaria, Serbia and Montenegro, North Macedonia, Kazakhstan, Kyrgyzstan,
-// Mongolia. Belarus has next to none, and is left out.
+// it, and the Type mode of the city and region quizzes reads names with it). The countries are those written in
+// Cyrillic that have Street View: Russia, Ukraine, Bulgaria, Serbia and Montenegro, North Macedonia, Kazakhstan,
+// Kyrgyzstan, Mongolia. Belarus has next to none, and is left out.
 //
 // Sounds are spelled as names are on the map. The base is Russian (BGN/PCGN without its marks, and ё as yo: Oryol):
 // х is kh, щ shch, й and ы both y, е and э both e (е is ye at the start of a word and after a vowel: Yekaterinburg).
@@ -19,7 +19,7 @@
 //                (Aktobe), ұ and ү u, ә a. Its own spelling is said with the answer (q, gh, ng, ö, ü, ä).
 //   Kyrgyzstan, Mongolia   ж is j (Jalal-Abad, Jargalant), ө o and ү u; Mongolian й and ь are i (Ölgii, Govi)
 // Signs give Kazakh and Kyrgyz words the way they follow a name: Абай көшесі, Алматы қаласы.
-const SCRIPT = {
+var SCRIPT = {
   name: 'Cyrillic', script: 'cyrl', unicode: 'Cyrillic', faces: 6, wide: 5,
   langs: {
     ru: { name: 'Russian', where: 'Russia', at: 'RUS' },
@@ -220,4 +220,6 @@ const SCRIPT = {
   },
 };
 // A place written with each letter (made by tools/builds/languages/build.mjs: run it again, don't edit).
-SCRIPT.eg = {"А":["Самара","Samara"],"К":["Томск","Tomsk"],"М":["Омск","Omsk"],"О":["Краснодар","Krasnodar"],"Т":["Саратов","Saratov"],"В":["Ижевск","Izhevsk"],"Е":["Воронеж","Voronezh"],"Н":["Красноярск","Krasnoyarsk"],"Р":["Ярославль","Yaroslavl"],"С":["Владивосток","Vladivostok"],"У":["Барнаул","Barnaul"],"Х":["Хабаровск","Khabarovsk"],"Б":["Новосибирск","Novosibirsk"],"Г":["Екатеринбург","Yekaterinburg"],"Д":["Волгоград","Volgograd"],"З":["Казань","Kazan"],"Л":["Ульяновск","Ulyanovsk"],"П":["Пермь","Perm"],"Ф":["Уфа","Ufa"],"Ж":["Нижний Новгород","Nizhny Novgorod"],"Й":["Нижний Тагил","Nizhny Tagil"],"Ц":["Новокузнецк","Novokuznetsk"],"Ч":["Махачкала","Makhachkala"],"Ш":["Йошкар-Ола","Yoshkar-Ola"],"Щ":["Благовещенск","Blagoveshchensk"],"Ё":["Орёл","Oryol"],"И":["Иркутск","Irkutsk"],"Ы":["Набережные Челны","Naberezhnye Chelny"],"Э":["Улан-Удэ","Ulan-Ude"],"Ю":["Тюмень","Tyumen"],"Я":["Челябинск","Chelyabinsk"],"Ь":["Тольятти","Tolyatti"],"Г/h":["Луганськ","Luhansk"],"Є/ie":["Єнакієве","Yenakiieve"],"И/y":["Миколаїв","Mykolaiv"],"І/i":["Харків","Kharkiv"],"Ї/i":["Київ","Kyiv"],"Й/i":["Кривий Ріг","Kryvyi Rih"],"Ю/iu":["Ізюм","Izium"],"Я/ia":["Запоріжжя","Zaporizhzhia"],"Х/h":["Хасково","Haskovo"],"Щ/sht":["Търговище","Targovishte"],"Ъ/a":["Велико Търново","Veliko Tarnovo"],"Ә/a":["Әйтеке би","Ayteke Bi"],"Ғ/g":["Талдықорған","Taldykorgan"],"Қ/k":["Қызылорда","Kyzylorda"],"Ң/n":["Жаңаөзен","Zhanaozen"],"Ө/o":["Ақтөбе","Aktobe"],"Ұ/u":["Екібастұз","Ekibastuz"],"Ү/u":["Түркістан","Turkistan"]};
+SCRIPT.eg = {"А":["Самара","Samara"],"К":["Томск","Tomsk"],"М":["Омск","Omsk"],"О":["Краснодар","Krasnodar"],"Т":["Саратов","Saratov"],"В":["Ижевск","Izhevsk"],"Е":["Воронеж","Voronezh"],"Н":["Красноярск","Krasnoyarsk"],"Р":["Ярославль","Yaroslavl"],"С":["Владивосток","Vladivostok"],"У":["Барнаул","Barnaul"],"Х":["Хабаровск","Khabarovsk"],"Б":["Новосибирск","Novosibirsk"],"Г":["Екатеринбург","Yekaterinburg"],"Д":["Волгоград","Volgograd"],"З":["Казань","Kazan"],"Л":["Ульяновск","Ulyanovsk"],"П":["Пермь","Perm"],"Ф":["Уфа","Ufa"],"Ж":["Нижний Новгород","Nizhny Novgorod"],"Й":["Нижний Тагил","Nizhny Tagil"],"Ц":["Новокузнецк","Novokuznetsk"],"Ч":["Махачкала","Makhachkala"],"Ш":["Йошкар-Ола","Yoshkar-Ola"],"Щ":["Благовещенск","Blagoveshchensk"],"Ё":["Орёл","Oryol"],"И":["Иркутск","Irkutsk"],"Ы":["Набережные Челны","Naberezhnye Chelny"],"Э":["Улан-Удэ","Ulan-Ude"],"Ю":["Тюмень","Tyumen"],"Я":["Челябинск","Chelyabinsk"],"Ь":["Тольятти","Tolyatti"],"Г/h":["Луганськ","Luhansk"],"Є/ie":["Єнакієве","Yenakiieve"],"И/y":["Миколаїв","Mykolaiv"],"І/i":["Харків","Kharkiv"],"Ї/i":["Київ","Kyiv"],"Й/i":["Кривий Ріг","Kryvyi Rih"],"Ю/iu":["Ізюм","Izium"],"Я/ia":["Запоріжжя","Zaporizhzhia"],"Х/h":["Хасково","Haskovo"],"Щ/sht":["Търговище","Targovishte"],"Ъ/a":["Велико Търново","Veliko Tarnovo"],"Ђ/đ":["Калуђерица","Kaluđerica"],"Ж/ž":["Ужице","Užice"],"Ј/j":["Крагујевац","Kragujevac"],"Љ/lj":["Краљево","Kraljevo"],"Њ/nj":["Зрењанин","Zrenjanin"],"Ћ/ć":["Параћин","Paraćin"],"Ц/c":["Суботица","Subotica"],"Ч/č":["Панчево","Pančevo"],"Џ/dž":["Оџаци","Odžaci"],"Ш/š":["Ниш","Niš"],"Ќ/kj":["Буковиќ","Bukoviḱ"],"Ә/a":["Әйтеке би","Ayteke Bi"],"Ғ/g":["Талдықорған","Taldykorgan"],"Қ/k":["Қызылорда","Kyzylorda"],"Ң/n":["Жаңаөзен","Zhanaozen"],"Ө/o":["Ақтөбе","Aktobe"],"Ұ/u":["Екібастұз","Ekibastuz"],"Ү/u":["Түркістан","Turkistan"],"Ж/j":["Кара-Кулжа","Kara-Kulja"],"Ң/ng":["Жаңы-Ноокат","Jangy-Nookat"],"Ь/i":["Мандалговь","Mandalgovi"]};
+// (one of the scripts the page loaded: ../shared/reading.js reads names in each)
+(globalThis.ALL_SCRIPTS ||= []).push(SCRIPT);

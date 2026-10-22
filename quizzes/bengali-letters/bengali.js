@@ -1,12 +1,20 @@
 // Bengali (Bangla): its letters and the words of the signs written in it, for the script quizzes
-// (../shared/reading.js says how this is written). The countries are Bangladesh and India (West Bengal).
+// (../shared/reading.js says how this is written). The countries are Bangladesh and India (West Bengal), and Assam
+// writes Assamese in it.
 // Sounds are spelled as Bangladeshi names are on the map: long and short vowels alike (আ is a, ঈ i), the hard
 // letters like the soft ones (ট and ত both ta), ফ fa, য ja, ঐ ai and ঔ au (spoken oi and ou). A consonant carries a
 // vowel, written a on the map and spoken o (বরিশাল Barishal), which a vowel mark replaces and ্ takes off. Words are
 // read as they are spoken.
-const SCRIPT = {
+// Assamese has two letters of its own, ৰ for r (in place of র, which it does not write) and ৱ for w or v (গুৱাহাটী
+// Guwahati, শিৱসাগৰ Sivasagar); its names are spelled on the map as Bengali ones are. (Both are consonants that carry
+// the vowel, which a letter of a language's own does not do here: their spellings name it, 'r ra ro'.) Its words of
+// signs are not in the table yet.
+var SCRIPT = {
   name: 'Bengali', script: 'beng', unicode: 'Bengali', faces: 5, inherent: 'a o', carrier: 'ক',
-  langs: { bn: { name: 'Bengali', where: 'Bangladesh · India', at: 'BGD', label: 'Bangladesh' } },
+  langs: {
+    bn: { name: 'Bengali', where: 'Bangladesh · India', at: 'BGD', label: 'Bangladesh' },
+    as: { name: 'Assamese', where: 'Assam', at: 'IND' },
+  },
   letters: [
     { title: 'অ আ ই ঈ উ ঊ', block: 'Vowels', type: 'v', rows: [
       ['অ', 'a', 'a o', 'spoken o'], ['আ', 'a', 'a aa', 'long a'], ['ই', 'i'], ['ঈ', 'i', 'i ee ii', 'long i'], ['উ', 'u'], ['ঊ', 'u', 'u oo uu', 'long u'],
@@ -61,7 +69,14 @@ const SCRIPT = {
     ['Joined letters', '্য ্র ্ব ক্ষ ঙ্গ ঞ্জ ঞ্চ ত্ত ত্র ক্ত হ্ম জ্ঞ গ্র প্র ব্র শ্র দ্র ক্র র্ক র্ম র্ণ ন্দ ন্ত ন্ধ ম্ব ম্প ল্ল ট্ট স্ত ষ্ট'],
     ['Consonants', 'ক খ গ ঘ ঙ চ ছ জ ঝ ঞ ট ঠ ড ঢ ণ ত থ দ ধ ন প ফ ব ভ ম য র ল শ ষ স হ ড় ঢ় য়'],
   ],
-  // A row per meaning, 'word|reading': as on the signs of Bangladesh.
+  // What Assamese adds: its own r and w, which carry the vowel (see above).
+  own: {
+    as: {
+      not: 'র',
+      rows: [['ৰ', 'ra', 'r ra ro', 'Assamese r, for র'], ['ৱ', 'wa', 'w v wa va -', 'Assamese w or v']],
+    },
+  },
+  // A row per meaning, 'word|reading': as on the signs of Bangladesh (Assamese: none yet).
   words: {
     themes: [
       { title: 'Words you can guess', rows: [
@@ -102,4 +117,6 @@ const SCRIPT = {
   },
 };
 // A place written with each letter (made by tools/builds/languages/build.mjs: run it again, don't edit).
-SCRIPT.eg = {"আ":["আখাউড়া","Akhaura"],"ই":["চাঁপাইনবাবগঞ্জ","Chapai Nawabganj"],"ঈ":["ঈশ্বরদী","Ishwardi"],"উ":["উল্লাপাড়া","Ullapara"],"এ":["এলেঙ্গা","Elenga"],"ও":["নওয়াপাড়া","Noapara"],"ক":["মানিকগঞ্জ","Manikganj"],"খ":["খুলনা","Khulna"],"গ":["মুন্সীগঞ্জ","Munshiganj"],"ঘ":["ঘোড়াশাল","Ghorashal"],"ঙ":["টাঙ্গাইল","Tangail"],"চ":["চৌমুহনী","Choumuhani"],"ছ":["হারাগাছ","Haragachh"],"জ":["জামালপুর","Jamalpur"],"ঝ":["ঝিকরগাছা","Jhikargachha"],"ঞ":["গোপালগঞ্জ","Gopalganj"],"ট":["হাটহাজারী","Hathazari"],"ড":["চুয়াডাঙ্গা","Chuadanga"],"ঢ":["ঢাকা","Dhaka"],"ণ":["নারায়ণগঞ্জ","Narayanganj"],"ত":["সাতক্ষীরা","Satkhira"],"থ":["বিশ্বনাথ","Bishwanath"],"দ":["দিনাজপুর","Dinajpur"],"ধ":["ধামরাই","Dhamrai"],"ন":["নরসিংদী","Narsingdi"],"প":["পাবনা","Pabna"],"ফ":["ফরিদপুর","Faridpur"],"ব":["বরিশাল","Barishal"],"ভ":["ভৈরব","Bhairab"],"ম":["মাগুরা","Magura"],"র":["শেরপুর","Sherpur"],"ল":["লাকসাম","Laksam"],"শ":["রাজশাহী","Rajshahi"],"ষ":["সরিষাবাড়ী","Sarishabari"],"স":["সাভার","Savar"],"হ":["হবিগঞ্জ","Habiganj"],"ড়":["বগুড়া","Bogura"],"য়":["জয়পুরহাট","Joypurhat"],"া":["মাদারীপুর","Madaripur"],"ি":["চকরিয়া","Chakaria"],"ী":["গাজীপুর","Gazipur"],"ু":["সৈয়দপুর","Saidpur"],"ে":["ফেনী","Feni"],"ৈ":["কালিয়াকৈর","Kaliakair"],"ো":["নোয়াখালী","Noakhali"],"ৌ":["গৌরনদী","Gaurnadi"],"ং":["রংপুর","Rangpur"],"ঁ":["চাঁদপুর","Chandpur"],"্":["হাজীগঞ্জ","Hajiganj"],"্র":["চৌদ্দগ্রাম","Chauddagram"],"্ব":["দেবিদ্বার","Debidwar"],"ক্ষ":["লক্ষ্মীপুর","Lakshmipur"],"ঙ্গ":["রাঙ্গামাটি","Rangamati"],"ঞ্জ":["সিরাজগঞ্জ","Sirajganj"],"ঞ্চ":["কাঞ্চন","Kanchan"],"ত্র":["নেত্রকোণা","Netrokona"],"ক্ত":["মুক্তাগাছা","Muktagachha"],"হ্ম":["ব্রাহ্মণবাড়িয়া","Brahmanbaria"],"গ্র":["কুড়িগ্রাম","Kurigram"],"ব্র":["ব্রাহ্মণবাড়িয়া","Brahmanbaria"],"শ্র":["শ্রীপুর","Sreepur"],"ন্দ":["চান্দিনা","Chandina"],"ন্ত":["সান্তাহার","Santahar"],"ন্ধ":["গাইবান্ধা","Gaibandha"],"ল্ল":["কুমিল্লা","Cumilla"],"ট্ট":["চট্টগ্রাম","Chattogram"],"স্ত":["শাহরাস্তি","Shahrasti"],"ষ্ট":["কুষ্টিয়া","Kushtia"]};
+SCRIPT.eg = {"আ":["আখাউড়া","Akhaura"],"ই":["চাঁপাইনবাবগঞ্জ","Chapai Nawabganj"],"ঈ":["ঈশ্বরদী","Ishwardi"],"উ":["উল্লাপাড়া","Ullapara"],"এ":["এলেঙ্গা","Elenga"],"ও":["নওয়াপাড়া","Noapara"],"ক":["মানিকগঞ্জ","Manikganj"],"খ":["খুলনা","Khulna"],"গ":["মুন্সীগঞ্জ","Munshiganj"],"ঘ":["ঘোড়াশাল","Ghorashal"],"ঙ":["টাঙ্গাইল","Tangail"],"চ":["চৌমুহনী","Choumuhani"],"ছ":["হারাগাছ","Haragachh"],"জ":["জামালপুর","Jamalpur"],"ঝ":["ঝিকরগাছা","Jhikargachha"],"ঞ":["গোপালগঞ্জ","Gopalganj"],"ট":["হাটহাজারী","Hathazari"],"ড":["চুয়াডাঙ্গা","Chuadanga"],"ঢ":["ঢাকা","Dhaka"],"ণ":["নারায়ণগঞ্জ","Narayanganj"],"ত":["সাতক্ষীরা","Satkhira"],"থ":["বিশ্বনাথ","Bishwanath"],"দ":["দিনাজপুর","Dinajpur"],"ধ":["ধামরাই","Dhamrai"],"ন":["নরসিংদী","Narsingdi"],"প":["পাবনা","Pabna"],"ফ":["ফরিদপুর","Faridpur"],"ব":["বরিশাল","Barishal"],"ভ":["ভৈরব","Bhairab"],"ম":["মাগুরা","Magura"],"র":["শেরপুর","Sherpur"],"ল":["লাকসাম","Laksam"],"শ":["রাজশাহী","Rajshahi"],"ষ":["সরিষাবাড়ী","Sarishabari"],"স":["সাভার","Savar"],"হ":["হবিগঞ্জ","Habiganj"],"ড়":["বগুড়া","Bogura"],"য়":["জয়পুরহাট","Joypurhat"],"া":["মাদারীপুর","Madaripur"],"ি":["চকরিয়া","Chakaria"],"ী":["গাজীপুর","Gazipur"],"ু":["সৈয়দপুর","Saidpur"],"ে":["ফেনী","Feni"],"ৈ":["কালিয়াকৈর","Kaliakair"],"ো":["নোয়াখালী","Noakhali"],"ৌ":["গৌরনদী","Gaurnadi"],"ং":["রংপুর","Rangpur"],"ঁ":["চাঁদপুর","Chandpur"],"্":["হাজীগঞ্জ","Hajiganj"],"্র":["চৌদ্দগ্রাম","Chauddagram"],"্ব":["দেবিদ্বার","Debidwar"],"ক্ষ":["লক্ষ্মীপুর","Lakshmipur"],"ঙ্গ":["রাঙ্গামাটি","Rangamati"],"ঞ্জ":["সিরাজগঞ্জ","Sirajganj"],"ঞ্চ":["কাঞ্চন","Kanchan"],"ত্র":["নেত্রকোণা","Netrokona"],"ক্ত":["মুক্তাগাছা","Muktagachha"],"হ্ম":["ব্রাহ্মণবাড়িয়া","Brahmanbaria"],"গ্র":["কুড়িগ্রাম","Kurigram"],"ব্র":["ব্রাহ্মণবাড়িয়া","Brahmanbaria"],"শ্র":["শ্রীপুর","Sreepur"],"ন্দ":["চান্দিনা","Chandina"],"ন্ত":["সান্তাহার","Santahar"],"ন্ধ":["গাইবান্ধা","Gaibandha"],"ল্ল":["কুমিল্লা","Cumilla"],"ট্ট":["চট্টগ্রাম","Chattogram"],"স্ত":["শাহরাস্তি","Shahrasti"],"ষ্ট":["কুষ্টিয়া","Kushtia"],"ৰ/ra":["দিছপুৰ","Dispur"],"ৱ/wa":["গুৱাহাটী","Guwahati"]};
+// (one of the scripts the page loaded: ../shared/reading.js reads names in each)
+(globalThis.ALL_SCRIPTS ||= []).push(SCRIPT);

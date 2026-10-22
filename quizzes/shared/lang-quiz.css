@@ -1,7 +1,6 @@
-/* Script quizzes, on top of area-quiz.css: the board of tiles (lang-config.js), the sign card with a letter, a word
-   or a name (city-config.js, typed), and the typefaces of each script (SCRIPT.script, see reading.js). A page loads
-   the fonts of its script. */
-:root{--script:"Noto Sans","Noto Sans Devanagari","Noto Sans Bengali",system-ui,sans-serif}
+/* Script quizzes, on top of area-quiz.css and faces.css (the typefaces of each script, SCRIPT.script, see
+   reading.js): the board of tiles (lang-config.js) and the sign card with a letter or a word. A page loads the fonts
+   of its script. */
 
 /* the question, on a sign card; over it, where a letter is read that way only in some countries, those countries */
 .card{border:1.5px solid var(--ink);border-radius:14px;padding:14px 18px;background:color-mix(in srgb,var(--ink) 3%,transparent);min-height:6rem;display:flex;flex-direction:column;justify-content:center;align-items:center}
@@ -12,29 +11,14 @@
 .board.letters .sent{font-size:5.5rem;line-height:1.2}
 .board.alphabets .sent{font-size:1.9rem;line-height:1.25}
 
-/* a question is set in one of its script's typefaces: plain, serif, slanted (where the small letters change shape),
-   narrow, written by hand, heavy */
-.sent.s-cyrl.f1{font-family:"PT Serif",var(--script);font-weight:700}
-.sent.s-cyrl.f2{font-family:"PT Serif",var(--script);font-weight:400;font-style:italic}
-.sent.s-cyrl.f3{font-family:"Oswald",var(--script);font-weight:500}
-.sent.s-cyrl.f4{font-family:"Caveat",var(--script);font-weight:700}
-.sent.s-cyrl.f5{font-family:"Russo One",var(--script);font-weight:400}
-.sent.s-deva{font-family:"Noto Sans Devanagari",var(--script);line-height:1.6}
-.sent.s-deva.f1{font-family:"Tiro Devanagari Hindi",var(--script);font-weight:400}
-.sent.s-deva.f2{font-family:"Kalam",var(--script);font-weight:700}
-.sent.s-deva.f3{font-family:"Khand",var(--script);font-weight:600}
-.sent.s-deva.f4{font-family:"Rozha One",var(--script);font-weight:400}
-.sent.s-beng{font-family:"Noto Sans Bengali",var(--script);line-height:1.6}
-.sent.s-beng.f1{font-family:"Tiro Bangla",var(--script);font-weight:400}
-.sent.s-beng.f2{font-family:"Hind Siliguri",var(--script);font-weight:600}
-.sent.s-beng.f3{font-family:"Baloo Da 2",var(--script);font-weight:700}
-.sent.s-beng.f4{font-family:"Galada",var(--script);font-weight:400}
+/* a question is set in one of its script's typefaces: ./faces.css, which a page loads before this file */
 
 /* the board: a tile per answer, its label always on it; a tile outside the round is dimmed with its label */
 .board .r{--fill:var(--card)}
 .board #ctx path{fill:color-mix(in srgb,var(--panel) 55%,transparent);stroke:none}
 .board #labels text{font-size:30px;stroke:none}
 .board.words #labels text{font-size:21px}
+.board:has(script[src$="/japanese.js"]) #labels text{font-size:22px} /* a kanji's tile has two readings (kawa, gawa) */
 .board.alphabets #labels text{font:600 30px var(--script)} /* the letters themselves: every mark as the script's own face draws it */
 .board #labels text.off{display:inline}
 .board #labels text.out{opacity:.3}
