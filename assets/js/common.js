@@ -47,18 +47,16 @@ async function loadIndex() {
   return { ...index, quizzes: index.quizzes.filter((q) => !q.hidden) };
 }
 
-// A country's quizzes come in one order everywhere (their `role` in data/quizzes.json): its regions, its cities with
-// the cities picked by Street View coverage, the town names and the reading of its names in their own script (which
-// belong to the city quiz: on the country page they sit inside its entry), its codes (area codes, postcodes), then
-// what is special to the country.
-const ROLES = ["regions", "cities", "cities-coverage", "names", "reading", "area-codes", "postcodes"];
-const WITH_CITIES = ["cities-coverage", "names", "reading"]; // the quizzes inside the city quiz's entry
+// A country's quizzes come in one order everywhere (their `role` in data/quizzes.json): its regions, its cities, its
+// town names (a quiz of their own since 2026-10-23, no longer inside the city quiz's entry), its codes (area codes,
+// postcodes), then what is special to the country.
+const ROLES = ["regions", "cities", "names", "area-codes", "postcodes"];
 function inOrder(quizzes) {
   const rank = (q) => (ROLES.includes(q.role) ? ROLES.indexOf(q.role) : ROLES.length);
   return quizzes.slice().sort((a, b) => rank(a) - rank(b));
 }
 // … and on the country's page in three groups: the basics (regions, cities, town names), the codes, the extras.
-const quizGroup = (q) => (["regions", "cities", ...WITH_CITIES].includes(q.role) ? "Basics" : ROLES.includes(q.role) ? "Codes" : "Extra");
+const quizGroup = (q) => (["regions", "cities", "names"].includes(q.role) ? "Basics" : ROLES.includes(q.role) ? "Codes" : "Extra");
 
 // Quizzes with their own page set `url`; the rest use the generic multiple-choice page.
 function quizUrl(quiz) {

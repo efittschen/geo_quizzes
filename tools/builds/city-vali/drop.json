@@ -1,0 +1,168 @@
+{
+ "AR": {
+  "3433360": "Ituzaingó: population wrong: 168,419 is Ituzaingó partido (Buenos Aires); this Corrientes town has ~20-25k"
+ },
+ "AU": {
+  "2068079": "Kwinana: part of Perth's built-up area (City of Kwinana, metro suburb)",
+  "2166143": "Frankston East: suburb of Frankston, part of Melbourne's built-up area"
+ },
+ "BO": {
+  "12522475": "Okinawa Uno: duplicate of Okinawa (same colony town, 0 km)"
+ },
+ "CL": {
+  "11947989": "Villa Mercedes: population wrong: 131,936 is Villa Mercedes (San Luis, Argentina); this is a hamlet near Huépil/Tucapel"
+ },
+ "CR": {
+  "3621841": "San José: administrative district (San José de Upala district), not a town of 31k; Upala canton seat already listed"
+ },
+ "DK": {
+  "2617175": "Lystrup: population wrong: hamlet near Auning carrying the Aarhus suburb Lystrup's 10,116 (same name already listed)",
+  "2618741": "Klinteby Frihed: population wrong: hamlet carrying Avedøre's 53,443"
+ },
+ "FI": {
+  "639853": "Raseborg: municipality, not a town: point is Ekenäs (already listed); signs show Ekenäs/Tammisaari",
+  "640440": "Pyhäjärvi: population wrong: village in Lapland (Pelkosenniemi area) carrying Pyhäjärvi town's figure; Pyhäjärvi (N. Ostrobothnia) already listed"
+ },
+ "FR": {
+  "8533870": "Saint-Quentin-en-Yvelines: agglomeration (ville nouvelle), not a town; point is Montigny-le-Bretonneux (already listed)"
+ },
+ "GE": {
+  "614410": "Gudauri: population wrong: ski resort with a few hundred residents, not 10,000"
+ },
+ "GH": {
+  "2294915": "Takoradi: duplicate: half of Sekondi-Takoradi (already listed)",
+  "11808941": "Sekondi: duplicate: half of Sekondi-Takoradi (already listed)"
+ },
+ "IS": {
+  "8644037": "Reykjanesbær: municipality (Keflavík + Njarðvík), point is Keflavík (already listed)",
+  "11258566": "Borgarnes: duplicate of Borgarnes (already listed)"
+ },
+ "IN": {
+  "1258393": "Rasapūdipalem: neighbourhood of Visakhapatnam carrying the city's population",
+  "1261162": "Nowrangapur: population wrong: 1.22M is Nabarangpur district; the town has ~30k",
+  "1262111": "Najafgarh: part of Delhi's built-up area; 1.37M is the Najafgarh zone",
+  "12165956": "Kallakurichi: population wrong: 1.68M is Kallakurichi district; the town has ~60k",
+  "12501153": "Kanayannur: taluk (administrative unit) of Ernakulam/Kochi, not a town",
+  "12501195": "Shahuwadi: taluka (administrative unit), 180k is the taluka's; the village is small"
+ },
+ "ID": {
+  "13680164": "Nusantara: new capital area under construction; 147k is the authority area's figure, few residents"
+ },
+ "IL": {
+  "294098": "Nazareth: duplicate of Nazareth (already listed, 0 km)"
+ },
+ "JP": {
+  "1848277": "Yonago: duplicate of Yonago (already listed)",
+  "1848354": "Yokohama: duplicate of Yokohama (already listed)",
+  "1849876": "Toyama: duplicate of Toyama (already listed; the old point sits ~18 km SE at the municipality centroid)",
+  "1850147": "Tokyo: duplicate of Tokyo (already listed)",
+  "1851100": "Takamatsu: duplicate of Takamatsu (already listed)",
+  "1851717": "Shizuoka: duplicate of Shizuoka (already listed)",
+  "1852139": "Shinagawa: population wrong: place in Ehime carrying Tokyo's Shinagawa ward's 422,488",
+  "1852383": "Minato: neighbourhood of Wakayama carrying a wrong population (375,339)",
+  "1852736": "Sendai: former city merged in 2004; now Satsumasendai (薩摩川内)",
+  "1853909": "Osaka: duplicate of Osaka (already listed)",
+  "1854383": "Okayama: duplicate of Okayama (already listed)",
+  "1855431": "Niigata: duplicate of Niigata (already listed)",
+  "1856035": "Naha: duplicate of Naha (already listed)",
+  "1856057": "Nagoya: duplicate of Nagoya (already listed)",
+  "1856177": "Nagasaki: duplicate of Nagasaki (already listed)",
+  "1856215": "Nagano: duplicate of Nagano (already listed)",
+  "1856717": "Miyazaki: duplicate of Miyazaki (already listed)",
+  "1857519": "Matsumoto: duplicate of Matsumoto (already listed)",
+  "1857910": "Kyoto: duplicate of Kyoto (already listed)",
+  "1858088": "Kurume: duplicate of Kurume (already listed)",
+  "1858421": "Kumamoto: duplicate of Kumamoto (already listed)",
+  "1859100": "Kofu: duplicate of Kofu (already listed)",
+  "1859171": "Kobe: duplicate of Kobe (already listed)",
+  "1859307": "Kitakyushu: duplicate of Kitakyushu (already listed)",
+  "1860243": "Kanazawa: duplicate of Kanazawa (already listed)",
+  "1860827": "Kagoshima: duplicate of Kagoshima (already listed)",
+  "1861084": "Izumo: duplicate of Izumo (already listed)",
+  "1862415": "Hiroshima: duplicate of Hiroshima (already listed)",
+  "1863917": "Fukuyama: duplicate of Fukuyama (already listed)",
+  "1863967": "Fukuoka: duplicate of Fukuoka (already listed)",
+  "1863985": "Fukui-shi: duplicate of Fukui (already listed)",
+  "1926099": "Matsuyama: duplicate of Matsuyama (already listed)",
+  "2111149": "Sendai: duplicate of Sendai (already listed)",
+  "2111901": "Mito: duplicate of Mito (already listed)",
+  "2112539": "Iwaki: duplicate of Iwaki (already listed)",
+  "2112923": "Fukushima: duplicate of Fukushima (already listed)",
+  "2113015": "Chiba: duplicate of Chiba (already listed)",
+  "2113126": "Akita: duplicate of Akita (already listed)",
+  "2127733": "Tomakomai: duplicate of Tomakomai (already listed)",
+  "2128295": "Sapporo: duplicate of Sapporo (already listed)",
+  "2130057": "Hirosaki: duplicate of Hirosaki (already listed)",
+  "2130188": "Hakodate: duplicate of Hakodate (already listed)",
+  "2130203": "Hachinohe: duplicate of Hachinohe (already listed)",
+  "2130629": "Asahikawa: duplicate of Asahikawa (already listed)",
+  "2130658": "Aomori: duplicate of Aomori (already listed)"
+ },
+ "KE": {
+  "185131": "Mwala: sub-county (administrative unit); 181,896 is Mwala sub-county, the town is small",
+  "186315": "Molo: duplicate: same census urban centre as Turi (already listed with this exact 48,356, 5 km)",
+  "188080": "Makueni Boma: duplicate: part of Wote (already listed, 3 km)",
+  "192785": "Khwisero: sub-county (administrative unit); 113,294 is Khwisero sub-county, no town of that size",
+  "193627": "Karuri: population wrong: place near Murang'a carrying Karuri (Kiambu)'s 194,342 (Karuri already listed)",
+  "194160": "Kapenguria: duplicate: same urban area as Makutano (West Pokot), 3 km (already listed)"
+ },
+ "MY": {
+  "1734445": "Pulai: mukim (administrative area) of Baling district; the town there is Baling (~3 km)",
+  "6847550": "Kota Kuala Muda: population wrong: 544,984 is Kuala Muda district (same figure as Sungai Petani on the list); the town has a few thousand",
+  "13100478": "Paya Terubong: suburb of George Town (Penang)"
+ },
+ "MN": {
+  "2032051": "Choyr: duplicate of Choir (point misplaced ~34 km)"
+ },
+ "NZ": {
+  "2208329": "Papakura: suburb, part of Auckland's built-up area"
+ },
+ "NG": {
+  "2337313": "Irewe: part of Lagos's built-up area (Ojo, along the Badagry road); 139k is not a separate town's"
+ },
+ "NO": {
+  "3147743": "Lenvik: former municipality (now Senja); its town is Finnsnes (already listed)"
+ },
+ "PA": {
+  "3704187": "Monagrillo: corregimiento, part of Chitré's built-up area (3 km)",
+  "3705779": "Llano Bonito: a corregimiento of Chitré, 2 km from its centre",
+  "10179345": "San Juan Bautista: corregimiento, part of Chitré's built-up area (1 km)"
+ },
+ "PE": {
+  "3695675": "La Peca: population wrong: La Peca has ~3-4k (district ~8k), not 27k; Bagua (~30k, 10 km W, GeoNames pop 0) is the town there"
+ },
+ "PT": {
+  "2266249": "Monsanto: population wrong: small parish of Alcanena (~1k), not 50,000",
+  "2740174": "Custoias: population wrong: hamlet in the Douro carrying Custóias (Matosinhos)'s 19,406"
+ },
+ "QA": {
+  "289545": "Umm Ghuwaylīnah: population wrong: desert spot in western Qatar carrying the Doha district Umm Ghuwailina's 39,457"
+ },
+ "ZA": {
+  "11205753": "Ncotshane: township of Pongola; signs show Pongola (GeoNames 964574, pop 1,680; ~20k with Ncotshane)"
+ },
+ "ES": {
+  "2520425": "Campiña: hamlet (\"Caserío Campiña\") carrying a comarca-sized 67,904; not a town"
+ },
+ "TH": {
+  "1156257": "Ban Na: village between Sukhothai and Old Sukhothai with an implausible 40,174; not a known town",
+  "1608258": "Nong Chok: district (khet) of Bangkok"
+ },
+ "TR": {
+  "317236": "Demirci: population wrong: village in Bursa province; the town Demirci is in Manisa (GeoNames 317241, 21,378)",
+  "321580": "Belek: population wrong: resort of Serik with ~5-10k residents, not 73,260",
+  "324859": "Akçapınar: population wrong: village (Vaskovan) carrying Tunceli province's 84,366",
+  "6947640": "Beylikdüzü: district of Istanbul",
+  "7628419": "Sultanbeyli: district of Istanbul"
+ },
+ "VN": {
+  "1565157": "Thới Lai: 109,684 is the district's population",
+  "1570819": "Phong Thạnh: rural commune (xã) of Giá Rai, not a town of 54k",
+  "1581755": "Giá Rai: the town whose centre is Hộ Phòng, already listed 4 km away",
+  "1584784": "Cờ Đỏ: population wrong: 116,576 is the former Cờ Đỏ district; the town has roughly 10-20k",
+  "1588129": "Ba Vì: former district (huyện), 282,600 is the district's; its town was Tây Đằng",
+  "1591440": "Bắc Quang: former district (huyện), 118,690 is the district's; its town Việt Quang is already listed",
+  "8628018": "Bản Na Hỷ: mountain village (bản) carrying a commune-level population; not a town of 16.7k",
+  "12217184": "Huyện Lâm Hà: district (huyện); its town Đinh Văn is already listed (4 km)"
+ }
+}

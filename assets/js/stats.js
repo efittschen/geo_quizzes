@@ -32,7 +32,7 @@ function initStats(index, nameByCode) {
   const most = (list, f) => { const n = new Map(); for (const x of list) { const k = f(x); n.set(k, (n.get(k) || 0) + 1); } return [...n].sort((a, b) => b[1] - a[1])[0]?.[0]; };
   const ago = (ms, now) => { const d = SRS.days(ms, now); return d <= 0 ? "Today" : d === 1 ? "Yesterday" : d < 60 ? `${d} d` : dateShort(ms); };
   const keyOf = (a) => `${a.quiz}|${a.kind}|${a.item}`;
-  const city = (quizId) => ["cities", "cities-coverage"].includes(byId.get(quizId)?.role);
+  const city = (quizId) => byId.get(quizId)?.role === "cities";
   const placeOf = (q) => { const country = nameByCode.get(quizCountries(q)[0]); return q.area ?? q.scope ?? (country && (SHORT_NAMES[country] ?? country)) ?? q.title; };
   const titleOf = (quizId) => byId.get(quizId)?.title ?? STORE.quiz(quizId).title ?? quizId;
   // A layer's name: as the log has it, else as the quiz page wrote it for its cards (a layer played only in a mode: that

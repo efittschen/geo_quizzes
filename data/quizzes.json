@@ -1133,14 +1133,6 @@
       "url": "quizzes/russia-cities/index.html"
     },
     {
-      "id": "russia-cities-coverage",
-      "country": "643",
-      "title": "Cities by Coverage",
-      "role": "cities-coverage",
-      "levels": 4,
-      "url": "quizzes/russia-cities-coverage/index.html"
-    },
-    {
       "id": "russia-town-names",
       "country": "643",
       "title": "Town Names",
@@ -1179,14 +1171,6 @@
       "role": "cities",
       "levels": 4,
       "url": "quizzes/us-cities/index.html"
-    },
-    {
-      "id": "us-cities-coverage",
-      "country": "840",
-      "title": "Cities by Coverage",
-      "role": "cities-coverage",
-      "levels": 4,
-      "url": "quizzes/us-cities-coverage/index.html"
     },
     {
       "id": "us-town-names",

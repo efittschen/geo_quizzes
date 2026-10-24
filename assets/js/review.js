@@ -33,7 +33,7 @@ function dueWhen(ts, now) {
 // Country names too long for the stack, in their usual short form.
 const SHORT_NAMES = { "United States of America": "USA", "United Kingdom": "UK", "United Arab Emirates": "UAE" };
 // A city quiz (its maps: by distance, or the dots), and the maps a quiz's cards can be on, as its page says them.
-const cityOf = (d) => ["cities", "cities-coverage"].includes(d.quiz.role);
+const cityOf = (d) => d.quiz.role === "cities";
 const looksOf = (d) => SRS.looksOf(d.id) ?? (cityOf(d) ? ["free", "quiz"] : ["quiz", "overlay", "street", "bare"]);
 // A row's actions behind ⋯ (a select: on a phone its own list): groups of [label, value] under their headings, then
 // Remove where there is remove(); act(value) or remove() does it and says whether anything changed, and changed()
@@ -200,7 +200,7 @@ function render(index, nameByCode) {
       const several = d.layers.length > 1, onlyMaps = !several && kids(d.layers[0]);
       const same = (label) => label.toLowerCase() === d.quiz.title.toLowerCase();
       const named = d.layers.map((l) => ({ ...l, label: !same(l.label) ? l.label : d.quiz.role === "area-codes" ? "Full codes" : `${l.label} only` }));
-      const city = ["cities", "cities-coverage"].includes(d.quiz.role);
+      const city = d.quiz.role === "cities";
       // A quiz's, a layer's or a map's ⋯ (kind and look null for all of them): its cards converted to another map of
       // the quiz (here: the maps they are on now; one alone is not offered), or taken off the stack.
       const menu = (what, kind, look, here) => {
@@ -243,7 +243,7 @@ function render(index, nameByCode) {
 // and map, where the quiz has cards of several).
 function renderDue(decks, placeOf, now) {
   const rows = decks.flatMap((d) => {
-    const called = STORE.quiz(d.id).called || {}, cards = SRS.cardList(d.id), city = ["cities", "cities-coverage"].includes(d.quiz.role);
+    const called = STORE.quiz(d.id).called || {}, cards = SRS.cardList(d.id), city = d.quiz.role === "cities";
     // (a layer named like its quiz, its main one, is not named again: "Brazil · Area Codes", not "… · Area codes")
     const layerOf = new Map(d.layers.filter((l) => l.label.toLowerCase() !== d.quiz.title.toLowerCase()).map((l) => [l.key, l.label])), maps = new Set(cards.map((c) => c.look)).size > 1;
     return cards.map((c) => ({ c, d, called, within: [...(d.layers.length > 1 ? [layerOf.get(c.kind)] : []), ...(maps && c.look ? [lookLabel(c.look, city)] : [])].filter(Boolean) }));

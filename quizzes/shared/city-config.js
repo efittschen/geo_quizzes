@@ -30,10 +30,10 @@
 //                 local name (cities.js: local, lang) is in one of them is asked by it instead of its English name.
 //                 Not for a second language of a country (Swedish in Finland, Māori in New Zealand): there the
 //                 English name is the one on the signs.
-//     top         sizes of the "Top N" rounds; a round with every city is added at the end
+//     top         sizes of the "Top N" rounds; a round with every city is added at the end, "Top <their number>"
 //     list        another list of cities on the country's map: { order, list }, from a file of the page's own. The
 //                 page then loads the country's cities.js for the map and the regions, and this list replaces
-//                 its cities (us-cities-coverage: the cities picked by Street View coverage).
+//                 its cities (once the "By coverage" lists of the US and Russia; none uses it now).
 
 const QUIZ = (() => {
   if (typeof MERCATOR === 'object') MERCATOR.cities(CITIES); // the map in Web Mercator, every part at its real place (mercator.js)
@@ -171,7 +171,7 @@ const QUIZ = (() => {
 
   const rounds = [
     ...sizes.filter(n => n < ALL.length).map(n => ({ kind: 'en', label: `Top ${n}`, top: n })),
-    { kind: 'en', label: 'All cities' },
+    { kind: 'en', label: `Top ${ALL.length}`, key: 'All cities' }, // (every city: "Top 100" where the list has 100; the key keeps the round's id of before)
   ];
 
   return {
