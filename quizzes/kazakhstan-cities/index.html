@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Kazakhstan Cities · Geo Quizzes</title>
-<meta name="description" content="Find Kazakhstan's largest cities on the map, by English or Kazakh name.">
+<meta name="description" content="Find Kazakhstan's cities on the map, by English or Kazakh name.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Noto+Sans:wght@500;600&display=swap" rel="stylesheet">
@@ -15,13 +15,13 @@
 <link rel="stylesheet" href="../shared/city-quiz.css">
 <style>#labels text,.chip,#eCode{font-family:var(--cond),"Noto Sans",sans-serif}</style>
 </head>
-<body data-dial="+7 (#)" data-folders="Cities|Town names=../kazakhstan-town-names/index.html">
+<body data-dial="+7 (#)">
 <a class="back" href="../../country.html?code=398">← Kazakhstan</a>
 <h1>Kazakhstan Cities</h1>
 <p class="note">Cities: GeoNames (CC BY 4.0) · Names: Wikidata, GeoNames · Borders: © OpenStreetMap contributors (ODbL)</p>
 <script src="../shared/quiz-page.js"></script>
 <script src="cities.js"></script>
-<script>const CITY_OPTS = { key: 'kzcities', lang: 'Kazakh' };</script>
+<script>const CITY_OPTS = { key: 'kzcities', lang: 'Kazakh', top: [10, 25, 50] };</script>
 <script src="../cyrillic-letters/cyrillic.js"></script>
 <script src="../shared/reading.js"></script>
 <script src="../shared/city-config.js"></script>

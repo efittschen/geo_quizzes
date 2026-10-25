@@ -63,8 +63,8 @@ function openCoverage(name, box, key) {
 
 // placeOf(quiz): on a suite's page, the country of each quiz. It leads there, with the quiz's title under it
 // ("Brazil", "States"); a quiz about the world or a continent keeps its title on top ("Flags", "World").
-// inside(quiz): the quizzes shown within this one's entry (the cities by coverage and the town names within the
-// cities), as smaller entries under it.
+// inside(quiz): the quizzes shown within this one's entry, as smaller entries under it (none at present: the town
+// names, once inside the cities, are a quiz of their own since 2026-10-23).
 // group(quiz): the heading a quiz stands under ("Basics"); a heading is put before the first quiz of each group.
 function renderQuizzes(quizzes, placeOf, inside = () => [], group = null) {
   const list = $("quiz-cards");
@@ -198,7 +198,7 @@ async function init() {
       : "";
     drawShape(feature, roads && (roads.ids[code] ?? roads.names[name]));
     const ordered = inOrder(quizzes);
-    if (quizzes.length) renderQuizzes(ordered, null, (q) => (q.role === "cities" ? ordered.filter((x) => WITH_CITIES.includes(x.role)) : []), quizGroup);
+    if (quizzes.length) renderQuizzes(ordered, null, undefined, quizGroup);
     else showEmpty(`No quizzes for ${name} yet.`);
     renderReview(index, quizzes, countryUrl(code));
     showReviewDue(index);
