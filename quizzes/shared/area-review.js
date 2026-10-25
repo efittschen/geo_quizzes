@@ -112,6 +112,17 @@ window.areaReview = E => {
     const called = {};
     for (const c in items) { const [k, id] = items[c]; called[parse(c).kind + '|' + id] ??= cardName(KINDS[k], id); }
     SRS.setNames(PAGE, called);
+    // And the group each card is in, in its layer (where the layer has groups): reviewed by group on the review page.
+    const grouped = {};
+    for (const c in items) {
+      const [k, id] = items[c], K = KINDS[k], kind = parse(c).kind;
+      if (!K || !K.groups || K.groups.length < 2) continue;
+      const g = K.groups.find(g => g.ids.includes(id)); if (!g) continue;
+      const list = grouped[kind] ||= K.groups.map(x => [x.title, []]), at = list.find(x => x[0] === g.title);
+      if (!at[1].includes(id)) at[1].push(id);
+    }
+    for (const kind in grouped) grouped[kind] = grouped[kind].filter(x => x[1].length);
+    SRS.setGroups(PAGE, grouped);
     if (Object.keys(deck.c).length) SRS.setLooks(PAGE, MAPS); // (the maps the review page offers to sort cards onto)
     return { deck, items };
   }

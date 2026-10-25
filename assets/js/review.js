@@ -196,8 +196,10 @@ function render(index, nameByCode) {
       // like its quiz (the "Area codes" of "Area Codes", next to "First digit") is told apart: "Full codes".
       // A layer with cards played on several maps (the quiz map, the street map…) has a line for each map under it;
       // a quiz with one layer has them under its own line.
-      const kids = (l) => l.maps.length > 1;
-      const several = d.layers.length > 1, onlyMaps = !several && kids(d.layers[0]);
+      const kids = (l) => l.maps.length > 1, grouped = (l) => l.groups.length > 1;
+      // (a layer played in a mode, its cards typed or picked rather than clicked, is named on a line of its own even
+      // alone: "Area codes · Type code", so its cards are not taken for the map's)
+      const several = d.layers.length > 1 || d.layers[0].key.includes("~"), onlyMaps = !several && (kids(d.layers[0]) || grouped(d.layers[0]));
       const same = (label) => label.toLowerCase() === d.quiz.title.toLowerCase();
       const named = d.layers.map((l) => ({ ...l, label: !same(l.label) ? l.label : d.quiz.role === "area-codes" ? "Full codes" : `${l.label} only` }));
       const city = ["cities", "cities-coverage"].includes(d.quiz.role);
@@ -224,15 +226,38 @@ function render(index, nameByCode) {
         });
         return rows;
       };
+      // A layer's groups (Indonesia's kabupaten and kota by province, area codes by their first digits), each on a
+      // line of its own to be reviewed by itself, with its maps (where its cards are on several) and its cards.
+      // lv: the groups' level (1 under the quiz's line, 2 under a layer's); lines: the branches above that go on past them.
+      const groupOf = Object.fromEntries(Object.entries(STORE.quiz(d.id).grouped || {}).map(([kind, list]) => [kind, new Map(list.flatMap(([title, items]) => items.map((it) => [it, title])))]));
+      const inGroup = (c, title) => groupOf[c.kind] && groupOf[c.kind].get(c.item) === title;
+      const X = (lv) => 16 + 26 * lv, guide = (lines) => lines.map((x) => `linear-gradient(var(--line),var(--line)) no-repeat ${x}px 0/1.5px 100%`).join(",") || "none";
+      const levelCls = (lv, last) => ["layer", lv === 2 ? "map" : lv === 3 ? "lv3" : "", last ? "last" : ""].filter(Boolean).join(" ");
+      const groupRows = (l, lv, parent, lines) => l.groups.flatMap((g, i) => {
+        const last = i === l.groups.length - 1, cell = document.createElement("td"), G = `g:${d.id}|${l.key}|${g.title}`, below = [...lines, ...(last ? [] : [X(lv)])];
+        cell.textContent = cell.title = g.title;
+        cell.style.setProperty("--lines", guide(lines));
+        const maps = g.maps.length > 1 ? g.maps : [];
+        // (no ⋯ of its own: a gap as wide, so its buttons line up with the others')
+        const gap = () => { const x = document.createElement("span"); x.className = "more-gap"; return x; };
+        return [tree(row(levelCls(lv, last), cell, [g], [gap()], { id: d.id, key: l.key, group: g.title, quiz: d.quiz }), G, parent),
+          ...(maps.length ? maps.flatMap((m, j) => {
+            const mlast = j === maps.length - 1, mc = document.createElement("td"), M = `${G}|${m.look}`;
+            mc.textContent = lookLabel(m.look, city);
+            mc.style.setProperty("--lines", guide(below));
+            return [tree(row(levelCls(lv + 1, mlast), mc, [m], [gap()], { id: d.id, key: l.key, group: g.title, look: m.look, quiz: d.quiz }), M, G),
+              ...cardRows(cards.filter((c) => c.kind === l.key && c.look === m.look && inGroup(c, g.title)), M, lv + 2, [...below, ...(mlast ? [] : [X(lv + 1)])])];
+          }) : cardRows(cards.filter((c) => c.kind === l.key && inGroup(c, g.title)), G, lv + 1, below))];
+      });
       // The layers hang from the sum's line on a branch, indented under it (see .decks tr.sum, tr.layer).
       const layers = several ? named.flatMap((l, i) => {
-        const last = i === named.length - 1, maps = kids(l);
+        const last = i === named.length - 1, maps = kids(l) || grouped(l);
         const cell = document.createElement("td");
         cell.textContent = cell.title = l.label;
         const cls = ["layer", maps ? "parent" : "", last ? "last" : ""].filter(Boolean).join(" "), L = `l:${d.id}|${l.key}`;
         return [tree(row(cls, cell, [l], [menu(`“${d.title}”, ${l.label}`, l.key, null, l.maps.map((m) => m.look))], { id: d.id, key: l.key, quiz: d.quiz }), L, Q),
-          ...(maps ? mapRows(l, true, !last) : cardRows(cards.filter((c) => c.kind === l.key), L, 2, last ? [] : [42]))];
-      }) : onlyMaps ? mapRows(named[0], false, false) : cardRows(cards, Q, 1);
+          ...(grouped(l) ? groupRows(l, 2, L, last ? [] : [42]) : maps ? mapRows(l, true, !last) : cardRows(cards.filter((c) => c.kind === l.key), L, 2, last ? [] : [42]))];
+      }) : grouped(named[0]) ? groupRows(named[0], 1, Q, []) : onlyMaps ? mapRows(named[0], false, false) : cardRows(cards, Q, 1);
       return [tree(row(several || onlyMaps ? "sum" : "", td, [d], [menu(`“${d.title}”`, null, null, [...new Set(d.layers.flatMap((l) => l.maps.map((m) => m.look)))])]), Q, P), ...layers];
     }).flat()];
   }));
@@ -246,7 +271,9 @@ function renderDue(decks, placeOf, now) {
     const called = STORE.quiz(d.id).called || {}, cards = SRS.cardList(d.id), city = ["cities", "cities-coverage"].includes(d.quiz.role);
     // (a layer named like its quiz, its main one, is not named again: "Brazil · Area Codes", not "… · Area codes")
     const layerOf = new Map(d.layers.filter((l) => l.label.toLowerCase() !== d.quiz.title.toLowerCase()).map((l) => [l.key, l.label])), maps = new Set(cards.map((c) => c.look)).size > 1;
-    return cards.map((c) => ({ c, d, called, within: [...(d.layers.length > 1 ? [layerOf.get(c.kind)] : []), ...(maps && c.look ? [lookLabel(c.look, city)] : [])].filter(Boolean) }));
+    const groupOf = Object.fromEntries(Object.entries(STORE.quiz(d.id).grouped || {}).map(([kind, list]) => [kind, new Map(list.flatMap(([title, items]) => items.map((it) => [it, title])))]));
+    const shown = new Set(d.layers.filter((l) => l.groups.length > 1).map((l) => l.key)); // (layers whose cards are in several groups)
+    return cards.map((c) => ({ c, d, called, within: [...(d.layers.length > 1 || c.kind.includes("~") ? [layerOf.get(c.kind)] : []), ...(shown.has(c.kind) && groupOf[c.kind] ? [groupOf[c.kind].get(c.item)] : []), ...(maps && c.look ? [lookLabel(c.look, city)] : [])].filter(Boolean) }));
   }).sort((a, b) => a.c.due - b.c.due || a.d.quiz.title.localeCompare(b.d.quiz.title));
   $("due-rows").replaceChildren(...rows.map(({ c, d, called, within }) => {
     const tr = document.createElement("tr");

@@ -150,9 +150,14 @@ main > .map-wrap:first-child{margin-top:24px}
 .decks tr.layer.map td:first-child::before{left:68px;top:0}
 .decks tr.layer.map td:first-child::after{left:68px}
 .decks tr.layer.map.more td:first-child{background:linear-gradient(var(--line),var(--line)) no-repeat 42px 0/1.5px 100%}
+/* a layer's groups (review.js): the branches above them that go on, as --lines; a third level for their maps */
+.decks tr.layer td:first-child{background:var(--lines,none)}
+.decks tr.layer.lv3 td:first-child{padding-left:118px;font-size:.86rem}
+.decks tr.layer.lv3 td:first-child::before,.decks tr.layer.lv3 td:first-child::after{left:94px}
 /* a row's actions, behind ⋯: convert to another map, remove */
 .decks select.more{appearance:none;-webkit-appearance:none;width:30px;height:24px;padding:0;border:1.5px solid transparent;border-radius:999px;background:none;color:var(--muted);font:700 1rem/1 var(--sans);text-align:center;text-align-last:center;cursor:pointer}
 .decks select.more:hover,.decks select.more:focus-visible{border-color:var(--line);color:var(--ink)}
+.decks .more-gap{display:inline-block;width:30px;flex:none}
 .decks select.more option,.decks select.more optgroup{font:400 .92rem/1.3 var(--sans);color:var(--ink);background:var(--panel);text-align:left}
 .decks select.more optgroup{font-weight:600}
 .decks a{text-decoration:none}
@@ -192,6 +197,7 @@ main > .map-wrap:first-child{margin-top:24px}
 .decks tr.cardline td:first-child{padding-left:66px;background:var(--lines,none)}
 .decks tr.cardline.d2 td:first-child{padding-left:92px}
 .decks tr.cardline.d3 td:first-child{padding-left:118px}
+.decks tr.cardline.d4 td:first-child{padding-left:144px}
 .decks tr.cardline small,.decks.due-list small{color:var(--muted);font-size:.82rem}
 .decks tr.cardline .num{font-weight:400;white-space:nowrap}
 .decks tr.cardline .num.due,.decks.due-list .num.due{font-weight:700}
@@ -333,11 +339,14 @@ a.ghost.off{opacity:.45;pointer-events:none}
   .decks.stack tr.layer.map.more td:first-child{background:none}
   .decks.stack .acts{gap:4px}
   .decks.stack .acts .ghost.small{padding:2px 7px;font-size:.78rem}
-  .decks select.more{width:22px}
+  .decks select.more,.decks .more-gap{width:22px}
   .decks tr:not(.place) td:first-child{padding-left:18px}
   .decks tr.cardline td:first-child{padding-left:30px;background:none}
   .decks tr.cardline.d2 td:first-child{padding-left:42px}
   .decks tr.cardline.d3 td:first-child{padding-left:54px}
+  .decks tr.cardline.d4 td:first-child{padding-left:66px}
+  .decks.stack tr.layer td:first-child{background:none}
+  .decks.stack tr.layer.lv3 td:first-child{padding-left:54px}
   h1{font-size:2.1rem}
   .folder > summary{padding:10px 12px}
   .place > summary{padding-left:32px}

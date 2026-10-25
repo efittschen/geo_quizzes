@@ -189,6 +189,18 @@ const SRS = (() => {
   // else made from the kind's key.
   const kindOf = key => { const bar = key.indexOf('|'), at = key.indexOf('@'); return key.slice(0, at >= 0 && at < bar ? at : bar); };
   const nameOf = (id, kind) => (STORE.quiz(id).layers || {})[kind] || kind.replace(/[-_]+/g, ' ').replace(/^./, c => c.toUpperCase());
+  // The groups of each layer's cards (the record's `grouped`: { '<kind>': [[group title, [item ids]]…] }, in the quiz's
+  // order: Indonesia's kabupaten and kota by province, area codes by their first digits), written by the quiz page.
+  function setGroups(id, grouped) {
+    const was = JSON.stringify(STORE.quiz(id).grouped || {});
+    if (JSON.stringify(grouped) !== was) STORE.setQuiz(id, r => { if (Object.keys(grouped).length) r.grouped = grouped; else delete r.grouped; });
+  }
+  // … as item -> group title, per layer
+  function groupsOf(id) {
+    const out = {}, g = STORE.quiz(id).grouped || {};
+    for (const kind in g) { const m = out[kind] = new Map(); for (const [title, items] of g[kind]) for (const item of items) m.set(item, title); }
+    return out;
+  }
   function setLayers(id, names) {
     const was = JSON.stringify(STORE.quiz(id).layers || {});
     if (JSON.stringify(names) !== was) STORE.setQuiz(id, r => { r.layers = names; });
@@ -318,17 +330,25 @@ const SRS = (() => {
   const lookOf = (key, c) => { const bar = key.indexOf('|'), at = key.indexOf('@'); return at >= 0 && at < bar ? key.slice(at + 1, bar) : (c.m || '') + (c.b ? '+' + c.b : ''); };
   const LOOKS = ['quiz', 'overlay', 'street', 'bare', 'free']; // their order on the review page; a card without a map last
   const lookRank = l => { const i = LOOKS.indexOf(l.split('+')[0]); return l ? (i < 0 ? LOOKS.length : i) * 10 + (l.includes('+') ? 1 : 0) : 99; };
-  // A deck with only the cards of some layers, or of some layers on some maps (kinds: ["<kind>" or
-  // "<kind>@<look>"]; null: all of them).
-  const fits = (kinds, k, c) => kinds.some(s => { const at = s.indexOf('@'); return at < 0 ? kindOf(k) === s : kindOf(k) === s.slice(0, at) && lookOf(k, c) === s.slice(at + 1); });
-  const part = (d, kinds) => (kinds ? { ...d, c: Object.fromEntries(Object.entries(d.c).filter(([k, c]) => fits(kinds, k, c))) } : d);
-  // A deck's layers with their numbers, in the order their first card was put on the stack; and in each, its maps.
+  // A deck with only the cards of some layers, or of some layers on some maps, or of one group of a layer (kinds:
+  // ["<kind>", "<kind>@<look>", "<kind>#<group>" or "<kind>@<look>#<group>"]; null: all of them).
+  const fits = (kinds, k, c, G) => kinds.some(spec => {
+    const [s, group] = spec.split('#'), at = s.indexOf('@');
+    const ok = at < 0 ? kindOf(k) === s : kindOf(k) === s.slice(0, at) && lookOf(k, c) === s.slice(at + 1);
+    return ok && (group === undefined || (G[kindOf(k)] && G[kindOf(k)].get(k.slice(k.indexOf('|') + 1))) === group);
+  });
+  const part = (d, kinds, G = kinds && kinds.some(s => s.includes('#')) ? groupsOf(d.id) : {}) => (kinds ? { ...d, c: Object.fromEntries(Object.entries(d.c).filter(([k, c]) => fits(kinds, k, c, G))) } : d);
+  // A deck's layers with their numbers, in the order their first card was put on the stack; and in each, its maps,
+  // and its groups (where its cards are in two or more), each with its maps.
   function layers(d, now) {
-    const kinds = [...new Set(Object.keys(d.c).map(kindOf))];
+    const kinds = [...new Set(Object.keys(d.c).map(kindOf))], G = groupsOf(d.id), titles = STORE.quiz(d.id).grouped || {};
+    const mapsOf = (key, own, group = '') => [...new Set(Object.entries(own.c).map(([k, c]) => lookOf(k, c)))].filter(Boolean).sort((a, b) => lookRank(a) - lookRank(b))
+      .map(look => ({ look, ...stats(part(d, [key + '@' + look + group], G), now) })).filter(m => m.total);
     return kinds.map(key => {
-      const own = part(d, [key]), looks = [...new Set(Object.entries(own.c).map(([k, c]) => lookOf(k, c)))].sort((a, b) => lookRank(a) - lookRank(b));
+      const own = part(d, [key]);
       // (a card that doesn't say its map, until its quiz page gives it one, is in the layer's numbers only)
-      return { key, label: nameOf(d.id, key), ...stats(own, now), maps: looks.filter(Boolean).map(look => ({ look, ...stats(part(d, [key + '@' + look]), now) })).filter(m => m.total) };
+      const groups = (titles[key] || []).map(([title]) => { const g = part(d, [key + '#' + title], G); return { title, ...stats(g, now), maps: mapsOf(key, g, '#' + title) }; }).filter(g => g.total);
+      return { key, label: nameOf(d.id, key), ...stats(own, now), maps: mapsOf(key, own), groups: groups.length > 1 ? groups : [] };
     }).filter(l => l.total);
   }
   const decks = () => STORE.quizIds().filter(id => STORE.quiz(id).cards).map(id => ({ id, ...deck(id) }));
@@ -524,5 +544,5 @@ const SRS = (() => {
   if (!opts().perMap) single();
   addEventListener("geoquizzes:fresh", () => { if (!opts().perMap) single(); });
 
-  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, setNames, cardList, reschedule, setLooks, looksOf, sort, clash, convert, keyOf, single, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, overview, run, setRun, nextStop, stretch, ran, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
+  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, setGroups, setNames, cardList, reschedule, setLooks, looksOf, sort, clash, convert, keyOf, single, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, overview, run, setRun, nextStop, stretch, ran, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
 })();
