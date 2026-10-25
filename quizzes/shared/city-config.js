@@ -56,6 +56,23 @@ const QUIZ = (() => {
   const dupes = of => { const n = {}; for (const c of C.list) if (of(c)) n[of(c)] = (n[of(c)] || 0) + 1; return n; };
   const DUP_EN = dupes(c => latin(c.id)), DUP_LOCAL = dupes(c => c.local);
   const fullEn = id => DUP_EN[latin(id)] > 1 ? `${latin(id)}, ${region(id)}` : latin(id);
+  // Signs (../shared/signs, see signs.js there): where the country has sign drawings reviewed against their pictures,
+  // the kind 'en' shows the asked city on one of its signs (the "Sign" switch), the names of the other places on it
+  // blurred: its nearest towns stand there. Loaded after the page, so the first question may show the plain name.
+  const SIGN_COUNTRIES = 'ALB AND ARE ARG AUS AUT BGD BGR BIH BOL BRA BTN BWA CAN CHL COL CRI CYP CZE DEU DNK ECU ESP EST FIN FRA GEO GHA GRC GTM HRV HUN IDN IND IRL ISL ISR ITA JOR JPN KAZ KEN KGZ KHM KOR LAO LBN LKA LSO LTU LUX LVA MEX MKD MLT MNE MNG MYS NAM NGA NOR NPL NZL OMN PAN PER PHL POL PRT PRY PSE QAT ROU RUS RWA SEN SRB SVK SVN SWE SWZ THA TUN TUR TWN UGA UKR URY USA VNM ZAF', SIGN_VERSION = '8e30a60c'; // (written by tools/builds/signs/build.mjs)
+  const SIGNS = SIGN_COUNTRIES.split(' ').includes(C.iso3) && document.currentScript ? (() => {
+    const base = new URL('signs/', document.currentScript.src).href, box = { draw: () => false }, s = document.createElement('script');
+    s.src = `${base}signs.js?v=${SIGN_VERSION}`; s.onload = () => Object.assign(box, CitySigns.init(base, C.iso3, SIGN_VERSION));
+    document.head.append(s);
+    return box;
+  })() : null;
+  const onSign = id => (BY[id].local && !LATIN.test(BY[id].local) ? BY[id].local : latin(id)); // as written on its signs
+  const signPlace = id => {
+    const n = C.list.filter(c => c.id !== id).map(c => [c.id, hav(BY[id], c)]).sort((a, b) => a[1] - b[1]);
+    const alt = x => (LATIN.test(onSign(x)) ? undefined : BY[x].en); // the Latin line of a sign in another script
+    return { name: onSign(id), alt: alt(id), region: region(id), next: n[0] && onSign(n[0][0]), nextAlt: n[0] && alt(n[0][0]),
+      next2: n[1] && onSign(n[1][0]), km: n[0] ? Math.max(1, Math.round(n[0][1])) : 5 };
+  };
   const fullLocal = id => DUP_LOCAL[BY[id].local] > 1 ? `${BY[id].local}, ${region(id)}` : BY[id].local;
   const capitals = ids => ids.filter(id => /^PPL[CA]$/.test(BY[id].fc));
   const sizes = O.top || [8, 25, 50, 100];
@@ -80,6 +97,7 @@ const QUIZ = (() => {
       label: O.latin || 'English', lang: O.latin || 'English', sub: `${ALL.length} cities`,
       prompt: 'name', name: fullEn, short: latin,
       clicked: a => fullEn(a), chip: fullEn,
+      ...(SIGNS ? { sign: (id, el) => SIGNS.draw(signPlace(id), el, fullEn(id) !== latin(id) ? region(id) : '') } : {}),
     }),
   ];
   if (LOCAL.length) kinds.push(kind('local', LOCAL, {

@@ -210,7 +210,9 @@
      Each kind: key, label, sub, noun [one, many], pickTitle, groups [{ title, sub, ids }],
      areasOf(id), short(id) for labels, name(id), about(id), clicked(areaId) describes a wrong click,
      prompt 'dial' | 'name', chip(id), chipTitle(id), optional hints: false (coloring would give
-     the answer away), detail: { label, text(id) } for an optional hint under the prompt, presets: [{ label, ids }]
+     the answer away), detail: { label, text(id) } for an optional hint under the prompt, sign(id, el) to show a
+     name asked ('name') as a picture instead (a city on its country's road sign: draws into el and returns true, or
+     false for the plain name; the "Sign" switch turns it off), presets: [{ label, ids }]
      for quick-select buttons next to All / None, rankings: [{ label, order, expand? }] for "Top N by …"
      (expand(id) widens each pick, e.g. ranking cities, then taking every code dialed there; a "largest area"
      ranking comes first unless areaRank: false, with each area's size shared between the items covering it,
@@ -1339,10 +1341,12 @@
     $('optColors').checked = savedOpts.colors; $('optDetail').checked = savedOpts.detail ?? savedOpts.state ?? false;
     if (lettersOpt) lettersOpt.checked = !!savedOpts.letters;
     if ($('optHard')) $('optHard').checked = !!savedOpts.hard;
+    if ($('optSign')) $('optSign').checked = savedOpts.sign ?? true;
   }
-  function saveOpts() { store('opts', { colors: $('optColors').checked, detail: $('optDetail').checked, letters: lettersOpt ? lettersOpt.checked : false, hard: hardMode() }); }
+  function saveOpts() { store('opts', { colors: $('optColors').checked, detail: $('optDetail').checked, letters: lettersOpt ? lettersOpt.checked : false, hard: hardMode(), sign: $('optSign') ? $('optSign').checked : true }); }
   $('optColors').addEventListener('change', () => { syncHints(); saveOpts(); });
   $('optDetail').addEventListener('change', saveOpts);
+  if ($('optSign')) $('optSign').addEventListener('change', saveOpts);
   if ($('optHard')) $('optHard').addEventListener('change', saveOpts);
   if (lettersOpt) lettersOpt.addEventListener('change', () => { syncHints(); saveOpts(); });
 
@@ -1851,6 +1855,7 @@
     $('startBtn').textContent = 'Start'; // (how many, and of what, the round's box says; a custom quiz with none picked can't start)
     $('optDetailWrap').hidden = !K.detail;
     if (K.detail) $('optDetailText').textContent = K.detail.label;
+    if ($('optSignWrap')) $('optSignWrap').hidden = !K.sign;
     $('optColorsWrap').hidden = !['quiz', 'overlay'].includes(chosenMap) || K.hints === false;
     $('optColorsText').textContent = hintLabelOf(cur.kind);
     if ($('optHardWrap')) $('optHardWrap').hidden = !!Q.board || !!K.fresh || !!K.pickAll; // (those start every question on a clean map already, or have none)
@@ -2183,7 +2188,7 @@
     mark(null); syncCheck();
     const back = K.choose4 === 'pickback'; // (a pick back asks the name, in big letters)
     const isArea = K.prompt === 'area' && !back, isName = K.prompt === 'name' || isArea || back, isText = K.prompt === 'text' && !back, isPhoto = K.prompt === 'photo' && !back, isShape = !!K.shape;
-    $('dial').hidden = isName || isText || isPhoto || isShape; $('bigname').hidden = !isName; $('bigname').classList.toggle('asking', isArea);
+    $('dial').hidden = isName || isText || isPhoto || isShape; $('bigname').hidden = !isName; $('bigname').classList.toggle('asking', isArea); $('bigname').classList.remove('signed');
     if ($('card')) $('card').hidden = !isText;
     if ($('photo')) $('photo').hidden = !isPhoto;
     shapeEl.hidden = !isShape; shapeEl.className = 'shape';
@@ -2200,7 +2205,12 @@
     else if (isText) { const t = K.text(id); $('sent').textContent = t.text; $('sent').className = 'sent ' + (t.cls || ''); $('sent').lang = t.lang || ''; $('card').dataset.tag = t.tag || ''; }
     else if (isArea) { if (K.same) codeAsk(K, id); else $('bigname').textContent = K.ask ? K.ask : `Which ${K.noun[0]} is this?`; showAsked(K.areas[id], K.same && { around: K.around(id), parts: K.parts(id) }); }
     else if (isShape) drawShape(K, id);
-    else if (isName) $('bigname').textContent = back ? K.answerName(id) : K.name(id);
+    else if (isName) {
+      const signed = !back && K.sign && !!$('optSign') && $('optSign').checked && K.sign(id, $('bigname'));
+      if (!signed) $('bigname').textContent = back ? K.answerName(id) : K.name(id);
+      $('bigname').classList.toggle('signed', !!signed);
+      if (signed) $('bigname').dataset.name = K.name(id); else delete $('bigname').dataset.name; // (the name asked, which the sign shows among others)
+    }
     else if (K.dial) $('code').replaceChildren(...K.dial(id).map(([text, cls]) => { const s = document.createElement('span'); s.className = cls; s.textContent = text; return s; }));
     else $('code').textContent = K.short(id);
     if (typedForm) {

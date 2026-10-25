@@ -75,6 +75,7 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
         <label class="toggle" id="optColorsWrap"><input type="checkbox" id="optColors" checked> <span id="optColorsText"></span></label>
         <label class="toggle" id="optDetailWrap"><input type="checkbox" id="optDetail"> <span id="optDetailText"></span></label>
         <label class="toggle" id="optLettersWrap" hidden><input type="checkbox" id="optLetters"> <span id="optLettersText"></span></label>
+        <label class="toggle" id="optSignWrap" hidden><input type="checkbox" id="optSign" checked> <span>Sign</span></label>
         <label class="toggle" id="optHardWrap"><input type="checkbox" id="optHard"> <span>Hard mode</span></label>
       </div>
     </section>

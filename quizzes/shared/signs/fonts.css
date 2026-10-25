@@ -1,0 +1,155 @@
+/* Fonts of the country signs (tools/builds/signs/build.mjs): free fonts, cut down to the letters the signs use. */
+/* Alte DIN 1451 Mittelschrift (for DIN 1451 Mittelschrift (SADC Road Traffic Signs Manual: Botswana, Lesotho, Namibia)): OFL-1.1 (Copyright 2017 Peter Wiegel; licence file in dl-altedin1451/), http://www.peter-wiegel.de/Fonts/index.html (Din1451altTT.zip, din1451alt.ttf, converted to woff2) */
+@font-face{font-family:'Alte DIN 1451 Mittelschrift';src:url('fonts/AlteDIN1451-Mittelschrift.woff2') format('woff2');font-weight:normal;font-style:normal;font-display:block}
+/* Archivo Narrow (for Helvetica Condensed / Arial Narrow Bold (Ugandan town signs, Senegalese diagram signs)): OFL-1.1, https://github.com/google/fonts/tree/main/ofl/archivonarrow (ArchivoNarrow[wght].ttf, static instance wght 700) */
+@font-face{font-family:'Archivo Narrow';src:url('fonts/ArchivoNarrow-Bold.woff2') format('woff2');font-weight:bold;font-style:normal;font-display:block}
+/* Arimo (for Helvetica / Arial Bold as used on Ghanaian, Kenyan and Tunisian (Latin) signs): OFL-1.1, https://github.com/google/fonts/tree/main/ofl/arimo (Arimo[wght].ttf, static instance wght 700) */
+@font-face{font-family:'Arimo';src:url('fonts/Arimo-Bold.woff2') format('woff2');font-weight:bold;font-style:normal;font-display:block}
+/* Arimo (for Helvetica / Arial Bold Italic (Luxembourgish names on Luxembourg's town and locality plates)): OFL-1.1, https://github.com/google/fonts/tree/main/ofl/arimo (Arimo-Italic[wght].ttf, static instance wght 700) */
+@font-face{font-family:'Arimo';src:url('fonts/Arimo-BoldItalic.woff2') format('woff2');font-weight:bold;font-style:italic;font-display:block}
+/* Arimo (for Helvetica / Arial Italic on French municipal street plates (town name line)): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/arimo/Arimo-Italic%5Bwght%5D.ttf */
+@font-face{font-family:'Arimo';src:url('fonts/Arimo-Italic-VF.woff2') format('woff2');font-weight:400 700;font-style:italic;font-display:block}
+/* Arimo (for Transport (UAE, Sri Lanka English) and Arial (used de facto on Kazakh signs)): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/arimo/Arimo%5Bwght%5D.ttf */
+@font-face{font-family:'Arimo';src:url('fonts/Arimo-VF.woff2') format('woff2');font-weight:400 700;font-style:normal;font-display:block}
+/* Barlow (for DIN 1451 Mittelschrift with Vietnamese diacritics (Vietnam's 'giaothong1'); free DIN clones lack ơ ư and stacked accents): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/barlow/Barlow-Medium.ttf */
+@font-face{font-family:'Barlow';src:url('fonts/Barlow-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:block}
+/* Barlow (for DIN 1451 Mittelschrift with Vietnamese diacritics (Vietnam's 'giaothong1')): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/barlow/Barlow-SemiBold.ttf */
+@font-face{font-family:'Barlow';src:url('fonts/Barlow-SemiBold.woff2') format('woff2');font-weight:600;font-style:normal;font-display:block}
+/* Barlow Condensed (for the narrow grotesque capitals of Senegalese town entry/exit signs (GeoHints city-signs 9, 10: KEUR MADABEL about 7.3 cap heights wide, letters about half a cap wide)): OFL-1.1 (licence in dl-sea-google/OFL.txt), https://github.com/google/fonts/raw/main/ofl/barlowcondensed/BarlowCondensed-Medium.ttf (copied from fonts/dl-sea-google) */
+@font-face{font-family:'Barlow Condensed';src:url('fonts/BarlowCondensed-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:block}
+/* Barlow Semi Condensed (for DIN 1451 Engschrift with Vietnamese diacritics (Vietnam's 'giaothong2', compressed)): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/barlowsemicondensed/BarlowSemiCondensed-Medium.ttf */
+@font-face{font-family:'Barlow Semi Condensed';src:url('fonts/BarlowSemiCondensed-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:block}
+/* Barlow Semi Condensed (for DIN 1451 Engschrift with Vietnamese diacritics (Vietnam's 'giaothong2', compressed)): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/barlowsemicondensed/BarlowSemiCondensed-SemiBold.ttf */
+@font-face{font-family:'Barlow Semi Condensed';src:url('fonts/BarlowSemiCondensed-SemiBold.woff2') format('woff2');font-weight:600;font-style:normal;font-display:block}
+/* CCRIGE (for Carretera Convencional (Spain, Orden FOM/534/2014; itself the official face)): OFL-1.1, https://github.com/swaree/CCRIGE */
+@font-face{font-family:'CCRIGE';src:url('fonts/CCRIGE.woff2') format('woff2');font-weight:normal;font-style:normal;font-display:block}
+/* CCRIGE Tilde (for Carretera Convencional (Spanish road signs), with the wavy Ñ chosen by the user over the straight bar of the real signs (photos in refs/ES/tilde/)): OFL-1.1 (CCRIGE: 2023 Javi Casas; 2022 Ministerio del Interior, Ministerio de Transportes, Movilidad y Agenda Urbana; licence in dl-ccrige/LICENSE; no Reserved Font Name, renamed anyway), https://github.com/swaree/CCRIGE (CCRIGE.woff2, identical to fonts/CCRIGE.woff2), modified with fontTools (script fonts/build-e/build_ccrige_tilde.py): the straight bar over Ñ and ñ replaced by a wavy tilde traced from GeoHints city-sign 138 (ARAÑUEL), the lower-case one narrowed to ñ's former bar; every other glyph, width and the spacing unchanged */
+@font-face{font-family:'CCRIGE Tilde';src:url('fonts/CCRIGETilde.woff2') format('woff2');font-weight:normal;font-style:normal;font-display:block}
+/* D-DIN Condensed (for DIN 1451 Engschrift (Belgian town-name plates F1/F3)): OFL-1.1 (Copyright 2017 Datto Inc.; licence file in dl-d-din/), https://www.fontlibrary.org/en/font/d-din (D-DINCondensed-Bold.woff2, copied from fonts/dl-d-din) */
+@font-face{font-family:'D-DIN Condensed';src:url('fonts/D-DINCondensed-Bold.woff2') format('woff2');font-weight:bold;font-style:normal;font-display:block}
+/* D-DIN Condensed (for DIN 1451 Engschrift, regular weight (Belgian white place-name plates)): OFL-1.1 (Copyright 2017 Datto Inc.; licence file in dl-d-din/), https://www.fontlibrary.org/en/font/d-din (D-DINCondensed.woff2, copied from fonts/dl-d-din) */
+@font-face{font-family:'D-DIN Condensed';src:url('fonts/D-DINCondensed.woff2') format('woff2');font-weight:normal;font-style:normal;font-display:block}
+/* DINish (for GOST R 52290-2004 / GOST 10807-78 road typeface (Russia, Mongolia); no free digitisation of it found (the CC-BY-SA one sits behind a captcha)): OFL-1.1, https://github.com/playbeing/dinish (DINish-Bold.ttf) */
+@font-face{font-family:'DINish';src:url('fonts/DINish-Bold.woff2') format('woff2');font-weight:bold;font-style:normal;font-display:block}
+/* DINish (for GOST R 52290-2004 / GOST 10807-78 road typeface (Russia, Mongolia)): OFL-1.1, https://github.com/playbeing/dinish (DINish-Medium.ttf) */
+@font-face{font-family:'DINish';src:url('fonts/DINish-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:block}
+/* DINish (for Caractères L4 (French sloped mixed-case lettering, e.g. 'La Réole' on motorway signs; no free L4 exists)): OFL-1.1, https://github.com/playbeing/dinish (DINish-MediumItalic.ttf) */
+@font-face{font-family:'DINish';src:url('fonts/DINish-MediumItalic.woff2') format('woff2');font-weight:500;font-style:italic;font-display:block}
+/* DINish (for DIN 1451 Mittelschrift (ex-Yugoslav yellow place-name and direction signs: Croatia, Montenegro, Serbia, North Macedonia, Slovenia direction signs); covers Latin with č ć đ š ž, Serbian and Macedonian Cyrillic, ǵ ḱ): OFL-1.1, https://github.com/playbeing/dinish (DINish-SemiBold.ttf, from dl-dinish/) */
+@font-face{font-family:'DINish';src:url('fonts/DINish-SemiBold.woff2') format('woff2');font-weight:600;font-style:normal;font-display:block}
+/* DINish Condensed (for GOST R 52290-2004 narrow letters (type A) (Russia, Mongolia)): OFL-1.1, https://github.com/playbeing/dinish (DINishCondensed-Bold.ttf) */
+@font-face{font-family:'DINish Condensed';src:url('fonts/DINishCondensed-Bold.woff2') format('woff2');font-weight:bold;font-style:normal;font-display:block}
+/* DINish Condensed (for DIN 1451 Engschrift (German signs: long place names)): OFL-1.1, https://github.com/playbeing/dinish (DINishCondensed-Medium.ttf) */
+@font-face{font-family:'DINish Condensed';src:url('fonts/DINishCondensed-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:block}
+/* DINish Condensed (for DIN 1451 Engschrift (narrow lettering on Slovenian, Macedonian and Croatian direction signs)): OFL-1.1, https://github.com/playbeing/dinish (DINishCondensed-SemiBold.ttf, from dl-dinish/) */
+@font-face{font-family:'DINish Condensed';src:url('fonts/DINishCondensed-SemiBold.woff2') format('woff2');font-weight:600;font-style:normal;font-display:block}
+/* DINish Expanded (for GOST R 52290-2004 road typeface, wide letters (type B) (Russia, Mongolia)): OFL-1.1, https://github.com/playbeing/dinish (DINishExpanded-Bold.ttf) */
+@font-face{font-family:'DINish Expanded';src:url('fonts/DINishExpanded-Bold.woff2') format('woff2');font-weight:bold;font-style:normal;font-display:block}
+/* DINish Expanded (for GOST R 52290-2004 road typeface, wide letters (type B) (Russia, Mongolia)): OFL-1.1, https://github.com/playbeing/dinish (DINishExpanded-Medium.ttf) */
+@font-face{font-family:'DINish Expanded';src:url('fonts/DINishExpanded-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:block}
+/* DINish Expanded (for Trafikkalfabetet, dark-on-light weight (Norwegian road signs)): OFL-1.1, https://github.com/playbeing/dinish/releases/download/v4.007/dinish-woff2.zip (DINishExpanded-SemiBold.woff2) */
+@font-face{font-family:'DINish Expanded';src:url('fonts/DINishExpanded-SemiBold.woff2') format('woff2');font-weight:600;font-style:normal;font-display:block}
+/* DINish SR (for DIN 1451 Mittelschrift with the ex-Yugoslav road-sign Cyrillic (Serbia, Republika Srpska: the Λ-shaped Л and Δ-shaped Д seen on GeoHints 131 and the Commons photos in refs/BA)): OFL-1.1 (DINish, Copyright 2021-2024 The DINish Project Authors; licence in dl-nordic-dinish/OFL.txt; no Reserved Font Name, renamed anyway), https://github.com/playbeing/dinish (DINish-Medium.ttf, from dl-dinish/), modified with fontTools (script fonts/build-e/build_dinish_sr.py): Л л drawn as a Λ (the A without its bar, the v upside down), Д д as a Λ standing on a base bar that overhangs both legs, Љ љ as that Λ with the soft-sign bowl on its right leg; everything else unchanged */
+@font-face{font-family:'DINish SR';src:url('fonts/DINishSR-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:block}
+/* DINish SR (for DIN 1451 Mittelschrift with the ex-Yugoslav road-sign Cyrillic (Serbia, Republika Srpska: the Λ-shaped Л and Δ-shaped Д seen on GeoHints 131 and the Commons photos in refs/BA)): OFL-1.1 (DINish, Copyright 2021-2024 The DINish Project Authors; licence in dl-nordic-dinish/OFL.txt; no Reserved Font Name, renamed anyway), https://github.com/playbeing/dinish (DINish-SemiBold.ttf, from dl-dinish/), modified with fontTools (script fonts/build-e/build_dinish_sr.py): Л л drawn as a Λ (the A without its bar, the v upside down), Д д as a Λ standing on a base bar that overhangs both legs, Љ љ as that Λ with the soft-sign bowl on its right leg; everything else unchanged */
+@font-face{font-family:'DINish SR';src:url('fonts/DINishSR-SemiBold.woff2') format('woff2');font-weight:600;font-style:normal;font-display:block}
+/* Hind (for Tern (Slovak town signs) and ASTRA-Frutiger (Swiss road signs)): OFL-1.1, https://github.com/google/fonts/tree/main/ofl/hind (Hind-Medium.ttf, converted to woff2) */
+@font-face{font-family:'Hind';src:url('fonts/Hind-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:block}
+/* Hind (for ASTRA-Frutiger, heavier cut for dark letters on white (Swiss road signs)): OFL-1.1, https://github.com/google/fonts/tree/main/ofl/hind (Hind-SemiBold.ttf, converted to woff2) */
+@font-face{font-family:'Hind';src:url('fonts/Hind-SemiBold.woff2') format('woff2');font-weight:600;font-style:normal;font-display:block}
+/* Lexend (for Drogowskaz, the Polish road-sign alphabet (Marek Sigmund 1975; no openly licensed digitisation found)): OFL-1.1, https://github.com/google/fonts/tree/main/ofl/lexend (Lexend[wght].ttf, static instance wght 500) */
+@font-face{font-family:'Lexend';src:url('fonts/Lexend-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:block}
+/* Noto Naskh Arabic (for the Naskh-style Arabic lettering of Tunisian signs): OFL-1.1, https://github.com/google/fonts/tree/main/ofl/notonaskharabic (NotoNaskhArabic[wght].ttf, static instance wght 700) */
+@font-face{font-family:'Noto Naskh Arabic';src:url('fonts/NotoNaskhArabic-Bold.woff2') format('woff2');font-weight:bold;font-style:normal;font-display:block}
+/* Noto Naskh Arabic (for the Naskh-style Arabic lettering of Tunisian signs): OFL-1.1, https://github.com/google/fonts/tree/main/ofl/notonaskharabic (NotoNaskhArabic[wght].ttf, static instance wght 400) */
+@font-face{font-family:'Noto Naskh Arabic';src:url('fonts/NotoNaskhArabic-Regular.woff2') format('woff2');font-weight:normal;font-style:normal;font-display:block}
+/* Noto Naskh Arabic (for UAE sign Arabic (Naskh; Boutros Advertisers Naskh in practice) and Malaysian Jawi): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notonaskharabic/NotoNaskhArabic%5Bwght%5D.ttf */
+@font-face{font-family:'Noto Naskh Arabic';src:url('fonts/NotoNaskhArabic-VF.woff2') format('woff2');font-weight:400 700;font-style:normal;font-display:block}
+/* Noto Sans (for Greek road-sign lettering (Transport-style Greek and Latin on Greek signs)): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosans/NotoSans%5Bwdth,wght%5D.ttf (licence in dl-balkan/OFL-NotoSans.txt) */
+@font-face{font-family:'Noto Sans';src:url('fonts/NotoSans-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Arabic (for Medina (the Arabic road-sign alphabet of Israel's sign regulations) and the plain sans Arabic of Gulf signs): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosansarabic/NotoSansArabic%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Arabic';src:url('fonts/NotoSansArabic-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Bengali (for Bengali/Assamese lettering on Indian and Bangladeshi signs): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosansbengali/NotoSansBengali%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Bengali';src:url('fonts/NotoSansBengali-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Canadian Aboriginal (for Inuktitut syllabics on Nunavut signs (fallback after Highway Gothic for names written in syllabics, e.g. ᐃᖃᓗᐃᑦ)): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosanscanadianaboriginal/NotoSansCanadianAboriginal%5Bwght%5D.ttf (licence in dl-na-notocans/OFL.txt) */
+@font-face{font-family:'Noto Sans Canadian Aboriginal';src:url('fonts/NotoSansCanadianAboriginal-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Devanagari (for Hindi lettering (Hindi7 per IRC:67; Nepali signs)): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosansdevanagari/NotoSansDevanagari%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Devanagari';src:url('fonts/NotoSansDevanagari-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Georgian (for the Georgian lettering of Georgian road signs (Mtavruli capitals on town and blue signs, Mkhedruli on the green one)): OFL-1.1, https://github.com/google/fonts/tree/main/ofl/notosansgeorgian (NotoSansGeorgian[wdth,wght].ttf, static instance wght 600 wdth 100) */
+@font-face{font-family:'Noto Sans Georgian';src:url('fonts/NotoSansGeorgian-SemiBold.woff2') format('woff2');font-weight:600;font-style:normal;font-display:block}
+/* Noto Sans Georgian SemiCondensed (for the Mtavruli of Georgian town entry/exit plates (GeoHints city-signs 75, 76: narrower than Noto's normal width, the Georgian line about as wide as the Latin one; their flat DIN-like terminals have no free counterpart found)): OFL-1.1 (The Noto Project Authors; same licence text as dl-balkan/OFL-NotoSans.txt), https://github.com/google/fonts/tree/main/ofl/notosansgeorgian (NotoSansGeorgian[wdth,wght].ttf from dl-eu9-cand/, static instance wdth 87.5 wght 600, built with fontTools: script fonts/build-e/build_geo_semicond.py) */
+@font-face{font-family:'Noto Sans Georgian SemiCondensed';src:url('fonts/NotoSansGeorgianSemiCondensed-SemiBold.woff2') format('woff2');font-weight:600;font-style:normal;font-display:block}
+/* Noto Sans Gujarati (for Gujarati lettering on Indian signs): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosansgujarati/NotoSansGujarati%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Gujarati';src:url('fonts/NotoSansGujarati-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Gurmukhi (for Gurmukhi (Punjabi) lettering on Indian signs): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosansgurmukhi/NotoSansGurmukhi%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Gurmukhi';src:url('fonts/NotoSansGurmukhi-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Hebrew (for Tamrurim (the Hebrew road-sign alphabet of Israel's sign regulations)): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosanshebrew/NotoSansHebrew%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Hebrew';src:url('fonts/NotoSansHebrew-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans JP (for Japanese guide-sign lettering (公団ゴシック / Kodan Gothic for kanji and kana; the romaji line in a sans of the same family)): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf */
+@font-face{font-family:'Noto Sans JP';src:url('fonts/NotoSansJP-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans KR (for Korean road-sign Hangul (MOLIT road-sign typeface, 한길체 since 2021; before: a heavy Gothic/Dotum style); Latin part stands in for the Korean signs' English lettering): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosanskr/NotoSansKR%5Bwght%5D.ttf */
+@font-face{font-family:'Noto Sans KR';src:url('fonts/NotoSansKR-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Kannada (for Kannada lettering on Indian signs): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosanskannada/NotoSansKannada%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Kannada';src:url('fonts/NotoSansKannada-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Khmer (for the Khmer lettering of Cambodian road signs and kilometre posts): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosanskhmer/NotoSansKhmer%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Khmer';src:url('fonts/NotoSansKhmer-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Lao (for the loopless Lao lettering of Lao direction and village signs): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosanslao/NotoSansLao%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Lao';src:url('fonts/NotoSansLao-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Lao Looped (for the looped hand-painted Lao lettering of Lao kilometre posts): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosanslaolooped/NotoSansLaoLooped%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Lao Looped';src:url('fonts/NotoSansLaoLooped-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Malayalam (for Malayalam lettering on Indian signs): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosansmalayalam/NotoSansMalayalam%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Malayalam';src:url('fonts/NotoSansMalayalam-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Oriya (for Odia lettering on Indian signs): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosansoriya/NotoSansOriya%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Oriya';src:url('fonts/NotoSansOriya-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Sinhala (for Sinhala lettering on Sri Lankan RDA signs): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosanssinhala/NotoSansSinhala%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Sinhala';src:url('fonts/NotoSansSinhala-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans TC (for Taiwan road-sign Chinese lettering (bold Hei / 黑體; older signs also in Kai 楷體)): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosanstc/NotoSansTC%5Bwght%5D.ttf */
+@font-face{font-family:'Noto Sans TC';src:url('fonts/NotoSansTC-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Tamil (for Tamil lettering on Sri Lankan RDA signs): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosanstamil/NotoSansTamil%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Tamil';src:url('fonts/NotoSansTamil-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Telugu (for Telugu lettering on Indian signs): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosanstelugu/NotoSansTelugu%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Telugu';src:url('fonts/NotoSansTelugu-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Thai (for loopless Thai lettering of the Department of Rural Roads route plates): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosansthai/NotoSansThai%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Thai';src:url('fonts/NotoSansThai-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Sans Thai Looped (for Thai Department of Highways sign lettering (looped Thai)): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notosansthailooped/NotoSansThaiLooped%5Bwdth,wght%5D.ttf */
+@font-face{font-family:'Noto Sans Thai Looped';src:url('fonts/NotoSansThaiLooped-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Noto Serif SemiCondensed (for the red serif lettering of Monaco's local direction plates (no official typeface known)): OFL-1.1, https://github.com/google/fonts/tree/main/ofl/notoserif (NotoSerif[wdth,wght].ttf, static instance wght 600, wdth 87.5) */
+@font-face{font-family:'Noto Serif SemiCondensed';src:url('fonts/NotoSerif-SemiBoldSemiCondensed.woff2') format('woff2');font-weight:600;font-style:normal;font-display:block}
+/* Noto Serif Tibetan (for Dzongkha (Tibetan script) lettering on Bhutanese signs (DDC Uchen / Jomolhari style)): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/notoseriftibetan/NotoSerifTibetan%5Bwght%5D.ttf */
+@font-face{font-family:'Noto Serif Tibetan';src:url('fonts/NotoSerifTibetan-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Overpass (for Transport Medium (British-derived signs of Kenya and Uganda; no free Transport exists)): OFL-1.1, https://github.com/google/fonts/tree/main/ofl/overpass (Overpass[wght].ttf, static instance wght 600) */
+@font-face{font-family:'Overpass';src:url('fonts/Overpass-SemiBold.woff2') format('woff2');font-weight:600;font-style:normal;font-display:block}
+/* Public Sans (for Transport Heavy (Portuguese and Irish dark-on-light signs; no free Transport exists)): OFL-1.1, https://github.com/google/fonts/tree/main/ofl/publicsans (PublicSans[wght].ttf, static instance wght 700) */
+@font-face{font-family:'Public Sans';src:url('fonts/PublicSans-Bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:block}
+/* Public Sans (for Transport Medium (Portuguese and Irish light-on-dark signs; no free Transport exists)): OFL-1.1, https://github.com/google/fonts/tree/main/ofl/publicsans (PublicSans[wght].ttf, static instance wght 600) */
+@font-face{font-family:'Public Sans';src:url('fonts/PublicSans-SemiBold.woff2') format('woff2');font-weight:600;font-style:normal;font-display:block}
+/* Public Sans (for EI-TP (the italic Transport for Irish-language names on Irish signs)): OFL-1.1, https://github.com/google/fonts/tree/main/ofl/publicsans (PublicSans-Italic[wght].ttf, static instance wght 600) */
+@font-face{font-family:'Public Sans';src:url('fonts/PublicSans-SemiBoldItalic.woff2') format('woff2');font-weight:600;font-style:italic;font-display:block}
+/* RG2014 Series C (for FHWA Standard Alphabets Series C (Highway Gothic) / AS 1744 Series C): MIT (Copyright (c) 2015 Sammi De Guzman), https://github.com/sammdot/roadgeek-fonts/releases/download/3.1/RG2014-3.10.zip (RG2014C.ttf; macron vowels ĀāĒēĪīŌōŪū, ¯ and ’ added for Māori names) */
+@font-face{font-family:'RG2014 Series C';src:url('fonts/RG2014C-macron.woff2') format('woff2');font-weight:normal;font-style:normal;font-display:block}
+/* RG2014 Series D (for FHWA Standard Alphabets Series D (Highway Gothic) / AS 1744 Series D): MIT (Copyright (c) 2015 Sammi De Guzman), https://github.com/sammdot/roadgeek-fonts/releases/download/3.1/RG2014-3.10.zip (RG2014D.ttf; macron vowels ĀāĒēĪīŌōŪū, ¯ and ’ added for Māori names) */
+@font-face{font-family:'RG2014 Series D';src:url('fonts/RG2014D-macron.woff2') format('woff2');font-weight:normal;font-style:normal;font-display:block}
+/* RG2014 Series E (for FHWA Standard Alphabets Series E (Highway Gothic) / AS 1744 Series E): MIT (Copyright (c) 2015 Sammi De Guzman), https://github.com/sammdot/roadgeek-fonts/releases/download/3.1/RG2014-3.10.zip (RG2014E.ttf; macron vowels ĀāĒēĪīŌōŪū, ¯ and ’ added for Māori names) */
+@font-face{font-family:'RG2014 Series E';src:url('fonts/RG2014E-macron.woff2') format('woff2');font-weight:normal;font-style:normal;font-display:block}
+/* RG2014 Series EM (for FHWA Standard Alphabets Series EM (Highway Gothic) / AS 1744 Series EM): MIT (Copyright (c) 2015 Sammi De Guzman), https://github.com/sammdot/roadgeek-fonts/releases/download/3.1/RG2014-3.10.zip (RG2014EM.ttf; macron vowels ĀāĒēĪīŌōŪū, ¯ and ’ added for Māori names) */
+@font-face{font-family:'RG2014 Series EM';src:url('fonts/RG2014EM-macron.woff2') format('woff2');font-weight:normal;font-style:normal;font-display:block}
+/* Red Hat Display (for Tratex (Swedish road signs: free to download but not openly licensed, so not used)): OFL-1.1, https://github.com/RedHatOfficial/RedHatFont (fonts/Proportional/RedHatDisplay/webfonts/RedHatDisplay-Bold.woff2) */
+@font-face{font-family:'Red Hat Display';src:url('fonts/RedHatDisplay-Bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:block}
+/* Red Hat Display (for Tratex, lighter mixed-case lettering of Swedish cycle signs): OFL-1.1, https://github.com/RedHatOfficial/RedHatFont (fonts/Proportional/RedHatDisplay/webfonts/RedHatDisplay-SemiBold.woff2) */
+@font-face{font-family:'Red Hat Display';src:url('fonts/RedHatDisplay-SemiBold.woff2') format('woff2');font-weight:600;font-style:normal;font-display:block}
+/* Roboto Condensed (for GOST 10807-78 / ST RK 1125 road lettering, narrow (Kazakhstan, Kyrgyzstan: needs Ә Ғ Қ Ң Ө Ұ Ү Һ І, which DINish lacks)): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/robotocondensed/RobotoCondensed%5Bwght%5D.ttf */
+@font-face{font-family:'Roboto Condensed';src:url('fonts/RobotoCondensed-VF.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+/* Signika (for Clearview Hwy (Indonesian and Philippine guide signs; commercial, no free version)): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/signika/Signika%5BGRAD,wght%5D.ttf */
+@font-face{font-family:'Signika';src:url('fonts/Signika-VF.woff2') format('woff2');font-weight:300 700;font-style:normal;font-display:block}
+/* Sofia Sans (for DIN 1451 Mittelschrift with Greek letters (Greek place-name and direction signs, Greek and Latin lines); no free DIN with Greek found): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/sofiasans/SofiaSans%5Bwght%5D.ttf (licence in dl-balkan/OFL-SofiaSans.txt) */
+@font-face{font-family:'Sofia Sans';src:url('fonts/SofiaSans-VF.woff2') format('woff2');font-weight:1 1000;font-style:normal;font-display:block}
+/* TeX Gyre Heros (for Triumvirat (Helvetica derivative; Latin and numerals of Israeli road signs)): GUST Font License (LPPL-1.3c), https://mirrors.ctan.org/fonts/tex-gyre/opentype/texgyreheros-bold.otf */
+@font-face{font-family:'TeX Gyre Heros';src:url('fonts/TeXGyreHeros-Bold.woff2') format('woff2');font-weight:bold;font-style:normal;font-display:block}
+/* TeX Gyre Heros (for Triumvirat (Helvetica derivative; Latin and numerals of Israeli road signs)): GUST Font License (LPPL-1.3c), https://mirrors.ctan.org/fonts/tex-gyre/opentype/texgyreheros-regular.otf */
+@font-face{font-family:'TeX Gyre Heros';src:url('fonts/TeXGyreHeros-Regular.woff2') format('woff2');font-weight:normal;font-style:normal;font-display:block}
+/* Tinos (for the Times-style bold serif of Malta's locality welcome boards): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/tinos/Tinos-Bold.ttf */
+@font-face{font-family:'Tinos';src:url('fonts/Tinos-Bold.woff2') format('woff2');font-weight:bold;font-style:normal;font-display:block}
+/* Tinos (for the italic motto line of Malta's locality welcome boards): OFL-1.1, https://github.com/google/fonts/raw/main/ofl/tinos/Tinos-BoldItalic.ttf */
+@font-face{font-family:'Tinos';src:url('fonts/Tinos-BoldItalic.woff2') format('woff2');font-weight:bold;font-style:italic;font-display:block}
+/* Typoroute L1 (for Caractères L1 (French road-sign capitals, as on Senegalese and Tunisian town signs)): OFL-1.1 (Copyright 2023 Gwenaël Jouvin, Reserved Font Name Typoroute), https://framagit.org/gwenj/typoroute (ttf/Typoroute2002-L1_100.ttf, converted to woff2) */
+@font-face{font-family:'Typoroute L1';src:url('fonts/Typoroute2002-L1.woff2') format('woff2');font-weight:normal;font-style:normal;font-display:block}
