@@ -99,9 +99,9 @@ function renderQuizList(index, nameByCode, suites) {
     ul.append(...quizzes.map(file));
     return ul;
   };
+  const byName = ([a], [b]) => a.localeCompare(b);
   const own = (area) => (whole.has(area) ? [files(whole.get(area), "files own")] : []);
   if (whole.has(WORLD_SCOPE)) tree.append(folder(WORLD_SCOPE, "continent", WORLD_SCOPE, whole.get(WORLD_SCOPE), own(WORLD_SCOPE)));
-  const byName = ([a], [b]) => a.localeCompare(b);
   if (scripts.size) {
     tree.append(folder(LANGUAGE_SCOPE, "continent", LANGUAGE_SCOPE, [...scripts.values()].flat(), [...scripts].sort(byName).map(([script, quizzes]) => {
       return folder(`${LANGUAGE_SCOPE}/${script}`, "place", script, quizzes, [files(quizzes, "files")]);
@@ -110,7 +110,9 @@ function renderQuizList(index, nameByCode, suites) {
   for (const [continent, places] of [...continents].sort(byName)) {
     const all = [...(whole.get(continent) ?? []), ...[...places.values()].flat()];
     const placeFolders = [...places].sort(byName).map(([place, quizzes]) => {
-      return folder(`${continent}/${place}`, "place", place, quizzes, [files(inOrder(quizzes), "files")]);
+      const f = folder(`${continent}/${place}`, "place", place, quizzes, [files(inOrder(quizzes), "files")]);
+      f.classList.toggle("no-coverage", NO_COVERAGE.includes(quizCountries(quizzes[0])[0]));
+      return f;
     });
     tree.append(folder(continent, "continent", continent, all, [...own(continent), ...placeFolders]));
   }
@@ -155,7 +157,9 @@ function renderMap(world, quizzesByCode, roads) {
   const svg = d3.select("#map").attr("viewBox", `0 0 ${WIDTH} ${HEIGHT}`);
   const projection = d3
     .geoNaturalEarth1()
-    .fitSize([WIDTH, HEIGHT], { type: "FeatureCollection", features: countries });
+    // fitted to world-atlas's 110m countries, without the small ones added from 50m (data/world.json): the projection
+    // the coverage pictures of the roads are drawn in (tools/coverage.mjs)
+    .fitSize([WIDTH, HEIGHT], { type: "FeatureCollection", features: countries.filter((f) => !f.properties.small) });
   const path = d3.geoPath(projection);
   const g = svg.append("g");
 
@@ -183,13 +187,19 @@ function renderMap(world, quizzesByCode, roads) {
     if (d.id) window.location.href = countryUrl(d.id);
   }
 
+  const quizClass = (d) => (quizzesFor(d).length ? `country has-quiz${NO_COVERAGE.includes(d.id) ? " no-coverage" : ""}` : "country");
+  // Countries with quizzes too small to point at (Malta, Andorra, Singapore…, and any drawn smaller than a few pixels
+  // across) get a dot, which is what is clicked; it grows as the map is zoomed in (sizeDots).
+  const tiny = countries.filter((d) => quizzesFor(d).length && (d.properties.small || path.area(d) < 12));
+  const isTiny = new Set(tiny);
+
   g.selectAll("path")
     .data(countries)
     .join("path")
-    .attr("class", (d) => (quizzesFor(d).length ? "country has-quiz" : "country"))
+    .attr("class", quizClass)
     .attr("d", path)
     .each(function (d) {
-      if (!quizzesFor(d).length) return;
+      if (!quizzesFor(d).length || isTiny.has(d)) return; // (a dot's country is reached by its dot)
       // Make countries with quizzes reachable by keyboard.
       this.setAttribute("tabindex", "0");
       this.setAttribute("role", "link");
@@ -211,6 +221,41 @@ function renderMap(world, quizzesByCode, roads) {
         open(d);
       }
     });
+
+  const dots = g.selectAll("g.dot")
+    .data(tiny)
+    .join("g")
+    .attr("class", "dot")
+    .attr("transform", (d) => `translate(${path.centroid(d)})`)
+    .attr("tabindex", "0")
+    .attr("role", "link")
+    .attr("aria-label", (d) => `${d.properties.name} quizzes`);
+  dots.append("circle").attr("class", quizClass);
+  dots
+    .on("mousemove", showTooltip)
+    .on("mouseenter focus", (event, d) => showRoads(d))
+    .on("mouseleave blur", () => {
+      tooltip.hidden = true;
+      showRoads(null);
+    })
+    .on("click", (event, d) => {
+      if (event.defaultPrevented) return;
+      open(d);
+    })
+    .on("keydown", (event, d) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        open(d);
+      }
+    });
+  // the dots are 8 px across on the screen when zoomed out and grow with the square root of the zoom (twice as large at
+  // 4 times), so zooming in makes them larger to click, as it does every country
+  function sizeDots(k) {
+    const unit = WIDTH / (svg.node().clientWidth || WIDTH) / k;
+    dots.select("circle.country").attr("r", 4 * Math.sqrt(k) * unit);
+  }
+  sizeDots(1);
+  window.addEventListener("resize", () => sizeDots(zoomed));
 
   // While the pointer is on a country, the roads there with Google Street View coverage are drawn on it: a picture
   // in the map's own projection (data/coverage/home/, made by tools/coverage.mjs countries), which comes in several
@@ -250,6 +295,7 @@ function renderMap(world, quizzesByCode, roads) {
       g.attr("transform", event.transform);
       tooltip.hidden = true;
       zoomed = event.transform.k;
+      sizeDots(zoomed);
       if (pointed) showRoads(pointed);
     });
   svg.call(zoom);

@@ -35,6 +35,15 @@ main > .map-wrap:first-child{margin-top:24px}
 /* pointed at: the country turns slate, and its roads with Street View coverage are drawn on it in yellow (map.js) */
 .country:hover{fill:#5A7189}
 .country.has-quiz:hover,.country.has-quiz:focus{fill:#2F4A66;outline:none}
+/* countries without Street View coverage (NO_COVERAGE): their quizzes kept, grey */
+/* a small country's dot (map.js), with a ring of the sea's colour */
+.dot{cursor:pointer;outline:none}
+.dot circle.country{stroke:var(--panel);stroke-width:1.2}
+.dot:hover circle.country,.dot:focus circle.country{fill:#2F4A66}
+.dot:hover circle.country.no-coverage,.dot:focus circle.country.no-coverage{fill:var(--fadedhover)}
+.country.has-quiz.no-coverage{fill:var(--faded)}
+.country.has-quiz.no-coverage:hover,.country.has-quiz.no-coverage:focus{fill:var(--fadedhover)}
+.place.no-coverage > summary{color:var(--muted)}
 .roads{pointer-events:none}
 .tooltip{position:absolute;pointer-events:none;padding:6px 10px;border-radius:8px;background:var(--panel);color:var(--ink);border:1.5px solid var(--ink);font-size:.9rem;white-space:nowrap;box-shadow:var(--shadow)}
 .tooltip strong{font-weight:600}

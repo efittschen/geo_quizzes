@@ -1,0 +1,3 @@
+/* hints: municipality (tools/hints.mjs) */
+.r[data-g="DA"]{--hint:var(--h2)} .r[data-g="KH"]{--hint:var(--h3)} .r[data-g="MS"]{--hint:var(--h8)} .r[data-g="RA"]{--hint:var(--h4)} .r[data-g="SH"]{--hint:var(--h5)} .r[data-g="US"]{--hint:var(--h1)} .r[data-g="WA"]{--hint:var(--h7)} .r[data-g="ZA"]{--hint:var(--h6)}
+/* end hints: municipality */

@@ -1,0 +1,3 @@
+/* hints: region (tools/hints.mjs) */
+.r[data-g="B"]{--hint:var(--h7)} .r[data-g="C"]{--hint:var(--h1)} .r[data-g="GB"]{--hint:var(--h8)} .r[data-g="GO"]{--hint:var(--h9)} .r[data-g="J"]{--hint:var(--h2)} .r[data-g="N"]{--hint:var(--h3)} .r[data-g="O"]{--hint:var(--h4)} .r[data-g="T"]{--hint:var(--h5)} .r[data-g="Y"]{--hint:var(--h6)}
+/* end hints: region */

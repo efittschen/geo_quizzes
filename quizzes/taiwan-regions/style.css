@@ -1,0 +1,5 @@
+/* Taiwan Regions: Chinese names in Noto Sans TC; hint colors by county (tools/hints.mjs), from the shared palette. */
+:root{--script:'Noto Sans TC',var(--sans),sans-serif}
+/* hints: county (tools/hints.mjs) */
+.r[data-g="09007"]{--hint:var(--h20)} .r[data-g="09020"]{--hint:var(--h21)} .r[data-g="10002"]{--hint:var(--h4)} .r[data-g="10004"]{--hint:var(--h5)} .r[data-g="10005"]{--hint:var(--h9)} .r[data-g="10007"]{--hint:var(--h10)} .r[data-g="10008"]{--hint:var(--h1)} .r[data-g="10009"]{--hint:var(--h11)} .r[data-g="10010"]{--hint:var(--h6)} .r[data-g="10013"]{--hint:var(--h14)} .r[data-g="10014"]{--hint:var(--h12)} .r[data-g="10015"]{--hint:var(--h7)} .r[data-g="10016"]{--hint:var(--h22)} .r[data-g="10017"]{--hint:var(--h17)} .r[data-g="10018"]{--hint:var(--h15)} .r[data-g="10020"]{--hint:var(--h18)} .r[data-g="63000"]{--hint:var(--h19)} .r[data-g="64000"]{--hint:var(--h2)} .r[data-g="65000"]{--hint:var(--h8)} .r[data-g="66000"]{--hint:var(--h3)} .r[data-g="67000"]{--hint:var(--h16)} .r[data-g="68000"]{--hint:var(--h13)}
+/* end hints: county */

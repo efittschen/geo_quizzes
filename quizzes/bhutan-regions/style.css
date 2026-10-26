@@ -1,0 +1,5 @@
+/* Bhutan regions: Dzongkha names in Noto Serif Tibetan; gewogs colored by dzongkhag (tools/hints.mjs). */
+:root{--script:'Noto Serif Tibetan',var(--sans),sans-serif}
+/* hints: dzongkhag (tools/hints.mjs) */
+.r[data-g="BT001"]{--hint:var(--h4)} .r[data-g="BT002"]{--hint:var(--h5)} .r[data-g="BT003"]{--hint:var(--h6)} .r[data-g="BT004"]{--hint:var(--h12)} .r[data-g="BT005"]{--hint:var(--h13)} .r[data-g="BT006"]{--hint:var(--h14)} .r[data-g="BT007"]{--hint:var(--h2)} .r[data-g="BT008"]{--hint:var(--h15)} .r[data-g="BT009"]{--hint:var(--h9)} .r[data-g="BT010"]{--hint:var(--h16)} .r[data-g="BT011"]{--hint:var(--h19)} .r[data-g="BT012"]{--hint:var(--h20)} .r[data-g="BT013"]{--hint:var(--h7)} .r[data-g="BT014"]{--hint:var(--h3)} .r[data-g="BT015"]{--hint:var(--h10)} .r[data-g="BT016"]{--hint:var(--h17)} .r[data-g="BT017"]{--hint:var(--h11)} .r[data-g="BT018"]{--hint:var(--h18)} .r[data-g="BT019"]{--hint:var(--h1)} .r[data-g="BT020"]{--hint:var(--h8)}
+/* end hints: dzongkhag */

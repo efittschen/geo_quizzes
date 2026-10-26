@@ -1,6 +1,6 @@
 // Shared by the home and country pages.
 
-const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const WORLD_URL = "data/world.json"; // world-atlas countries-110m, plus the small countries only 50m has (Malta, Andorra…): tools/builds/world-atlas/build.mjs
 
 // world-atlas feature ids are ISO 3166-1 numeric codes ("076" = Brazil); quizzes use the same codes.
 function countryUrl(code) {
@@ -13,8 +13,11 @@ function quizCountries(quiz) {
 }
 // The two-letter code of a quiz's (first) country, where space is short: BR. The countries that have quizzes, from
 // the coverage data's table (data/coverage/home.json); a quiz without a country has none.
-const COUNTRY_CODES = {"032":"AR","036":"AU","040":"AT","050":"BD","056":"BE","064":"BT","068":"BO","076":"BR","100":"BG","116":"KH","124":"CA","144":"LK","152":"CL","170":"CO","218":"EC","246":"FI","250":"FR","276":"DE","288":"GH","300":"GR","348":"HU","356":"IN","360":"ID","380":"IT","392":"JP","398":"KZ","404":"KE","410":"KR","458":"MY","484":"MX","512":"OM","516":"NA","524":"NP","528":"NL","554":"NZ","566":"NG","578":"NO","600":"PY","604":"PE","608":"PH","616":"PL","620":"PT","642":"RO","643":"RU","686":"SN","704":"VN","710":"ZA","724":"ES","752":"SE","756":"CH","764":"TH","792":"TR","804":"UA","826":"GB","840":"US"};
+const COUNTRY_CODES = {"008":"AL","020":"AD","032":"AR","036":"AU","040":"AT","050":"BD","056":"BE","064":"BT","068":"BO","070":"BA","072":"BW","076":"BR","100":"BG","116":"KH","124":"CA","144":"LK","152":"CL","156":"CN","158":"TW","170":"CO","188":"CR","191":"HR","196":"CY","203":"CZ","208":"DK","218":"EC","233":"EE","246":"FI","250":"FR","268":"GE","275":"PS","276":"DE","288":"GH","300":"GR","320":"GT","348":"HU","352":"IS","356":"IN","360":"ID","372":"IE","376":"IL","380":"IT","392":"JP","398":"KZ","400":"JO","404":"KE","410":"KR","417":"KG","418":"LA","422":"LB","426":"LS","428":"LV","438":"LI","440":"LT","442":"LU","458":"MY","470":"MT","484":"MX","496":"MN","499":"ME","512":"OM","516":"NA","524":"NP","528":"NL","554":"NZ","566":"NG","578":"NO","591":"PA","600":"PY","604":"PE","608":"PH","616":"PL","620":"PT","634":"QA","642":"RO","643":"RU","646":"RW","674":"SM","686":"SN","688":"RS","702":"SG","703":"SK","704":"VN","705":"SI","710":"ZA","724":"ES","748":"SZ","752":"SE","756":"CH","764":"TH","784":"AE","788":"TN","792":"TR","800":"UG","804":"UA","807":"MK","826":"GB","840":"US","858":"UY"};
 const quizCode = (quiz) => COUNTRY_CODES[quizCountries(quiz)[0]] ?? null;
+// Countries without official Street View coverage (not in the location pool of tools/coverage.mjs): their quizzes are
+// kept, but the home map and list show them grey.
+const NO_COVERAGE = ["156"];
 
 // A quiz about the whole world or a whole continent has a `scope` instead ("World", or the continent's name as in
 // the index's `continents`). Its page lists the quizzes of that scope (country.html?area=<scope>).

@@ -1,5 +1,7 @@
 {
   "continents": {
+    "008": "Europe",
+    "020": "Europe",
     "032": "South America",
     "036": "Oceania",
     "040": "Europe",
@@ -7,29 +9,57 @@
     "056": "Europe",
     "064": "Asia",
     "068": "South America",
+    "070": "Europe",
+    "072": "Africa",
     "076": "South America",
     "100": "Europe",
     "116": "Asia",
     "124": "North America",
     "144": "Asia",
     "152": "South America",
+    "156": "Asia",
+    "158": "Asia",
     "170": "South America",
+    "188": "North America",
+    "191": "Europe",
+    "196": "Europe",
+    "203": "Europe",
+    "208": "Europe",
     "218": "South America",
+    "233": "Europe",
     "246": "Europe",
     "250": "Europe",
+    "268": "Asia",
+    "275": "Asia",
     "276": "Europe",
     "288": "Africa",
     "300": "Europe",
+    "320": "North America",
     "348": "Europe",
+    "352": "Europe",
     "356": "Asia",
     "360": "Asia",
+    "372": "Europe",
+    "376": "Asia",
     "380": "Europe",
     "392": "Asia",
     "398": "Asia",
+    "400": "Asia",
     "404": "Africa",
     "410": "Asia",
+    "417": "Asia",
+    "418": "Asia",
+    "422": "Asia",
+    "426": "Africa",
+    "428": "Europe",
+    "438": "Europe",
+    "440": "Europe",
+    "442": "Europe",
     "458": "Asia",
+    "470": "Europe",
     "484": "North America",
+    "496": "Asia",
+    "499": "Europe",
     "512": "Asia",
     "516": "Africa",
     "524": "Asia",
@@ -37,24 +67,38 @@
     "554": "Oceania",
     "566": "Africa",
     "578": "Europe",
+    "591": "North America",
     "600": "South America",
     "604": "South America",
     "608": "Asia",
     "616": "Europe",
     "620": "Europe",
+    "634": "Asia",
     "642": "Europe",
     "643": "Europe",
+    "646": "Africa",
+    "674": "Europe",
     "686": "Africa",
+    "688": "Europe",
+    "702": "Asia",
+    "703": "Europe",
     "704": "Asia",
+    "705": "Europe",
     "710": "Africa",
     "724": "Europe",
+    "748": "Africa",
     "752": "Europe",
     "756": "Europe",
     "764": "Asia",
+    "784": "Asia",
+    "788": "Africa",
     "792": "Asia",
+    "800": "Africa",
     "804": "Europe",
+    "807": "Europe",
     "826": "Europe",
-    "840": "North America"
+    "840": "North America",
+    "858": "South America"
   },
   "quizzes": [
     {
@@ -2324,6 +2368,718 @@
       "url": "quizzes/poland-town-names/index.html"
     },
     {
+      "id": "czechia-regions",
+      "country": "203",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/czechia-regions/index.html"
+    },
+    {
+      "id": "czechia-cities",
+      "country": "203",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/czechia-cities/index.html"
+    },
+    {
+      "id": "slovakia-regions",
+      "country": "703",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/slovakia-regions/index.html"
+    },
+    {
+      "id": "slovakia-cities",
+      "country": "703",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/slovakia-cities/index.html"
+    },
+    {
+      "id": "israel-regions",
+      "country": "376",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 2,
+      "url": "quizzes/israel-regions/index.html"
+    },
+    {
+      "id": "israel-cities",
+      "country": "376",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/israel-cities/index.html"
+    },
+    {
+      "id": "taiwan-regions",
+      "country": "158",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/taiwan-regions/index.html"
+    },
+    {
+      "id": "taiwan-cities",
+      "country": "158",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/taiwan-cities/index.html"
+    },
+    {
+      "id": "croatia-regions",
+      "country": "191",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/croatia-regions/index.html"
+    },
+    {
+      "id": "croatia-cities",
+      "country": "191",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/croatia-cities/index.html"
+    },
+    {
+      "id": "slovenia-regions",
+      "country": "705",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/slovenia-regions/index.html"
+    },
+    {
+      "id": "slovenia-cities",
+      "country": "705",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/slovenia-cities/index.html"
+    },
+    {
+      "id": "ireland-regions",
+      "country": "372",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 3,
+      "url": "quizzes/ireland-regions/index.html"
+    },
+    {
+      "id": "ireland-cities",
+      "country": "372",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/ireland-cities/index.html"
+    },
+    {
+      "id": "denmark-regions",
+      "country": "208",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/denmark-regions/index.html"
+    },
+    {
+      "id": "denmark-cities",
+      "country": "208",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/denmark-cities/index.html"
+    },
+    {
+      "id": "serbia-regions",
+      "country": "688",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/serbia-regions/index.html"
+    },
+    {
+      "id": "serbia-cities",
+      "country": "688",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/serbia-cities/index.html"
+    },
+    {
+      "id": "montenegro-regions",
+      "country": "499",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 2,
+      "url": "quizzes/montenegro-regions/index.html"
+    },
+    {
+      "id": "montenegro-cities",
+      "country": "499",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/montenegro-cities/index.html"
+    },
+    {
+      "id": "north-macedonia-regions",
+      "country": "807",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/north-macedonia-regions/index.html"
+    },
+    {
+      "id": "north-macedonia-cities",
+      "country": "807",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/north-macedonia-cities/index.html"
+    },
+    {
+      "id": "estonia-regions",
+      "country": "233",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/estonia-regions/index.html"
+    },
+    {
+      "id": "estonia-cities",
+      "country": "233",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/estonia-cities/index.html"
+    },
+    {
+      "id": "latvia-regions",
+      "country": "428",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 3,
+      "url": "quizzes/latvia-regions/index.html"
+    },
+    {
+      "id": "latvia-cities",
+      "country": "428",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/latvia-cities/index.html"
+    },
+    {
+      "id": "lithuania-regions",
+      "country": "440",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/lithuania-regions/index.html"
+    },
+    {
+      "id": "lithuania-cities",
+      "country": "440",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/lithuania-cities/index.html"
+    },
+    {
+      "id": "iceland-regions",
+      "country": "352",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/iceland-regions/index.html"
+    },
+    {
+      "id": "iceland-cities",
+      "country": "352",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/iceland-cities/index.html"
+    },
+    {
+      "id": "luxembourg-regions",
+      "country": "442",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/luxembourg-regions/index.html"
+    },
+    {
+      "id": "luxembourg-cities",
+      "country": "442",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/luxembourg-cities/index.html"
+    },
+    {
+      "id": "malta-regions",
+      "country": "470",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/malta-regions/index.html"
+    },
+    {
+      "id": "malta-cities",
+      "country": "470",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/malta-cities/index.html"
+    },
+    {
+      "id": "cyprus-regions",
+      "country": "196",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/cyprus-regions/index.html"
+    },
+    {
+      "id": "cyprus-cities",
+      "country": "196",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/cyprus-cities/index.html"
+    },
+    {
+      "id": "uruguay-regions",
+      "country": "858",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 2,
+      "url": "quizzes/uruguay-regions/index.html"
+    },
+    {
+      "id": "uruguay-cities",
+      "country": "858",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/uruguay-cities/index.html"
+    },
+    {
+      "id": "panama-regions",
+      "country": "591",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/panama-regions/index.html"
+    },
+    {
+      "id": "panama-cities",
+      "country": "591",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/panama-cities/index.html"
+    },
+    {
+      "id": "costa-rica-regions",
+      "country": "188",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/costa-rica-regions/index.html"
+    },
+    {
+      "id": "costa-rica-cities",
+      "country": "188",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/costa-rica-cities/index.html"
+    },
+    {
+      "id": "guatemala-regions",
+      "country": "320",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/guatemala-regions/index.html"
+    },
+    {
+      "id": "guatemala-cities",
+      "country": "320",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/guatemala-cities/index.html"
+    },
+    {
+      "id": "georgia-regions",
+      "country": "268",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/georgia-regions/index.html"
+    },
+    {
+      "id": "georgia-cities",
+      "country": "268",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/georgia-cities/index.html"
+    },
+    {
+      "id": "kyrgyzstan-regions",
+      "country": "417",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 3,
+      "url": "quizzes/kyrgyzstan-regions/index.html"
+    },
+    {
+      "id": "kyrgyzstan-cities",
+      "country": "417",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/kyrgyzstan-cities/index.html"
+    },
+    {
+      "id": "mongolia-regions",
+      "country": "496",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/mongolia-regions/index.html"
+    },
+    {
+      "id": "mongolia-cities",
+      "country": "496",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/mongolia-cities/index.html"
+    },
+    {
+      "id": "tunisia-regions",
+      "country": "788",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/tunisia-regions/index.html"
+    },
+    {
+      "id": "tunisia-cities",
+      "country": "788",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/tunisia-cities/index.html"
+    },
+    {
+      "id": "botswana-regions",
+      "country": "072",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 2,
+      "url": "quizzes/botswana-regions/index.html"
+    },
+    {
+      "id": "botswana-cities",
+      "country": "072",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/botswana-cities/index.html"
+    },
+    {
+      "id": "eswatini-regions",
+      "country": "748",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 3,
+      "url": "quizzes/eswatini-regions/index.html"
+    },
+    {
+      "id": "eswatini-cities",
+      "country": "748",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 2,
+      "url": "quizzes/eswatini-cities/index.html"
+    },
+    {
+      "id": "lesotho-regions",
+      "country": "426",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/lesotho-regions/index.html"
+    },
+    {
+      "id": "lesotho-cities",
+      "country": "426",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 3,
+      "url": "quizzes/lesotho-cities/index.html"
+    },
+    {
+      "id": "albania-regions",
+      "country": "008",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/albania-regions/index.html"
+    },
+    {
+      "id": "albania-cities",
+      "country": "008",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/albania-cities/index.html"
+    },
+    {
+      "id": "bosnia-and-herzegovina-regions",
+      "country": "070",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/bosnia-and-herzegovina-regions/index.html"
+    },
+    {
+      "id": "bosnia-and-herzegovina-cities",
+      "country": "070",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/bosnia-and-herzegovina-cities/index.html"
+    },
+    {
+      "id": "andorra-regions",
+      "country": "020",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 1,
+      "url": "quizzes/andorra-regions/index.html"
+    },
+    {
+      "id": "andorra-cities",
+      "country": "020",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 3,
+      "url": "quizzes/andorra-cities/index.html"
+    },
+    {
+      "id": "san-marino-regions",
+      "country": "674",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 1,
+      "url": "quizzes/san-marino-regions/index.html"
+    },
+    {
+      "id": "liechtenstein-regions",
+      "country": "438",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 2,
+      "url": "quizzes/liechtenstein-regions/index.html"
+    },
+    {
+      "id": "rwanda-regions",
+      "country": "646",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/rwanda-regions/index.html"
+    },
+    {
+      "id": "rwanda-cities",
+      "country": "646",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 3,
+      "url": "quizzes/rwanda-cities/index.html"
+    },
+    {
+      "id": "uganda-regions",
+      "country": "800",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/uganda-regions/index.html"
+    },
+    {
+      "id": "uganda-cities",
+      "country": "800",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/uganda-cities/index.html"
+    },
+    {
+      "id": "laos-regions",
+      "country": "418",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/laos-regions/index.html"
+    },
+    {
+      "id": "laos-cities",
+      "country": "418",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 3,
+      "url": "quizzes/laos-cities/index.html"
+    },
+    {
+      "id": "singapore-regions",
+      "country": "702",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/singapore-regions/index.html"
+    },
+    {
+      "id": "china-regions",
+      "country": "156",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/china-regions/index.html"
+    },
+    {
+      "id": "china-cities",
+      "country": "156",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/china-cities/index.html"
+    },
+    {
+      "id": "jordan-regions",
+      "country": "400",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 3,
+      "url": "quizzes/jordan-regions/index.html"
+    },
+    {
+      "id": "jordan-cities",
+      "country": "400",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/jordan-cities/index.html"
+    },
+    {
+      "id": "lebanon-regions",
+      "country": "422",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 2,
+      "url": "quizzes/lebanon-regions/index.html"
+    },
+    {
+      "id": "lebanon-cities",
+      "country": "422",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 3,
+      "url": "quizzes/lebanon-cities/index.html"
+    },
+    {
+      "id": "qatar-regions",
+      "country": "634",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/qatar-regions/index.html"
+    },
+    {
+      "id": "qatar-cities",
+      "country": "634",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 2,
+      "url": "quizzes/qatar-cities/index.html"
+    },
+    {
+      "id": "united-arab-emirates-regions",
+      "country": "784",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 2,
+      "url": "quizzes/united-arab-emirates-regions/index.html"
+    },
+    {
+      "id": "united-arab-emirates-cities",
+      "country": "784",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 3,
+      "url": "quizzes/united-arab-emirates-cities/index.html"
+    },
+    {
+      "id": "palestine-regions",
+      "country": "275",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 2,
+      "url": "quizzes/palestine-regions/index.html"
+    },
+    {
+      "id": "palestine-cities",
+      "country": "275",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/palestine-cities/index.html"
+    },
+    {
+      "id": "bhutan-cities",
+      "country": "064",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 3,
+      "url": "quizzes/bhutan-cities/index.html"
+    },
+    {
+      "id": "bhutan-regions",
+      "country": "064",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/bhutan-regions/index.html"
+    },
+    {
+      "id": "nepal-regions",
+      "country": "524",
+      "title": "Regions",
+      "role": "regions",
+      "levels": 4,
+      "url": "quizzes/nepal-regions/index.html"
+    },
+    {
+      "id": "nepal-cities",
+      "country": "524",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/nepal-cities/index.html"
+    },
+    {
       "id": "japan-codes",
       "country": "392",
       "title": "Area Codes",
@@ -2410,6 +3166,14 @@
       "role": "regions",
       "levels": 4,
       "url": "quizzes/greece-regions/index.html"
+    },
+    {
+      "id": "greece-cities",
+      "country": "300",
+      "title": "Cities",
+      "role": "cities",
+      "levels": 4,
+      "url": "quizzes/greece-cities/index.html"
     },
     {
       "id": "united-kingdom-codes",

@@ -1,0 +1,4 @@
+/* Lithuania regions: savivaldybės colored by apskritis (tools/hints.mjs), so neighbouring apskritys differ. */
+/* hints: apskritis (tools/hints.mjs) */
+.r[data-g="AL"]{--hint:var(--h6)} .r[data-g="KL"]{--hint:var(--h9)} .r[data-g="KU"]{--hint:var(--h1)} .r[data-g="MR"]{--hint:var(--h7)} .r[data-g="PN"]{--hint:var(--h3)} .r[data-g="SA"]{--hint:var(--h4)} .r[data-g="TA"]{--hint:var(--h2)} .r[data-g="TE"]{--hint:var(--h8)} .r[data-g="UT"]{--hint:var(--h10)} .r[data-g="VL"]{--hint:var(--h5)}
+/* end hints: apskritis */

@@ -1,0 +1,4 @@
+/* Estonia regions: omavalitsused colored by maakond (tools/hints.mjs), so neighbouring maakonnad differ. */
+/* hints: maakond (tools/hints.mjs) */
+.r[data-g="0037"]{--hint:var(--h4)} .r[data-g="0039"]{--hint:var(--h14)} .r[data-g="0045"]{--hint:var(--h12)} .r[data-g="0050"]{--hint:var(--h2)} .r[data-g="0052"]{--hint:var(--h1)} .r[data-g="0056"]{--hint:var(--h10)} .r[data-g="0060"]{--hint:var(--h5)} .r[data-g="0064"]{--hint:var(--h11)} .r[data-g="0068"]{--hint:var(--h6)} .r[data-g="0071"]{--hint:var(--h7)} .r[data-g="0074"]{--hint:var(--h15)} .r[data-g="0079"]{--hint:var(--h8)} .r[data-g="0081"]{--hint:var(--h9)} .r[data-g="0084"]{--hint:var(--h3)} .r[data-g="0087"]{--hint:var(--h13)}
+/* end hints: maakond */
