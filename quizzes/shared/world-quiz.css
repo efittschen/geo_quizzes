@@ -13,7 +13,7 @@
 /* pages whose items are groups of places (driving side, writing) show only the place under the pointer */
 @media (hover:hover){
   .own-hover #regions .r:not(.dot):not(.out):hover{stroke:var(--ink);stroke-width:2;stroke-opacity:1}
-  .own-hover #regions .r.dot:not(.out):hover{stroke-width:15px}
+  .own-hover #regions .r.dot:not(.out):hover{stroke-width:calc(var(--dot,11px) * 1.36)}
 }
 
 /* flags: the whole flag on a plain ground, never cropped */

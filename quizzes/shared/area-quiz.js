@@ -872,13 +872,19 @@
   function clearLabels() { for (const e of ENTRIES) { e.shown.clear(); renderEntry(e); } }
   function sizeLabels(s = scale()) {
     sized = s;
+    // Dots (cities, small countries) are 11 px across on the screen when zoomed out and grow as the map is zoomed in,
+    // with the square root of the zoom (twice as large at 4 times, 70 px at 40): zooming in makes them easier to tap,
+    // and still pulls crowded ones apart, as the map grows faster than they do (--dot, in the CSS).
+    const r = stageBox(), s0 = base && r.width ? Math.min(r.width / base.w, r.height / base.h) : s;
+    const dot = 11 * Math.sqrt(Math.max(1, s / s0));
+    svg.style.setProperty('--dot', dot.toFixed(1) + 'px');
     for (const c of gPins.querySelectorAll('circle')) c.setAttribute('r', (4.5 / s).toFixed(3));
     for (const c of gFree.querySelectorAll('circle')) c.setAttribute('r', (5 / s).toFixed(3));
     for (const t of gPins.querySelectorAll('text')) { t.setAttribute('font-size', (13 / s).toFixed(3)); t.setAttribute('dy', (-9 / s).toFixed(3)); t.style.strokeWidth = (3 / s).toFixed(3) + 'px'; }
     for (const e of ENTRIES) {
       const fs = Q.dots ? 12 / s : Math.min(15 / s, Math.max(9 / s, Math.sqrt(e.area) * Q.labelScale));
       e.el.setAttribute('font-size', fs.toFixed(3)); e.el.style.strokeWidth = (3 / s).toFixed(3) + 'px';
-      if (Q.dots) e.el.setAttribute('dy', (-13 / s).toFixed(3)); // city names sit above their dot, like pins
+      if (Q.dots) e.el.setAttribute('dy', (-(dot / 2 + 7.5) / s).toFixed(3)); // city names sit above their dot, like pins
     }
   }
 
