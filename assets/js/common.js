@@ -74,8 +74,10 @@ function loadRating(id) {
   const levels = STORE.quiz(id).stars;
   return Array.isArray(levels) ? { levels, played: levels.some((p) => p > 0) } : null;
 }
-// Progress per level for a quiz: saved progress, or empty stars for each of its levels (quizzes.json "levels").
+// Progress per level for a quiz: saved progress, or empty stars for each of its levels (quizzes.json "levels"). A
+// quiz without levels ("levels": 0: Easy to Hard, its rounds drawn anew) has no stars, whatever was saved before.
 function quizLevels(quiz) {
+  if (quiz.levels === 0) return [];
   const saved = loadRating(quiz.id)?.levels;
   return Array.isArray(saved) ? saved : Array(quiz.levels ?? 1).fill(0);
 }
