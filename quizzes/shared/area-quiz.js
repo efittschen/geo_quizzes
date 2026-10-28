@@ -96,6 +96,12 @@
   // Explore labels by the page's own first kind if the configured one isn't on this page.
   if (!Q.kinds.some(k => k.key === Q.exploreKind)) Q.exploreKind = Q.kinds[0].key;
   const HERE = document.currentScript.src.replace(/[^/]*$/, ''); // where the shared scripts are
+  // The map is drawn by WebGL (gl-map.js, with earcut.js), both asked for at once, side by side; the SVG map shows
+  // until its first picture is there (see glm below), and stays where WebGL 2 is missing or the address asks for it
+  // (?svg=1, to compare).
+  const GL_LOAD = !new URLSearchParams(location.search).has('svg') ? Promise.all(['earcut.js', 'gl-map.js'].map(src => new Promise((ok, no) => {
+    const s = document.createElement('script'); s.src = HERE + src; s.onload = ok; s.onerror = no; document.head.append(s);
+  }))) : null;
   const MAX_TRIES = 3;
   const RESULT_CLASS = ['got', 't2', 't3', 'miss']; // index = wrong clicks before the right one
   const FRESH_MS = 700; // how long an answer's color stays in a kind that starts every question on a clean map
@@ -569,6 +575,16 @@
   let ahead = 0;
   function reach(a) { if (a !== ahead) Object.assign(svg.style, { left: -a * 100 + '%', top: -a * 100 + '%', width: (1 + 2 * a) * 100 + '%', height: (1 + 2 * a) * 100 + '%' }); ahead = a; }
   reach(AHEAD);
+  // The map drawn by WebGL (GL_LOAD above): the SVG's shapes and labels are then only read, not drawn, and a tap is
+  // found on them by their outlines (areaAt). It draws every view as it comes, so the outlines take the detail of the
+  // view while the map zooms, not only once it rests (syncDetail in slide), the dots grow and the labels stay; the
+  // triangles of every zoom step are made ahead while the page is idle (bandsAhead).
+  let glm = null;
+  if (GL_LOAD) GL_LOAD.then(() => {
+    glm = glMap(stage, svg); if (!glm) return;
+    glm.view(vb, dotPx(scale()));
+    for (const k in LAYOUTS) { const L = LAYOUTS[k]; if (L && L.pre && L.queued) { L.queued = false; bandsAhead(L); } } // (made before WebGL came: its triangles now)
+  }, () => {});
   svg.setAttribute('viewBox', `${-ahead * MW} ${-ahead * MH} ${MW * (1 + 2 * ahead)} ${MH * (1 + 2 * ahead)}`);
   stage.addEventListener('scroll', () => { stage.scrollLeft = stage.scrollTop = 0; }); // (a browser without `overflow: clip` could be made to scroll the stage to the picture's rest)
   // The map's box on the screen is the stage's: the picture is larger, and moved (none while the street map is shown).
@@ -592,7 +608,8 @@
     svg.setAttribute('viewBox', `${vb.x - ahead * vb.w} ${vb.y - ahead * vb.h} ${vb.w * (1 + 2 * ahead)} ${vb.h * (1 + 2 * ahead)}`);
     if (slid) { svg.style.transform = ''; slid = false; }
     drawn = { ...vb };
-    const s = scale(); if (s !== sized) sizeLabels(s);
+    const s = scale(); if (glm) glm.view(vb, dotPx(s));
+    if (s !== sized) sizeLabels(s);
     if (moving) resting = setTimeout(apply, REST); else { syncDetail(s); svg.classList.remove('zooming'); }
     worldNear(pictureBox());
     showTiles();
@@ -618,6 +635,7 @@
     // (the picture's own corner lies `ahead` of the stage's size outside the stage's)
     const tx = n.x - k * d.x + n.s * (drawn.x - vb.x) + ahead * r.width * (1 - k), ty = n.y - k * d.y + n.s * (drawn.y - vb.y) + ahead * r.height * (1 - k);
     svg.style.transform = `translate(${tx}px,${ty}px) scale(${k})`; slid = true;
+    if (glm) { glm.view(vb, dotPx(n.s)); syncDetail(n.s); worldNear(pictureBox()); } // (WebGL draws the view itself at once, at its detail: nothing of it is stretched)
     showTiles();
     if (live) liveSoon();
     clearTimeout(resting); resting = setTimeout(apply, REST);
@@ -715,7 +733,7 @@
   // The area a press or the pointer is on. On a unit drawn as one shape any of its areas, since they are all the same
   // item (a round of states asks nothing of the Kreise); in Explore, which tells about an area, the one under it.
   function areaAt(e) {
-    const t = e.target, d = t && t.dataset; if (!d) return null;
+    const t = glm ? glm.at(toSvg(e.clientX, e.clientY, vb)) : e.target, d = t && t.dataset; if (!d) return null; // (WebGL: the shape under it, by its outline)
     if (d.a) return d.a;
     const p = d.u !== undefined ? UNDER[+d.u] : null; if (!p) return null;
     if (view !== 'explore') return p.areas[0];
@@ -797,7 +815,7 @@
     return areas.map(a => { const p = UNDER[underOf[a]]; if (!p || !p.whole) return AREA[a].d; if (done.has(p)) return ''; done.add(p); return p.getAttribute('d'); }).join(' ');
   }
   // An area's box on the quiz map: from its outline where it is not drawn itself.
-  const boxOf_ = a => { if (EL[a].isConnected) return EL[a].getBBox(); const s = shapeOf(SVG_SPACE, a); return { x: s.x0, y: s.y0, width: s.x1 - s.x0, height: s.y1 - s.y0 }; };
+  const boxOf_ = a => { if (EL[a].isConnected && !glm) return EL[a].getBBox(); const s = shapeOf(SVG_SPACE, a); return { x: s.x0, y: s.y0, width: s.x1 - s.x0, height: s.y1 - s.y0 }; }; // (WebGL: the SVG's shapes are not laid out, see glm)
   function flyTo(areas) {
     const bs = areas.map(boxOf_);
     const x0 = Math.min(...bs.map(b => b.x)), y0 = Math.min(...bs.map(b => b.y));
@@ -841,6 +859,7 @@
       if (!e) {
         e = byPos[key] = { ...m, ids: [], shown: new Set(), el: document.createElementNS(NS, 'text') };
         e.el.setAttribute('x', m.x); e.el.setAttribute('y', m.y); e.el.setAttribute('class', 'off');
+        e.el.dataset.raw = (Math.sqrt(m.area) * Q.labelScale).toPrecision(5); // (its size on the map before it is held within 9 to 15 px, see sizeLabels: for the WebGL labels)
         gL.appendChild(e.el); ENTRIES.push(e);
       }
       return e;
@@ -889,14 +908,15 @@
   }
   function showAllLabels(kind) { showLabels(kind, KINDS[kind].ids); }
   function clearLabels() { for (const e of ENTRIES) { e.shown.clear(); renderEntry(e); } }
+  // The dots' size on the screen at scale s (see sizeLabels).
+  function dotPx(s) { const r = stageBox(), s0 = base && r.width ? Math.min(r.width / base.w, r.height / base.h) : s; return 11 * Math.sqrt(Math.max(1, s / s0)); }
   function sizeLabels(s = scale()) {
     sized = s;
     // Dots (cities, small countries) are 11 px across on the screen when zoomed out and grow as the map is zoomed in,
     // with the square root of the zoom (twice as large at 4 times, 70 px at 40): zooming in makes them easier to tap,
     // and still pulls crowded ones apart, as the map grows faster than they do (--dot, in the CSS). (Dots of a size
     // on the ground, an area's w, keep theirs.)
-    const r = stageBox(), s0 = base && r.width ? Math.min(r.width / base.w, r.height / base.h) : s;
-    const dot = 11 * Math.sqrt(Math.max(1, s / s0));
+    const dot = dotPx(s);
     svg.style.setProperty('--dot', dot.toFixed(1) + 'px');
     for (const c of gPins.querySelectorAll('circle')) c.setAttribute('r', (4.5 / s).toFixed(3));
     for (const c of gFree.querySelectorAll('circle')) c.setAttribute('r', (5 / s).toFixed(3));
@@ -1310,7 +1330,10 @@
       // (band T holds the scales from .5·QN / 2^T to .5·QN / 2^(T-1) screen pixels to a map unit; FINE and above draw version 1)
       const hi = T ? .5 * QN / 2 ** (T - 1) : Infinity, lo = T ? .5 * QN / 2 ** T : .5 * QN;
       const versions = [...(hi >= FINE ? [1] : []), ...(lo < FINE ? [0] : [])];
-      L.units.forEach((_, i) => tasks.push(() => { wholeOf(L, i, T); for (const d of versions) lineOf(L, d, T, i); }));
+      L.units.forEach((_, i) => tasks.push(() => {
+        const w = wholeOf(L, i, T); for (const d of versions) lineOf(L, d, T, i);
+        if (glm) { glm.prepare(w, ['e', 's']); for (const d of versions) glm.prepare(lineOf(L, d, T, i), ['r']); } // (WebGL: their triangles too)
+      }));
     }
     BANDS_TODO.unshift(...tasks);
     if (!aheadOn) { aheadOn = true; soon(work); }

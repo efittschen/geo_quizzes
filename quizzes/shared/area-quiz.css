@@ -368,6 +368,11 @@ svg#map.zooming #labels{visibility:hidden}
 .stage.streets{--sea:#D6E2E7;--panel:#F6F8F6;--card:#FFFFFF;--ink:#15283A;--muted:#5A6B78;--line:#C9D3D8;--land:#EDF0E4;--edge:rgba(21,40,58,.32);--state:#15283A;
   --got:#62B686;--t2:#F2CF5B;--t3:#EE9A4D;--miss:#E8877E;--halo:rgba(246,248,246,.9);--btn:#15283A;--btnink:#F6F8F6;color:var(--ink)}
 .tiles{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none}
+/* the map drawn by WebGL (gl-map.js): its canvas behind the SVG, whose shapes and labels are then only read, not
+   drawn */
+.stage > canvas.glmap{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+.stage > canvas.glmap.overlay{mix-blend-mode:multiply;opacity:.8}
+svg#map.gl #ctx,svg#map.gl #regions,svg#map.gl #borders,svg#map.gl #labels{display:none}
 /* (a Mercator map's tiles: pictures on sheets, moved as a whole, see map-tiles.js) */
 .tiles .sheet{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
 .tiles .sheet img{position:absolute;max-width:none;user-select:none;-webkit-user-select:none}
