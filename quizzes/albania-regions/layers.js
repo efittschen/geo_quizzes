@@ -9,7 +9,7 @@
 
 const LAYERS = {
   key: "alregions",
-  size: [1000,2216],
+  size: [1000, 2235],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

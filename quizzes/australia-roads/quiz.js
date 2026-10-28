@@ -12,11 +12,11 @@ const digitOf = area => area.slice(1);
 
 const QUIZ = {
   key: 'auvicroads',
-  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, g: r.id })),
+  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: r.id })),
   borders: [],
   context: DATA.ctx,
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.3, fly: { pad: 1.6, min: 1.5 / 40 },
-  geo: GEO,
+  proj: DATA.proj, kpu: DATA.kpu,
   street: { bounds: [[-39.2, 140.9], [-33.9, 150]], maxBounds: [[-42, 136], [-31, 154]] },
   hintLabel: 'Color by first digit',
   exploreKind: 'digit',

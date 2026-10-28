@@ -6,7 +6,7 @@
 
 const LAYERS = {
   key: "atregions",
-  size: [1000,517],
+  size: [1000, 516],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.25,

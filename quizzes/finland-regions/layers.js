@@ -17,7 +17,7 @@
 const LAYERS = {
   key: "finreg",
   borders: "[DATA.cty]",
-  size: [1000,1768],
+  size: [1000, 2035],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

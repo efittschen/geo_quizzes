@@ -7,7 +7,7 @@
 const LAYERS = {
   key: "szregions",
   borders: "[DATA.rb]",
-  size: [1000,1333],
+  size: [1000, 1331],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.25,

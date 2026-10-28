@@ -8,7 +8,7 @@
 
 const LAYERS = {
   key: "hucounties",
-  size: [1000,624],
+  size: [1000, 618],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

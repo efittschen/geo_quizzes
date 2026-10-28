@@ -11,7 +11,7 @@
 
 const LAYERS = {
   key: "ugregions",
-  size: [1000,1053],
+  size: [1000, 1054],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.25,

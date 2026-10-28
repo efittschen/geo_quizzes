@@ -9,7 +9,7 @@
 
 const LAYERS = {
   key: "peregions",
-  size: [1000,1474],
+  size: [1000, 1471],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.25,

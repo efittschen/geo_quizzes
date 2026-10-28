@@ -23,11 +23,11 @@ const pre = id => R[id].ab + '.';
 
 const QUIZ = {
   key: 'throads',
-  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, g: r.r6 })),
+  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: r.r6 })),
   borders: [],
   context: DATA.ctx,
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.22, fly: { pad: 1.6, min: 1.5 / 40 },
-  geo: GEO,
+  proj: DATA.proj, kpu: DATA.kpu,
   street: { bounds: [[5.6, 97.3], [20.5, 105.7]], maxBounds: [[0, 88], [27, 115]] },
   hintLabel: 'Color by region',
   exploreKind: 'rural',

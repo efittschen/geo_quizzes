@@ -12,7 +12,7 @@
 
 const LAYERS = {
   key: "seregions",
-  size: [700,1565],
+  size: [700, 1590],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.3,

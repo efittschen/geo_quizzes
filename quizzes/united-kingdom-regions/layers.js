@@ -4,7 +4,7 @@
 
 const LAYERS = {
   key: "ukregions",
-  size: [1000,1852],
+  size: [1000, 1874],
   pad: 16,
   maxZoom: 60,
   labelScale: 0.22,

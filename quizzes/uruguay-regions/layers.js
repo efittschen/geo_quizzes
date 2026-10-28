@@ -8,7 +8,7 @@
 
 const LAYERS = {
   key: "uyregions",
-  size: [1000,1112],
+  size: [1000, 1093],
   pad: 16,
   maxZoom: 30,
   labelScale: 0.3,

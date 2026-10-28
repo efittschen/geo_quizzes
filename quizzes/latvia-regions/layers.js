@@ -11,7 +11,7 @@
 const LAYERS = {
   key: "lvregions",
   borders: "[DATA.rb]",
-  size: [1000,595],
+  size: [1000, 607],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

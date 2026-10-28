@@ -8,7 +8,7 @@
 const LAYERS = {
   key: "ltregions",
   borders: "[DATA.rb]",
-  size: [1000,764],
+  size: [1000, 761],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

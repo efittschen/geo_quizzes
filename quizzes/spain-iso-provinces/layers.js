@@ -7,7 +7,7 @@
 
 const LAYERS = {
   key: "esisoprov",
-  size: [1000,848],
+  size: [1000, 891],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.25,
@@ -15,7 +15,7 @@ const LAYERS = {
   street: {"bounds":[[27.6,-18.2],[43.8,4.4]],"maxBounds":[[22,-25],[48,10]]},
   hintLabel: "Color by community",
   exploreKind: "iso",
-  d: {"p51":"M598.5,425.4a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z","p52":"M704.3,454.9a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z"},
+  d: {"p51":"M562.8,457.8a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z","p52":"M669.9,490.6a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z"},
   top: ["p51","p52"],
   kinds: [
     {

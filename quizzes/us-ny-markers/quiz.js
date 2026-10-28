@@ -26,11 +26,11 @@ const PARTS = [
 
 const QUIZ = {
   key: 'usnymarkers',
-  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, g: r.rg })),
+  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: r.rg })),
   borders: [],
   context: DATA.ctx,
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.3, fly: { pad: 1.6, min: 1.5 / 40 },
-  geo: GEO,
+  proj: DATA.proj, kpu: DATA.kpu,
   street: { bounds: [[40.5, -79.8], [45.0, -71.8]], maxBounds: [[37, -85], [48, -66]] },
   hintLabel: 'Color by region',
   exploreKind: 'codes',

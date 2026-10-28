@@ -5,7 +5,7 @@
 
 const LAYERS = {
   key: "aeregions",
-  size: [1000,778],
+  size: [1000, 774],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.24,

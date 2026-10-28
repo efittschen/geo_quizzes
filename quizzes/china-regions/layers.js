@@ -15,7 +15,7 @@
 
 const LAYERS = {
   key: "cnregions",
-  size: [1200,1018],
+  size: [1200, 886],
   pad: 16,
   maxZoom: 80,
   labelScale: 0.2,

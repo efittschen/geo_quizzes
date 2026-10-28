@@ -12,7 +12,7 @@
 
 const LAYERS = {
   key: "rsregions",
-  size: [1000,1327],
+  size: [1000, 1319],
   pad: 16,
   maxZoom: 60,
   labelScale: 0.2,

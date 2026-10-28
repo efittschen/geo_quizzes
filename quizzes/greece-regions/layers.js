@@ -5,7 +5,7 @@
 
 const LAYERS = {
   key: "grregions",
-  size: [1000,861],
+  size: [1000, 867],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.25,

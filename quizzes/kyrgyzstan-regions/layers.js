@@ -12,7 +12,7 @@
 
 const LAYERS = {
   key: "kgregions",
-  size: [1000,493],
+  size: [1000, 498],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

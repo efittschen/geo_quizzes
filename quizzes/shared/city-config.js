@@ -31,6 +31,15 @@
 //                 Not for a second language of a country (Swedish in Finland, Māori in New Zealand): there the
 //                 English name is the one on the signs.
 //     top         sizes of the "Top N" rounds; a round with every city is added at the end, "Top <their number>"
+//     back        the map behind the dots a player starts with, until they pick another: 'sat' (the satellite map),
+//                 'street', 'bare', 'overlay' (default: the drawn map)
+//     maxZoom     how far the map zooms in, times its whole (default 40; a map of the world needs more)
+//     dotKm       the dots' size on the ground in km, the same at every zoom (a Web Mercator map), instead of the
+//                 size on screen that grows with the zoom: for dots never tapped, only showing where an answer was
+//     single      a page of one round only, played by distance and started anew each time (see area-quiz.js, Q.single):
+//                 { draw() -> the round's cities in the order asked, points(km, point, id, i) -> { base, mult, pts },
+//                 tag(i), max(n), cls(base) -> 0 to 3, legend } (world-places/points.js). Its rounds give no review
+//                 cards and keep no best.
 //     list        another list of cities on the country's map: { order, list }, from a file of the page's own. The
 //                 page then loads the country's cities.js for the map and the regions, and this list replaces
 //                 its cities (once the "By coverage" lists of the US and Russia; none uses it now).
@@ -55,7 +64,7 @@ const QUIZ = (() => {
   // Names asked twice in the list get their region, so "Portland" is never a coin flip.
   const dupes = of => { const n = {}; for (const c of C.list) if (of(c)) n[of(c)] = (n[of(c)] || 0) + 1; return n; };
   const DUP_EN = dupes(c => latin(c.id)), DUP_LOCAL = dupes(c => c.local);
-  const fullEn = id => DUP_EN[latin(id)] > 1 ? `${latin(id)}, ${region(id)}` : latin(id);
+  const fullEn = id => DUP_EN[latin(id)] > 1 && !O.single ? `${latin(id)}, ${region(id)}` : latin(id); // (on a page of one round a name twice is one place asked on two days)
   // Signs (../shared/signs, see signs.js there): where the country has sign drawings reviewed against their pictures,
   // the kind 'en' shows the asked city on one of its signs (the "Sign" switch), the names of the other places on it
   // blurred: its nearest towns stand there. Loaded after the page, so the first question may show the plain name.
@@ -187,21 +196,21 @@ const QUIZ = (() => {
     },
   };
 
-  const rounds = [
+  const rounds = O.single ? [{ kind: 'en', label: 'Places', key: 'All cities' }] : [
     ...sizes.filter(n => n < ALL.length).map(n => ({ kind: 'en', label: `Top ${n}`, top: n })),
     { kind: 'en', label: `Top ${ALL.length}`, key: 'All cities' }, // (every city: "Top 100" where the list has 100; the key keeps the round's id of before)
   ];
 
   return {
     key: O.key || C.iso3.toLowerCase() + 'cities',
-    areas: C.list.map(c => ({ id: c.id, d: `M${c.x},${c.y}l0,0`, lx: c.x, ly: c.y, a: 1, g: c.adm })),
+    areas: C.list.map(c => ({ id: c.id, d: `M${c.x},${c.y}l0,0`, lx: c.x, ly: c.y, a: 1, g: c.adm, ...(O.dotKm && MERC ? { w: +(O.dotKm / (111.32 * Math.cos(c.lat * RAD) / C.proj.k)).toFixed(4) } : {}) })), // (w: dotKm in map units, at its latitude)
     borders: [],
     context: C.ctx, world: !!C.world, proj: C.proj, // (world: the map lies on the plain map of the world, by its projection: see mercator.js)
     base: { land: C.land, lines: C.lines },
     dots: true,
     free,
     streets: C,
-    size: [C.w, C.h], pad: 16, maxZoom: 40, labelScale: 0.25, fly: { pad: 1.6, min: 1.5 / 40 },
+    size: [C.w, C.h], pad: 16, maxZoom: O.maxZoom || 40, labelScale: 0.25, back: O.back, single: O.single || null, fly: { pad: 1.6, min: 1.5 / 40 },
     hintLabel: 'Color by region',
     exploreKind: 'en',
     explore: a => ({ code: LATIN.test(BY[a].local || '') ? latin(a) : BY[a].local, title: latin(a), sub: [...english(a), region(a), `#${rank(a)} · ${fmtPop(BY[a].pop)}`] }),

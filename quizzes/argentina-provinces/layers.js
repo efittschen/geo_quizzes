@@ -4,7 +4,7 @@
 const LAYERS = {
   key: "arprov",
   map: {"paths":"DATA.ent","cols":{"id":["pv0","pv1","pv2","pv3","pv4","pv5","pv6","pv7","pv8","pv9","pv10","pv11","pv12","pv13","pv14","pv15","pv16","pv17","pv18","pv19","pv20","pv21","pv22","pv23"],"key":["Entre Ríos","Salta","Jujuy","Formosa","Misiones","Chaco","Corrientes","Catamarca","La Rioja","San Juan","Mendoza","Neuquén","Chubut","Río Negro","Santa Cruz","Tierra del Fuego","Buenos Aires","Buenos Aires (city)","Santa Fe","Tucumán","Santiago del Estero","San Luis","La Pampa","Córdoba"],"name":["Entre Ríos","Salta","Jujuy","Formosa","Misiones","Chaco","Corrientes","Catamarca","La Rioja","San Juan","Mendoza","Neuquén","Chubut","Río Negro","Santa Cruz","Tierra del Fuego","Buenos Aires Province","City of Buenos Aires","Santa Fe","Tucumán","Santiago del Estero","San Luis","La Pampa","Córdoba"]}},
-  size: [800,1658],
+  size: [800, 1761],
   pad: 16,
   maxZoom: 90,
   labelScale: 0.12,

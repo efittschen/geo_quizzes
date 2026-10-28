@@ -32,7 +32,7 @@ const QUIZ = (() => {
   const regions = z => (P.name[z] || [])[0] || '';
   const count = z => P.n[z] ? `${P.n[z].toLocaleString('en-US')} ${P.n[z] === 1 ? 'postcode' : 'postcodes'}` : '';
 
-  const WORD = { 1: 'First digit', 2: 'Two digits', 3: 'Three digits', 4: 'Four digits' };
+  const WORD = { 1: 'First digit', 2: 'Two digits', 3: 'Three digits', 4: 'Four digits', 5: 'Five digits' };
   const labelOf = l => LETTERS ? O.label || 'Postcode areas' : WORD[l];
   const kindKey = l => LETTERS ? 'areas' : 'p' + l;
 
@@ -82,12 +82,11 @@ const QUIZ = (() => {
   const [[s, w], [n, e]] = P.bounds, zoom = O.maxZoom || 40;
   return {
     key: O.key,
-    areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, g: LETTERS ? r.id : ((P.area[r.id] || [''])[0][0] || '') })),
+    areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, ...(r.s !== undefined ? { s: r.s } : {}), g: LETTERS ? r.id : ((P.area[r.id] || [''])[0][0] || '') })),
     borders: O.borders || [],
     context: DATA.ctx,
     proj: DATA.proj, kpu: DATA.kpu,
     size: [DATA.w, DATA.h], pad: 16, maxZoom: zoom, labelScale: O.labelScale || 0.25, fly: { pad: 1.6, min: 1.5 / zoom },
-    geo: GEO,
     street: { bounds: [[s, w], [n, e]], maxBounds: [[s - 8, w - 12], [n + 8, e + 12]] },
     hintLabel: LETTERS ? 'Color zones' : 'Color by first digit',
     exploreKind: kindKey(FINE),

@@ -4,7 +4,7 @@
 const LAYERS = {
   key: "usstates",
   borders: "DATA.ent",
-  size: [1000,585],
+  size: [1000, 699],
   pad: 16,
   maxZoom: 60,
   labelScale: 0.14,

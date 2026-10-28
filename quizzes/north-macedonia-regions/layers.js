@@ -10,7 +10,7 @@
 
 const LAYERS = {
   key: "mkregions",
-  size: [1000,788],
+  size: [1000, 790],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

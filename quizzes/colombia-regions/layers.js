@@ -6,7 +6,7 @@
 
 const LAYERS = {
   key: "codept",
-  size: [1000,1468],
+  size: [1000, 1192],
   pad: 16,
   maxZoom: 30,
   labelScale: 0.3,

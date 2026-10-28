@@ -9,7 +9,7 @@
 
 const LAYERS = {
   key: "namregions",
-  size: [1000,924],
+  size: [1000, 967],
   pad: 16,
   maxZoom: 30,
   labelScale: 0.22,

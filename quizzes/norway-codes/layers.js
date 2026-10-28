@@ -7,7 +7,7 @@ const LAYERS = {
   key: "norcodes",
   phone: true, // phone area codes: each layer of codes is played the other way round too, the code typed (layer-config.js)
   borders: "[DATA.inset]",
-  size: [1000,1164],
+  size: [1000, 2499],
   pad: 16,
   maxZoom: 30,
   labelScale: 0.3,

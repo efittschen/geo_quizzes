@@ -10,7 +10,7 @@
 
 const LAYERS = {
   key: "hrregions",
-  size: [1000,999],
+  size: [1000, 980],
   pad: 16,
   maxZoom: 45,
   labelScale: 0.2,

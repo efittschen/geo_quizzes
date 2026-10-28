@@ -11,7 +11,7 @@
 const LAYERS = {
   key: "norreg",
   borders: "[DATA.cty]",
-  size: [1000,1164],
+  size: [1000, 1189],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

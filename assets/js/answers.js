@@ -20,7 +20,7 @@
 //          [t, quiz, layer, item, look, mode, f, r, ms, g, iv, v, ...given]
 //            t       seconds after t0
 //            quiz, layer, item, look, mode   places in s: the quiz page (its folder), the layer (the kind, without its
-//                    mode), the item, the map it was answered on ("quiz", "overlay", "street", "bare", "free", with a
+//                    mode), the item, the map it was answered on ("quiz", "overlay", "street", "bare", "sat", "free", with a
 //                    city quiz's background after a "+"), and how ("map", "list", "type", "pairs", "pick",
 //                    "pickback", "code", "draw", "paint")
 //            f       1 in a review, 2 a replay (asked again after a miss: later in the review, or in a Retry round),

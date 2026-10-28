@@ -4,7 +4,7 @@
 
 const LAYERS = {
   key: "smregions",
-  size: [1000,1194],
+  size: [1000, 1184],
   pad: 16,
   maxZoom: 12,
   labelScale: 0.3,

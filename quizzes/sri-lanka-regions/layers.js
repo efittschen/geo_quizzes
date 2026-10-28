@@ -8,7 +8,7 @@
 
 const LAYERS = {
   key: "lkregions",
-  size: [1000,1680],
+  size: [1000, 1677],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

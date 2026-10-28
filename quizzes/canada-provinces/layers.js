@@ -4,7 +4,7 @@
 const LAYERS = {
   key: "caprov",
   map: "PROVINCES",
-  size: [1200,1031],
+  size: [1200, 1564],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.2,

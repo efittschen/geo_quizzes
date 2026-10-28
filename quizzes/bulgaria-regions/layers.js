@@ -5,7 +5,7 @@
 
 const LAYERS = {
   key: "bgregions",
-  size: [1000,659],
+  size: [1000, 650],
   pad: 16,
   maxZoom: 30,
   labelScale: 0.25,

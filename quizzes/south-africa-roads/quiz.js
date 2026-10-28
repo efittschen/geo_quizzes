@@ -57,11 +57,11 @@ const onLangPage = /lang/.test(page);
 
 const QUIZ = {
   key: 'zaroads',
-  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, g: r.fam })),
+  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: r.fam })),
   borders: [],
   context: DATA.ctx,
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.3, fly: { pad: 1.6, min: 1.5 / 40 },
-  geo: GEO,
+  proj: DATA.proj, kpu: DATA.kpu,
   street: { bounds: [[-34.9, 16.4], [-22.1, 32.9]], maxBounds: [[-45, 5], [-12, 45]] },
   hintLabel: 'Color by language group',
   exploreKind: onLangPage ? 'langs' : 'rzones',

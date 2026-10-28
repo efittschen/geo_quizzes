@@ -6,7 +6,8 @@
 // A script is a row of SCRIPTS below and its file, quizzes/<script>-letters/<script>.js (SCRIPT: its letters, as
 // each country reads them, and the words of their signs: see quizzes/shared/reading.js). For each one this writes
 //   - SCRIPT.eg, at the end of that file: a place written with each letter, said with the letter's answer. The places
-//     are the cities of a country that writes the letter that way (READING below), from its cities.js, whose name
+//     are the cities of a country that writes the letter that way (READING below), from its cities.js (and then the
+//     real names of names/<script>.json, NAMES below), whose name
 //     on the map is what its letters spell (not Delhi for दिल्ली: the example would contradict the letter's sound),
 //     first those that spell the letter the usual way (ভ as bh, not the v of Savar). Rare letters choose first, and
 //     each takes the largest city no letter has taken yet, so the examples differ; a letter no such city has gets
@@ -26,11 +27,12 @@
 // And quizzes/latin-alphabets/, the Countries page the other way round on the board of tiles: a country, click the
 // letters it writes. Its file (alphabets.js beside the page) is what the Countries page itself makes of the
 // languages (QUIZ.parts of quizzes/shared/world-config.js, run here), so both ask the same countries and letters.
-// And for every country of READING, whose names are written in such a script: its Reading quiz,
-// quizzes/<country>-reading/ (the country's city map with typed answers, quizzes/shared/city-config.js). It
-// belongs to the country: its entry has the country's code and the role "reading", and it is a tab of the country's
-// city pages (tools/builds/town-names keeps that tab when it writes them).
-// Run it again after changing a script's file or the cities read from.
+// And the Type mode of every name written in such a script, which is reading it (quizzes/shared/reading.js): each page
+// with a script side, a city quiz's names in another script or a layer of them (below), gets the files of the scripts
+// its names are written in, reading.js, faces.css and the scripts' fonts, written in before its config. India's other
+// scripts (READING rows with a fourth field) take their places from the towns of their state(s), in
+// tools/builds/languages/towns/<fourth>.js (once small city quizzes of their own, removed on 2026-10-23).
+// Run it again after changing a script's file or the cities read from, and after a city or region page is written anew.
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -42,21 +44,95 @@ const SCRIPTS = [
   ['cyrillic', 'the names on the map (Russia: BGN/PCGN)', 'Countries'],
   ['devanagari', 'Hunterian romanisation', 'Regions'],
   ['bengali', 'the names on the map', ''],
+  ['thai', 'the Royal Thai General System (RTGS)', ''],
+  ['khmer', 'UNGEGN romanisation and the names on signs', ''],
+  ['hangul', 'Revised Romanization of Korean', ''],
+  ['sinhala', 'the names on the map', ''],
+  ['tamil', 'the names on the map (Sri Lanka)', ''],
+  ['arabic', 'the names on the map (Oman; Jammu and Kashmir, Malaysia)', ''],
+  ['tibetan', 'Bhutan\'s spelling of its place names, as on its signs', ''],
+  ['javanese', 'the Latin names on the same signs', ''],
+  ['balinese', 'the Latin names on the same signs', ''],
+  ['sundanese', 'the Latin names on the same signs', ''],
+  ['syllabics', 'Inuktitut in Latin letters', ''],
+  ['cherokee', 'the standard Latin values', ''],
+  ['greek', 'ELOT 743, as on Greek and Cypriot signs', ''],
+  ['hebrew', 'the names on the map and signs (CBS)', ''],
+  ['georgian', 'the national romanisation as on signs (no apostrophes)', ''],
+  ['japanese', 'Hepburn, as on road signs (long vowels unmarked)', ''],
+  ['chinese', 'Hanyu Pinyin without tones, as on Taiwan\'s signs (older names kept: Taipei, Kaohsiung)', ''],
+  ['lao', 'Laos\'s French-based romanisation, as on its signs and maps (Xay, Gnommalat, Phou)', ''],
+  ['telugu', 'Hunterian romanisation, as on India\'s signs and maps', ''],
+  ['kannada', 'Hunterian romanisation, as on India\'s signs and maps', ''],
+  ['malayalam', 'Hunterian romanisation, as on India\'s signs and maps', ''],
+  ['gujarati', 'Hunterian romanisation, as on India\'s signs and maps', ''],
+  ['gurmukhi', 'Hunterian romanisation, as on India\'s signs and maps', ''],
+  ['odia', 'Hunterian romanisation, as on India\'s signs and maps', ''],
 ];
-// [country (its cities quiz), its script, the language its names are read in]
+// [country (its cities quiz), its script, the language its names are read in]: the cities that give the letters their
+// examples (SCRIPT.eg; a page's own scripts are found from its names, see "the pages with names in a script")
 const READING = [
   ['russia', 'cyrillic', 'ru'], ['ukraine', 'cyrillic', 'uk'], ['bulgaria', 'cyrillic', 'bg'], ['kazakhstan', 'cyrillic', 'kk'],
   ['india', 'devanagari', 'hi'], ['bangladesh', 'bengali', 'bn'],
+  ['thailand', 'thai', 'th'], ['cambodia', 'khmer', 'km'], ['south-korea', 'hangul', 'ko'], ['sri-lanka', 'sinhala', 'si'], ['oman', 'arabic', 'ar'],
+  ['serbia', 'cyrillic', 'sr'], ['north-macedonia', 'cyrillic', 'mk'], ['kyrgyzstan', 'cyrillic', 'ky'], ['mongolia', 'cyrillic', 'mn'], ['tunisia', 'arabic', 'ar'], ['bosnia-and-herzegovina', 'cyrillic', 'sr'],
+  ['nepal', 'devanagari', 'ne'],
+  ['jordan', 'arabic', 'ar'], ['lebanon', 'arabic', 'ar'], ['qatar', 'arabic', 'ar'], ['united-arab-emirates', 'arabic', 'ar'], ['palestine', 'arabic', 'ar'],
+  ['bhutan', 'tibetan', 'dz'],
+  ['greece', 'greek', 'el'], ['cyprus', 'greek', 'el'], ['israel', 'hebrew', 'he'], ['georgia', 'georgian', 'ka'],
+  ['japan', 'japanese', 'ja'],
+  ['taiwan', 'chinese', 'zh-TW'], ['laos', 'lao', 'lo'],
+  // India's other scripts: the places from the towns of the state(s) that write it (fourth: towns/<fourth>.js beside
+  // this file, a CITIES list as a city quiz has it)
+  ['india', 'telugu', 'te', 'india-telugu-cities'], ['india', 'kannada', 'kn', 'india-kannada-cities'],
+  ['india', 'malayalam', 'ml', 'india-malayalam-cities'], ['india', 'gujarati', 'gu', 'india-gujarati-cities'],
+  ['india', 'gurmukhi', 'pa', 'india-gurmukhi-cities'], ['india', 'odia', 'or', 'india-odia-cities'],
 ];
+// [country, script, language]: more cities whose names give a script's letters their examples (SCRIPT.eg)
+const EXAMPLES = [['sri-lanka', 'tamil', 'ta'], ['india', 'tamil', 'ta'], ['india', 'bengali', 'as']];
+// scripts whose letters take their examples from real names too, after the cities: names/<script>.json, { source,
+// names: { <language>: [[name, the Latin name of the same place]…] } }, the larger places first (OpenStreetMap,
+// Wikidata), for scripts that no city quiz writes (Javanese) or writes in few names (Bhutan's Dzongkha)
+const NAMES = ['tibetan', 'javanese', 'balinese', 'sundanese', 'syllabics', 'cherokee', 'arabic'];
 const FONTS = {
   latn: 'family=Noto+Sans:wght@400;500;600;700',
   cyrl: 'family=Noto+Sans:wght@500;600&family=PT+Serif:ital,wght@0,700;1,400&family=Oswald:wght@500&family=Caveat:wght@700&family=Russo+One',
   deva: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Devanagari:wght@500;600&family=Tiro+Devanagari+Hindi&family=Kalam:wght@700&family=Khand:wght@600&family=Rozha+One',
   beng: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Bengali:wght@500;600&family=Tiro+Bangla&family=Hind+Siliguri:wght@600&family=Baloo+Da+2:wght@700&family=Galada',
+  thai: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Thai+Looped:wght@500;600&family=Noto+Serif+Thai:wght@600&family=Kanit:wght@500',
+  khmr: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Khmer:wght@500;600&family=Battambang:wght@700&family=Moul',
+  hang: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+KR:wght@500;600&family=Nanum+Myeongjo:wght@700&family=Black+Han+Sans',
+  sinh: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Sinhala:wght@500;600&family=Noto+Serif+Sinhala:wght@600&family=Abhaya+Libre:wght@600',
+  taml: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Tamil:wght@500;600&family=Noto+Serif+Tamil:wght@600&family=Mukta+Malar:wght@600',
+  arab: 'family=Noto+Sans:wght@500;600&family=Noto+Naskh+Arabic:wght@500;600&family=Noto+Kufi+Arabic:wght@600&family=Amiri:wght@700&family=Noto+Nastaliq+Urdu:wght@500;700&family=Gulzar',
+  tibt: 'family=Noto+Sans:wght@500;600&family=Noto+Serif+Tibetan:wght@500;600&family=Jomolhari',
+  java: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Javanese:wght@500;600',
+  bali: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Balinese:wght@500;600&family=Noto+Serif+Balinese',
+  sund: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Sundanese:wght@500;600',
+  cans: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Canadian+Aboriginal:wght@500;600',
+  cher: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Cherokee:wght@500;600',
+  grek: 'family=Noto+Sans:wght@500;600&family=Noto+Serif:ital,wght@0,700;1,400&family=Fira+Sans+Extra+Condensed:wght@600&family=Mansalva',
+  hebr: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Hebrew:wght@500;600&family=Frank+Ruhl+Libre:wght@700&family=Secular+One&family=Amatic+SC:wght@700',
+  geor: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Georgian:wdth,wght@62.5,800;100,500;100,600&family=Noto+Serif+Georgian:wght@700',
+  jpan: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+JP:wght@500;600&family=Noto+Serif+JP:wght@600&family=Zen+Maru+Gothic:wght@500&family=Klee+One:wght@600',
+  hani: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+TC:wght@500;600&family=Noto+Sans+SC:wght@500;600&family=Noto+Serif+TC:wght@600&family=LXGW+WenKai+TC',
+  laoo: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Lao:wght@500;600&family=Noto+Serif+Lao:wght@600&family=Phetsarath:wght@700',
+  telu: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Telugu:wght@500;600&family=Tiro+Telugu&family=Hind+Guntur:wght@600&family=Ramabhadra',
+  knda: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Kannada:wght@500;600&family=Tiro+Kannada&family=Baloo+Tamma+2:wght@700&family=Anek+Kannada:wght@600',
+  mlym: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Malayalam:wght@500;600&family=Noto+Serif+Malayalam:wght@600&family=Manjari:wght@700&family=Chilanka',
+  gujr: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Gujarati:wght@500;600&family=Rasa:wght@600&family=Hind+Vadodara:wght@600&family=Shrikhand',
+  guru: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Gurmukhi:wght@500;600&family=Tiro+Gurmukhi&family=Mukta+Mahee:wght@600&family=Baloo+Paaji+2:wght@700',
+  orya: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Oriya:wght@500;600&family=Noto+Serif+Oriya:wght@600&family=Baloo+Bhaina+2:wght@700&family=Anek+Odia:wght@600',
 };
 const EG = '\n// A place written with each letter (made by tools/builds/languages/build.mjs: run it again, don\'t edit).\nSCRIPT.eg = ';
+// … and after it, the script among those the page loaded (a page may load several: quizzes/shared/reading.js)
+const LOADED = '// (one of the scripts the page loaded: ../shared/reading.js reads names in each)\n(globalThis.ALL_SCRIPTS ||= []).push(SCRIPT);\n';
 const READING_JS = fs.readFileSync(path.join(ROOT, 'quizzes', 'shared', 'reading.js'), 'utf8');
-const DOT = /^[़়]/; // the dot under a letter makes another letter of it (ढ़ is not ढ)
+const DOT = /^[़়਼઼଼಼]/; // the dot under a letter makes another letter of it (ढ़ is not ढ, ਸ਼ not ਸ)
+// scripts whose joined letters hide the shapes of the letters in them (their virama): a letter's place is first one
+// that writes it on its own, not next to the virama (Malayalam ന in പുനലൂർ, not in മട്ടന്നൂർ), and the virama's one that
+// shows it, at the end of a word (പാലക്കാട്)
+const STACKED = { telugu: '్', kannada: '್', malayalam: '്', gujarati: '્', gurmukhi: '੍', odia: '୍' };
 const nf = s => s.normalize('NFC'), plain = s => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 const tier = n => 1 + [10, 30, 60, Infinity].findIndex(max => n < max); // a round's level, by its size
 const read = (file, name) => vm.runInNewContext(fs.readFileSync(file, 'utf8') + `;${name}`);
@@ -75,6 +151,7 @@ const head = (title, description, script) => `<!doctype html>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&${FONTS[script]}&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../assets/css/base.css">
 <link rel="stylesheet" href="../shared/area-quiz.css">
+<link rel="stylesheet" href="../shared/faces.css">
 <link rel="stylesheet" href="../shared/lang-quiz.css">
 </head>`;
 const body = (folders, back, title, note, scripts, cls = '') => `
@@ -91,7 +168,7 @@ ${scripts}
 
 // A page of the world quizzes (a script's countries on the map).
 const world = (title, description, script, folders, note, scripts) => head(title, description, script)
-  .replace('<link rel="stylesheet" href="../shared/lang-quiz.css">', '<link rel="stylesheet" href="../shared/photo-quiz.css">\n<link rel="stylesheet" href="../shared/world-quiz.css">')
+  .replace('<link rel="stylesheet" href="../shared/faces.css">\n<link rel="stylesheet" href="../shared/lang-quiz.css">', '<link rel="stylesheet" href="../shared/photo-quiz.css">\n<link rel="stylesheet" href="../shared/world-quiz.css">')
   + body(folders, '<a class="back" href="../../country.html?area=Languages">← Languages</a>', title, note,
     `<script src="../shared/world.js"></script>\n<script src="../shared/world-facts.js"></script>\n<script src="../world-languages/data.js"></script>\n${scripts}\n<script src="../shared/world-config.js"></script>`, 'writing own-hover');
 
@@ -145,7 +222,8 @@ function regions(S) {
 const LIST = path.join(ROOT, 'data', 'quizzes.json');
 let list = fs.readFileSync(LIST, 'utf8')
   .replace(/,\n    \{\n      "id": "[^"]+",\n      "scope": "Languages",\n      "area": "[^"]+",[\s\S]*?\n    \}/g, '') // (its own: each is in a script's folder; a language quiz without one is someone else's and stays)
-  .replace(/,\n    \{\n      "id": "[^"]+",\n      "country": "\d+",\n      "title": "Reading",[\s\S]*?\n    \}/g, '');
+  .replace(/,\n    \{\n      "id": "[^"]+",\n      "country": "\d+",\n      "title": "Reading(?: · [^"]+)?",[\s\S]*?\n    \}/g, '') // (the Reading pages of before 2026-10-21, now the Type mode)
+  .replace(new RegExp(`,\\n    \\{\\n      "id": "(?:${READING.filter(r => r[3]).map(r => r[3]).join('|')})",[\\s\\S]*?\\n    \\}`, 'g'), ''); // (India's other scripts' city quizzes, removed on 2026-10-23)
 const entry = (id, where, title, levels) => `    {\n      "id": "${id}",\n${where}      "title": "${title}",\n      "levels": ${levels},\n      "url": "quizzes/${id}/index.html"\n    }`;
 const atEnd = text => { list = list.replace(/\n  \]\n\}\n$/, `,\n${text}\n  ]\n}\n`); };
 
@@ -153,10 +231,10 @@ const atEnd = text => { list = list.replace(/\n  \]\n\}\n$/, `,\n${text}\n  ]\n}
 const BY_SCRIPT = {};
 for (const [name, system, third] of SCRIPTS) {
   const file = quiz(`${name}-letters`, `${name}.js`);
-  const src = fs.readFileSync(file, 'utf8').split(EG)[0].replace(/\s*$/, '\n');
+  const src = fs.readFileSync(file, 'utf8').split(EG)[0].replace(/\s*$/, '\n').replace(/^const SCRIPT = /m, 'var SCRIPT = '); // (var: a page may load several)
   const S = vm.runInNewContext(src + ';SCRIPT'), R = vm.runInNewContext(`${src}\n${READING_JS};READING`);
   const TAGS = Object.keys(S.langs), inScript = new RegExp(`\\p{Script=${S.unicode}}`, 'u');
-  BY_SCRIPT[name] = { S, inScript };
+  BY_SCRIPT[name] = { S, inScript, src };
 
   // the letters asked (as lang-config.js makes them), each with the languages that read it so
   const usual = (r, type) => (r[2] ? r[2].split(' ')[0] : /^[cj]$/.test(type || '') ? r[1].replace(/a$/, '') : r[1]).replace(/[^a-z]/g, '');
@@ -169,13 +247,17 @@ for (const [name, system, third] of SCRIPTS) {
   }
   // a place for each letter, from a country that reads it so
   const cities = {};
-  for (const [country, script, tag] of READING) if (script === name) {
-    cities[tag] = read(quiz(`${country}-cities`, 'cities.js'), 'CITIES').list.filter(c => c.local && inScript.test(c.local) && R.of(tag).accepts(c.local, c.en));
+  for (const [country, script, tag, page] of [...READING, ...EXAMPLES]) if (script === name) {
+    cities[tag] = [...(cities[tag] || []), ...read(page ? path.join(ROOT, 'tools', 'builds', 'languages', 'towns', `${page}.js`) : quiz(`${country}-cities`, 'cities.js'), 'CITIES').list.filter(c => c.local && inScript.test(c.local) && R.of(tag).accepts(c.local, c.en))];
+  }
+  if (NAMES.includes(name)) for (const [tag, list] of Object.entries(JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'builds', 'languages', 'names', `${name}.json`), 'utf8')).names)) {
+    cities[tag] = [...(cities[tag] || []), ...list.map(([local, en]) => ({ local: nf(local), en })).filter(c => inScript.test(c.local) && R.of(tag).accepts(c.local, c.en))];
   }
   const has = (c, forms) => forms.some(f => nf(c.local).toLowerCase().split(f.toLowerCase()).slice(1).some(rest => !DOT.test(rest)));
   const found = [...letters].map(([id, l]) => {
     const at = (cities[l.langs.find(t => cities[t])] || []).filter(c => has(c, l.forms)), spelled = c => plain(c.en).includes(l.usual);
-    return { id, at: [...at.filter(spelled), ...at.filter(c => !spelled(c))] };
+    const V = STACKED[name], seen = c => !V || l.forms.some(f => { const p = nf(c.local).split(nf(f)); return p.slice(1).some((rest, i) => !DOT.test(rest) && (nf(f) === V ? !rest || /^[\s-]/.test(rest) : !rest.startsWith(V) && !p[i].endsWith(V))); });
+    return { id, at: [...at.filter(c => spelled(c) && seen(c)), ...at.filter(c => spelled(c) && !seen(c)), ...at.filter(c => !spelled(c))] };
   }).filter(l => l.at.length);
   const taken = new Set(), eg = {};
   for (const l of [...found].sort((a, b) => a.at.length - b.at.length)) {
@@ -183,16 +265,17 @@ for (const [name, system, third] of SCRIPTS) {
     taken.add(c); eg[l.id] = [c.local, c.en];
   }
   const ordered = Object.fromEntries([...letters.keys()].filter(id => eg[id]).map(id => [id, eg[id]]));
-  fs.writeFileSync(file, src + EG.slice(1) + JSON.stringify(ordered) + ';\n');
+  fs.writeFileSync(file, src + EG.slice(1) + JSON.stringify(ordered) + ';\n' + LOADED);
 
   // the pages, tabs of each other
-  const parts = ['Letters', 'Words', ...(third ? [third] : [])], back = '<a class="back" href="../../country.html?area=Languages">← Languages</a>';
-  const tabs = here => parts.map(t => (t === here ? t : `${t}=../${name}-${t.toLowerCase()}/index.html`)).join('|');
+  const WORDS = S.words.themes.length > 0; // (a script whose sign words are not written yet has no Words page)
+  const parts = ['Letters', ...(WORDS ? ['Words'] : []), ...(third ? [third] : [])], back = '<a class="back" href="../../country.html?area=Languages">← Languages</a>';
+  const tabs = here => (parts.length < 2 ? '' : parts.map(t => (t === here ? t : `${t}=../${name}-${t.toLowerCase()}/index.html`)).join('|')); // (a page alone has no tabs)
   const lang = `<script src="../${name}-letters/${name}.js"></script>\n<script src="../shared/reading.js"></script>`;
   const countries = [...new Set(TAGS.flatMap(t => S.langs[t].where.split(' · ')))].join(', ');
   for (const [part, description, note] of [
-    ['Letters', `Read a ${S.name} letter, click its sound: ${countries}.`, `Sounds: ${system}`],
-    ['Words', `Read a word from a sign in ${S.name}, click its meaning: ${countries}.`, 'Words seen on signs'],
+    ['Letters', `Read ${/^[AEIOU]/.test(S.name) ? 'an' : 'a'} ${S.name} letter, click its sound: ${countries}.`, `Sounds: ${system}`],
+    ...(WORDS ? [['Words', `Read a word from a sign in ${S.name}, click its meaning: ${countries}.`, 'Words seen on signs']] : []),
   ]) {
     const dir = quiz(`${name}-${part.toLowerCase()}`), title = `${S.name} ${part}`;
     fs.mkdirSync(dir, { recursive: true });
@@ -214,7 +297,7 @@ for (const [name, system, third] of SCRIPTS) {
   const words = new Set(S.words.themes.flatMap(t => t.rows.flatMap(([meaning, ...cells]) => wordsOf(cells).map(w => `${meaning}:${nf(w)}`))));
   const where = `      "scope": "Languages",\n      "area": "${S.name}",\n`;
   atEnd(entry(`${name}-letters`, where, 'Letters', tier(letters.size)));
-  atEnd(entry(`${name}-words`, where, 'Words', tier(words.size)));
+  if (WORDS) atEnd(entry(`${name}-words`, where, 'Words', tier(words.size)));
   if (third) {
     // Its largest round asks every word of the table that not every country or region writes (see world-config.js).
     const places = new Set(TAGS.map(t => S.langs[t].at)), by = {}; // word -> where it is written
@@ -287,32 +370,75 @@ for (const [name, system, third] of SCRIPTS) {
   fs.writeFileSync(path.join(dir, 'index.html'), world('Latin Countries', 'A letter, several letters or a word of a sign in Latin script: click the countries of the area that write it.', 'latn', '',
     'Official and main sign languages · Places with Street View · Map: Natural Earth', `<script>const WORLD_OPTS = { type: 'writing', script: 'latn', key: 'latin-countries' };</script>`));
   atEnd(entry('latin-countries', '      "scope": "Languages",\n      "area": "Latin",\n', 'Countries', 4)); // (its rounds of a whole part of the world are its largest)
+  // Which Script (quizzes/which-script, made by hand): the scripts told apart, in a folder of its own
+  atEnd(entry('which-script', '      "scope": "Languages",\n      "area": "All scripts",\n', 'Which Script', 3));
 }
 
-/* ---------- a country's Reading quiz ---------- */
-for (const [country, script, tag] of READING) {
-  const { S, inScript } = BY_SCRIPT[script], id = `${country}-reading`;
-  const cityPage = fs.readFileSync(quiz(`${country}-cities`, 'index.html'), 'utf8');
-  const [, code, name] = /country\.html\?code=(\d+)">← ([^<]+)</.exec(cityPage), credits = /<p class="note">([^<]*)<\/p>/.exec(cityPage)[1];
-  const names = read(quiz(`${country}-cities`, 'cities.js'), 'CITIES').list.filter(c => c.local && inScript.test(c.local)).length;
-  // the tabs of the country's city pages, with this one last
-  const others = ['cities', 'cities-coverage', 'town-names'].filter(p => fs.existsSync(quiz(`${country}-${p}`, 'index.html')));
-  const LABEL = { cities: 'Cities', 'cities-coverage': 'By coverage', 'town-names': 'Town names', reading: 'Reading' };
-  const tabs = here => [...others, 'reading'].map(p => (p === here ? LABEL[p] : `${LABEL[p]}=../${country}-${p}/index.html`)).join('|');
-  fs.mkdirSync(quiz(id), { recursive: true });
-  fs.writeFileSync(quiz(id, 'index.html'), head(`${name} Reading`, `Read ${name}'s place names in ${S.name}, type them in Latin letters.`, S.script)
-    + body(tabs('reading'), `<a class="back" href="../../country.html?code=${code}">← ${name}</a>`, `${name} Reading`, credits,
-      `<script src="../${country}-cities/cities.js"></script>\n<script src="../${script}-letters/${script}.js"></script>\n<script src="../shared/reading.js"></script>\n<script>const CITY_OPTS = { key: '${id}', typed: '${tag}' };</script>\n<script src="../shared/city-config.js"></script>`));
-  for (const p of others) {
-    const page = quiz(`${country}-${p}`, 'index.html');
-    fs.writeFileSync(page, fs.readFileSync(page, 'utf8').replace(/ data-folders="[^"]*"/, '').replace(/<body([^>]*)>/, `<body$1 data-folders="${tabs(p)}">`));
+/* ---------- the pages with names in a script: their Type mode reads them ---------- */
+// A city quiz's names in another script (its kind 'local', CITY_OPTS.lang) and a layer of names in another script (a
+// kind `of` another, asked by its text; of those the page shows: data-kinds) are read in their Type mode
+// (quizzes/shared/reading.js, READING.name). Such a page loads the files of the scripts its names are written in,
+// reading.js, faces.css and the scripts' fonts (the link marked data-faces), all written in here, before its config;
+// a page whose names no script here writes is left without them (its Type mode then the usual one).
+const RCTX = vm.createContext({}); // every script, and reading.js, as a page with all of them runs them
+for (const [name] of SCRIPTS) vm.runInContext(BY_SCRIPT[name].src + LOADED, RCTX);
+const NAME = vm.runInContext(`${READING_JS};READING.name`, RCTX), FILE = Object.fromEntries(SCRIPTS.map(([n]) => [BY_SCRIPT[n].S.script, n]));
+const LAYER_LIB = fs.readFileSync(quiz('shared', 'layer-config.js'), 'utf8').split("\n// The page's quiz.")[0];
+// The names of a page's script side, [text, language]…, from its own scripts, run as the page runs them.
+function namesOf(dir, html) {
+  const tags = [...html.matchAll(/<script(?: src="([^"]+)")?>([\s\S]*?)<\/script>/g)], at = tags.findIndex(m => /shared\/(?:city|layer)-config\.js$/.test(m[1] || ''));
+  const own = tags.slice(0, at).filter(([, src]) => !src || !/shared\/|-letters\/|(?:^|\/)geo\.js$/.test(src)); // (not the engine's, the scripts' or the street map's shapes)
+  const text = own.map(([, src, inline]) => (src ? fs.readFileSync(path.join(dir, src), 'utf8') : inline));
+  const city = /city-config/.test(tags[at][1]);
+  if (!city && !(text.some(t => /\bof:\s*["']/.test(t)) && text.some(t => /prompt:\s*["']text["']/.test(t)))) return []; // (no layer in another language asked by its text)
+  const ctx = vm.createContext({ GEO: {} });
+  for (const t of text) vm.runInContext(t, ctx);
+  if (city) {
+    const O = vm.runInContext('typeof CITY_OPTS === "object" ? CITY_OPTS : {}', ctx), C = O.list ? { ...vm.runInContext('CITIES', ctx), ...O.list } : vm.runInContext('CITIES', ctx);
+    const LATIN = /^[\p{Script=Latin}\p{Script=Common}\p{Script=Inherited}]*$/u;
+    return O.lang ? C.list.filter(c => c.local && !LATIN.test(c.local)).map(c => [c.local, c.lang]) : [];
   }
-  // its entry, after the country's last city quiz
-  const mine = entry(id, `      "country": "${code}",\n`, 'Reading', tier(names)).replace('"title": "Reading",', '"title": "Reading",\n      "role": "reading",');
-  const after = new RegExp(`(      "id": "${country}-${others[others.length - 1]}",[\\s\\S]*?\\n    \\})`);
-  if (!after.test(list)) throw new Error(`${country}: no city quiz in data/quizzes.json to put its Reading after`);
-  list = list.replace(after, `$1,\n${mine}`);
-  console.log(`${name} Reading: ${names} names in ${S.name}`);
+  vm.runInContext(`${LAYER_LIB};globalThis.LIB_ = layerLib`, ctx);
+  const L = vm.runInContext('LAYERS', ctx), lib = ctx.LIB_, M = lib.model(L, n => vm.runInContext(n, ctx));
+  const shown = (/<body[^>]* data-kinds="([^"]*)"/.exec(html) || [])[1], out = [];
+  for (let k of L.kinds) {
+    if (k.like) k = { ...L.kinds.find(b => b.key === k.like), ...k };
+    if (!k.of || k.typed || k.groupsOnly || k.prompt !== 'text' || (shown && !shown.split(/\s+/).includes(k.key))) continue;
+    const K = lib.layer(M, k);
+    for (const id of K.ids) { const t = K.T.text && K.T.text[id]; if (t && t.text) out.push([t.text, t.lang]); }
+  }
+  return out;
 }
+// The fonts of some scripts as one link's families (each family once).
+function fontsOf(scripts) {
+  const seen = new Map();
+  for (const f of scripts.flatMap(s => FONTS[BY_SCRIPT[s].S.script].split('&'))) {
+    const family = f.split(':')[0];
+    if (seen.has(family) && seen.get(family) !== f) throw new Error(`${family}: two ways in FONTS`);
+    seen.set(family, f);
+  }
+  return [...seen.values()].join('&');
+}
+const SCRIPT_LINES = /\n<script src="\.\.\/[a-z]+-letters\/[a-z]+\.js"><\/script>|\n<script src="\.\.\/shared\/reading\.js"><\/script>|\n<link [^>]*data-faces>|\n<link rel="stylesheet" href="\.\.\/shared\/faces\.css">/g;
+const wired = [];
+for (const dir of fs.readdirSync(quiz()).sort()) {
+  const file = quiz(dir, 'index.html');
+  if (!fs.existsSync(file)) continue;
+  const html = fs.readFileSync(file, 'utf8');
+  if (!/<script src="\.\.\/shared\/(?:city|layer)-config\.js"><\/script>/.test(html)) continue;
+  const names = namesOf(quiz(dir), html), by = {};
+  for (const [text, tag] of names) { const r = NAME(text, tag); if (r) by[FILE[r.script]] = (by[FILE[r.script]] || 0) + 1; }
+  const scripts = SCRIPTS.map(([n]) => n).filter(n => by[n]);
+  let out = html.replace(SCRIPT_LINES, '');
+  if (scripts.length) {
+    const fonts = `<link href="https://fonts.googleapis.com/css2?${fontsOf(scripts)}&display=swap" rel="stylesheet" data-faces>`;
+    out = /<link href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]*" rel="stylesheet">/.test(out) ? out.replace(/(<link href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]*" rel="stylesheet">)/, `$1\n${fonts}`) : out.replace('<link rel="stylesheet" href="../../assets/css/base.css">', `${fonts}\n$&`);
+    out = out.replace('<link rel="stylesheet" href="../shared/area-quiz.css">', '$&\n<link rel="stylesheet" href="../shared/faces.css">')
+      .replace(/\n<script src="\.\.\/shared\/(?:city|layer)-config\.js"><\/script>/, m => `\n${scripts.map(n => `<script src="../${n}-letters/${n}.js"></script>`).join('\n')}\n<script src="../shared/reading.js"></script>${m}`);
+    wired.push(`${dir} (${scripts.map(n => `${n} ${by[n]}`).join(', ')} of ${names.length})`);
+  }
+  if (out !== html) fs.writeFileSync(file, out);
+}
+console.log(`Read in their Type mode: ${wired.length} pages\n  ${wired.join('\n  ')}`);
 JSON.parse(list);
 fs.writeFileSync(LIST, list);

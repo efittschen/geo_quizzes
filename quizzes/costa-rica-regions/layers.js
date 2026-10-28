@@ -8,7 +8,7 @@
 const LAYERS = {
   key: "crregions",
   borders: "[DATA.prov]",
-  size: [1000,1268],
+  size: [1000, 1274],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.2,

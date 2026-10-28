@@ -4,7 +4,7 @@
 const LAYERS = {
   key: "snregions",
   borders: "[DATA.rb]",
-  size: [1000,729],
+  size: [1000, 733],
   pad: 16,
   maxZoom: 60,
   labelScale: 0.22,

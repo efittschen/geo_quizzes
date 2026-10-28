@@ -55,13 +55,13 @@ const circle = (x, y, r) => `M${x - r},${y}a${r},${r} 0 1,0 ${2 * r},0a${r},${r}
 const QUIZ = {
   key: 'arroutes',
   areas: DATA.reg.map(r => ({
-    id: r.id, d: ENLARGED[r.id] ? circle(r.lx, r.ly, ENLARGED[r.id]) : r.d, lx: r.lx, ly: r.ly, a: r.a, top: r.id in ENLARGED,
+    id: r.id, d: ENLARGED[r.id] ? circle(r.lx, r.ly, ENLARGED[r.id]) : r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, top: r.id in ENLARGED, ...(ENLARGED[r.id] ? { real: r.d } : {}),
     g: r.id === 'S' ? 'II-V' : rangesOf(r.id)[0].id,
   })),
   borders: [],
   context: DATA.ctx,
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 60, labelScale: 0.12, fly: { pad: 1.6, min: 1 / 30 },
-  geo: GEO,
+  proj: DATA.proj, kpu: DATA.kpu,
   street: { bounds: [[-55.1, -73.6], [-21.8, -53.6]], maxBounds: [[-60, -90], [-15, -40]] },
   hintLabel: 'Color by number range',
   exploreKind: 'ranges',

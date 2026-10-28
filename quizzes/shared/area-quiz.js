@@ -6,7 +6,8 @@
 //   areas        [{ id, d, lx, ly, a, g }]  SVG path, label point, size and hint-color group of each map area
 //                (lx/ly/a may be left out: they're then computed from the path); top: true draws the area above
 //                its neighbours with its own border (e.g. a tiny city enlarged so it can be seen); dot: true draws
-//                it (a zero-length path "Mx,yl0,0") as a dot that keeps its size on screen (Monaco on a world map)
+//                it (a zero-length path "Mx,yl0,0") as a dot that keeps its size on screen (Monaco on a world map);
+//                w: a city quiz's dot of a size on the ground instead, its width in map units (city-config.js, dotKm)
 //   borders      [d]                         thicker outlines drawn on top (states, federal districts…)
 //   size, pad    SVG map size [w, h] and padding; maxZoom, labelScale, fly: { pad, min } tune the quiz map
 //   home         optional [x0, y0, x1, y1]: the part of the map the page shows when zoomed out (a continent of the
@@ -28,13 +29,18 @@
 //                dots: true draws each area (a zero-length path "Mx,yl0,0") as a dot that keeps its size on
 //                screen at every zoom, with its label above it (see shared/city-config.js)
 //   geo/street   leave out to offer the quiz map only (no street map, no overlay: the street map with the quiz
-//                map's outlines and colors on it, and no bare map: the street map without any borders)
+//                map's outlines and colors on it, no bare map: the street map without any borders, and no
+//                satellite map)
 //   free         city quizzes: { span, measure(point, id) -> [km shown, km scored] } also offers playing on the map
 //                itself: the dots stay hidden, a click anywhere answers, and points fall with the distance to the
 //                city (GeoGuessr's 5000 · e^(−10 · d / D), D = span, the map's diagonal in km)
+//   single       a page of one round only (city-config.js, CITY_OPTS.single): the setup screen is its Start, with
+//                no rounds, Explore, My stats or map pickers; every start (Restart, Again) draws the round anew
+//                (single.draw(), asked in that order), on the map by distance on the background the page names
+//                (back), scored by single.points, each question with its tag (single.tag). No review cards, no best
 //   streets      city quizzes: the cities.js the map is drawn from (its projection, land and insets). Offers the street
 //                map behind the quiz map, with the region borders on it (overlay), alone, or bare (without its own
-//                borders either): ./map-tiles.js
+//                borders either), or the satellite map instead: ./map-tiles.js
 //   proj, kpu    how the quiz map is projected and its km per map unit (from its data.js): Street View coverage can
 //                then be laid on the quiz map too, not only on the street map (see useCover)
 //   hintsDefault whether "color areas" starts ticked (default true)
@@ -138,8 +144,14 @@
     p.dataset.a = a.id; p.dataset.g = a.g;
     if (a.top) p.classList.add('top');
     if (a.dot) p.classList.add('dot');
+    if (a.w) { p.style.strokeWidth = a.w + 'px'; p.style.vectorEffect = 'none'; svg.classList.add('ground'); } // (a dot of a size on the ground: it grows and shrinks with the map; svg.ground: no ring around it)
     SPARE.appendChild(p); EL[a.id] = p;
   }
+  // A map made ready in Web Mercator beforehand (mercator.js, ready) needs no geo.js: an area's label point as latitude
+  // and longitude (for the street map and My stats) is its point on the map's own projection; its outline where the
+  // map draws it as a circle comes with it (real, for Shape).
+  const READY = !!(Q.proj && Q.proj.type === 'mercator' && Q.proj.grain && typeof MERCATOR === 'object');
+  const labOf = id => (Q.geo && Q.geo[id] ? Q.geo[id].lab : READY ? MERCATOR.latlng(AREA[id].lx, AREA[id].ly, Q.proj) : null);
   // Areas marked top stay above everything else in the map (they may overlap their neighbours).
   const raiseTops = () => { for (const a of Q.areas) if (a.top && EL[a.id].isConnected) gR.appendChild(EL[a.id]); };
   if (Q.context) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', Q.context); $('ctx').appendChild(p); }
@@ -246,8 +258,9 @@
      narrows the list (names that start with it first, then those with a word that does, then the rest that
      contain it); a click on a name puts it in the field (a double click answers with it at once), the arrow keys
      move the mark, and Enter or OK answers with the name marked: typed then gets that name, so what is typed is
-     never compared letter by letter. The button by the field folds the list away, to just the name marked once
-     something is typed, and back, for every quiz (the settings' listMin).
+     never compared letter by letter. The list starts folded away: then nothing is offered while typing, the arrow
+     keys mark nothing, and Enter or OK answers with what is typed, compared as in Type. The button by the field opens
+     it, and folds it again, for every quiz (the settings' listOpen). In Hard mode there is no list and no button.
      A picture's cls 'blur' shows it blurred while it is asked (and when enlarged before it is answered).
      typed(id, text) -> true | false makes the answer one to type, in a field under the prompt (a name read in
      another script, written in Latin letters): a wrong one counts like a wrong click, a shown answer is typed to
@@ -542,15 +555,15 @@
      picture is only moved and sized to the view: the browser slides what it has drawn already, which costs it next to
      nothing. Drawing a large map again for every step of a move (as a change of the SVG's viewBox does) is what made
      moving it slow, and drawing it again in the middle of a drag is what made the drag stutter. So it is drawn again
-     only when the hand rests (REST ms) or lets go, and while held only once the picture is stretched or shrunk by
-     more than HELD_STRETCH (a drag that goes on past the picture shows the sea beside it until then, as the street
-     map's library does). Moved by the wheel, it is drawn again when the view has come EDGE of the way into what was
-     drawn ahead or the picture is stretched by more than STRETCH. Meanwhile lines and labels grow and shrink with the
-     picture. */
+     only when the hand rests (REST ms) or lets go: never while zooming, however far (zoomed in far, lines and labels
+     are thick until then, zoomed out far, the sea shows beyond the picture, as the street map's library does), and
+     while held never at all (a drag that goes on past the picture shows the sea beside it). A move by the wheel that
+     does not zoom is drawn again when the view has come EDGE of the way into what was drawn ahead. Meanwhile lines and
+     labels grow and shrink with the picture. */
   // Points are told apart, and those worked out here rounded, to 1/QN of a map unit: hundredths, or finer where the
   // map's own points are (Q.grain, mercator.js).
   const QN = Math.max(100, Math.round(1 / (Q.grain || 1)));
-  const [MW, MH] = Q.size, PAD = Q.pad, stage = $('stage'), AHEAD = .5, EDGE = .6, STRETCH = 1.6, HELD_STRETCH = 4, REST = 120;
+  const [MW, MH] = Q.size, PAD = Q.pad, stage = $('stage'), AHEAD = .5, EDGE = .6, REST = 120;
   let base = { x: 0, y: 0, w: MW, h: MH }, vb = { ...base };
   // The picture's box: the stage's and `ahead` of its size more on every side (a share, so it follows the stage's size).
   let ahead = 0;
@@ -571,13 +584,16 @@
   let sized = 0; // the scale the labels were last sized for: moving the map without zooming leaves them as they are
   let drawn = null, slid = false, raf = 0, resting = 0; // the view the picture is drawn for; whether it is moved from there
   const showTiles = () => { if (tiles) { const r = stageBox(), s = Math.min(r.width / vb.w, r.height / vb.h); if (s) tiles.view(vb.x - (r.width / s - vb.w) / 2, vb.y - (r.height / s - vb.h) / 2, s); } };
-  // The picture drawn for the view.
-  function apply() {
+  // The picture drawn for the view. In the middle of a move (moving: the picture stretched too far) the outlines keep
+  // the detail they have: they take the one for the view only once the move is over (at rest, let go), so zooming
+  // never stops to change them.
+  function apply(moving) {
     cancelAnimationFrame(raf); clearTimeout(resting);
     svg.setAttribute('viewBox', `${vb.x - ahead * vb.w} ${vb.y - ahead * vb.h} ${vb.w * (1 + 2 * ahead)} ${vb.h * (1 + 2 * ahead)}`);
     if (slid) { svg.style.transform = ''; slid = false; }
     drawn = { ...vb };
-    const s = scale(); if (s !== sized) sizeLabels(s); syncDetail(s);
+    const s = scale(); if (s !== sized) sizeLabels(s);
+    if (moving) resting = setTimeout(apply, REST); else { syncDetail(s); svg.classList.remove('zooming'); }
     worldNear(pictureBox());
     showTiles();
     if (live) liveSoon(); // (a piece being drawn follows the map, see draw)
@@ -596,7 +612,9 @@
     const d = put(drawn), n = put(vb), k = n.s / d.s;
     // how far the view reaches into what is drawn ahead (1: to its end), on its worst side
     const out = Math.max((drawn.x - vb.x) / drawn.w, (vb.x + vb.w - drawn.x - drawn.w) / drawn.w, (drawn.y - vb.y) / drawn.h, (vb.y + vb.h - drawn.y - drawn.h) / drawn.h) / ahead;
-    if (pts.size ? k > HELD_STRETCH || k < 1 / HELD_STRETCH : out > EDGE || k > STRETCH || k < 1 / STRETCH) return apply();
+    const zooming = Math.abs(Math.log(k)) >= .01;
+    if (!pts.size && !zooming && out > EDGE) return apply(true); // (not while held, not while zooming)
+    if (zooming) svg.classList.add('zooming'); // (the labels are hidden while the map zooms: the browser paints it again as it grows)
     // (the picture's own corner lies `ahead` of the stage's size outside the stage's)
     const tx = n.x - k * d.x + n.s * (drawn.x - vb.x) + ahead * r.width * (1 - k), ty = n.y - k * d.y + n.s * (drawn.y - vb.y) + ahead * r.height * (1 - k);
     svg.style.transform = `translate(${tx}px,${ty}px) scale(${k})`; slid = true;
@@ -611,8 +629,8 @@
     const ox = (r.width - v.w * s) / 2, oy = (r.height - v.h * s) / 2;
     return { x: v.x + (cx - r.left - ox) / s, y: v.y + (cy - r.top - oy) / s };
   }
-  // On the street map, the overlay and the bare map the map zooms in as far as the street map's tiles go (zoom level
-  // 19); a Mercator map has 256 · 2^zoom / 360 / k screen pixels to its unit there (k: its units to a degree of
+  // On the street map, the overlay, the bare map and the satellite map the map zooms in as far as the street map's
+  // tiles go (zoom level 19; the satellite map's are enlarged past 8); a Mercator map has 256 · 2^zoom / 360 / k screen pixels to its unit there (k: its units to a degree of
   // longitude, mercator.js).
   const STREET_MAX = Q.proj && Q.proj.type === 'mercator' ? 256 * 2 ** 19 / 360 / Q.proj.k : 0;
   function clampV(v) {
@@ -732,13 +750,14 @@
   // map's tiles lie under it as they are (map-tiles.js, behind the quiz map, following its view: see showTiles). The
   // overlay is the quiz map itself, tinting the tiles (area-quiz.css); the street map alone is the same map with its
   // areas not shown, there to be tapped, and only what was answered shows. The bare map is the street map alone with
-  // the tiles' own borders taken out too (map-tiles.js, tiles.bare()).
+  // the tiles' own borders taken out too (map-tiles.js, tiles.bare()); the satellite map, photos from above with no
+  // names, roads or borders on them (tiles.sat()).
 
   /* ---------- one interface over the maps ---------- */
   let mapStyle = 'quiz';
-  const onStreet = () => mapStyle === 'street' || mapStyle === 'overlay' || mapStyle === 'bare'; // on the street map, with or without the areas
+  const onStreet = () => mapStyle === 'street' || mapStyle === 'overlay' || mapStyle === 'bare' || mapStyle === 'sat'; // on the street map, with or without the areas
   const overlaid = () => mapStyle === 'overlay';
-  const plain = () => mapStyle === 'street' || mapStyle === 'bare'; // the street map alone: nothing may give the borders away
+  const plain = () => mapStyle === 'street' || mapStyle === 'bare' || mapStyle === 'sat'; // the street map alone: nothing may give the borders away
   const pathsOf = areas => areas.map(a => EL[a]);
   const shapesOf = a => [EL[a]];
   // Classes the stylesheet reads on the map (hints, fade, merged, picking).
@@ -756,11 +775,11 @@
     syncHints(); syncCover();
   }
   // The street map's tiles behind the map: on the street map and the overlay, and behind a city quiz's map (showBack);
-  // on the bare map, and behind a city quiz's bare map, without their borders.
+  // on the bare map, and behind a city quiz's bare map, without their borders; on the satellite map its photos.
   function syncStreets() {
     const on = onStreet() || shownBack !== 'quiz';
     svg.classList.toggle('streets', on);
-    if (on || tiles) withTiles(() => { const now = onStreet() || shownBack !== 'quiz'; tiles.street(!now ? null : mapStyle === 'bare' || (!onStreet() && shownBack === 'bare') ? 'bare' : 'street'); apply(); });
+    if (on || tiles) withTiles(() => { const look = onStreet() ? mapStyle : shownBack; tiles.street(look === 'quiz' ? null : look === 'bare' || look === 'sat' ? look : 'street'); apply(); });
   }
   function activeKind() { return view === 'explore' ? (MS && MS.kind()) || Q.exploreKind : view === 'setup' ? choiceKind() : G.kind; } // (MS: My stats, its layer)
   // The item under the pointer: outlined on the quiz map, tinted on the overlay; in a kind with pickAll, where areas
@@ -801,14 +820,14 @@
     let a = 0, x = 0, y = 0, lat = 0, lng = 0;
     for (const id of areas) {
       const r = AREA[id], w = r.a || 1; a += w; x += r.lx * w; y += r.ly * w;
-      if (Q.geo) { lat += Q.geo[id].lab[0] * w; lng += Q.geo[id].lab[1] * w; }
+      const ll = labOf(id); if (ll) { lat += ll[0] * w; lng += ll[1] * w; }
     }
     const m = { x: x / a, y: y / a, ll: [lat / a, lng / a], area: a };
     if (areas.length > 1) {
       // Items spread over several areas (e.g. a zone covering Central Russia and the Far East) can have
       // their average point outside all of them, so put the label on the member area closest to it.
       const near = areas.reduce((b, id) => Math.hypot(AREA[id].lx - m.x, AREA[id].ly - m.y) < Math.hypot(AREA[b].lx - m.x, AREA[b].ly - m.y) ? id : b);
-      Object.assign(m, { x: AREA[near].lx, y: AREA[near].ly, ll: Q.geo ? Q.geo[near].lab : null });
+      Object.assign(m, { x: AREA[near].lx, y: AREA[near].ly, ll: labOf(near) });
     }
     return m;
   }
@@ -874,7 +893,8 @@
     sized = s;
     // Dots (cities, small countries) are 11 px across on the screen when zoomed out and grow as the map is zoomed in,
     // with the square root of the zoom (twice as large at 4 times, 70 px at 40): zooming in makes them easier to tap,
-    // and still pulls crowded ones apart, as the map grows faster than they do (--dot, in the CSS).
+    // and still pulls crowded ones apart, as the map grows faster than they do (--dot, in the CSS). (Dots of a size
+    // on the ground, an area's w, keep theirs.)
     const r = stageBox(), s0 = base && r.width ? Math.min(r.width / base.w, r.height / base.h) : s;
     const dot = 11 * Math.sqrt(Math.max(1, s / s0));
     svg.style.setProperty('--dot', dot.toFixed(1) + 'px');
@@ -960,7 +980,7 @@
   // (the units, and the outlines they are made of as the page's data has them: points in latitude and longitude, else
   // the path's own text; the same in every browser)
   function sigOf(units) {
-    let n = 0; for (const u of units) for (const a of u) n += Q.geo && Q.geo[a] ? Q.geo[a].rings.reduce((m, r) => m + r.length, 0) : AREA[a].d.length;
+    let n = 0; for (const u of units) for (const a of u) n += Q.geo && Q.geo[a] && Q.geo[a].rings ? Q.geo[a].rings.reduce((m, r) => m + r.length, 0) : AREA[a].d.length;
     const s = units.map(u => u.join(',')).join('|') + '|' + Math.round(MW) + 'x' + Math.round(MH) + '|' + n + '|' + (Q.grain || '');
     let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
     return (h >>> 0).toString(36) + ':' + units.length;
@@ -1212,6 +1232,7 @@
     for (const a of AREAS) { EL[a].style.removeProperty('--hint'); EL[a].classList.remove('tight'); }
     mapClass('merged', !!L);
     if (!L) return placeAreas();
+    bandsAhead(L);
     if (L.color) for (const a of AREAS) EL[a].style.setProperty('--hint', L.color[a]);
     UNIT_LINES = L.units.map(() => { const line = document.createElementNS(NS, 'path'); line.setAttribute('class', 'unit'); return line; });
     UNDER = L.units.map((u, i) => {
@@ -1263,12 +1284,42 @@
   // Each version of the outlines is worked out when it is first shown, and the other one right after it, as soon as
   // the page has nothing to do: zooming in would else stand still at FINE the first time, until it is worked out.
   const whenIdle = window.requestIdleCallback ? f => requestIdleCallback(f, { timeout: 4000 }) : f => setTimeout(f, 1500);
+  // Stored shapes: a version's outlines at a band, a unit's at a time (a band's list, with the areas it leaves loose).
+  const bandLines = (L, d, T) => (L.bands ??= {})[d + ':' + T] ??= Object.assign([], { loose: new Set(L.pre.loose[d]) });
+  const lineOf = (L, d, T, i) => bandLines(L, d, T)[i] ??= runsD(L.pre.lines[d][i], T);
   function drawUnits() {
-    const L = LAYOUTS[layoutKind], lines = L.pre ? ((L.bands ??= {})[detail + ':' + band] ??= Object.assign(L.pre.lines[detail].map(runs => runsD(runs, band)), { loose: new Set(L.pre.loose[detail]) }))
-      : (L.lines ??= [])[detail] ??= unitOutlines(L.units, DETAIL[detail]);
-    UNIT_LINES.forEach((p, i) => p.setAttribute('d', lines[i]));
+    const L = LAYOUTS[layoutKind], lines = L.pre ? bandLines(L, detail, band) : (L.lines ??= [])[detail] ??= unitOutlines(L.units, DETAIL[detail]);
+    UNIT_LINES.forEach((p, i) => p.setAttribute('d', L.pre ? lineOf(L, detail, band, i) : lines[i]));
     for (const a of AREAS) EL[a].classList.toggle('tight', underOf[a] !== undefined && !lines.loose.has(a));
     if (!L.ahead && !L.pre) { L.ahead = true; whenIdle(() => DETAIL.forEach((d, i) => { L.lines[i] ??= unitOutlines(L.units, d); })); }
+  }
+  // With stored shapes, every zoom step of a layout is made in the background from the moment its kind is on the map
+  // (the round picked on the setup screen, Explore, a round played), so that zooming only puts finished paths in place:
+  // every band a view can reach, from the street map's closest to the map zoomed out as far as it goes (at this
+  // screen's size), the band on screen and its neighbours first; each unit's fill and the outline versions drawn at
+  // that band, a unit at a time while the page has nothing else to do. A kind put on the map later goes first.
+  const BANDS_TODO = [], soon = window.requestIdleCallback ? f => requestIdleCallback(f, { timeout: 1000 }) : f => setTimeout(f, 40);
+  let aheadOn = false;
+  function bandsAhead(L) {
+    if (!L || !L.pre || L.queued || !stageBox().width) return; // (a map not laid out: its bands are made as they are shown)
+    L.queued = true;
+    const widest = Math.min(30, bandOf(scale() * vb.w / (base.w * (Q.world ? 3 : 1.15))));
+    const steps = Array.from({ length: widest + 1 }, (_, T) => T).sort((a, b) => Math.abs(a - band) - Math.abs(b - band) || a - b);
+    const tasks = [];
+    for (const T of steps) {
+      // (band T holds the scales from .5·QN / 2^T to .5·QN / 2^(T-1) screen pixels to a map unit; FINE and above draw version 1)
+      const hi = T ? .5 * QN / 2 ** (T - 1) : Infinity, lo = T ? .5 * QN / 2 ** T : .5 * QN;
+      const versions = [...(hi >= FINE ? [1] : []), ...(lo < FINE ? [0] : [])];
+      L.units.forEach((_, i) => tasks.push(() => { wholeOf(L, i, T); for (const d of versions) lineOf(L, d, T, i); }));
+    }
+    BANDS_TODO.unshift(...tasks);
+    if (!aheadOn) { aheadOn = true; soon(work); }
+    // (without idle callbacks, Safari: 8 ms at a time, every 40 ms)
+    function work(deadline) {
+      const t0 = performance.now(), more = deadline ? () => deadline.timeRemaining() > 2 : () => performance.now() - t0 < 8;
+      do BANDS_TODO.shift()(); while (BANDS_TODO.length && more()); // (one at least, also when the page is never idle)
+      if (BANDS_TODO.length) soon(work); else aheadOn = false;
+    }
   }
   // The detail a view draws: the version of the outlines (detail), and the band of points kept, those that lie half a
   // screen pixel or more off a line without them (band T: a tolerance of 2^(T-1) / QN map units, see SHAPES.lv).
@@ -1409,14 +1460,16 @@
 
   let pickKind = KINDS[load('kind')] ? load('kind') : Q.kinds[0].key;
   // The maps to play on: the quiz map, the street map, the overlay (the street map with the quiz map's outlines and
-  // colors on it), or the bare map (the street map without even its own borders, the hardest): a small picker on the
+  // colors on it), the bare map (the street map without even its own borders), or the satellite map (photos from
+  // above, without names either: the hardest): a small picker on the
   // map itself, shown on the setup screen. City quizzes (Q.free) choose
   // between clicking anywhere on the map (the default) and clicking the dots instead: that is asked in the box of
   // the round picked, under its name (playRow), not on the map.
-  const FREE = !!Q.free;
+  const FREE = !!Q.free, ONE = Q.single; // (ONE: a page of one round, see single above)
+  if (ONE) document.body.classList.add('single');
   const SWITCHES = FREE || ROUNDS.some(r => r.of) || Q.kinds.some(k => KINDS[k.key].modes); // rounds with a switch in their box: Map or Dots, a language, how to answer
   const MAPS = FREE ? [['free', 'Map', 'by distance'], ['quiz', 'Dots', '3 tries']]
-    : [['quiz', 'Quiz map', 'with borders'], ['overlay', 'Overlay', 'borders on streets'], ['street', 'Street map', 'hard, no borders'], ['bare', 'Bare map', 'no borders at all']].slice(0, Q.geo ? 4 : 1);
+    : [['quiz', 'Quiz map', 'with borders'], ['overlay', 'Overlay', 'borders on streets'], ['street', 'Street map', 'hard, no borders'], ['bare', 'Bare map', 'no borders at all'], ['sat', 'Satellite', 'no names, no borders']].slice(0, Q.geo || READY ? 5 : 1);
   let chosenMap = MAPS.some(([m]) => m === load('map')) ? load('map') : MAPS[0][0];
   $('mapSeg').hidden = FREE || MAPS.length < 2; // nothing to choose between
   $('mapSeg').replaceChildren(...(FREE ? [] : MAPS).map(([m, t, sub]) => {
@@ -1427,7 +1480,7 @@
   // the page says how it is projected: the city quizzes (Q.streets, their cities.js) and the area quizzes with a
   // projection in their data.js (Q.proj).
   const TILED = Q.streets || (Q.proj && Q.kpu && /^(conicEqualArea|albersUsa|mercator)$/.test(Q.proj.type)
-    ? { proj: Q.proj, kpu: Q.kpu, areas: Q.areas.filter(a => Q.geo && Q.geo[a.id]).map(a => ({ d: a.d, lat: Q.geo[a.id].lab[0], lng: Q.geo[a.id].lab[1], x: a.lx, y: a.ly })) } : null);
+    ? { proj: Q.proj, kpu: Q.kpu, areas: Q.areas.filter(a => labOf(a.id)).map(a => ({ d: a.d, lat: labOf(a.id)[0], lng: labOf(a.id)[1], x: a.lx, y: a.ly })) } : null);
   let waiting = null; // what to do once the script is there
   function withTiles(then) {
     if (window.parent !== window && new URLSearchParams(location.search).has('cards')) return; // (opened out of sight by the review page: no map is looked at)
@@ -1446,10 +1499,11 @@
   const mapBar = document.createElement('div'); mapBar.className = 'mapbar';
   $('mapSeg').before(mapBar); mapBar.append($('mapSeg'));
   // City quizzes can have the street map behind the quiz map: the overlay keeps the region borders on it, the street
-  // map shows the streets alone, the bare map without the tiles' own borders too. Their picker takes the place of the
+  // map shows the streets alone, the bare map without the tiles' own borders too, the satellite map photos from above
+  // with no names at all. Their picker takes the place of the
   // map picker, which they don't have.
-  const BACKS = Q.streets ? [['quiz', 'Quiz map', 'drawn'], ['overlay', 'Overlay', 'borders on streets'], ['street', 'Street map', 'no borders'], ['bare', 'Bare map', 'no borders at all']] : [];
-  let chosenBack = BACKS.some(([m]) => m === load('back')) ? load('back') : 'quiz';
+  const BACKS = Q.streets ? [['quiz', 'Quiz map', 'drawn'], ['overlay', 'Overlay', 'borders on streets'], ['street', 'Street map', 'no borders'], ['bare', 'Bare map', 'no borders at all'], ['sat', 'Satellite', 'no names, no borders']] : [];
+  let chosenBack = BACKS.some(([m]) => m === load('back')) ? load('back') : BACKS.some(([m]) => m === Q.back) ? Q.back : 'quiz'; // (Q.back: the page's own, city-config.js)
   const backSeg = document.createElement('div');
   backSeg.className = 'maps'; backSeg.hidden = !BACKS.length; backSeg.setAttribute('role', 'group'); backSeg.setAttribute('aria-label', 'Background');
   backSeg.replaceChildren(...BACKS.map(([m, t, sub]) => {
@@ -1468,7 +1522,7 @@
   function showBack(back) {
     if (back === shownBack) return;
     shownBack = back;
-    svg.classList.toggle('plain', back === 'street' || back === 'bare');
+    svg.classList.toggle('plain', back === 'street' || back === 'bare' || back === 'sat');
     syncStreets();
   }
   if (BACKS.length) useBack(chosenBack);
@@ -1587,17 +1641,17 @@
   const keepBest = (kind, ids, map, best) => keep(r => { (r.best ||= {})[bestKey(kind, ids, map)] = STORE.bestOut(best, ids.length, nameOf(kind, ids)); });
   { // results taken over from the layout before came without a name: those of this page's rounds get theirs
     const best = record().best || {}, unnamed = [];
-    for (const r of ROUNDS) if (!r.random) { const p = STORE.print(roundIds(r)); for (const map of ['quiz', 'overlay', 'street', 'bare', 'free']) { const k = `${r.kind}/${map}/${p}`; if (best[k] && !best[k].name) unnamed.push([k, r.label]); } }
+    for (const r of ROUNDS) if (!r.random) { const p = STORE.print(roundIds(r)); for (const map of ['quiz', 'overlay', 'street', 'bare', 'sat', 'free']) { const k = `${r.kind}/${map}/${p}`; if (best[k] && !best[k].name) unnamed.push([k, r.label]); } }
     if (unnamed.length) keep(r => { for (const [k, name] of unnamed) if (r.best?.[k]) r.best[k].name = name; });
   }
   // How a card is reviewed: the way the last perfect round with it was played, which is kept with the card (see
-  // area-review.js): on that map (the quiz map, the overlay, the street map, the bare map; a city quiz's dots or its
+  // area-review.js): on that map (the quiz map, the overlay, the street map, the bare map, the satellite map; a city quiz's dots or its
   // map by distance) and, in a city quiz, with that background. A card not played perfectly since that is kept goes by the
   // best results, which don't say when: the map of a perfect result of a round, a saved or a custom quiz with its
   // item in it, the hardest of several (a player goes from the dots to the distance, not back); or else (a round
   // that has changed since) of any perfect result of its kind, the easiest of several; and with none the map
   // chosen on the setup screen. Its background is the one chosen there, as nothing tells what it was.
-  const EASIEST = ['quiz', 'overlay', 'street', 'bare', 'free'].filter(m => MAPS.some(([x]) => x === m)); // (the dots before the map by distance)
+  const EASIEST = ['quiz', 'overlay', 'street', 'bare', 'sat', 'free'].filter(m => MAPS.some(([x]) => x === m)); // (the dots before the map by distance)
   const family = kind => KINDS[kind].cards || kind; // kinds that share their cards
   // Per family: { any: the maps with a perfect result, on: { item: the maps with one that has the item in it } }.
   function perfectMaps() {
@@ -1632,9 +1686,9 @@
       `<span class="fill" style="width:${Math.round(Math.min(p, 1) * 100)}%">${svg}</span></span>`;
   };
   function levelProgress(folder) { // of one folder's rounds, or of all
-    const rounds = ROUNDS.filter(r => !r.random && (!folder || folderOf(r.kind) === folder)).map(r => {
+    const rounds = ROUNDS.filter(r => !r.random && !ONE && (!folder || folderOf(r.kind) === folder)).map(r => { // (a page of one round: none, its rounds are drawn anew)
       const ids = roundIds(r), kinds = [r.kind, ...(KINDS[r.kind].modes || []).map(m => `${r.kind}~${m}`)]; // (in any mode)
-      const best = Math.max(0, ...kinds.flatMap(k => ['quiz', 'overlay', 'street', 'bare', 'free'].map(map => { const b = bestFor(k, ids, map); return b ? b.s / ids.length : 0; })));
+      const best = Math.max(0, ...kinds.flatMap(k => ['quiz', 'overlay', 'street', 'bare', 'sat', 'free'].map(map => { const b = bestFor(k, ids, map); return b ? b.s / ids.length : 0; })));
       return { tier: tierOf(ids.length), best };
     });
     if (!rounds.length) return [];
@@ -1667,7 +1721,7 @@
     b.append(t, n);
     if (sub) { const s = document.createElement('small'); s.textContent = sub; b.append(s); }
     const played = playKind(kind), free = chosenMap === 'free' && played === kind; // (its best in the mode picked)
-    const best = !random && (free ? ['free'] : ['quiz', 'overlay', 'street', 'bare']).map(map => bestFor(played, ids, map)).filter(Boolean).sort((x, y) => y.s - x.s)[0];
+    const best = !random && (free ? ['free'] : ['quiz', 'overlay', 'street', 'bare', 'sat']).map(map => bestFor(played, ids, map)).filter(Boolean).sort((x, y) => y.s - x.s)[0];
     if (best) { const e = document.createElement('span'); e.className = 'best'; e.textContent = (best.s === ids.length ? '✓ ' : '') + (free ? (best.p || 0).toLocaleString('en-US') : `${best.s}/${ids.length}`); b.append(e); }
     b.onclick = () => choose(key);
     return b;
@@ -1868,13 +1922,14 @@
     $('helpWrap').hidden = true; helpRow(); // (its switches are in the box of the round picked)
     pressed('mapSeg', 'map', chosenMap);
     if (view === 'setup') {
-      // (a kind whose answers are sets of areas, dim: false, shows the whole map: the round's areas are its answers)
-      const chosen = K.dim === false ? [] : cur.ids.flatMap(id => K.areas[id]);
+      // (a kind whose answers are sets of areas, dim: false, shows the whole map: the round's areas are its answers;
+      // a page of one round shows none: its round is drawn at the start)
+      const chosen = K.dim === false || ONE ? [] : cur.ids.flatMap(id => K.areas[id]);
       markOut(K.dim === false ? AREAS : chosen);
       // On the street map alone the round's areas are tinted instead (the map itself has no borders to dim).
       const inRound = new Set(chosen);
       for (const a of AREAS) EL[a].classList.toggle('pre', plain() && inRound.has(a));
-      showLabels(cur.kind, cur.ids);
+      showLabels(cur.kind, ONE ? [] : cur.ids);
       syncHints();
     }
     store('map', chosenMap);
@@ -2156,7 +2211,8 @@
     clearInterval(timer); clearTimeout(G.ending);
     if (KINDS[kind].mode && map === 'free') map = 'quiz'; // (a mode answers on the dots of a city quiz, not by distance)
     if (KINDS[kind].shape) map = 'quiz'; // (a shape is asked without a map: its results and cards are the quiz map's, whatever map is picked)
-    Object.assign(G, { kind, items, queue: shuffle(items), i: 0, score: 0, streak: 0, best: 0, res: [], t0: performance.now(), retry, review, points: 0, box, back: null });
+    if (ONE) { map = 'free'; back = Q.back || back; }
+    Object.assign(G, { kind, items, queue: ONE ? items.slice() : shuffle(items), i: 0, score: 0, streak: 0, best: 0, res: [], t0: performance.now(), retry, review, points: 0, box, back: null });
     if (KINDS[kind].depth) { const d = KINDS[kind].depth; G.queue = G.queue.map((id, n) => [id, n]).sort((x, y) => d(x[0]) - d(y[0]) || x[1] - y[1]).map(x => x[0]); } // (MODES 'code': a place's parts first, then the codes over all of it)
     syncSound();
     useMap(map); showBack(back); clearMap();
@@ -2214,6 +2270,7 @@
     else if (isName) {
       const signed = !back && K.sign && !!$('optSign') && $('optSign').checked && K.sign(id, $('bigname'));
       if (!signed) $('bigname').textContent = back ? K.answerName(id) : K.name(id);
+      if (ONE) { const tag = document.createElement('span'); tag.className = 'tier'; tag.textContent = ONE.tag(G.i); $('bigname').prepend(tag); }
       $('bigname').classList.toggle('signed', !!signed);
       if (signed) $('bigname').dataset.name = K.name(id); else delete $('bigname').dataset.name; // (the name asked, which the sign shows among others)
     }
@@ -2295,7 +2352,7 @@
     // (with nothing typed and no name marked by the arrow keys, a stray Enter answers nothing; Name it and Shape: what
     // finds no name in the list is taken as typed, and compared as in Type)
     const typedText = $('typed').value.trim();
-    const text = K.choices ? (typedText || steered ? listed[marked] || (K.named ? typedText : '') : '') : typedText;
+    const text = K.choices && !folded() ? (typedText || steered ? listed[marked] || (K.named ? typedText : '') : '') : typedText; // (the list folded, or Hard mode: what is typed)
     if (K.same && view === 'play' && id !== undefined && !text && G.revealed) { giveUp(); return; } // (the codes shown: Enter goes on)
     if (view !== 'play' || !K.typed || id === undefined || !text) return;
     if (K.same) { typedCodes(K, id, text); return; }
@@ -2310,17 +2367,18 @@
   const typedList = $('typedList'), plainOf = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const listBtn = $('typedListBtn');
   let listed = [], marked = 0, steered = false; // steered: a name marked with the arrow keys
-  let listMin = !!STORE.settings().listMin; // the list folded away: only the name marked shows, once there is one
+  let listMin = !STORE.settings().listOpen; // the list folded away (as it starts): nothing offered while typing
+  const folded = () => listMin || hardMode(); // (Hard mode: no list at all)
   function syncList() {
     if (!typedList) return;
     const K = KINDS[G.kind];
-    if (listBtn) listBtn.hidden = !K || !K.typed || !K.choices;
+    if (listBtn) listBtn.hidden = !K || !K.typed || !K.choices || hardMode();
     if (!K || !K.typed || !K.choices) { typedList.hidden = true; return; }
     const q = plainOf($('typed').value.trim()), all = K.choices(), seen = new Set(), forms = K.choiceForms || (n => [plainOf(n)]); // (Name it, Shape: a name is found by each of its forms)
     const tiers = !q ? [all] : [all.filter(n => forms(n).some(f => f.startsWith(q))), all.filter(n => forms(n).some(f => f.split(/[\s,.-]+/).some(w => w.startsWith(q)))), all.filter(n => forms(n).some(f => f.includes(q)))];
     listed = tiers.flat().filter(n => !seen.has(n) && seen.add(n));
     marked = Math.max(0, Math.min(marked, listed.length - 1));
-    const shown = !listMin ? listed.map((n, i) => [n, i]) : (q || steered) && listed.length ? [[listed[marked], marked]] : [];
+    const shown = !folded() ? listed.map((n, i) => [n, i]) : [];
     typedList.replaceChildren(...shown.map(([n, i]) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'opt' + (i === marked ? ' on' : ''); b.textContent = n;
       b.setAttribute('role', 'option'); b.setAttribute('aria-selected', i === marked);
@@ -2328,7 +2386,7 @@
       b.ondblclick = () => { if (K.named) return; fillChoice(n); typedForm.requestSubmit(); };
       return b;
     }));
-    typedList.hidden = listMin && !shown.length;
+    typedList.hidden = folded();
     if (listBtn) {
       listBtn.setAttribute('aria-expanded', !listMin);
       listBtn.title = listMin ? 'Show the list' : 'Hide the list'; listBtn.setAttribute('aria-label', listBtn.title);
@@ -2354,7 +2412,7 @@
     $('typed').addEventListener('keydown', e => {
       const K = KINDS[G.kind];
       if (!K || !K.choices || !listed.length) return;
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !folded()) {
         e.preventDefault(); marked = (marked + (e.key === 'ArrowDown' ? 1 : -1) + listed.length) % listed.length; steered = true; syncList();
         typedList.querySelector('.on')?.scrollIntoView({ block: 'nearest' });
       } else if (e.key === 'Enter') { e.preventDefault(); typedForm.requestSubmit(); }
@@ -2362,7 +2420,7 @@
   }
   if (listBtn) listBtn.onclick = () => {
     listMin = !listMin;
-    STORE.setSettings(s => { if (listMin) s.listMin = true; else delete s.listMin; });
+    STORE.setSettings(s => { delete s.listMin; if (listMin) delete s.listOpen; else s.listOpen = true; });
     syncList();
     typedList.querySelector('.on')?.scrollIntoView({ block: 'nearest' });
     $('typed').focus({ preventScroll: true });
@@ -2756,6 +2814,7 @@
   const CURVED = /[AaCcQqSsTt]/;
   function realD(a) {
     const A = AREA[a], g = Q.geo && Q.geo[a], P = Q.proj;
+    if (READY && A.real && (A.dot || CURVED.test(A.d))) return A.real; // (a map made ready: its own, come with it)
     if (!(A.dot || CURVED.test(A.d)) || !g || !g.rings || !P || P.type !== 'mercator' || typeof MERCATOR !== 'object') return A.d;
     const near = P.lng0 + A.lx / P.k; // (each point within half a turn of where the map has it)
     return g.rings.map(r => 'M' + r.map(([lat, lng]) => `${+((lng + 360 * Math.round((near - lng) / 360) - P.lng0) * P.k).toFixed(3)},${+((P.y0 - MERCATOR.my(lat)) * P.k).toFixed(3)}`).join('L') + 'Z').join('');
@@ -3066,9 +3125,9 @@
     if (target === undefined || rating() || !Number.isFinite(p.x + p.y) || now - (G.lastFree || 0) < 350) return;
     G.lastFree = now;
     const a = AREA[K.areas[target][0]];
-    const [km, scored] = Q.free.measure(p, target);
-    const pts = Math.round(FREE_MAX * Math.exp(-10 * scored / Q.free.span));
-    const t = G.review ? RV.grade(pts < FREE_CLOSE) : freeClass(pts), k = RESULT_CLASS[t];
+    const [km, scored] = Q.free.measure(p, target), S = ONE && ONE.points(km, p, target, G.i);
+    const pts = S ? S.pts : Math.round(FREE_MAX * Math.exp(-10 * scored / Q.free.span));
+    const t = G.review ? RV.grade(pts < FREE_CLOSE) : S ? ONE.cls(S.base) : freeClass(pts), k = RESULT_CLASS[t];
     for (const el of pathsOf(K.areas[target])) { el.classList.remove('ans', 'flash', ...RESULT_CLASS); el.classList.add(k); }
     showLabel(G.kind, target);
     const line = document.createElementNS(NS, 'line'), dot = document.createElementNS(NS, 'circle');
@@ -3078,11 +3137,11 @@
     const tick = $('ticks').children[G.i]; tick.classList.remove('now'); tick.classList.add(k);
     G.res.push(t); G.points += pts;
     if (t === 0) { G.score++; G.streak++; G.best = Math.max(G.best, G.streak); } else G.streak = 0;
-    setFeedback($('fb'), t === 0 ? 'ok' : 'bad', K.name(target), [`${fmtKm(km)} · ${fmtPts(pts)}`, [].concat(K.about(target))[0]]);
+    setFeedback($('fb'), t === 0 ? 'ok' : 'bad', K.name(target), [`${fmtKm(km)} · ${S && S.mult > 1 ? `${S.base} × ${S.mult} = ` : ''}${fmtPts(pts)}`, ...(ONE ? [] : [[].concat(K.about(target))[0]])]); // (a page of one round: its places' region says nothing)
     // Bring the city into view when it lies outside what the map shows now.
     if (a.lx < vb.x || a.lx > vb.x + vb.w || a.ly < vb.y || a.ly > vb.y + vb.h) flyToPts([p, { x: a.lx, y: a.ly }]);
-    if (RV) RV.answered(target, t === 0);
-    logged(target, freeClass(pts), { v: [pts, Math.round(km * 10) / 10] });
+    if (RV && !ONE) RV.answered(target, t === 0);
+    logged(target, S ? t : freeClass(pts), { v: [pts, Math.round(km * 10) / 10] });
     G.i++;
     // The last answer stays on screen for a moment before the results.
     onward(() => { if (G.i >= G.queue.length) { $('sScore').textContent = G.points.toLocaleString('en-US'); G.ending = setTimeout(finish, 1500); } else ask(); });
@@ -3094,19 +3153,19 @@
     for (const id of G.items) showLabel(G.kind, id);
     if (hardMode() && !K.fresh) { clearTimeout(freshTimer); G.queue.forEach((id, i) => { if (G.res[i] !== undefined) for (const p of pathsOf(K.areas[id])) p.classList.add(RESULT_CLASS[G.res[i]]); }); }
     const complete = n === G.items.length;
-    const prev = G.retry ? null : bestFor(G.kind, G.items, mapStyle);
+    const prev = G.retry || ONE ? null : bestFor(G.kind, G.items, mapStyle); // (a page of one round keeps no best: its rounds are drawn anew)
     const free = mapStyle === 'free';
     const better = !prev || (free ? G.points > (prev.p || 0) || (G.points === prev.p && ms < prev.t) : G.score > prev.s || (G.score === prev.s && ms < prev.t));
-    if (!G.retry && complete) {
+    if (!G.retry && complete && !ONE) {
       // Map play keeps two records: the most points (with its time) and the most close answers, which the stars use.
       if (free && (better || G.score > (prev ? prev.s : 0))) { keepBest(G.kind, G.items, mapStyle, { s: Math.max(G.score, prev ? prev.s : 0), t: better ? ms : prev.t, p: better ? G.points : prev.p }); saveRating(); }
       else if (!free && better) { keepBest(G.kind, G.items, mapStyle, { s: G.score, t: ms }); saveRating(); }
     }
     $('rScore').textContent = free ? G.points.toLocaleString('en-US') : `${G.score} of ${n}`;
-    const pct = n ? Math.round((free ? G.points / (n * FREE_MAX) : G.score / n) * 100) : 0;
-    let line = free ? `${pct}% of ${(n * FREE_MAX).toLocaleString('en-US')} · ${G.score}/${n} close · ${fmt(ms)}` : `${pct}% · ${fmt(ms)} · streak ${G.best}`;
+    const most = ONE ? ONE.max(n) : n * FREE_MAX, pct = n ? Math.round((free ? G.points / most : G.score / n) * 100) : 0;
+    let line = free ? `${pct}% of ${most.toLocaleString('en-US')} · ${G.score}/${n} close · ${fmt(ms)}` : `${pct}% · ${fmt(ms)} · streak ${G.best}`;
     if (prev && complete) line += better ? ' · new best' : free ? ` · best ${(prev.p || 0).toLocaleString('en-US')}` : ` · best ${prev.s}/${n}`;
-    legendItems.forEach((li, i) => { li.lastChild.textContent = free ? FREE_LEGEND[i] : K.draw ? DRAW_LEGEND[i] : LEGEND[i]; li.hidden = !!K.draw && !G.review && !DRAW_LEGEND[i]; });
+    legendItems.forEach((li, i) => { li.lastChild.textContent = free ? (ONE ? ONE.legend : FREE_LEGEND)[i] : K.draw ? DRAW_LEGEND[i] : LEGEND[i]; li.hidden = !!K.draw && !G.review && !DRAW_LEGEND[i]; });
     if (legendItems[0]) legendItems[0].parentNode.hidden = !!(K.fresh || K.pickAll);
     $('rLine').textContent = line;
     const missed = G.queue.map((id, i) => [id, G.res[i]]).filter(([, t]) => t > 0)
@@ -3118,13 +3177,13 @@
       return b;
     }));
     $('rPick').textContent = '';
-    $('missWrap').hidden = !missed.length; $('retryBtn').hidden = !missed.length;
+    $('missWrap').hidden = !missed.length; $('retryBtn').hidden = !missed.length || !!ONE;
     $('retryBtn').textContent = free ? `Retry (${missed.length})` : `Retry missed (${missed.length})`;
     if (missTitle) missTitle.textContent = free ? 'Not close' : MISS_TITLE;
     G.missed = missed.map(([id]) => id);
     show('done');
     // A perfect round puts its questions on the review stack.
-    if (RV) { if (complete && !G.retry && G.score === n) RV.learned(G.kind, G.items); RV.finished(); }
+    if (RV && !ONE) { if (complete && !G.retry && G.score === n) RV.learned(G.kind, G.items); RV.finished(); }
   }
   $('chips').addEventListener('click', e => {
     const chip = e.target.closest('[data-id]'); if (!chip) return;
@@ -3164,16 +3223,16 @@
   }
 
   /* ---------- buttons & keys ---------- */
-  $('startBtn').onclick = () => { const cur = current(); if (cur.ids.length) start(playKind(cur.kind), cur.ids, { box: cur.box }); };
+  $('startBtn').onclick = () => { const cur = current(); if (ONE) start(cur.kind, ONE.draw()); else if (cur.ids.length) start(playKind(cur.kind), cur.ids, { box: cur.box }); };
   $('exploreBtn').onclick = () => {
     useMap(chosenMap); clearMap(); show('explore');
     if (!plain()) showAllLabels(Q.exploreKind);
     showCode('--'); if (ePick) ePick.value = '';
     setFeedback($('eInfo'), '', '', '');
   };
-  $('restartBtn').onclick = () => start(G.kind, G.items, { retry: G.retry, box: G.box });
+  $('restartBtn').onclick = () => start(G.kind, ONE ? ONE.draw() : G.items, { retry: G.retry, box: G.box });
   $('endBtn').onclick = () => { if (!G.res.length) { openSetup(); return; } finish(); };
-  $('againBtn').onclick = () => start(G.kind, G.items, { retry: G.retry, box: G.box });
+  $('againBtn').onclick = () => start(G.kind, ONE ? ONE.draw() : G.items, { retry: G.retry, box: G.box });
   $('retryBtn').onclick = () => start(G.kind, G.missed, { retry: true, box: G.box });
   $('menuBtn').onclick = openSetup;
   $('eBack').onclick = openSetup;

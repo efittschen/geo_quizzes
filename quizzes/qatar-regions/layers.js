@@ -5,7 +5,7 @@
 
 const LAYERS = {
   key: "qaregions",
-  size: [1000,2039],
+  size: [1000, 2041],
   pad: 16,
   maxZoom: 60,
   labelScale: 0.24,

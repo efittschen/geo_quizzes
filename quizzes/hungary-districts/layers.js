@@ -5,7 +5,7 @@
 const LAYERS = {
   key: "budistricts",
   context: false,
-  size: [1000,952],
+  size: [1000, 950],
   pad: 16,
   maxZoom: 12,
   labelScale: 0.25,

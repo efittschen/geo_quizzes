@@ -12,7 +12,7 @@
 const LAYERS = {
   key: "bwregions",
   borders: "[DATA.db]",
-  size: [1000,1059],
+  size: [1000, 1054],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

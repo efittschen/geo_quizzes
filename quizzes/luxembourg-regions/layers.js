@@ -10,7 +10,7 @@
 const LAYERS = {
   key: "luregions",
   borders: "[DATA.rb]",
-  size: [1000,1434],
+  size: [1000, 1433],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

@@ -7,7 +7,7 @@
 
 const LAYERS = {
   key: "uklondon",
-  size: [1000,928],
+  size: [1000, 927],
   pad: 16,
   maxZoom: 30,
   labelScale: 0.35,

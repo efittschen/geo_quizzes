@@ -12,7 +12,7 @@
 
 const LAYERS = {
   key: "ngregions",
-  size: [1000,816],
+  size: [1000, 814],
   pad: 16,
   maxZoom: 30,
   labelScale: 0.24,

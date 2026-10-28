@@ -6,7 +6,7 @@
 const LAYERS = {
   key: "mxpostcodes",
   borders: "[DATA.ent]",
-  size: [2000,1284],
+  size: [2000, 1263],
   pad: 24,
   maxZoom: 80,
   labelScale: 0.3,

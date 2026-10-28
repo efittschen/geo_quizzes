@@ -5,7 +5,7 @@
 
 const LAYERS = {
   key: "psregions",
-  size: [1000,1152],
+  size: [1000, 1156],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.24,

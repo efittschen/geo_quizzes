@@ -11,7 +11,7 @@
 
 const LAYERS = {
   key: "geregions",
-  size: [1000,563],
+  size: [1000, 573],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

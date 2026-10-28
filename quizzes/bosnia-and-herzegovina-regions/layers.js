@@ -15,7 +15,7 @@
 
 const LAYERS = {
   key: "baregions",
-  size: [1000,979],
+  size: [1000, 970],
   pad: 16,
   maxZoom: 60,
   labelScale: 0.2,

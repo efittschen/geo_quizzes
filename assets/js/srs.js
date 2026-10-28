@@ -27,14 +27,14 @@
 //   a deck, the cards of one quiz page (in the page's record, so quizzes can come and go):
 //     { t: page title, c: { '<kind>|<item id>': card } }
 //     A card is a question on one map: its key is '<kind>@<look>|<item id>', the look being the map it is played
-//     on ("quiz", "overlay", "street", "bare"; in a city quiz "free" or "quiz" for the dots, with "+<background>" where that
+//     on ("quiz", "overlay", "street", "bare", "sat"; in a city quiz "free" or "quiz" for the dots, with "+<background>" where that
 //     is not the drawn map: "free+street"). A question learned on two maps is two cards, each reviewed on its own
 //     map. With "Cards per map" off (a setting, `perMap`; the user's choice, 2026-10-21, others keep it on) a question
 //     has one card per way of answering it (its kind: Map, List, Type, Pairs, Draw… each their own, '<kind>~list'),
 //     whatever map it is played on: answers on any map count for it, in ordinary rounds and reviews; a perfect round
 //     gives a card only to a question that has none, and moves the card it has to its map if that is harder (quiz,
-//     overlay, street, bare; in a city quiz the dots before the map by distance, each on the drawn map, the overlay,
-//     the street map, the bare map: `hardness`). A question's cards on several maps (from before, or from another
+//     overlay, street, bare, sat; in a city quiz the dots before the map by distance, each on the drawn map, the overlay,
+//     the street map, the bare map, the satellite map: `hardness`). A question's cards on several maps (from before, or from another
 //     browser) become one when the setting is turned off, and on every page that opens with it off (`single`).
 //     Turned on again, they stay one, and perfect rounds on other maps make cards of their own again.
 //     (Cards from before have no look in their key, '<kind>|<item id>': one that keeps its m and b is that
@@ -50,8 +50,9 @@
 //             s: its learning step (2, 3…: a new card's first, second… step; 1: the step after a miss, if the
 //             settings have one; none once it is in review), x: 1 while its question is missing from the quiz,
 //             m, b, p: how the last perfect round with it was played, which is how it is reviewed: the map
-//             ("quiz", "overlay", "street", "bare", or in a city quiz "quiz" for the dots and "free" for the map by
-//             distance), a city quiz's background if it wasn't the drawn map ("overlay", "street", "bare"), and when (ms) }
+//             ("quiz", "overlay", "street", "bare", "sat", or in a city quiz "quiz" for the dots and "free" for the map
+//             by distance), a city quiz's background if it wasn't the drawn map ("overlay", "street", "bare", "sat"),
+//             and when (ms) }
 //   the settings  { easy, fast, limit }: seconds for "easy", for "known" and for the time limit;
 //                 { round, day }: the most cards one review asks, and the most reviewed in a day;
 //                 perMap: false where "Cards per map" is off (see above);
@@ -269,8 +270,9 @@ const SRS = (() => {
     });
   }
   /* ---------- "Cards per map" off: one card a question, whatever the map ---------- */
-  // How hard a map is (a look): the quiz map, the overlay, the street map, the bare map; in a city quiz the dots before
-  // the map by distance, each on the drawn map, the overlay, the street map, the bare map (as EASIEST in area-quiz.js,
+  // How hard a map is (a look): the quiz map, the overlay, the street map, the bare map, the satellite map; in a city
+  // quiz the dots before the map by distance, each on the drawn map, the overlay, the street map, the bare map, the
+  // satellite map (as EASIEST in area-quiz.js,
   // and the backgrounds' picker). A card without a map is the easiest.
   const hardness = look => { const [map, back] = look.split('+'); return LOOKS.indexOf(map) * 10 + Math.max(0, LOOKS.indexOf(back)); };
   const question = key => kindOf(key) + key.slice(key.indexOf('|')); // '<kind>|<item id>'
@@ -328,7 +330,7 @@ const SRS = (() => {
   }
   // The map a card is played on: its look, from its key (see above), else from what the card keeps.
   const lookOf = (key, c) => { const bar = key.indexOf('|'), at = key.indexOf('@'); return at >= 0 && at < bar ? key.slice(at + 1, bar) : (c.m || '') + (c.b ? '+' + c.b : ''); };
-  const LOOKS = ['quiz', 'overlay', 'street', 'bare', 'free']; // their order on the review page; a card without a map last
+  const LOOKS = ['quiz', 'overlay', 'street', 'bare', 'sat', 'free']; // their order on the review page; a card without a map last
   const lookRank = l => { const i = LOOKS.indexOf(l.split('+')[0]); return l ? (i < 0 ? LOOKS.length : i) * 10 + (l.includes('+') ? 1 : 0) : 99; };
   // A deck with only the cards of some layers, or of some layers on some maps, or of one group of a layer (kinds:
   // ["<kind>", "<kind>@<look>", "<kind>#<group>" or "<kind>@<look>#<group>"]; null: all of them).

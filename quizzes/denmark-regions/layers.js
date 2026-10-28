@@ -8,7 +8,7 @@
 const LAYERS = {
   key: "dkregions",
   borders: "[DATA.rb]",
-  size: [1000,794],
+  size: [1000, 811],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

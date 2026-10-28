@@ -10,7 +10,7 @@
 const LAYERS = {
   key: "eeregions",
   borders: "[DATA.rb]",
-  size: [1000,693],
+  size: [1000, 650],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

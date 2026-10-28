@@ -9,7 +9,7 @@
 const LAYERS = {
   key: "ieregions",
   borders: "[DATA.cty]",
-  size: [1000,1414],
+  size: [1000, 1439],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.25,

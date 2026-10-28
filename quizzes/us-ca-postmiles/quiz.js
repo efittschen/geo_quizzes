@@ -14,11 +14,11 @@ const groupsOf = ns => ns.map(districtName);
 
 const QUIZ = {
   key: 'uscapostmiles',
-  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, g: r.dist })),
+  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: r.dist })),
   borders: [],
   context: DATA.ctx,
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.3, fly: { pad: 1.6, min: 1.5 / 40 },
-  geo: GEO,
+  proj: DATA.proj, kpu: DATA.kpu,
   street: { bounds: [[32.5, -124.4], [42.0, -114.1]], maxBounds: [[28, -130], [46, -108]] },
   hintLabel: 'Color by Caltrans district',
   exploreKind: 'codes',

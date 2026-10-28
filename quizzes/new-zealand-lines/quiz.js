@@ -17,11 +17,11 @@ const byName = (a, b) => CO[a].localeCompare(CO[b], 'en');
 
 const QUIZ = {
   key: 'nzlines',
-  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, g: r.co || 'none' })),
+  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: r.co || 'none' })),
   borders: [],
   context: DATA.ctx,
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.22, fly: { pad: 1.6, min: 1.5 / 40 },
-  geo: GEO,
+  proj: DATA.proj, kpu: DATA.kpu,
   street: { bounds: [[-47.4, 166.3], [-34.3, 178.7]], maxBounds: [[-55, 155], [-28, 190]] },
   hintLabel: 'Color each company',
   exploreKind: 'lines',

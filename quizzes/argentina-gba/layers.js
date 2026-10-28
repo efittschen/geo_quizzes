@@ -5,7 +5,7 @@
 
 const LAYERS = {
   key: "argba",
-  size: [1000,1388],
+  size: [1000, 1400],
   pad: 16,
   maxZoom: 20,
   labelScale: 0.1,

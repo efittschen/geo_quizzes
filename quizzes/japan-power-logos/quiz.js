@@ -48,9 +48,11 @@ const GROUPS = PARTS.map(([title, pws]) => ({ title, sub: '', ids: ALL.filter(id
 
 const QUIZ = {
   key: 'jplogos',
-  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, g: '' })),
+  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' })),
   borders: [],
   context: DATA.ctx,
+  proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+  street: {"bounds":[[24,123],[45.6,146]],"maxBounds":[[18,115],[50,158]]},
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.22, fly: { pad: 1.6, min: 0.0375 },
   hintLabel: '', hintsDefault: false,
   exploreKind: 'photos',

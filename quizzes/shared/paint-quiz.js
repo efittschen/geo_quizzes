@@ -348,7 +348,7 @@
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
   /* ---------- the map behind, and coverage on top ---------- */
-  const BACKS = [['quiz', 'Quiz map', 'drawn'], ['overlay', 'Overlay', 'borders on streets'], ['street', 'Street map', 'no borders'], ['bare', 'Bare map', 'no borders at all']];
+  const BACKS = [['quiz', 'Quiz map', 'drawn'], ['overlay', 'Overlay', 'borders on streets'], ['street', 'Street map', 'no borders'], ['bare', 'Bare map', 'no borders at all'], ['sat', 'Satellite', 'no names, no borders']];
   const mapBar = el('div', 'mapbar'), backSeg = el('div', 'maps'), coverSeg = el('div', 'maps'), coverBtn = el('button', null, 'Coverage');
   backSeg.setAttribute('role', 'group'); backSeg.setAttribute('aria-label', 'Map');
   backSeg.replaceChildren(...BACKS.map(([m, t, sub]) => { const b = el('button', null, t); b.type = 'button'; b.dataset.back = m; b.title = sub; b.onclick = () => useBack(m); return b; }));
@@ -367,7 +367,7 @@
   function useBack(m) {
     back = m; if (saved.map !== m) { saved.map = m; keep(); }
     for (const b of backSeg.children) b.setAttribute('aria-pressed', b.dataset.back === m);
-    if (m !== 'quiz' || tiles) withTiles(() => { tiles.street(back === 'quiz' ? null : back === 'bare' ? 'bare' : 'street'); fit(); });
+    if (m !== 'quiz' || tiles) withTiles(() => { tiles.street(back === 'quiz' ? null : back === 'bare' || back === 'sat' ? back : 'street'); fit(); });
   }
   // Street View coverage over the map: the layer of the Coverage page (data/coverage, see the README).
   const COVER = HERE + '../../data/coverage';

@@ -4,7 +4,7 @@
 const LAYERS = {
   key: "austates",
   map: {"paths":"DATA.ent","cols":{"id":["st0","st1","st2","st3","st4","st5","st6","st7"],"name":["Western Australia","Northern Territory","South Australia","Queensland","New South Wales","Victoria","Tasmania","Australian Capital Territory"]}},
-  size: [1100,1057],
+  size: [1100, 1063],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.2,

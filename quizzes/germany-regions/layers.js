@@ -11,7 +11,7 @@
 
 const LAYERS = {
   key: "destates",
-  size: [1000,1359],
+  size: [1000, 1359],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.2,

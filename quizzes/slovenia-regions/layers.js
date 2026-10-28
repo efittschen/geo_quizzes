@@ -8,7 +8,7 @@
 
 const LAYERS = {
   key: "siregions",
-  size: [1000,658],
+  size: [1000, 653],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

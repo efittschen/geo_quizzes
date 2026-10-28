@@ -6,7 +6,7 @@ const LAYERS = {
   key: "inpre",
   phone: true, // phone area codes: each layer of codes is played the other way round too, the code typed (layer-config.js)
   borders: "DATA.ent",
-  size: [1000,1084],
+  size: [1000, 1070],
   pad: 16,
   maxZoom: 50,
   labelScale: 0.3,
@@ -14,7 +14,7 @@ const LAYERS = {
   street: {"bounds":[[8,68],[35.5,97.5]],"maxBounds":[[0,55],[42,110]]},
   hintLabel: "Color by first digit",
   exploreKind: "prefix2",
-  d: {"p40":"M349,688.7a9,9 0 1,0 18,0a9,9 0 1,0 -18,0z","p79":"M157.8,473.1a9,9 0 1,0 18,0a9,9 0 1,0 -18,0z"},
+  d: {"p40":"M343.1,699a9,9 0 1,0 18,0a9,9 0 1,0 -18,0z","p79":"M143.2,490.5a9,9 0 1,0 18,0a9,9 0 1,0 -18,0z"},
   top: ["p40","p79"],
   kinds: [
     {

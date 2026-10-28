@@ -3,8 +3,8 @@
 
 const LAYERS = {
   key: "ecprov",
-  borders: ["M21.799999999999997,91.4H296.2V328.2H21.799999999999997Z"],
-  size: [1000,682],
+  borders: [""],
+  size: [1000, 393],
   pad: 16,
   maxZoom: 30,
   labelScale: 0.3,

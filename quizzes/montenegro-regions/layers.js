@@ -8,7 +8,7 @@
 
 const LAYERS = {
   key: "meregions",
-  size: [1000,1214],
+  size: [1000, 1214],
   pad: 16,
   maxZoom: 30,
   labelScale: 0.25,

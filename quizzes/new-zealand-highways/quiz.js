@@ -19,11 +19,11 @@ const byNum = (a, b) => num(a) - num(b) || a.localeCompare(b);
 
 const QUIZ = {
   key: 'nzhighways',
-  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, g: r.rc === 'Area Outside Region' ? 'CI' : regionName(r.rc) })),
+  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: r.rc === 'Area Outside Region' ? 'CI' : regionName(r.rc) })),
   borders: [],
   context: DATA.inset,
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.3, fly: { pad: 1.6, min: 1.5 / 40 },
-  geo: GEO,
+  proj: DATA.proj, kpu: DATA.kpu,
   street: { bounds: [[-47.4, 166.3], [-34.3, 178.7]], maxBounds: [[-55, 155], [-28, 190]] },
   hintLabel: 'Color by region',
   exploreKind: 'sh',

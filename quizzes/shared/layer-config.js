@@ -95,11 +95,14 @@ const layerLib = (() => {
   // The parts of a quiz that the tables are filled from; the compressor (tools/builds/layers) uses the same ones.
   function model(L, resolve) {
     const m = L.map || 'DATA.reg', [path, idKey] = m.paths ? [m.paths, 'id'] : [].concat(m).concat('id');
-    const list = m.paths ? resolve(path).map((d, i) => ({ d, ...Object.fromEntries(Object.entries(m.cols).map(([f, col]) => [f, col[i]])) })) : resolve(path);
+    // (bare outlines: their label points and old sizes beside them, where the map is made ready: <path>At)
+    const at = m.paths && resolve(path + 'At');
+    const list = m.paths ? resolve(path).map((d, i) => ({ d, ...(at && at[i] ? { lx: at[i][0], ly: at[i][1], s: at[i][2] } : {}), ...Object.fromEntries(Object.entries(m.cols).map(([f, col]) => [f, col[i]])) })) : resolve(path);
     const AREAS = list.map(r => String(r[idKey]));
     const R = Object.fromEntries(list.map(r => [String(r[idKey]), r]));
     const FV = Object.fromEntries(AREAS.map(a => [a, fieldVars(R[a])]));
-    return { list, idKey, AREAS, R, FV, kinds: {} };
+    const holder = String(path).includes('.') ? resolve(String(path).split('.')[0]) : null; // (what holds the areas: DATA for DATA.reg)
+    return { list, idKey, AREAS, R, FV, kinds: {}, holder };
   }
   const ITEM_TABLES = ['name', 'short', 'chip', 'chipTitle', 'detail', 'about', 'dial', 'text', 'pin', 'chipClass'];
   const AREA_TABLES = ['clicked', 'areaLabel', 'colors'];
@@ -204,15 +207,18 @@ const layerLib = (() => {
       return out;
     });
     const g = table(L.g, M.AREAS, a => quizVars(M, a)), top = new Set(L.top || []), d = L.d || {};
+    const P = M.holder && M.holder.proj ? M.holder : typeof DATA === 'object' && DATA.proj ? DATA : null; // (the map's projection: where its areas are, else its data.js)
     const explore = table(L.explore, M.AREAS, a => quizVars(M, a));
     return {
       key: L.key,
-      areas: M.list.map(r => { const id = String(r[M.idKey]); return { id, d: d[id] || r.d, lx: r.lx, ly: r.ly, a: r.a, g: g[id], ...(top.has(id) ? { top: true } : {}) }; }),
+      // (a map made ready in Web Mercator: s, the area's size on the old equal-area map; real, its own outline where
+      // the layer draws it as a circle)
+      areas: M.list.map(r => { const id = String(r[M.idKey]); return { id, d: d[id] || r.d, lx: r.lx, ly: r.ly, a: r.a, g: g[id], ...(top.has(id) ? { top: true } : {}), ...(r.s !== undefined ? { s: r.s } : {}), ...(d[id] && r.s !== undefined ? { real: r.d } : {}) }; }),
       borders: at(L.borders || []),
       ...(L.context === false ? {} : { context: typeof L.context === 'object' ? L.context.d : resolve(L.context || 'DATA.ctx') }),
       size: L.size, pad: L.pad, maxZoom: L.maxZoom, labelScale: L.labelScale, fly: L.fly,
-      ...(typeof DATA === 'object' && DATA.proj ? { proj: DATA.proj, kpu: DATA.kpu } : {}), // how the map is projected, where its data.js says
-      ...(L.geo === false ? {} : { geo: resolve(L.geo || 'GEO'), street: L.street }),
+      ...(P ? { proj: P.proj, kpu: P.kpu } : {}), // how the map is projected, where its data says
+      street: L.street, ...(L.geo === false || (P && P.proj.grain) ? {} : { geo: resolve(L.geo || 'GEO') }), // (latitudes and longitudes: a map not made ready in Web Mercator)
       hintLabel: L.hintLabel, exploreKind: L.exploreKind,
       ...(L.hintsDefault === undefined ? {} : { hintsDefault: L.hintsDefault }),
       ...(L.langsAlways ? { langsAlways: true } : {}),

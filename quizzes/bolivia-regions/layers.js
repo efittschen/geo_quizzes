@@ -6,7 +6,7 @@
 
 const LAYERS = {
   key: "bodept",
-  size: [1000,1135],
+  size: [1000, 1135],
   pad: 16,
   maxZoom: 20,
   labelScale: 0.12,

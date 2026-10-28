@@ -17,7 +17,7 @@
 
 const LAYERS = {
   key: "itregions",
-  size: [1000,1330],
+  size: [1000, 1304],
   pad: 16,
   maxZoom: 30,
   labelScale: 0.22,

@@ -11,7 +11,7 @@
 const LAYERS = {
   key: "escodes",
   phone: true, // phone area codes: each layer of codes is played the other way round too, the code typed (layer-config.js)
-  size: [1000,848],
+  size: [1000, 891],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.3,
@@ -19,7 +19,7 @@ const LAYERS = {
   street: {"bounds":[[27.6,-18.2],[43.8,4.4]],"maxBounds":[[22,-25],[48,10]]},
   hintLabel: "Color by first two digits",
   exploreKind: "codes",
-  d: {"z1100ce":"M598.5,425.4a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z","z2900ml":"M704.3,454.9a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z"},
+  d: {"z1100ce":"M562.8,457.8a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z","z2900ml":"M669.9,490.6a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z"},
   top: ["z1100ce","z2900ml"],
   kinds: [
     {

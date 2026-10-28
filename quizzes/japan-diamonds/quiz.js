@@ -42,7 +42,7 @@ for (const [id, , prefs] of DESIGNS) for (const name of prefs) (AT[PID[name]] ||
 // One area per prefecture: its own from data.js, or the joined one of prefs.js where data.js splits it.
 const PIECES = {};
 for (const r of DATA.reg) (PIECES[r.pf] ||= []).push(r);
-const PREF_AREAS = Object.entries(PIECES).map(([pf, [r]]) => ({ id: 'p' + String(pf).padStart(2, '0'), ...(PREF_SHAPES[pf] || { d: r.d, lx: r.lx, ly: r.ly, a: r.a }), g: '' }));
+const PREF_AREAS = Object.entries(PIECES).map(([pf, [r]]) => ({ id: 'p' + String(pf).padStart(2, '0'), ...(PREF_SHAPES[pf] || { d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s }), g: '' }));
 
 const DIR = new URL('img/', document.currentScript.src).href;
 const prefsOf = id => D[id].prefs.join(', ');
@@ -55,6 +55,8 @@ const QUIZ = {
   areas: PREF_AREAS,
   borders: [],
   context: DATA.ctx,
+  proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+  street: {"bounds":[[24,123],[45.6,146]],"maxBounds":[[18,115],[50,158]]},
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.22, fly: { pad: 1.6, min: 0.0375 },
   hintLabel: '', hintsDefault: false,
   exploreKind: 'diamonds',

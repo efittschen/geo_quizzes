@@ -10,7 +10,7 @@
 
 const LAYERS = {
   key: "kecounties",
-  size: [1000,1271],
+  size: [1000, 1270],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.3,

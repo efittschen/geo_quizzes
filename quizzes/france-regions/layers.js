@@ -17,7 +17,7 @@
 
 const LAYERS = {
   key: "frregions",
-  size: [1000,922],
+  size: [1000, 960],
   pad: 50,
   maxZoom: 60,
   labelScale: 0.2,

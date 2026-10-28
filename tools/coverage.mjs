@@ -415,7 +415,7 @@ async function tiles() {
 // The pool has a few locations filed under a country far away from it. So a location more than a degree outside
 // the boxes around its country's pieces of land (Natural Earth 1:50m) counts only if at least five others are in
 // the same one-degree square: islands that Natural Earth leaves out (San Andrés, Fernando de Noronha) stay in.
-const WORLD_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'; // the home map's countries, as in assets/js/common.js
+const WORLD_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'; // the home map's projection is fitted to these (assets/js/map.js), data/world.json's small countries left out
 const HOME = [960, 500], SCALES = [2, 4, 8, 16], ROAD = 'f2b705'; // --yellow of base.css
 
 // A picture of pixel values 0 (clear) and 1 (road), as a PNG with one bit per pixel.

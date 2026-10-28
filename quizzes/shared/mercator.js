@@ -5,7 +5,8 @@
    The map files are older than this choice. They hold each map drawn in an equal-area projection of its own, far-off
    parts in boxes, and beside it the same shapes as latitude and longitude (geo.js; a cities.js has every city's).
    This file redraws a page's map when the page loads, before its quiz is built, and changes nothing else: ids, names
-   and tables stay. quiz-page.js loads it on every quiz page; the scripts that build on a map call it first:
+   and tables stay. A map made ready beforehand (tools/builds/mercator, which runs this file's own redrawing once and
+   writes the result into the map files) is only taken as it is. quiz-page.js loads it on every quiz page; the scripts that build on a map call it first:
 
      MERCATOR.quiz(Q)        area-quiz.js, for an area quiz: every area from its rings in Q.geo, the borders through
                              the areas themselves (their old and new outlines match point for point) or the old
@@ -178,8 +179,21 @@ const MERCATOR = (() => {
   const shoelace = pts => { let a = 0, cx = 0, cy = 0; for (let i = 0; i < pts.length; i++) { const [x0, y0] = pts[i], [x1, y1] = pts[(i + 1) % pts.length], c = x0 * y1 - x1 * y0; a += c; cx += (x0 + x1) * c; cy += (y0 + y1) * c; } return { a: a / 2, cx: cx / (3 * a), cy: cy / (3 * a) }; };
 
   /* ---------- an area quiz ---------- */
-  function quiz(Q) {
+  // A map made ready in Web Mercator beforehand (tools/builds/mercator; its proj names the step its points are rounded
+  // to, grain) is taken as it is: it lies on the world's map like a map redrawn here, and its areas keep their size on
+  // the old, equal-area map (s) for "largest area".
+  function ready(Q) {
+    delete Q.context; Q.world = true; Q.grain = Q.proj.grain;
+    for (const a of Q.areas) if (a.s !== undefined) a.size = a.s;
+    done.push({ what: 'ready', w: Q.size[0], h: Q.size[1], ms: 0 });
+    return false;
+  }
+  // (box: the frame's [[south, west], [north, east]], where tools/builds/mercator gives a map one frame for all the
+  // pages that draw it; returns where a latitude and longitude go on the new map (place; F, turn, rq: its frame, the
+  // turn of a longitude, the rounding of a point), or false when nothing was redrawn)
+  function quiz(Q, box0) {
     const why = reason => { left.push(reason); return false; }, t0 = performance.now();
+    if (Q && !Q.dots && Q.proj && Q.proj.type === 'mercator' && Q.proj.grain) return ready(Q);
     if (!Q || Q.dots || (Q.proj && Q.proj.type === 'mercator')) return false;
     if (!Q.geo || !Q.size || !Q.areas.length || !Q.areas.every(a => Q.geo[a.id] && Q.geo[a.id].rings)) return why('areas without latitude and longitude');
     // A country over the 180th meridian (Russia, the Aleutians, the Chatham Islands) stays in one piece: every ring
@@ -193,7 +207,7 @@ const MERCATOR = (() => {
       G[a.id] = { rings, lab: g.lab && [g.lab[0], g.lab[1] + turn(g.lab[1])] };
       for (const ring of rings) for (const [lat, lng] of ring) box.add(lat, lng);
     }
-    const F = frame(box.get(), Q.size[0]);
+    const F = frame(box0 || box.get(), Q.size[0]);
     // The areas' points are rounded no coarser than the latitudes and longitudes they come from (thousandths of a
     // degree): half a step at most 0.001°, so the street map under the quiz map meets its borders even when zoomed in
     // to its streets. A map unit is 1/k of a degree: tenths of a unit where k is 50 or more, else hundredths or
@@ -244,7 +258,7 @@ const MERCATOR = (() => {
     for (const k of Q.kinds || []) if (k.pin) { const pin = k.pin; k.pin = id => { const p = pin(id); if (!p || !p.ll) return p; const [x, y] = F.at(p.ll[0], p.ll[1] + turn(p.ll[1])); return { ...p, x, y }; }; }
     Q.size = [F.w, F.h]; Q.proj = F.proj; Q.kpu = F.kpu; Q.grain = 10 ** -dec;
     done.push({ what: 'quiz', w: F.w, h: F.h, ms: Math.round(performance.now() - t0) });
-    return true;
+    return { place: (lat, lng) => F.at(lat, lng + turn(lng)), box: box.get(), F, turn, rq };
   }
 
   /* ---------- a city quiz's map, and the town names on it ---------- */
@@ -326,5 +340,7 @@ const MERCATOR = (() => {
     return true;
   }
 
-  return { frame, conic, albersUsa, fit, runs, redraw, world, quiz, cities, names, left, notes, done, my, latOf };
+  // A point of a Web Mercator map -> [lat, lng]
+  const latlng = (x, y, P) => [latOf(P.y0 - y / P.k), P.lng0 + x / P.k];
+  return { frame, conic, albersUsa, fit, runs, redraw, world, quiz, cities, names, left, notes, done, my, latOf, latlng };
 })();

@@ -10,7 +10,7 @@
 const LAYERS = {
   key: "gtregions",
   borders: "[DATA.dep]",
-  size: [1000,1053],
+  size: [1000, 1055],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.15,

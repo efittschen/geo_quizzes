@@ -4,7 +4,7 @@
 
 const LAYERS = {
   key: "adregions",
-  size: [1000,814],
+  size: [1000, 813],
   pad: 16,
   maxZoom: 12,
   labelScale: 0.3,

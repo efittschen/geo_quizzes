@@ -12,7 +12,7 @@
 
 const LAYERS = {
   key: "btregions",
-  size: [1000,515],
+  size: [1000, 517],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.25,

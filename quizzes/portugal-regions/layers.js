@@ -7,7 +7,7 @@
 
 const LAYERS = {
   key: "ptregions",
-  size: [1000,840],
+  size: [1000, 490],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

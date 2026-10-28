@@ -6,10 +6,10 @@
 const FLAGS = {
   key: 'arflags', alt: 'province flag',
   map: {
-    areas: DATA.ent.map((d, i) => ({ id: 'pv' + i, d, g: '' })), context: DATA.ctx,
-    geo: GEO, // the map redrawn in Web Mercator (mercator.js), the street map under it
+    areas: DATA.ent.map((d, i) => ({ id: 'pv' + i, d, g: '', ...(DATA.entAt ? { lx: DATA.entAt[i][0], ly: DATA.entAt[i][1], s: DATA.entAt[i][2] } : {}) })), context: DATA.ctx,
+    proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
     street: {"bounds":[[-55.1,-73.6],[-21.8,-53.6]],"maxBounds":[[-60,-90],[-15,-40]]},
-    size: [800, 1658], pad: 16, maxZoom: 90, labelScale: 0.12, fly: { pad: 1.6, min: 0.025 },
+    size: [800, 1761], pad: 16, maxZoom: 90, labelScale: 0.12, fly: { pad: 1.6, min: 0.025 },
   },
   parts: ['Northwest', 'Northeast', 'Cuyo', 'Pampas', 'Patagonia'],
   // [ISO 3166-2 letter, name, part, its area]

@@ -31,13 +31,6 @@
 .cd.rar0{box-shadow:inset 0 -3px 0 var(--rar0)} .cd.rar1{box-shadow:inset 0 -3px 0 var(--rar1)} .cd.rar2{box-shadow:inset 0 -3px 0 var(--rar2)}
 .legend .rar0{background:var(--rar0)} .legend .rar1{background:var(--rar1)} .legend .rar2{background:var(--rar2)}
 
-/* places too small to hit: a dot that keeps its size on screen (a zero-length stroke with round caps) */
-#regions .r.dot{--fill:color-mix(in oklab,var(--ink) 38%,var(--land));fill:none;stroke:var(--fill);stroke-width:var(--dot,11px);stroke-linecap:round;stroke-opacity:1}
-#regions .r.dot.out{--fill:color-mix(in oklab,var(--ink) 14%,var(--sea))}
-#regions .r.dot.got{--fill:var(--ok)} #regions .r.dot.t2{--fill:var(--t2)} #regions .r.dot.t3{--fill:var(--t3)} #regions .r.dot.miss{--fill:var(--bad)}
-#regions .r.dot.ans,#regions .r.dot.sel{--fill:var(--yellow);stroke-width:calc(var(--dot,11px) * 1.55)}
-#regions .r.dot.flash{--fill:var(--bad)}
-
 @media (max-width:760px){
   /* the picture as tall as a fifth of the screen and as wide as that makes it, in the middle: no black bars beside it,
      and the map below gets the room they took */

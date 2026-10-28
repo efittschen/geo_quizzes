@@ -4,9 +4,11 @@
 // Clear, and Blurred (the picture blurred until answered), each with its own best results and review cards. Rounds:
 // one per part of the country, then all flags. A page loads its map (data.js, geo.js), sets FLAGS, then loads this
 // file and area-quiz.js:
-//   FLAGS = { key, alt, map, parts, items, areaName }
+//   FLAGS = { key, alt, map, parts, items, areaName, noun, looks }
 //     key       localStorage prefix
 //     alt       what the pictures are ('state flag')
+//     noun      what one and several are called (default ['flag', 'flags']: other pictures of a place, ['plate', 'plates'])
+//     looks     false: the pictures are not flags, so no flat / waving / hanging switch (default true)
 //     map       the map's part of the QUIZ config: { areas, context, geo, proj, kpu, street, size, pad, maxZoom,
 //               labelScale, fly } (area-quiz.js); geo, so that mercator.js redraws the map in Web Mercator
 //     parts     the parts of the country, in order: a round each
@@ -29,15 +31,16 @@ const QUIZ = (() => {
   const about = id => [ITEM[id].what, ITEM[id].part].filter(Boolean).join(' · ');
   const said = a => (AT[a] ? [...new Set(AT[a].map(id => ITEM[id].name))].join(' · ') : F.areaName ? F.areaName(a) : '');
   const GROUPS = F.parts.map(title => ({ title, sub: '', ids: ALL.filter(id => ITEM[id].part === title) }));
+  const NOUN = F.noun || ['flag', 'flags'], NOUNS = NOUN[1][0].toUpperCase() + NOUN[1].slice(1);
   const kind = (key, label, lang, cls, more = {}) => ({
-    key, label, lang, sub: `${ALL.length} flags`, noun: ['flag', 'flags'], pickTitle: 'Flags to practice',
+    key, label, lang, sub: `${ALL.length} ${NOUN[1]}`, noun: NOUN, pickTitle: `${NOUNS} to practice`,
     groups: GROUPS,
     areasOf: id => ITEM[id].areas,
     areaRank: false, hints: false,
     short: id => ITEM[id].short || ITEM[id].name, name: id => ITEM[id].name, about,
     clicked: said,
     prompt: 'photo', photo: id => flag(id, cls),
-    modes: ['list', 'type', 'pairs'], looks: true,
+    modes: ['list', 'type', 'pairs'], looks: F.looks !== false,
     chip: id => ITEM[id].name, chipTitle: id => ITEM[id].what || ITEM[id].part,
     ...more,
   });
@@ -47,13 +50,13 @@ const QUIZ = (() => {
     ...F.map,
     hintLabel: '', hintsDefault: false,
     langsAlways: true, // every round box shows Clear | Blurred
-    exploreKind: 'flags',
+    exploreKind: NOUN[1],
     explore: a => {
       const flags = AT[a] || [], own = F.areaName && F.areaName(a), names = said(a);
       return { code: F.areaCode ? F.areaCode(a) : [...new Set(flags.map(id => ITEM[id].short || id))].join(' '),
         title: own || names, sub: [own && own !== names ? names : '', ...new Set(flags.map(id => ITEM[id].part))].filter(Boolean), photos: flags.map(id => flag(id)) };
     },
-    rounds: [...GROUPS.filter(g => g.ids.length).map(g => ({ kind: 'flags', label: g.title, groups: [g.title] })), { kind: 'flags', label: 'All flags' }],
-    kinds: [kind('flags', 'Flags', 'Clear', ''), kind('blurred', 'Blurred flags', 'Blurred', 'blur', { of: 'flags' })],
+    rounds: [...GROUPS.filter(g => g.ids.length).map(g => ({ kind: 'flags', label: g.title, groups: [g.title] })), { kind: 'flags', label: `All ${NOUN[1]}` }],
+    kinds: [kind('flags', NOUNS, 'Clear', ''), kind('blurred', `Blurred ${NOUN[1]}`, 'Blurred', 'blur', { of: 'flags' })], // (the keys stay 'flags' whatever the noun: saved results and cards use them)
   };
 })();

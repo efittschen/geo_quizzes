@@ -5,7 +5,7 @@
 
 const LAYERS = {
   key: "skregions",
-  size: [1000,496],
+  size: [1000, 498],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.25,

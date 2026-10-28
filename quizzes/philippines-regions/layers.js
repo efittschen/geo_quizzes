@@ -9,7 +9,7 @@
 const LAYERS = {
   key: "phregions",
   borders: "[DATA.rb]",
-  size: [1000,1365],
+  size: [1000, 1723],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

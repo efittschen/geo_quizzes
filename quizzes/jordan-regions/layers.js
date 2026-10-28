@@ -5,7 +5,7 @@
 
 const LAYERS = {
   key: "joregions",
-  size: [1000,1127],
+  size: [1000, 1131],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.24,

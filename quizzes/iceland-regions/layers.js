@@ -9,7 +9,7 @@
 const LAYERS = {
   key: "isregions",
   borders: "[DATA.rb]",
-  size: [1000,709],
+  size: [1000, 700],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

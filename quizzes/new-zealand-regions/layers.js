@@ -7,7 +7,7 @@
 const LAYERS = {
   key: "nzregions",
   context: "DATA.inset",
-  size: [1000,1440],
+  size: [1000, 985],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

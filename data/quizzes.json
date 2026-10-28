@@ -1237,8 +1237,7 @@
       "country": "840",
       "title": "Bollards",
       "levels": 4,
-      "url": "quizzes/us-bollards/index.html",
-      "hidden": true
+      "url": "quizzes/us-bollards/index.html"
     },
     {
       "id": "argentina-routes",
@@ -3247,6 +3246,13 @@
       "url": "quizzes/world-countries/index.html"
     },
     {
+      "id": "world-places",
+      "scope": "World",
+      "title": "Easy to Hard",
+      "levels": 0,
+      "url": "quizzes/world-places/index.html"
+    },
+    {
       "id": "world-driving-side",
       "scope": "World",
       "title": "Driving Side",
@@ -3263,10 +3269,10 @@
     {
       "id": "world-bollards",
       "scope": "World",
+      "area": "Roads",
       "title": "Bollards",
       "levels": 4,
-      "url": "quizzes/world-bollards/index.html",
-      "hidden": true
+      "url": "quizzes/world-bollards/index.html"
     },
     {
       "id": "world-flags",
@@ -3292,50 +3298,50 @@
     {
       "id": "africa-bollards",
       "scope": "Africa",
+      "area": "Roads",
       "title": "Bollards",
       "levels": 3,
-      "url": "quizzes/africa-bollards/index.html",
-      "hidden": true
+      "url": "quizzes/africa-bollards/index.html"
     },
     {
       "id": "asia-bollards",
       "scope": "Asia",
+      "area": "Roads",
       "title": "Bollards",
       "levels": 4,
-      "url": "quizzes/asia-bollards/index.html",
-      "hidden": true
+      "url": "quizzes/asia-bollards/index.html"
     },
     {
       "id": "europe-bollards",
       "scope": "Europe",
+      "area": "Roads",
       "title": "Bollards",
       "levels": 4,
-      "url": "quizzes/europe-bollards/index.html",
-      "hidden": true
+      "url": "quizzes/europe-bollards/index.html"
     },
     {
       "id": "north-america-bollards",
       "scope": "North America",
+      "area": "Roads",
       "title": "Bollards",
       "levels": 4,
-      "url": "quizzes/north-america-bollards/index.html",
-      "hidden": true
+      "url": "quizzes/north-america-bollards/index.html"
     },
     {
       "id": "oceania-bollards",
       "scope": "Oceania",
+      "area": "Roads",
       "title": "Bollards",
       "levels": 3,
-      "url": "quizzes/oceania-bollards/index.html",
-      "hidden": true
+      "url": "quizzes/oceania-bollards/index.html"
     },
     {
       "id": "south-america-bollards",
       "scope": "South America",
+      "area": "Roads",
       "title": "Bollards",
       "levels": 4,
-      "url": "quizzes/south-america-bollards/index.html",
-      "hidden": true
+      "url": "quizzes/south-america-bollards/index.html"
     },
     {
       "id": "cyrillic-letters",

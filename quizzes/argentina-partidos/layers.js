@@ -5,7 +5,7 @@
 
 const LAYERS = {
   key: "arpartidos",
-  size: [1000,1431],
+  size: [1000, 1455],
   pad: 16,
   maxZoom: 60,
   labelScale: 0.16,

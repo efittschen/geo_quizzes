@@ -6,7 +6,7 @@
 
 const LAYERS = {
   key: "czregions",
-  size: [1000,575],
+  size: [1000, 573],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.25,

@@ -441,7 +441,7 @@ window.areaReview = E => {
   // engine must hold the calls returned below before a round starts.)
   if (new URLSearchParams(location.search).has('review')) queueMicrotask(travel);
 
-  // The map picked during the review, as far as this page has it: a map ("quiz", "overlay", "street", "bare") where its
+  // The map picked during the review, as far as this page has it: a map ("quiz", "overlay", "street", "bare", "sat") where its
   // cards are asked on one, and a background where they are asked with one (a city quiz).
   function lookFor(mode) {
     const l = S.look, out = {};

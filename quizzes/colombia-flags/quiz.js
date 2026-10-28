@@ -18,10 +18,10 @@ const DEPTS = [
 const FLAGS = {
   key: 'coflags', alt: 'department flag',
   map: {
-    areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, g: '' })), context: DATA.ctx,
-    geo: GEO, proj: DATA.proj, kpu: DATA.kpu, // the map redrawn in Web Mercator (mercator.js), the street map under it
+    areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' })), context: DATA.ctx,
+    proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
     street: {"bounds":[[-4.3,-79.1],[12.6,-66.8]],"maxBounds":[[-10,-90],[18,-60]]},
-    size: [1000, 1468], pad: 16, maxZoom: 30, labelScale: 0.3, fly: { pad: 1.6, min: 0.05 },
+    size: [1000, 1192], pad: 16, maxZoom: 30, labelScale: 0.3, fly: { pad: 1.6, min: 0.05 },
   },
   parts: ['Andes north', 'Andes south', 'Caribbean', 'Pacific', 'Llanos', 'Amazon'],
   items: DEPTS.map(([id, dane, part]) => [id, NAME['d' + dane], part, ['d' + dane]]),

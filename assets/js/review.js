@@ -34,7 +34,7 @@ function dueWhen(ts, now) {
 const SHORT_NAMES = { "United States of America": "USA", "United Kingdom": "UK", "United Arab Emirates": "UAE" };
 // A city quiz (its maps: by distance, or the dots), and the maps a quiz's cards can be on, as its page says them.
 const cityOf = (d) => d.quiz.role === "cities";
-const looksOf = (d) => SRS.looksOf(d.id) ?? (cityOf(d) ? ["free", "quiz"] : ["quiz", "overlay", "street", "bare"]);
+const looksOf = (d) => SRS.looksOf(d.id) ?? (cityOf(d) ? ["free", "quiz"] : ["quiz", "overlay", "street", "bare", "sat"]);
 // A row's actions behind ⋯ (a select: on a phone its own list): groups of [label, value] under their headings, then
 // Remove where there is remove(); act(value) or remove() does it and says whether anything changed, and changed()
 // follows if so.
@@ -161,7 +161,7 @@ function render(index, nameByCode) {
     // the quizzes that have it; or all of them off the stack.
     const targets = new Map(), kindOfQuiz = (d) => (cityOf(d) ? "c" : "a");
     for (const d of list) for (const x of looksOf(d)) targets.set(`${kindOfQuiz(d)}:${x}`, lookLabel(x, cityOf(d)));
-    const ORDER = ["a:quiz", "a:overlay", "a:street", "a:bare", "c:free", "c:quiz"], rank = (k) => (ORDER.indexOf(k) + 1 || 99);
+    const ORDER = ["a:quiz", "a:overlay", "a:street", "a:bare", "a:sat", "c:free", "c:quiz"], rank = (k) => (ORDER.indexOf(k) + 1 || 99);
     const placeMenu = moreMenu(`“${place}”`, [["Convert to", [...targets].sort((a, b) => rank(a[0]) - rank(b[0])).map(([k, label]) => [label, k])]], (k) => {
       const [q, x] = k.split(":");
       return converting(`“${place}”`, targets.get(k), list.filter((d) => kindOfQuiz(d) === q && looksOf(d).includes(x)).map((d) => [d.id, null, null, x]));
@@ -318,9 +318,10 @@ function renderDue(decks, placeOf, now) {
 }
 
 // The name of a map cards are played on (their look, see srs.js): the quiz map, the overlay, the street map, the bare
-// map; in a city quiz the map by distance or the dots, on the drawn map, the overlay, the street map or the bare map.
+// map, the satellite map; in a city quiz the map by distance or the dots, on the drawn map, the overlay, the street
+// map, the bare map or the satellite map.
 function lookLabel(look, city) {
-  const NAMES = { quiz: "Quiz map", overlay: "Overlay", street: "Street map", bare: "Bare map" };
+  const NAMES = { quiz: "Quiz map", overlay: "Overlay", street: "Street map", bare: "Bare map", sat: "Satellite" };
   const [map, back] = look.split("+");
   if (!city && map !== "free") return NAMES[map] ?? map;
   return (map === "free" ? "Map" : "Dots") + (back ? ` · ${NAMES[back] ?? back}` : "");

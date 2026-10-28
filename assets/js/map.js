@@ -100,7 +100,14 @@ function renderQuizList(index, nameByCode, suites) {
     return ul;
   };
   const byName = ([a], [b]) => a.localeCompare(b);
-  const own = (area) => (whole.has(area) ? [files(whole.get(area), "files own")] : []);
+  // The world's or a continent's own quizzes: those with an `area` (a subject: Signs, Roads…) in a folder each.
+  const own = (area) => {
+    if (!whole.has(area)) return [];
+    const loose = whole.get(area).filter((q) => !q.area), subjects = new Map();
+    for (const q of whole.get(area)) if (q.area) subjects.set(q.area, [...(subjects.get(q.area) ?? []), q]);
+    return [...(loose.length ? [files(loose, "files own")] : []),
+      ...[...subjects].sort(byName).map(([subject, quizzes]) => folder(`${area}/${subject}`, "place", subject, quizzes, [files(quizzes, "files")]))];
+  };
   if (whole.has(WORLD_SCOPE)) tree.append(folder(WORLD_SCOPE, "continent", WORLD_SCOPE, whole.get(WORLD_SCOPE), own(WORLD_SCOPE)));
   if (scripts.size) {
     tree.append(folder(LANGUAGE_SCOPE, "continent", LANGUAGE_SCOPE, [...scripts.values()].flat(), [...scripts].sort(byName).map(([script, quizzes]) => {

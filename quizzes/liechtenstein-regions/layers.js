@@ -6,7 +6,7 @@
 
 const LAYERS = {
   key: "liregions",
-  size: [1000,1990],
+  size: [1000, 2000],
   pad: 16,
   maxZoom: 12,
   labelScale: 0.3,

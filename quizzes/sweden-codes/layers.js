@@ -7,7 +7,7 @@
 const LAYERS = {
   key: "secodes",
   phone: true, // phone area codes: each layer of codes is played the other way round too, the code typed (layer-config.js)
-  size: [700,1565],
+  size: [700, 1590],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.3,

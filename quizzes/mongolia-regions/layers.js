@@ -9,7 +9,7 @@
 
 const LAYERS = {
   key: "mnregions",
-  size: [1000,498],
+  size: [1000, 483],
   pad: 16,
   maxZoom: 60,
   labelScale: 0.22,

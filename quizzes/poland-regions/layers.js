@@ -4,7 +4,7 @@
 
 const LAYERS = {
   key: "plregions",
-  size: [1000,935],
+  size: [1000, 946],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.3,

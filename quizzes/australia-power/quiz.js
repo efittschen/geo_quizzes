@@ -40,11 +40,11 @@ const inStates = (...st) => IDS.filter(id => NET[id].st.some(s => st.includes(s)
 
 const QUIZ = {
   key: 'aupower',
-  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, g: r.op })),
+  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: r.op })),
   borders: [STATE_LINES],
   context: DATA.ctx,
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 60, labelScale: 0.25, fly: { pad: 1.6, min: 1 / 60 },
-  geo: GEO,
+  proj: DATA.proj, kpu: DATA.kpu,
   street: { bounds: [[-43.7, 113], [-10.6, 153.7]], maxBounds: [[-50, 95], [0, 170]] },
   hintLabel: 'Color each network',
   exploreKind: 'net',

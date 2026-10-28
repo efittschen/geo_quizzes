@@ -10,7 +10,7 @@
 
 const LAYERS = {
   key: "sgregions",
-  size: [1000,647],
+  size: [1000, 648],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.25,

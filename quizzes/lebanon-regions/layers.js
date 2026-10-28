@@ -5,7 +5,7 @@
 
 const LAYERS = {
   key: "lbregions",
-  size: [1000,1293],
+  size: [1000, 1297],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.24,

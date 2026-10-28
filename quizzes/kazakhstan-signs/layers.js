@@ -8,7 +8,7 @@
 
 const LAYERS = {
   key: "kzsigns",
-  size: [1000,563],
+  size: [1000, 550],
   pad: 16,
   maxZoom: 30,
   labelScale: 0.3,
@@ -16,7 +16,7 @@ const LAYERS = {
   street: {"bounds":[[40.6,46.5],[55.4,87.3]],"maxBounds":[[34,38],[60,95]]},
   hintLabel: "Color regions",
   exploreKind: "signs",
-  d: {"almaty":"M770.9,445a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z","astana":"M603.8,160.4a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z","shymkent":"M570.9,495.8a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z"},
+  d: {"almaty":"M737.8,462.5a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z","astana":"M604,177.1a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z","shymkent":"M558,492.9a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z"},
   top: ["almaty","astana","shymkent"],
   kinds: [
     {

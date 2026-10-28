@@ -11,7 +11,7 @@
 
 const LAYERS = {
   key: "mystates",
-  size: [1000,336],
+  size: [1000, 333],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.3,
@@ -19,7 +19,7 @@ const LAYERS = {
   street: {"bounds":[[0.8,99.6],[7.4,119.3]],"maxBounds":[[-6,90],[14,128]]},
   hintLabel: "Color each state",
   exploreKind: "states",
-  d: {"KUL":"M96.8,214.8a5.5,5.5 0 1,0 11,0a5.5,5.5 0 1,0 -11,0z","PJY":"M98.2,226.6a4.5,4.5 0 1,0 9,0a4.5,4.5 0 1,0 -9,0z"},
+  d: {"KUL":"M98.5,214.5a5.5,5.5 0 1,0 11,0a5.5,5.5 0 1,0 -11,0z","PJY":"M100,226.3a4.5,4.5 0 1,0 9,0a4.5,4.5 0 1,0 -9,0z"},
   top: ["KUL","PJY"],
   kinds: [
     {

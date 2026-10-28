@@ -20,7 +20,10 @@
      tiles.bare().show(on)      the bare map: the street map without any borders, nor the names of states and
                                 countries (OpenStreetMap's tiles with them taken out, see BARE_TILES; Google's drawn
                                 without them)
-     tiles.street(look)         shows the street map as it looks, 'street' or 'bare', and hides the other (null: both)
+     tiles.sat().show(on)       the satellite map: Sentinel-2 photos from above (EOX's cloudless mosaic, see SAT), no
+                                names, roads or borders on them; never Google's
+     tiles.street(look)         shows the street map as it looks, 'street', 'bare' or 'sat', and hides the others
+                                (null: all)
      tiles.coverage(dir, meta).show(on)   Street View coverage (data/coverage and its meta.json, see the README), a
                                 canvas over the map, blended into it
      tiles.insets               { box, land }: SVG paths of the insets' frames and of the land in them. An inset
@@ -328,12 +331,26 @@ function mapTiles(stage, C, AHEAD = 192) {
     layers.push(me);
     return me;
   }
-  // The street map as it looks: 'street' (its tiles as they are) or 'bare' (with the borders taken out); and for each,
-  // whether it is shown and, with Google's tiles, what asks Google for the credit of the tiles in view.
+  // The street map as it looks: 'street' (its tiles as they are), 'bare' (with the borders taken out) or 'sat' (the
+  // satellite map); and for each, whether it is shown and, with Google's tiles, what asks Google for the credit of the
+  // tiles in view.
   const looks = {}, shown = {}, owed = {};
   let credit = null, osm = null, coverage = null;
+  const backed = () => { stage.classList.toggle('streets', !!(shown.street || shown.bare || shown.sat)); stage.classList.toggle('sat', !!shown.sat); };
+  // The satellite map: EOX's cloudless mosaic of the Sentinel-2 photos of 2025 (as MapTap's photos, Sentinel-2's), up
+  // to zoom level 8 as MapTap has them for free, enlarged closer in. Free with this credit, not for commercial use.
+  const SAT = (z, x, y) => `https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/${z}/${y}/${x}.jpg`;
+  const EOX = '<a href="https://cloudless.eox.at">EOxCloudless</a> by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2025)';
+  function satellite() {
+    const note = said(' · Satellite ' + EOX + ', <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>');
+    const own = credits ? document.createElement('span') : null;
+    if (own) { own.className = 'sat'; own.innerHTML = '&copy; <a href="https://cloudless.eox.at">EOX</a> · Copernicus Sentinel data 2025'; own.hidden = true; credits.prepend(own); }
+    return layer({ id: 'sat', size: 256, minZ: 1, maxZ: 8, url: SAT,
+      shown(yes) { shown.sat = yes; note.hidden = !yes; if (own) own.hidden = !yes; backed(); } });
+  }
   function street(look) {
     if (looks[look]) return looks[look];
+    if (look === 'sat') return looks.sat = satellite();
     // one credit for both: in the page's list, and on the map itself unless the page shows it anyway
     if (!credit) {
       credit = said(' · Street map ' + OSM + ' contributors'); osm = credits && !credits.querySelector('.osm') ? document.createElement('span') : null;
@@ -388,7 +405,7 @@ function mapTiles(stage, C, AHEAD = 192) {
         shown[look] = yes;
         if (yes) credited(text);
         const any = shown.street || shown.bare;
-        credit.hidden = !any; if (osm) osm.hidden = !any; stage.classList.toggle('streets', !!any);
+        credit.hidden = !any; if (osm) osm.hidden = !any; backed();
         if (yes && owed[look]) owed[look]();
       } });
   }
@@ -397,8 +414,9 @@ function mapTiles(stage, C, AHEAD = 192) {
     view(x, y, k) { want = { x, y, k }; for (const l of layers) l.moved(); for (const l in owed) if (owed[l] && shown[l]) owed[l](); },
     streets: () => street('street'),
     bare: () => street('bare'),
-    // The street map shown as it looks ('street' or 'bare'), the other hidden; null: neither.
-    street(look) { for (const l of ['street', 'bare']) if (l !== look && looks[l]) looks[l].show(false); if (look) street(look).show(true); },
+    sat: () => street('sat'),
+    // The street map shown as it looks ('street', 'bare' or 'sat'), the others hidden; null: none.
+    street(look) { for (const l of ['street', 'bare', 'sat']) if (l !== look && looks[l]) looks[l].show(false); if (look) street(look).show(true); },
     coverage(dir, meta) {
       if (coverage) return coverage;
       const have = Object.fromEntries(Object.entries(meta.tiles).map(([z, l]) => [z, new Set(l)]));

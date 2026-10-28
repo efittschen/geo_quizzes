@@ -9,7 +9,7 @@
 
 const LAYERS = {
   key: "brcep",
-  size: [1000,919],
+  size: [1000, 1051],
   pad: 18,
   maxZoom: 20,
   labelScale: 0.42,

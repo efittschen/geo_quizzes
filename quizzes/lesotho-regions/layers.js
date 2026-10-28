@@ -10,7 +10,7 @@
 const LAYERS = {
   key: "lsregions",
   borders: "[DATA.db]",
-  size: [1000,990],
+  size: [1000, 992],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

@@ -81,10 +81,10 @@ const letterInVolga = id => letterAreas(id).some(a => VOLGA.includes(a));
 
 const QUIZ = {
   key: 'rulangs',
-  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, g: FAMILY[r.id] || 'none' })),
+  areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: FAMILY[r.id] || 'none' })),
   borders: DATA.fd,
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 45, labelScale: 0.3, fly: { pad: 1.6, min: 1 / 30 },
-  geo: GEO,
+  proj: DATA.proj, kpu: DATA.kpu,
   street: { bounds: [[41.2, 19.6], [77.7, 190]], maxBounds: [[25, 0], [86, 215]] },
   hintLabel: 'Color by language family',
   exploreKind: 'langs',

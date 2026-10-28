@@ -4,7 +4,7 @@
 const LAYERS = {
   key: "zaprov",
   map: {"paths":"DATA.ent","cols":{"id":["pv0","pv1","pv2","pv3","pv4","pv5","pv6","pv7","pv8"],"name":["Western Cape","Limpopo","Eastern Cape","Northern Cape","KwaZulu-Natal","North West","Free State","Gauteng","Mpumalanga"]}},
-  size: [1100,964],
+  size: [1100, 969],
   pad: 16,
   maxZoom: 30,
   labelScale: 0.25,

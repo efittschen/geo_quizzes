@@ -5,7 +5,7 @@
 
 const LAYERS = {
   key: "idregions",
-  size: [2000,738],
+  size: [2000, 739],
   pad: 40,
   maxZoom: 60,
   labelScale: 0.22,

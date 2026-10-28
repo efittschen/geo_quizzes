@@ -10,7 +10,7 @@
 
 const LAYERS = {
   key: "laregions",
-  size: [1000,1198],
+  size: [1000, 1201],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.25,

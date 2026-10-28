@@ -28,6 +28,10 @@ const file = path.join(ROOT, 'quizzes', `${Q.slug}-cities`, 'cities.js'), page =
 const oldFile = path.join(WORK, 'old', `${Q.slug}-cities.js`), src = fs.readFileSync(fs.existsSync(oldFile) ? oldFile : file, 'utf8'), ctx = {}; vm.createContext(ctx);
 vm.runInContext(src.replace('const CITIES', 'var CITIES'), ctx);
 const C = ctx.CITIES, OLD = Object.fromEntries(C.list.map(c => [c.id, c]));
+// the map itself (its land, lines, projection and size): the file as it is now, made ready in Web Mercator
+// (tools/builds/mercator); every town is placed on it by its latitude and longitude
+{ const now = {}; vm.createContext(now); vm.runInContext(fs.readFileSync(file, 'utf8').replace('const CITIES', 'var CITIES'), now);
+  for (const k of ['w', 'h', 'kpu', 'proj', 'land', 'lines', 'span', 'world', 'ctx', 'inset']) { if (k in now.CITIES) C[k] = now.CITIES[k]; else delete C[k]; } }
 const ids = L.levels.flatMap(l => l.new), cut = L.levels.map(l => l.k);
 
 // the local language of a region: what the old list's towns there are in
@@ -77,8 +81,7 @@ const NAMEFIX = {
 };
 const bare = (name, lang) => (AFFIX[lang] || []).reduce((s, re) => s.replace(re, ''), name).trim();
 const list = ids.map(id => {
-  if (OLD[id] && FIX[cc]?.[id]) { const c = { ...OLD[id], ...FIX[cc][id] }, [x, y] = proj([c.lng, c.lat]); return { ...c, x: round(x, 1), y: round(y, 1) }; }
-  if (OLD[id]) return OLD[id];
+  if (OLD[id]) { const c = { ...OLD[id], ...FIX[cc]?.[id] }, [x, y] = proj([c.lng, c.lat]); delete c.k; return { ...c, x: round(x, 1), y: round(y, 1) }; }
   const t = TOWNS[id], lang = langOf(t.adm), nm = NAMES[id] || {}, [x, y] = proj([t.lng, t.lat]);
   const admin = /\b(gewog|district|union|upazila|municipality|commune|township|county|province|region|prefecture|department|parish|ward|division|rural|urban|council)\b|[,(]/i;
   const c = { id, en: bare(nm.en && !admin.test(nm.en) ? nm.en : t.name, 'en'), local: lang === 'en' ? null : (nm[lang] && bare(nm[lang].split(/\s*[,(（]/)[0], lang)) || null, lang, lat: round(t.lat, 4), lng: round(t.lng, 4), x: round(x, 1), y: round(y, 1), pop: t.pop, adm: t.adm, fc: t.fc };

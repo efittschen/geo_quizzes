@@ -9,10 +9,10 @@ const PARTS = [['West', ['BC', 'AB', 'SK', 'MB']], ['East', ['ON', 'QC', 'NB', '
 const FLAGS = {
   key: 'caflags', alt: 'province flag',
   map: {
-    areas: PROVINCES.map(p => ({ id: p.id, d: p.d, lx: p.lx, ly: p.ly, a: p.a, g: '' })), context: DATA.ctx,
-    geo: GEO, // the map redrawn in Web Mercator (mercator.js), the street map under it
+    areas: PROVINCES.map(p => ({ id: p.id, d: p.d, lx: p.lx, ly: p.ly, a: p.a, s: p.s, g: '' })), context: DATA.ctx,
+    proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
     street: {"bounds":[[41.7,-141],[62,-52.6]],"maxBounds":[[35,-175],[85,-40]]},
-    size: [1200, 1031], pad: 16, maxZoom: 40, labelScale: 0.2, fly: { pad: 1.6, min: 0.04 },
+    size: [1200, 1564], pad: 16, maxZoom: 40, labelScale: 0.2, fly: { pad: 1.6, min: 0.04 },
   },
   parts: PARTS.map(([part]) => part),
   items: PARTS.flatMap(([part, ids]) => ids.map(id => [id, PROV[id].name, part, [PROV[id].id], { short: id }])),

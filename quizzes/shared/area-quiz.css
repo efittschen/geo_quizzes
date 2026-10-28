@@ -142,10 +142,17 @@ body{overflow:hidden}
 .dots.hints .r,.dots.hints.fade .r{--fill:color-mix(in oklab,var(--hint,var(--ink)) 55%,var(--ink))}
 .dots #regions .r.out{visibility:hidden}
 .dots #hl path{fill:none;stroke-linecap:round;stroke-width:calc(var(--dot,11px) * 2);stroke-opacity:.3}
+.dots.ground #hl path{display:none}   /* (dots of a size on the ground, city-config.js dotKm: the dot marks the place, no ring sized for tapping) */
 .dots #ansUse{stroke:var(--yellow);animation:dotpulse 1s ease-in-out infinite alternate}
 @keyframes dotpulse{from{stroke-width:calc(var(--dot,11px) * 1.45);stroke-opacity:.35}to{stroke-width:calc(var(--dot,11px) * 2.55);stroke-opacity:.8}}
 /* city quizzes played on the map (Q.free): dots stay hidden until answered; the last guess is joined to its city */
 .dots.freeplay #regions .r:not(.got):not(.t2):not(.t3):not(.miss){visibility:hidden}
+/* an area too small to hit (dot: true, any area quiz): a dot that keeps its size on screen (a zero-length stroke with round caps) */
+#regions .r.dot{--fill:color-mix(in oklab,var(--ink) 38%,var(--land));fill:none;stroke:var(--fill);stroke-width:var(--dot,11px);stroke-linecap:round;stroke-opacity:1}
+#regions .r.dot.out{--fill:color-mix(in oklab,var(--ink) 14%,var(--sea))}
+#regions .r.dot.got{--fill:var(--ok)} #regions .r.dot.t2{--fill:var(--t2)} #regions .r.dot.t3{--fill:var(--t3)} #regions .r.dot.miss{--fill:var(--bad)}
+#regions .r.dot.ans,#regions .r.dot.sel{--fill:var(--yellow);stroke-width:calc(var(--dot,11px) * 1.55)}
+#regions .r.dot.flash{--fill:var(--bad)}
 svg#map.freeplay:not(.grab){cursor:crosshair}
 #free line{stroke:var(--ink);stroke-width:2;stroke-dasharray:6 4;vector-effect:non-scaling-stroke;pointer-events:none}
 #free circle{fill:var(--panel);stroke:var(--ink);stroke-width:2.5;vector-effect:non-scaling-stroke;pointer-events:none}
@@ -172,6 +179,9 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
 .bigname.signed{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .bigname.signed svg{display:block;height:clamp(96px,20vh,170px);width:auto;max-width:100%}
 .bigname .signcap{font:600 .95rem/1.2 var(--sans);color:var(--muted)}
+/* A page of one round (area-quiz.js, Q.single): only its Start; each question with its tier (Easy ×1) */
+.single #setup > .group:first-child,.single #exploreBtn,.single #statsBtn,.single #learnBtn,.single #folders,.single .mapbar{display:none!important}
+.bigname .tier{display:block;margin-bottom:6px;font:700 .78rem/1.4 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 /* the sound switch in the round's panel (a kind with say): filled while the sound is on */
 #soundBtn[aria-pressed="true"]{background:var(--btn);border-color:var(--btn);color:var(--btnink)}
 /* a typed answer (a kind with typed): the field under the prompt */
@@ -186,6 +196,10 @@ svg#map.freeplay:not(.grab){cursor:crosshair}
 .picklist .opt{appearance:none;text-align:left;padding:7px 12px;border:0;border-radius:8px;background:transparent;color:var(--ink);font:500 1rem/1.2 var(--sans);cursor:pointer}
 .picklist .opt:hover{background:color-mix(in srgb,var(--ink) 7%,transparent)}
 .picklist .opt.on{background:var(--ink);color:var(--panel)}
+/* Name it (MODES in area-quiz.js), on every screen: the list hangs right under the field, the answer under the list */
+.naming #play > *{order:2}
+.naming #play > .bigname,.naming #play > .typed,.naming #play > .picklist{order:0}
+.naming #play > .ask,.naming #play > .rv-timer,.naming #play > .feedback{order:1}
 /* the button by the field that folds the list away (to the one name marked) and back */
 .typed .listbtn{flex:none;display:grid;place-items:center;width:40px;padding:0;border:1.5px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);cursor:pointer}
 .typed .listbtn:hover{border-color:var(--ink)}
@@ -276,13 +290,13 @@ svg#map.mine #regions .r.out{pointer-events:auto}
 .corner .zoom{position:static;margin-right:14px;pointer-events:auto}
 .credits{display:flex;align-items:flex-end}
 .credits > *{pointer-events:auto}
-.credits .osm,.note{margin:0;font-size:.7rem;line-height:1.35;color:var(--muted);background:color-mix(in srgb,var(--panel) 85%,transparent)}
-.credits .osm{padding:2px 8px;white-space:nowrap}
+.credits .osm,.credits .sat,.note{margin:0;font-size:.7rem;line-height:1.35;color:var(--muted);background:color-mix(in srgb,var(--panel) 85%,transparent)}
+.credits .osm,.credits .sat{padding:2px 8px;white-space:nowrap}
 .credits > :first-child{border-top-left-radius:6px}
 .credits a{color:inherit}
-.note{position:relative;width:1.7rem;height:1.45rem;overflow:hidden;white-space:nowrap;text-indent:-300vw;cursor:pointer}
+.note{position:relative;width:1.7rem;height:1.45rem;overflow:hidden;white-space:nowrap;font-size:0;cursor:pointer}   /* (closed: its text no size, however long) */
 .note::before{content:'©';position:absolute;inset:0;text-indent:0;text-align:center;font-size:.85rem;line-height:1.45rem}
-.note:hover,.note:focus,.note:focus-within{position:absolute;right:0;bottom:env(safe-area-inset-bottom,0px);z-index:1;width:max-content;max-width:100%;height:auto;padding:3px 8px;white-space:normal;text-indent:0;text-align:right;background:var(--panel);border-top-left-radius:6px;cursor:auto;outline:0}
+.note:hover,.note:focus,.note:focus-within{position:absolute;right:0;bottom:env(safe-area-inset-bottom,0px);z-index:1;width:max-content;max-width:100%;height:auto;padding:3px 8px;white-space:normal;font-size:.7rem;text-align:right;background:var(--panel);border-top-left-radius:6px;cursor:auto;outline:0}
 .note:hover::before,.note:focus::before,.note:focus-within::before{content:none}
 
 /* map */
@@ -290,6 +304,7 @@ svg#map.mine #regions .r.out{pointer-events:auto}
    moved as a whole while a finger moves the map: a layer of its own, so that moving it draws nothing again. */
 svg#map{position:relative;display:block;transform-origin:0 0;will-change:transform;touch-action:none;cursor:pointer;user-select:none;-webkit-user-select:none}
 svg#map.grab{cursor:grabbing}
+svg#map.zooming #labels{visibility:hidden}
 /* an area's color lives in --fill, so merged layouts can paint the seams between areas in it too */
 /* (an area's color changes at once: a fade would draw the map again for every step of it) */
 .r{--fill:var(--land);fill:var(--fill);stroke:var(--edge);stroke-width:.8;vector-effect:non-scaling-stroke;fill-rule:evenodd}
@@ -373,7 +388,9 @@ svg#map.blind #regions .r.sel{fill-opacity:.45;stroke:var(--ink);stroke-width:2}
 svg#map.blind #regions .r.ans{fill-opacity:.4}
 /* Street View coverage laid over a map: blended into it, so what is under it stays readable */
 #coverage{mix-blend-mode:multiply;opacity:.5}
-/* (on the dark quiz map it is lightened into it instead; the street map is light in either theme) */
+/* (on the dark quiz map it is lightened into it instead, and on the satellite map's dark photos; the street map is
+   light in either theme) */
+.stage.sat #coverage{mix-blend-mode:screen;opacity:.85}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .stage:not(.streets) #coverage{mix-blend-mode:screen;opacity:.85}}
 :root[data-theme="dark"] .stage:not(.streets) #coverage{mix-blend-mode:screen;opacity:.85}
 #ctx path.inset-box,#ctx path.inset-land{display:none}
@@ -513,12 +530,8 @@ svg#map.sketch.grab{cursor:grabbing}
   .feedback .c{font-size:.85rem}
   .stats b{font-size:1.2rem}
   .playing .panel{max-height:40vh;max-height:40dvh}
-  /* Name it (MODES in area-quiz.js): a little more room for the list, and the answer right under the field, where
-     it is seen above the list (the panel scrolls) */
+  /* Name it (MODES in area-quiz.js): a little more room for the list (the panel scrolls) */
   .naming.playing .panel{max-height:46vh;max-height:46dvh}
-  .naming #play > *{order:2}
-  .naming #play > .bigname,.naming #play > .typed{order:0}
-  .naming #play > .ask,.naming #play > .rv-timer,.naming #play > .feedback{order:1}
   .naming .picklist{max-height:24vh;max-height:24dvh}
   .startbar{margin:-2px -16px 0;padding:8px 16px 10px;gap:6px}
   .folders{margin-top:-9px}

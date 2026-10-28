@@ -14,7 +14,7 @@ const LAYERS = {
   key: "nzcodes",
   phone: true, // phone area codes: each layer of codes is played the other way round too, the code typed (layer-config.js)
   context: "DATA.inset",
-  size: [1000,1441],
+  size: [1000, 984],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.24,

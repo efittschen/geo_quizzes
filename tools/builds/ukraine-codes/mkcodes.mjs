@@ -3,14 +3,14 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { createRequire } from 'node:module';
-import { geoConicEqualArea } from 'd3-geo';
+import { projectionFrom } from '../../lib/geo.mjs';
 const require = createRequire(import.meta.url);
 const { translit, currentName } = require('./names.js');
 const { nameMatch } = require('./match.js');
 const OUT = decodeURIComponent(new URL('../../../../quizzes/ukraine-codes', import.meta.url).pathname);
 const placed = require('./placed.json'), assign = require('./assign.json');
 const ctx = {}; vm.createContext(ctx); vm.runInContext(fs.readFileSync(OUT + '/fine.js', 'utf8') + '\nthis.D = FINE;', ctx);
-const D = ctx.D, proj = geoConicEqualArea().parallels(D.proj.parallels).rotate(D.proj.rotate).scale(D.proj.scale).translate(D.proj.translate);
+const D = ctx.D, proj = projectionFrom(D.proj);
 const areaIds = new Set(D.reg.map(r => r.id));
 const unitsOf = {}; for (const u of assign.units) (unitsOf[u.code] ??= []).push(u);
 // names by hand where GeoNames has no current Ukrainian name for the place, or another spelling

@@ -11,7 +11,7 @@
 const LAYERS = {
   key: "tnregions",
   borders: "[DATA.gov]",
-  size: [1000,2144],
+  size: [1000, 2156],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.15,

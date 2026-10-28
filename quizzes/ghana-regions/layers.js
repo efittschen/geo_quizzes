@@ -6,7 +6,7 @@
 
 const LAYERS = {
   key: "ghregions",
-  size: [1000,1452],
+  size: [1000, 1457],
   pad: 16,
   maxZoom: 60,
   labelScale: 0.2,

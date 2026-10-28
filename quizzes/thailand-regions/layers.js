@@ -8,7 +8,7 @@
 
 const LAYERS = {
   key: "thregions",
-  size: [1000,1879],
+  size: [1000, 1845],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,

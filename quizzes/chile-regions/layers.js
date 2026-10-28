@@ -8,7 +8,7 @@
 
 const LAYERS = {
   key: "clregions",
-  size: [700,2242],
+  size: [700, 815],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.4,

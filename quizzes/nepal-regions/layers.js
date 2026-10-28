@@ -17,7 +17,7 @@
 
 const LAYERS = {
   key: "npregions",
-  size: [1000,569],
+  size: [1000, 573],
   pad: 16,
   maxZoom: 60,
   labelScale: 0.22,

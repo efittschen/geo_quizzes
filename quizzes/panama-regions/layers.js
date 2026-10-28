@@ -11,7 +11,7 @@
 const LAYERS = {
   key: "paregions",
   borders: "[DATA.prov]",
-  size: [1000,418],
+  size: [1000, 418],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.2,

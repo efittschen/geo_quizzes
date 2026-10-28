@@ -6,7 +6,7 @@
 
 const LAYERS = {
   key: "trroads",
-  size: [1200,556],
+  size: [1200, 508],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.26,

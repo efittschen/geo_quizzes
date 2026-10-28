@@ -11,7 +11,7 @@
 
 const LAYERS = {
   key: "rwregions",
-  size: [1000,881],
+  size: [1000, 881],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.25,

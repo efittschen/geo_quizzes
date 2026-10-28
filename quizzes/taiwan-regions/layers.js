@@ -6,7 +6,7 @@
 
 const LAYERS = {
   key: "twregions",
-  size: [1000,1282],
+  size: [1000, 1276],
   pad: 16,
   maxZoom: 60,
   labelScale: 0.2,

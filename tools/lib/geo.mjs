@@ -84,7 +84,12 @@ export function fitProjection(fc, width, pad = 0) {
 export function projectionDef(proj) {
   return { type: 'conicEqualArea', parallels: proj.parallels(), rotate: proj.rotate().slice(0, 2), scale: proj.scale(), translate: proj.translate() };
 }
+// A map's projection as its data file records it (DATA.proj, CITIES.proj): the equal-area conic a new map is drawn
+// in, or Web Mercator, as every quiz page's map is made ready (tools/builds/mercator, quizzes/shared/mercator.js:
+// x = (lng − lng0)·k, y = (y0 − Mercator's y in degrees)·k), turned to half a turn east of its west edge so that a
+// map over the 180th meridian (Russia) stays in one piece.
 export function projectionFrom(def) {
+  if (def.type === 'mercator') return d3.geoMercator().rotate([-(def.lng0 + 180), 0]).scale(def.k * 180 / Math.PI).translate([180 * def.k, def.y0 * def.k]);
   return d3.geoConicEqualArea().parallels(def.parallels).rotate(def.rotate).scale(def.scale).translate(def.translate);
 }
 

@@ -11,7 +11,7 @@
 
 const LAYERS = {
   key: "pyregions",
-  size: [1000,1082],
+  size: [1000, 1081],
   pad: 16,
   maxZoom: 60,
   labelScale: 0.12,

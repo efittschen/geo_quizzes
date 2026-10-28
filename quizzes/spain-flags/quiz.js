@@ -8,15 +8,15 @@ const AREAS_OF = {};
 for (const r of DATA.reg) (AREAS_OF[r.ccaa] ||= []).push(r.id);
 const community = (id, name, part) => [id, name, part, AREAS_OF[id], { short: id }];
 // Ceuta and Melilla drawn as dots, large enough to click (as on ../spain-regions)
-const DOT = {"p51":"M598.5,425.4a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z","p52":"M704.3,454.9a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z"};
+const DOT = {"p51":"M562.8,457.8a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z","p52":"M669.9,490.6a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z"};
 
 const FLAGS = {
   key: 'esflags', alt: 'regional flag',
   map: {
-    areas: DATA.reg.map(r => ({ id: r.id, d: DOT[r.id] || r.d, lx: r.lx, ly: r.ly, a: r.a, g: '', ...(DOT[r.id] ? { top: true } : {}) })), context: DATA.ctx,
-    geo: GEO, proj: DATA.proj, kpu: DATA.kpu, // the map redrawn in Web Mercator (mercator.js), the street map under it
+    areas: DATA.reg.map(r => ({ id: r.id, d: DOT[r.id] || r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '', ...(DOT[r.id] ? { top: true, real: r.d } : {}) })), context: DATA.ctx,
+    proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
     street: {"bounds":[[27.6,-18.2],[43.8,4.4]],"maxBounds":[[22,-25],[48,10]]},
-    size: [1000, 848], pad: 16, maxZoom: 40, labelScale: 0.25, fly: { pad: 1.6, min: 0.0375 },
+    size: [1000, 891], pad: 16, maxZoom: 40, labelScale: 0.25, fly: { pad: 1.6, min: 0.0375 },
   },
   parts: ['Northwest', 'Northeast', 'Centre and south', 'Islands and cities'],
   items: [

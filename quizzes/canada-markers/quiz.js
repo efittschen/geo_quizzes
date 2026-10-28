@@ -32,9 +32,11 @@ const GROUPS = [
 
 const QUIZ = {
   key: 'camarkers',
-  areas: PROVINCES.map(p => ({ id: p.id, d: p.d, lx: p.lx, ly: p.ly, a: p.a, g: '' })),
+  areas: PROVINCES.map(p => ({ id: p.id, d: p.d, lx: p.lx, ly: p.ly, a: p.a, s: p.s, g: '' })),
   borders: [],
   context: DATA.ctx,
+  proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+  street: {"bounds":[[41.7,-141],[62,-52.6]],"maxBounds":[[35,-175],[85,-40]]},
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.2, fly: { pad: 1.6, min: 0.04 },
   hintLabel: '', hintsDefault: false,
   exploreKind: 'photos',

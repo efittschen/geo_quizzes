@@ -6,7 +6,7 @@ const LAYERS = {
   map: ["DATA.ddd","c"],
   context: false,
   borders: "DATA.uf",
-  size: [1000,1000],
+  size: [1000, 1061],
   pad: 18,
   maxZoom: 14,
   labelScale: 0.42,

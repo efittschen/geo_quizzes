@@ -4,7 +4,7 @@
 
 const LAYERS = {
   key: "oncounties",
-  size: [1000,1084],
+  size: [1000, 1128],
   pad: 16,
   maxZoom: 40,
   labelScale: 0.22,
