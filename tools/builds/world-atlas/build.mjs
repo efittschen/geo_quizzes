@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// world-atlas: the countries of the home, country and review pages' world map (data/world.json, WORLD_URL in
+// world-atlas: the countries of the home, country and review pages' world map (data/site/world.json, WORLD_URL in
 // assets/js/common.js). world-atlas's countries-110m, light enough for a phone, lacks the smallest countries (Malta,
 // Andorra, San Marino, Liechtenstein, Singapore…), whose country pages then found no country. So this takes the
 // 110m countries and adds, from countries-50m, every country 110m does not have, in one TopoJSON with the same object
@@ -23,6 +23,6 @@ const have = new Set(base.map(f => f.id));
 const added = feature(large, large.objects.countries).features.filter(f => f.id && !have.has(f.id))
   .map(f => ({ ...f, properties: { ...f.properties, small: true } }));
 const world = topology({ countries: { type: 'FeatureCollection', features: [...base, ...added] } }, 1e5);
-const out = path.join(ROOT, 'data', 'world.json');
+const out = path.join(ROOT, 'data', 'site', 'world.json');
 fs.writeFileSync(out, JSON.stringify(world));
 console.log(`${base.length} countries of 110m + ${added.length} of 50m (${added.map(f => f.properties.name).slice(0, 12).join(', ')}…) → ${path.relative(ROOT, out)}, ${Math.round(fs.statSync(out).size / 1024)} KB`);

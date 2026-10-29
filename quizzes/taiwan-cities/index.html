@@ -10,21 +10,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Noto+Sans+TC:wght@500;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@500;600&family=Noto+Sans+TC:wght@500;600&family=Noto+Sans+SC:wght@500;600&family=Noto+Serif+TC:wght@600&family=LXGW+WenKai+TC&display=swap" rel="stylesheet" data-faces>
 <link rel="stylesheet" href="../../assets/css/base.css">
-<link rel="stylesheet" href="../shared/area-quiz.css">
-<link rel="stylesheet" href="../shared/faces.css">
-<link rel="stylesheet" href="../shared/city-quiz.css">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="../../engine/css/quiz-page.css">
+<link rel="stylesheet" href="../../engine/css/quiz-map.css">
+<link rel="stylesheet" href="../../engine/css/formats.css">
 </head>
-<body data-dial="(#) ····-····">
+<body data-han="tc" data-dial="(#) ····-····">
 <a class="back" href="../../country.html?code=158">← Taiwan</a>
 <h1>Taiwan Cities</h1>
 <p class="note">Population: Ministry of the Interior (2025) · Names &amp; borders: Ministry of the Interior, NLSC (Open Government Data License 1.0), via taiwan-atlas · Seats: OpenStreetMap contributors (ODbL), GeoNames (CC BY 4.0)</p>
-<script src="../shared/quiz-page.js"></script>
-<script src="cities.js"></script>
+<script src="../../engine/page.js"></script>
+<script src="../../data/maps/taiwan-cities/cities.js"></script>
 <script>const CITY_OPTS = { key: 'twcities', lang: 'Chinese', top: [10, 25, 50] };</script>
-<script src="../chinese-letters/chinese.js"></script>
-<script src="../shared/reading.js"></script>
-<script src="../shared/city-config.js"></script>
-<script src="../shared/area-quiz.js"></script>
+<script src="../../data/letters/chinese.js"></script>
+<script src="../../engine/types/reading.js"></script>
+<script src="../../engine/types/city.js"></script>
+<script type="module" src="../../engine/main.js"></script>
 </body>
 </html>

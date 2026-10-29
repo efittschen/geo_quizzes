@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// townnames: the parts of a country's place names that mark a region -> quizzes/<slug>-town-names/names.js for the
-// painting quiz (shared/paint-quiz.js).
+// townnames: the parts of a country's place names that mark a region -> data/maps/<slug>-town-names/names.js for the
+// painting quiz (engine/paint.js).
 //
-//   node tools/townnames.mjs --iso2 DE --map quizzes/germany-cities/cities.js --out quizzes/germany-town-names/names.js
+//   node tools/townnames.mjs --iso2 DE --map data/maps/germany-cities/cities.js --out data/maps/germany-town-names/names.js
 //        [--chosen tools/cache/builds/town-names/chosen.json]
 //        [--min-places 60] [--parts 100] [--tight 90] [--gain 500] [--brush 120] [--cover 90] [--skip=-lde,-ke]
 //
@@ -34,7 +34,6 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { geoConicEqualArea } from 'd3-geo';
 import { projectionFrom } from './lib/geo.mjs';
 import { loadPlaces, candidates, select, label, sourceOf, countryPoints } from './lib/names.mjs';
 
@@ -46,10 +45,8 @@ const ASK = 80, SHOW = 3000;   // names to ask per part; places written per part
 const CELL = 5, R = +o.brush, COVER = +o.cover / 100, LINES = 3, MIN_GAIN = 0.002, MIN_LINE = 0.02, MAX_CIRCLES = 400;
 
 const MAP = vm.runInNewContext(fs.readFileSync(o.map, 'utf8') + ';CITIES');
-// The map's projection; an Albers USA map by its lower-48 part, as shared/city-config.js reads it (Alaska and
-// Hawaii are insets there).
-const proj = MAP.proj.type === 'albersUsa' ? geoConicEqualArea().parallels([29.5, 45.5]).rotate([96, 0]).center([-0.6, 38.7]).scale(MAP.proj.scale).translate(MAP.proj.translate) : projectionFrom(MAP.proj);
-// Places that fall off the map (those of an inset: Alaska, the Azores, Rapa Nui) are left out altogether.
+const proj = projectionFrom(MAP.proj);
+// Places that fall off the map are left out.
 const places = (await loadPlaces(CC)).filter(p => { [p.x, p.y] = proj([p.lng, p.lat]); return p.x >= 0 && p.x <= MAP.w && p.y >= 0 && p.y <= MAP.h; });
 
 /* ---------- which parts ---------- */

@@ -1,0 +1,2 @@
+// colombia-regions: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"codept","map":"DATA.reg","size":[1000,1192],"pad":16,"maxZoom":30,"labelScale":0.3,"fly":{"pad":1.6,"min":0.05},"hintLabel":"Color by region","exploreKind":"departments","kinds":[{"key":"regions","label":"Natural regions","noun":["region","regions"],"prompt":"name","hints":false},{"key":"departments","label":"Departments","noun":["department","departments"],"prompt":"name","detail":"Show region"}]};

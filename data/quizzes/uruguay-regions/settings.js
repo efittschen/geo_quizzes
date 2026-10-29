@@ -1,0 +1,2 @@
+// uruguay-regions: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"uyregions","map":"DATA.reg","size":[1000,1093],"pad":16,"maxZoom":30,"labelScale":0.3,"fly":{"pad":1.6,"min":0.05},"hintLabel":"Color by departamento","exploreKind":"departamentos","kinds":[{"key":"departamentos","label":"Departamentos","noun":["department","departments"],"prompt":"name"}]};

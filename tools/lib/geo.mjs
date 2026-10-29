@@ -1,5 +1,6 @@
-// Shared map building for the quiz tools: fit an equal-area projection to a country, project and simplify its
-// polygons, and produce SVG paths in the map space the quiz engine uses, plus [lat, lng] rings for the street map.
+// Shared map building for the quiz tools: a map's Web Mercator frame and projection, its polygons projected and
+// simplified with their borders shared, SVG paths in its map units, and the way back from a map to latitude and
+// longitude.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -64,40 +65,56 @@ export async function naturalEarthCountries() {
   return readGeoJSON(await cached('https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson', 'ne_50m_admin_0_countries.geojson'));
 }
 
-// Equal-area conic fitted to the features: standard parallels at 1/6 and 5/6 of the latitude range, centred on
-// the middle longitude (works across the antimeridian). Returns the projection and its definition (DATA.proj),
-// so other tools (cities) can place points in the same map space.
-export function fitProjection(fc, width, pad = 0) {
-  const [[w, s], [e, n]] = d3.geoBounds(fc);
-  const span = e >= w ? e - w : e + 360 - w;
-  let lon0 = w + span / 2; if (lon0 > 180) lon0 -= 360;
-  const p1 = round(s + (n - s) / 6, 4), p2 = round(n - (n - s) / 6, 4);
-  const proj = d3.geoConicEqualArea().parallels([p1, p2]).rotate([round(-lon0, 4), 0]);
-  proj.fitWidth(width - 2 * pad, fc);
-  const b = d3.geoPath(proj).bounds(fc);
-  const [tx, ty] = proj.translate();
-  proj.translate([round(tx + pad - b[0][0], 3), round(ty + pad - b[0][1], 3)]);
-  proj.scale(round(proj.scale(), 3));
-  const h = Math.ceil(b[1][1] - b[0][1] + 2 * pad);
-  return { proj, w: width, h, def: projectionDef(proj) };
-}
-export function projectionDef(proj) {
-  return { type: 'conicEqualArea', parallels: proj.parallels(), rotate: proj.rotate().slice(0, 2), scale: proj.scale(), translate: proj.translate() };
-}
-// A map's projection as its data file records it (DATA.proj, CITIES.proj): the equal-area conic a new map is drawn
-// in, or Web Mercator, as every quiz page's map is made ready (tools/builds/mercator, quizzes/shared/mercator.js:
-// x = (lng − lng0)·k, y = (y0 − Mercator's y in degrees)·k), turned to half a turn east of its west edge so that a
-// map over the 180th meridian (Russia) stays in one piece.
+/* ---------- maps in Web Mercator, as every quiz page draws them (engine/lib/mercator.js) ---------- */
+// A map's proj: { type: 'mercator', k, lng0, y0, grain }: k map units per degree of longitude, lng0 its west edge,
+// y0 its north edge as Mercator's y in degrees, so x = (lng − lng0)·k, y = (y0 − my(lat))·k; grain the step its
+// points are rounded to (a city map has none).
+const RAD = Math.PI / 180;
+export const my = lat => Math.log(Math.tan(Math.PI / 4 + Math.max(-85.05, Math.min(85.05, lat)) * RAD / 2)) / RAD; // Mercator's y, in degrees
+export const latOf = y => (2 * Math.atan(Math.exp(y * RAD)) - Math.PI / 2) / RAD;
+// A point of a map -> [lat, lng].
+export const latlng = (x, y, P) => [latOf(P.y0 - y / P.k), P.lng0 + x / P.k];
+// The d3 projection of a map's proj, turned to half a turn east of its west edge so that a map over the 180th
+// meridian (Russia) stays in one piece.
 export function projectionFrom(def) {
-  if (def.type === 'mercator') return d3.geoMercator().rotate([-(def.lng0 + 180), 0]).scale(def.k * 180 / Math.PI).translate([180 * def.k, def.y0 * def.k]);
-  return d3.geoConicEqualArea().parallels(def.parallels).rotate(def.rotate).scale(def.scale).translate(def.translate);
+  if (def.type !== 'mercator') throw new Error(`a map in ${def.type}: every map is Web Mercator`);
+  return d3.geoMercator().rotate([-(def.lng0 + 180), 0]).scale(def.k * 180 / Math.PI).translate([180 * def.k, def.y0 * def.k]);
 }
-
-// Kilometres per map unit at the centre of the map.
-export function kmPerUnit(proj, w, h) {
-  const a = proj.invert([w / 2 - 50, h / 2]), b = proj.invert([w / 2 + 50, h / 2]);
-  return round(d3.geoDistance(a, b) * 6371 / 100, 4);
+// The frame of a new map: W map units wide over the features' box (across the 180th meridian too), its height from
+// Mercator. Its points are rounded no coarser than the latitudes and longitudes they come from (thousandths of a
+// degree): to tenths of a map unit where k is 50 or more, else hundredths or thousandths (digits; def.grain).
+// -> { def, proj, w, h, kpu, digits }
+export function mercatorFrame(fc, W) {
+  const [[w, s], [e, n]] = d3.geoBounds(fc), span = e >= w ? e - w : e + 360 - w;
+  const k = W / span, y0 = my(n), mid = latOf((y0 + my(s)) / 2), digits = Math.min(3, Math.max(1, Math.ceil(-Math.log10(0.002 * k))));
+  const def = { type: 'mercator', k, lng0: w, y0, grain: 10 ** -digits };
+  return { def, proj: projectionFrom(def), w: W, h: Math.ceil((y0 - my(s)) * k), kpu: round(111.32 * Math.cos(mid * RAD) / k, 4), digits };
 }
+// The runs of points of an SVG path of straight lines (M L H V Z, either case, also without their letters), as
+// [{ closed, pts: [[x, y]…] }]; null when it has anything else (an arc: an area drawn as a circle).
+export function pathRuns(d) {
+  if (!d || /[^MLHVZmlhvz\d\s,.eE+-]/.test(d)) return null;
+  const out = [], re = /([MLHVZmlhvz])|(-?\d*\.?\d+(?:e-?\d+)?)/g;
+  let cmd = '', nums = [], x = 0, y = 0, run = null, m;
+  const flush = () => {
+    const C = cmd.toUpperCase(), rel = cmd !== C;
+    if (C === 'H' || C === 'V') for (const v of nums) { if (C === 'H') x = rel ? x + v : v; else y = rel ? y + v : v; run.pts.push([x, y]); }
+    else for (let i = 0; i + 1 < nums.length; i += 2) {
+      x = rel ? x + nums[i] : nums[i]; y = rel ? y + nums[i + 1] : nums[i + 1];
+      if (C === 'M' && i === 0) out.push(run = { pts: [], closed: false });
+      run.pts.push([x, y]);
+    }
+    nums = [];
+  };
+  while ((m = re.exec(d))) {
+    if (m[1]) { if (cmd) flush(); cmd = m[1]; if (cmd === 'Z' || cmd === 'z') { if (run) { run.closed = true; [x, y] = run.pts[0]; } cmd = ''; } }
+    else { if (!cmd) cmd = 'L'; nums.push(+m[2]); }
+  }
+  if (cmd) flush();
+  return out;
+}
+// An area's outline on a map -> its rings in [lat, lng] (read off the map, exact to its grain).
+export const latlngRings = (d, P) => (pathRuns(d) || []).map(r => r.pts.map(([x, y]) => latlng(x, y, P)));
 
 const pathOf = (obj, digits = 1) => d3.geoPath(null).digits(digits)(obj) || '';
 
@@ -134,30 +151,12 @@ export function labelAndArea(f) {
   return { lx: round(lab[0], 1), ly: round(lab[1], 1), a: round(total, 1) };
 }
 
-// Planar feature -> street-map rings ([lat, lng], 3 decimals ≈ 100 m) by inverting the projection.
-export function geoRings(f, proj) {
-  const inv = ([x, y]) => { const [lng, lat] = proj.invert([x, y]); return [round(lat, 3), round(lng, 3)]; };
-  return f.geometry.coordinates.flatMap(poly => poly.map(ring => ring.map(inv)));
-}
-
-// Grey land of the neighbours: Natural Earth countries clipped to the map (plus a margin), without the country.
-export async function contextPath(proj, w, h, iso3, { margin = 60, minArea = 1.5 } = {}) {
-  const ne = await naturalEarthCountries();
-  const others = { type: 'FeatureCollection', features: ne.features.filter(f => ![f.properties.ADM0_A3, f.properties.ISO_A3, f.properties.SOV_A3].includes(iso3)) };
-  const clipped = proj.clipExtent([[-margin, -margin], [w + margin, h + margin]]);
-  const projected = geoProject(others, clipped);
-  proj.clipExtent(null);
-  const topo = topology({ c: projected }, 1e6);
-  const simp = simplify(presimplify(topo), minArea);
-  return pathOf(feature(simp, simp.objects.c));
-}
-
 // The country's outline and its inner region borders, from a set of regions (e.g. first-level divisions).
-export function landAndLines(topo, obj = 'a') {
+export function landAndLines(topo, obj = 'a', digits = 1) {
   const o = topo.objects[obj];
   return {
-    land: pathOf(merge(topo, o.geometries)),
-    lines: pathOf(mesh(topo, o, (a, b) => a !== b)),
+    land: pathOf(merge(topo, o.geometries), digits),
+    lines: pathOf(mesh(topo, o, (a, b) => a !== b), digits),
   };
 }
 

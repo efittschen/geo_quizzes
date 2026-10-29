@@ -1,5 +1,5 @@
 // Japan's 47 prefectures: [id, kanji, English, Chinese (simplified), pinyin], and the rounds of the quiz (regions, Hokkaido with Tohoku and
-// Chugoku with Shikoku so that no round is a single pair). Names as in ../japan-regions/layers.js.
+// Chugoku with Shikoku so that no round is a single pair). Names as in ../shared/maps/japan-regions/layers.js.
 const PREFECTURES = [
   ["p01","北海道","Hokkaido","北海道","Běihǎidào"],
   ["p02","青森県","Aomori","青森县","Qīngsēn Xiàn"],

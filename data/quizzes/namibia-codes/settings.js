@@ -1,0 +1,2 @@
+// namibia-codes: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"namcodes","map":"DATA.reg","size":[1000,967],"pad":16,"maxZoom":30,"labelScale":0.3,"fly":{"pad":1.6,"min":0.05},"hintLabel":"Color each code","exploreKind":"codes","kinds":[{"key":"codes","label":"Area codes","noun":["code","codes"],"prompt":"dial","detail":"Show towns","presets":[["Big cities",["061","066","064","065","062","067"]]],"modes":["code"]}]};

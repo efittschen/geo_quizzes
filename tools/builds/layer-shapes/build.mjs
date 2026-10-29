@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 // The shapes of every layer whose items group areas (a state of Kreise, a code zone of towns), worked out once and
-// kept beside the page as shapes.js, so the page does not work them out each time it opens.
+// kept as the page's data/quizzes/<page>/shapes.js, so the page does not work them out each time it opens.
 //
 //   node tools/builds/layer-shapes/build.mjs [quizzes/<page>/index.html …] [--dry]
 //
 // Without pages: every page of the area quiz engine. Each page is opened in headless Chromium with
-// window.SHAPES_DUMP set, and the engine itself (quizzes/shared/area-quiz.js) works out, for each of the page's kinds
+// window.SHAPES_DUMP set, and the engine itself (engine/) works out, for each of the page's kinds
 // that groups areas: the units' colors, each unit as one shape and its outlines in both versions (zoomed out, zoomed
 // in). Their lines are then kept once each (arcs, as in TopoJSON: a line two units share is in both their shapes and
 // in both versions of their outlines), and the shapes as lists of arcs. That is written to the page's folder as
-// shapes.js, and the page gets <script src="shapes.js"> before the engine. A page with no such kind gets neither
+// shapes.js, and the page gets <script src="../../data/quizzes/<page>/shapes.js"> before the engine. A page with no such kind gets neither
 // (an old shapes.js is removed). --dry writes nothing and says what would change.
 // The street map's outlines (the overlay) are worked out by the page from the same arcs, on a Mercator quiz map.
 //
@@ -24,7 +24,7 @@ import { chromium } from 'playwright-core';
 import { ROOT } from '../../lib/geo.mjs';
 
 const { values: o, positionals } = parseArgs({ allowPositionals: true, options: { dry: { type: 'boolean', default: false } } });
-const ENGINE = /^(\s*)<script src="([^"]*)shared\/area-quiz\.js"><\/script>$/m, TAG = '<script src="shapes.js"></script>';
+const ENGINE = /^(\s*)<script type="module" src="([^"]*)engine\/main\.js"><\/script>$/m, TAG = id => `<script src="../../data/quizzes/${id}/shapes.js"></script>`;
 const pages = positionals.length ? positionals : fs.readdirSync(path.join(ROOT, 'quizzes')).map(d => `quizzes/${d}/index.html`)
   .filter(p => fs.existsSync(path.join(ROOT, p)) && ENGINE.test(fs.readFileSync(path.join(ROOT, p), 'utf8')));
 
@@ -33,7 +33,8 @@ const server = http.createServer((req, res) => {
   const rel = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   const file = path.join(ROOT, rel);
   // (a page is opened without the shapes it has now: they are what is being made)
-  if (!file.startsWith(ROOT) || path.basename(file) === 'shapes.js' || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end('not found'); }
+  const stored = /^\/(data\/quizzes|quizzes)\/[^/]+\/shapes\.js$/.test(rel); // (a page's stored shapes, not the engine's shapes.js)
+  if (!file.startsWith(ROOT) || stored || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end('not found'); }
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
   fs.createReadStream(file).pipe(res);
 });
@@ -127,17 +128,19 @@ function levels(pts) {
 }
 let written = 0, removed = 0, failed = 0;
 for (const p of pages) {
-  const html = path.join(ROOT, p), dir = path.dirname(html), out = path.join(dir, 'shapes.js');
+  const html = path.join(ROOT, p), id = path.basename(path.dirname(html)), own = fs.existsSync(path.join(path.dirname(html), 'quiz.js'));
+  // (a page with a quiz.js of its own keeps its folder as it is, shapes.js beside it, until it is gone through)
+  const out = own ? path.join(path.dirname(html), 'shapes.js') : path.join(ROOT, 'data/quizzes', id, 'shapes.js'), tag = own ? '<script src="shapes.js"></script>' : TAG(id);
   const page = await context.newPage(), errors = [];
   page.on('pageerror', e => errors.push(e.message));
   try {
     await page.goto(base + p, { waitUntil: 'load' });
     const shapes = await page.waitForFunction(() => window.SHAPES_OUT, null, { timeout: 120000 }).then(h => h.jsonValue());
     if (errors.length) throw new Error(errors[0]);
-    const kinds = Object.keys(shapes.kinds), src = fs.readFileSync(html, 'utf8'), has = src.includes(TAG);
+    const kinds = Object.keys(shapes.kinds), src = fs.readFileSync(html, 'utf8'), has = src.includes(tag);
     if (!kinds.length) {
       console.log(`${p}: no kind groups areas`);
-      if (!o.dry) { if (has) fs.writeFileSync(html, src.replace(new RegExp('^\\s*' + TAG.replace(/[.]/g, '\\.') + '\\n', 'm'), '')); if (fs.existsSync(out)) fs.rmSync(out); }
+      if (!o.dry) { if (has) fs.writeFileSync(html, src.replace(new RegExp('^\\s*' + tag.replace(/[.]/g, '\\.') + '\\n', 'm'), '')); if (fs.existsSync(out)) fs.rmSync(out); }
       if (has || fs.existsSync(out)) removed++;
     } else {
       const text = `// Made by tools/builds/layer-shapes/build.mjs from this page's data (the layers whose items group areas)\nconst SHAPES = ${JSON.stringify(topo(shapes))};\n`;
@@ -145,8 +148,8 @@ for (const p of pages) {
       console.log(`${p}: ${kinds.map(k => `${k} (${shapes.kinds[k].fill.length} units)`).join(', ')} · ${kb(text.length)}${same ? ' · unchanged' : ''}`);
       if (!same) written++;
       if (!o.dry && !same) {
-        fs.writeFileSync(out, text);
-        if (!has) fs.writeFileSync(html, src.replace(ENGINE, (line, indent) => `${indent}${TAG}\n${line}`));
+        fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, text);
+        if (!has) fs.writeFileSync(html, src.replace(ENGINE, (line, indent) => `${indent}${tag}\n${line}`));
       }
     }
   } catch (e) {

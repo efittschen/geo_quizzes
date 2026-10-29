@@ -39,7 +39,7 @@ const NAME = Object.fromEntries(STATES.map(([id, name]) => [id, name]));
 const REGION = Object.fromEntries(STATES.map(([id, , region]) => [id, region]));
 const KIND = id => (TERRITORY.includes(id) ? 'Federal territory' : 'State') + ' · ' + REGION[id];
 const ALL = STATES.map(s => s[0]);
-// Kuala Lumpur and Putrajaya drawn as circles, as in ../malaysia-regions/layers.js: their own shapes are too small to click.
+// Kuala Lumpur and Putrajaya drawn as circles, as in ../shared/maps/malaysia-regions/layers.js: their own shapes are too small to click.
 const DRAWN = { KUL: 'M98.5,214.5a5.5,5.5 0 1,0 11,0a5.5,5.5 0 1,0 -11,0z', PJY: 'M100,226.3a4.5,4.5 0 1,0 9,0a4.5,4.5 0 1,0 -9,0z' };
 
 const DIR = new URL('img/', document.currentScript.src).href;
@@ -64,9 +64,9 @@ const QUIZ = {
   key: 'myflags',
   areas: DATA.reg.map(r => ({ id: r.id, d: DRAWN[r.id] || r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '', ...(DRAWN[r.id] ? { top: true, real: r.d } : {}) })),
   borders: [],
-  context: DATA.ctx,
-  proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
-  street: {"bounds":[[0.8,99.6],[7.4,119.3]],"maxBounds":[[-6,90],[14,128]]},
+  
+  proj: DATA.proj, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+  
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.3, fly: { pad: 1.6, min: 0.0375 },
   hintLabel: '', hintsDefault: false,
   langsAlways: true, // every round box shows Clear | Blurred

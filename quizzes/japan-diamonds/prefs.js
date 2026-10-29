@@ -1,4 +1,4 @@
-// The prefectures that ../japan-regions/data.js splits by power utility, each joined into one outline on its map
+// The prefectures that ../shared/maps/japan-regions/data.js splits by power utility, each joined into one outline on its map
 // (JIS number -> { d, lx, ly, a, s }), so that a click picks the whole prefecture. Made by
 // tools/builds/merged-areas/build.mjs japan-prefs.
 const PREF_SHAPES = {

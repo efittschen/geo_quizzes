@@ -16,9 +16,9 @@ const PROVS = [
 const FLAGS = {
   key: 'ecflags', alt: 'province flag',
   map: {
-    areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' })), context: DATA.ctx,
-    proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
-    street: {"bounds":[[-5.1,-81.2],[1.5,-75.1]],"maxBounds":[[-9,-95],[5,-70]]},
+    areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' })), 
+    proj: DATA.proj, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+    
     size: [1000, 393], pad: 16, maxZoom: 30, labelScale: 0.3, fly: { pad: 1.6, min: 0.05 },
   },
   parts: ['Coast and Galápagos', 'Andes north', 'Andes south', 'Amazon'],

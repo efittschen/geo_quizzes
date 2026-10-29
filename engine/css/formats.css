@@ -1,0 +1,254 @@
+/* How a question is shown (the engine's formats, engine/formats/), on top of ../../assets/css/base.css.
+     code      the dial: a phone or plate code in the page's frame (<body data-dial>), scaled to fit the panel (--fit,
+               set by the format: a long code or frame is drawn smaller rather than cut)
+     name      the name, big; a question about a place outlined (asking); a name on a road sign (signed)
+     text      the sign card: words in a script, in one of its typefaces, picked anew each time (s-<script> f<n>)
+     picture   a picture, enlarged by a tap; flags flat or as cloth (the look switch); thumbnails of answered ones
+     shape     the place alone, scaled to fit
+   The text is set in --script: every script's Noto font (base.css: --notos; a page loads the fonts of its scripts);
+   Chinese and Japanese texts take their own region's typeface by their language. */
+:root{--script:var(--notos),system-ui,sans-serif}
+:lang(zh-Hans),:lang(zh-CN){--script:"Noto Sans SC","Noto Sans",system-ui,sans-serif}
+:lang(zh-Hant),:lang(zh-TW),:lang(zh-HK){--script:"Noto Sans TC","Noto Sans",system-ui,sans-serif}
+:lang(ja){--script:"Noto Sans JP","Noto Sans",system-ui,sans-serif}
+:lang(ko){--script:"Noto Sans KR","Noto Sans",system-ui,sans-serif}
+@keyframes pop{from{transform:translateY(8px);opacity:.2}to{transform:none;opacity:1}}
+
+/* ---------- code: the dial ---------- */
+.dial{display:flex;align-items:baseline;gap:.12em;font-family:var(--cond);line-height:.9;white-space:nowrap;zoom:var(--fit,1)}
+.dial .cc{font-weight:500;font-size:1.7rem;color:var(--muted);margin-right:.15em}
+.dial .p{font-weight:500;font-size:4.4rem;color:var(--muted)}
+.dial .code{font-weight:700;font-size:6.6rem;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.dial .rest{font-weight:500;font-size:1.7rem;color:var(--muted);margin-left:.35em;letter-spacing:.04em}
+.dial .code .hot{color:var(--ink)} .dial .code .cold{color:var(--muted);opacity:.45}   /* the digits that matter bold, the rest faded */
+.dial.pop .code{animation:pop .35s ease-out}
+.info .dial .code{font-size:5rem} .info .dial .p{font-size:3.4rem}   /* Explore */
+.info .dial.multi .code{font-size:3rem} .info .dial.multi .p{font-size:2.2rem}
+.app.nomap .dial .code{font-size:5rem}
+
+/* ---------- name ---------- */
+.bigname{font:700 3.2rem/1 var(--cond);letter-spacing:-.01em}
+.bigname.pop{animation:pop .35s ease-out}
+.bigname.asking{font-size:1.9rem;line-height:1.1}   /* the question about a place outlined, not a name */
+.bigname.signed{display:flex;flex-direction:column;align-items:flex-start;gap:6px}   /* a name on a road sign, at one height */
+.bigname.signed svg{display:block;height:clamp(96px,20vh,170px);width:auto;max-width:100%}
+.bigname .signcap{font:600 .95rem/1.2 var(--sans);color:var(--muted)}
+.bigname .tier{display:block;margin-bottom:6px;font:700 .78rem/1.4 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}   /* a page of one round: the question's tier */
+/* Type code: whether the place asked is part of a larger area or a whole one */
+.bigname .scope{display:block;width:max-content;margin-bottom:6px;padding:2px 9px;border-radius:999px;font:700 .78rem/1.4 var(--sans);letter-spacing:.06em;text-transform:uppercase}
+.bigname .scope.part{background:color-mix(in srgb,var(--rare) 35%,transparent);color:var(--ink)}
+.bigname .scope.whole{background:color-mix(in srgb,var(--yellow) 45%,transparent);color:var(--ink)}
+.app.nomap .bigname{font-size:4.4rem}
+.app.nomap .bigname.asking{font-size:2.6rem}
+
+/* ---------- text: the sign card ---------- */
+.card{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:6rem;padding:14px 18px;border:1.5px solid var(--ink);border-radius:14px;background:color-mix(in srgb,var(--ink) 3%,transparent)}
+.card[data-tag]:not([data-tag=""])::before{content:attr(data-tag);font:600 .8rem/1.2 var(--sans);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:center}   /* where it is read so */
+.sent{margin:0;font:600 2.3rem/1.35 var(--script);overflow-wrap:anywhere;width:100%}
+.card.pop .sent{animation:pop .35s ease-out}
+.sent.letter{font-size:4rem;line-height:1.2;text-align:center}   /* a letter, capital and small */
+.sent.word{font-size:2.5rem;line-height:1.3;text-align:center}   /* one word of a sign */
+.sent:lang(ar),.sent:lang(fa),.sent:lang(ur){font-size:2.1rem;line-height:1.9}
+.sent:lang(ur),.sent.l-urd{font-family:"Noto Nastaliq Urdu",var(--script);line-height:2.3}
+.sent.s-tibt{line-height:1.7} .sent.s-mymr{line-height:1.8}
+.sent.l-hant{font-family:"Noto Sans TC",var(--script)} .sent.l-hans{font-family:"Noto Sans SC",var(--script)}
+/* a page about a script (world-config.js: writing): what is said in it, in its fonts */
+.writing .cd,.writing .chip,.writing #labels text,.writing .feedback{font-family:var(--script)}
+.writing #eDial{white-space:normal}
+.writing #eDial .code{font:500 3rem/1.2 var(--script);letter-spacing:0}
+.writing #eDial.long .code{font-size:1.9rem}
+.app.nomap .card{min-height:9rem}
+.app.nomap .sent{font-size:3.6rem}
+/* each script's typefaces (READING.face: s-<script>, f1, f2…; f0 is the stack itself) */
+.sent.s-cyrl.f1{font-family:"PT Serif",var(--script);font-weight:700}
+.sent.s-cyrl.f2{font-family:"PT Serif",var(--script);font-weight:400;font-style:italic}
+.sent.s-cyrl.f3{font-family:"Oswald",var(--script);font-weight:500}
+.sent.s-cyrl.f4{font-family:"Caveat",var(--script);font-weight:700}
+.sent.s-cyrl.f5{font-family:"Russo One",var(--script);font-weight:400}
+.sent.s-deva{font-family:"Noto Sans Devanagari",var(--script);line-height:1.6}
+.sent.s-deva.f1{font-family:"Tiro Devanagari Hindi",var(--script);font-weight:400}
+.sent.s-deva.f2{font-family:"Kalam",var(--script);font-weight:700}
+.sent.s-deva.f3{font-family:"Khand",var(--script);font-weight:600}
+.sent.s-deva.f4{font-family:"Rozha One",var(--script);font-weight:400}
+.sent.s-beng{font-family:"Noto Sans Bengali",var(--script);line-height:1.6}
+.sent.s-beng.f1{font-family:"Tiro Bangla",var(--script);font-weight:400}
+.sent.s-beng.f2{font-family:"Hind Siliguri",var(--script);font-weight:600}
+.sent.s-beng.f3{font-family:"Baloo Da 2",var(--script);font-weight:700}
+.sent.s-beng.f4{font-family:"Galada",var(--script);font-weight:400}
+.sent.s-sinh{font-family:"Noto Sans Sinhala",var(--script);line-height:1.6}
+.sent.s-sinh.f1{font-family:"Noto Serif Sinhala",var(--script);font-weight:600}
+.sent.s-sinh.f2{font-family:"Abhaya Libre",var(--script);font-weight:600}
+.sent.s-taml{font-family:"Noto Sans Tamil",var(--script);line-height:1.6}
+.sent.s-taml.f1{font-family:"Noto Serif Tamil",var(--script);font-weight:600}
+.sent.s-taml.f2{font-family:"Mukta Malar",var(--script);font-weight:600}
+.sent.s-arab{font-family:"Noto Naskh Arabic",var(--script);line-height:1.8}
+.sent.s-arab.f1{font-family:"Noto Kufi Arabic",var(--script);font-weight:600}
+.sent.s-arab.f2{font-family:"Amiri",var(--script);font-weight:700}
+.sent.s-thai{font-family:"Noto Sans Thai Looped",var(--script);line-height:1.6}
+.sent.s-thai.f1{font-family:"Noto Serif Thai",var(--script);font-weight:600}
+.sent.s-thai.f2{font-family:"Kanit",var(--script);font-weight:500}
+.sent.s-khmr{font-family:"Noto Sans Khmer",var(--script);line-height:1.9}
+.sent.s-khmr.f1{font-family:"Battambang",var(--script);font-weight:700}
+.sent.s-khmr.f2{font-family:"Moul",var(--script);font-weight:400}
+.sent.s-hang{font-family:"Noto Sans KR",var(--script)}
+.sent.s-hang.f1{font-family:"Nanum Myeongjo",var(--script);font-weight:700}
+.sent.s-hang.f2{font-family:"Black Han Sans",var(--script);font-weight:400}
+/* Urdu (lang="ur": its own letters on the Arabic pages) in the Nastaliq hand of its signs */
+.sent.s-arab:lang(ur),.sent.s-arab.f2:lang(ur){font-family:"Noto Nastaliq Urdu",var(--script);font-weight:500;line-height:2.3}
+.sent.s-arab.f1:lang(ur){font-family:"Gulzar",var(--script);font-weight:400;line-height:2.3}
+.sent.s-arab.f2:lang(ur){font-weight:700}
+.sent.s-tibt{font-family:"Noto Serif Tibetan",var(--script);line-height:1.9}
+.sent.s-tibt.f1{font-family:"Jomolhari",var(--script);font-weight:400}
+.sent.s-java{font-family:"Noto Sans Javanese",var(--script);line-height:2}
+.sent.s-bali{font-family:"Noto Sans Balinese",var(--script);line-height:2}
+.sent.s-bali.f1{font-family:"Noto Serif Balinese",var(--script);font-weight:400}
+.sent.s-sund{font-family:"Noto Sans Sundanese",var(--script);line-height:1.7}
+.sent.s-cans{font-family:"Noto Sans Canadian Aboriginal",var(--script)}
+.sent.s-cher{font-family:"Noto Sans Cherokee",var(--script)}
+.sent.s-grek.f1{font-family:"Noto Serif",var(--script);font-weight:700}
+.sent.s-grek.f2{font-family:"Noto Serif",var(--script);font-weight:400;font-style:italic}
+.sent.s-grek.f3{font-family:"Fira Sans Extra Condensed",var(--script);font-weight:600}
+.sent.s-grek.f4{font-family:"Mansalva",var(--script);font-weight:400}
+.sent.s-hebr{font-family:"Noto Sans Hebrew",var(--script)}
+.sent.s-hebr.f1{font-family:"Frank Ruhl Libre",var(--script);font-weight:700}
+.sent.s-hebr.f2{font-family:"Secular One",var(--script);font-weight:400}
+.sent.s-hebr.f3{font-family:"Amatic SC",var(--script);font-weight:700}
+.sent.s-geor{font-family:"Noto Sans Georgian",var(--script)}
+.sent.s-geor.f1{font-family:"Noto Serif Georgian",var(--script);font-weight:700}
+.sent.s-geor.f2{font-family:"Noto Sans Georgian",var(--script);font-weight:800;font-stretch:62.5%}
+.sent.s-jpan{font-family:"Noto Sans JP",var(--script)}
+.sent.s-jpan.f1{font-family:"Noto Serif JP",var(--script);font-weight:600}
+.sent.s-jpan.f2{font-family:"Zen Maru Gothic",var(--script);font-weight:500}
+.sent.s-jpan.f3{font-family:"Klee One",var(--script);font-weight:600}
+.sent.s-hani{font-family:"Noto Sans TC","Noto Sans SC",var(--script)}
+.sent.s-hani.f1{font-family:"Noto Serif TC","Noto Sans SC",var(--script);font-weight:600}
+.sent.s-hani.f2{font-family:"LXGW WenKai TC","Noto Sans SC",var(--script);font-weight:400}
+.sent.s-laoo{font-family:"Noto Sans Lao",var(--script);line-height:1.7}
+.sent.s-laoo.f1{font-family:"Noto Serif Lao",var(--script);font-weight:600}
+.sent.s-laoo.f2{font-family:"Phetsarath",var(--script);font-weight:700}
+.sent.s-telu{font-family:"Noto Sans Telugu",var(--script);line-height:1.7}
+.sent.s-telu.f1{font-family:"Tiro Telugu",var(--script);font-weight:400}
+.sent.s-telu.f2{font-family:"Hind Guntur",var(--script);font-weight:600}
+.sent.s-telu.f3{font-family:"Ramabhadra",var(--script);font-weight:400}
+.sent.s-knda{font-family:"Noto Sans Kannada",var(--script);line-height:1.7}
+.sent.s-knda.f1{font-family:"Tiro Kannada",var(--script);font-weight:400}
+.sent.s-knda.f2{font-family:"Baloo Tamma 2",var(--script);font-weight:700}
+.sent.s-knda.f3{font-family:"Anek Kannada",var(--script);font-weight:600}
+.sent.s-mlym{font-family:"Noto Sans Malayalam",var(--script);line-height:1.7}
+.sent.s-mlym.f1{font-family:"Noto Serif Malayalam",var(--script);font-weight:600}
+.sent.s-mlym.f2{font-family:"Manjari",var(--script);font-weight:700}
+.sent.s-mlym.f3{font-family:"Chilanka",var(--script);font-weight:400}
+.sent.s-gujr{font-family:"Noto Sans Gujarati",var(--script);line-height:1.6}
+.sent.s-gujr.f1{font-family:"Rasa",var(--script);font-weight:600}
+.sent.s-gujr.f2{font-family:"Hind Vadodara",var(--script);font-weight:600}
+.sent.s-gujr.f3{font-family:"Shrikhand",var(--script);font-weight:400}
+.sent.s-guru{font-family:"Noto Sans Gurmukhi",var(--script);line-height:1.6}
+.sent.s-guru.f1{font-family:"Tiro Gurmukhi",var(--script);font-weight:400}
+.sent.s-guru.f2{font-family:"Mukta Mahee",var(--script);font-weight:600}
+.sent.s-guru.f3{font-family:"Baloo Paaji 2",var(--script);font-weight:700}
+.sent.s-orya{font-family:"Noto Sans Oriya",var(--script);line-height:1.7}
+.sent.s-orya.f1{font-family:"Noto Serif Oriya",var(--script);font-weight:600}
+.sent.s-orya.f2{font-family:"Baloo Bhaina 2",var(--script);font-weight:700}
+.sent.s-orya.f3{font-family:"Anek Odia",var(--script);font-weight:600}
+
+/* ---------- road numbers and signs: a page's dial frame (<body data-sign>), or a text's own look (its cls) ---------- */
+.dial.km{width:max-content;align-items:baseline;background:#15181B;border:3px solid #fff;outline:2px solid #15181B;border-radius:8px;padding:.1em .3em .14em}   /* Argentina: a km post */
+.dial.km .code{font-size:4rem}
+.dial.km .code .hot{color:#fff} .dial.km .code .cold{color:#fff;opacity:.8;font-size:.5em;letter-spacing:.02em}
+.dial.mx-shield{display:inline-flex;align-self:flex-start;justify-content:center;min-width:8.5rem;padding:.18em .45em .9em;border:5px solid var(--ink);border-radius:8px 8px 46% 46% / 8px 8px 34% 34%;background:color-mix(in srgb,var(--ink) 3%,transparent)}   /* Mexico: a federal highway */
+.dial.mx-shield .code{font-size:4.4rem;letter-spacing:.02em}
+.dial.nz-shield{display:inline-flex;align-self:flex-start;align-items:center;justify-content:center;min-width:1.6em;padding:.12em .32em .2em;font-size:4.2rem;background:#C8102E;border:.06em solid #fff;outline:2px solid #C8102E;border-radius:.16em .16em .5em .5em}   /* New Zealand: a state highway */
+.dial.nz-shield .code{font-size:1em;line-height:1;color:#fff}
+.dial.nz-shield .code .hot{color:#fff} .dial.nz-shield .code .cold{color:#fff;opacity:.6}
+.dial.se-road{width:max-content;background:#1F5AA6;border:3px solid #fff;outline:2px solid #1F5AA6;border-radius:6px;padding:.08em .28em .12em}   /* Sweden: a road number */
+.dial.se-road .code{font-size:3.6rem}
+.dial.se-road .code .hot{color:#fff}
+.dial .code .rng{font-size:.62em}   /* a range of postcodes' digits (Mexico) */
+.bigname{font-variant-numeric:tabular-nums}
+/* a sign as the text asked: no card around it */
+.card:has(.shield),.card:has(.troad){border:0;background:none;padding:0}
+.sent.osign{display:inline-block;width:auto;white-space:pre-line;text-align:center;font:600 2rem/1.25 var(--sans);color:#111;background:#fff;border:3px solid #111;border-radius:4px;padding:.25em .7em}   /* Austria: a place sign */
+.sent.bsign{display:inline-block;width:auto;font:600 3.4rem/1.05 var(--cond);color:#fff;background:#1F4E9A;border:3px solid #fff;outline:2px solid #1F4E9A;border-radius:6px;padding:.05em .4em .08em}   /* Austria: a road number */
+.sent.wsign{display:inline-block;width:auto;font:600 3.2rem/1.1 var(--cond);color:#fff;background:#1E3765;border:3px solid #fff;outline:2px solid #1E3765;border-radius:5px;padding:.08em .5em .1em}   /* Vienna: a district sign */
+.sent.road{font:700 3.2rem/1 var(--cond);font-variant-numeric:tabular-nums;letter-spacing:.01em}   /* Hungary: a road number */
+.sent.plate{display:inline-block;width:auto;padding:.05em .5em;border-radius:8px;background:#1d4f9c;color:#fff;box-shadow:inset 0 0 0 3px #1d4f9c,inset 0 0 0 6px #fff;font:700 2.6rem/1.3 var(--sans);letter-spacing:.02em}   /* Russia: a road number */
+.sent.shield{width:auto;font:700 3.4rem/1 var(--cond);color:#1D4E9E;background:#F7C600;border:3px solid #1D4E9E;border-radius:8px;padding:.18em .4em .12em;letter-spacing:.01em}   /* South Korea: a national road */
+.sent.troad{width:auto;font:700 3.2rem/1 var(--cond);color:#111;background:#fff;border:3px solid #111;border-radius:8px;padding:.16em .4em .1em;letter-spacing:.02em}   /* Ukraine: a T-road */
+.sent.troad::after{content:'-xx';color:#9aa0a6}
+.sent.stone{width:auto;position:relative;padding:34px 22px 6px;min-width:3.2em;text-align:center;font:700 2.6rem/1.1 var(--cond);color:#16181B;background:#F4F2EC;border:2px solid #9A968C;border-radius:46% 46% 6px 6px / 38% 38% 6px 6px;overflow:hidden}   /* Cambodia: a road marker, a white stone with a red top */
+.sent.stone::before{content:"";position:absolute;left:0;right:0;top:0;height:28px;background:#C8322B}
+.sent.zh{text-align:center;font-size:2rem}   /* a name in Chinese beside the local one */
+.sent.letters{letter-spacing:.06em;word-spacing:.18em}   /* a language's letters */
+.sent.jawi{font-family:"Noto Naskh Arabic",var(--script);font-size:2.2rem;line-height:1.9}   /* Malay in Jawi */
+.sent.script-bali{font-family:"Noto Sans Balinese",var(--script);font-size:2.1rem}
+.sent.script-java{font-family:"Noto Sans Javanese",var(--script);font-size:2.1rem}
+
+/* ---------- picture ---------- */
+:root{--rar0:var(--ok); --rar1:var(--yellow); --rar2:var(--bad)}   /* how often a picture's thing is met: common, rarer, rare */
+.photo{appearance:none;display:block;width:100%;padding:0;border:1.5px solid var(--ink);border-radius:var(--radius);overflow:hidden;background:#000;cursor:zoom-in;aspect-ratio:16/10;flex:none}
+.photo img{display:block;width:100%;height:100%;object-fit:contain}
+.photo.pop img{animation:pop .35s ease-out}
+/* a blurred picture (cls 'blur'): blurred while asked, and enlarged before it is answered */
+.photo[data-look~="blur"] img{filter:blur(5px)}
+.lightbox img[data-look~="blur"]{filter:blur(16px)}
+
+.lightbox{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:16px;background:rgba(8,14,20,.92);cursor:zoom-out}
+.lightbox figure{margin:0;display:grid;gap:10px;justify-items:center;max-width:100%}
+.lightbox img{display:block;max-width:100%;max-height:calc(100vh - 90px);border-radius:6px}
+.lightbox figcaption{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:center;align-items:baseline;color:#F6F8F6;font-weight:600}
+.lightbox a{color:#F6F8F6;font-weight:500}
+
+/* answered pictures: next to the answer, on the results and in Explore */
+.ph{appearance:none;padding:0;border:1.5px solid var(--line);border-radius:6px;overflow:hidden;background:#000;cursor:zoom-in;line-height:0}
+.ph:hover{border-color:var(--ink)}
+.ph img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover}
+.ph.rar0{border-bottom:4px solid var(--rar0)} .ph.rar1{border-bottom:4px solid var(--rar1)} .ph.rar2{border-bottom:4px solid var(--rar2)}
+.feedback > .ph{float:right;width:88px;margin:0 0 4px 10px}
+.feedback::after{content:"";display:block;clear:both}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;margin-top:10px}
+.chips .chip.ph{display:flex;flex-direction:column;width:104px;line-height:1.2;background:transparent;cursor:pointer;border-width:2px}
+.chips .chip.ph img{margin-bottom:3px}
+
+/* rarity in the picker: a colored edge under each picture's number */
+.cd.rar0{box-shadow:inset 0 -3px 0 var(--rar0)} .cd.rar1{box-shadow:inset 0 -3px 0 var(--rar1)} .cd.rar2{box-shadow:inset 0 -3px 0 var(--rar2)}
+.legend .rar0{background:var(--rar0)} .legend .rar1{background:var(--rar1)} .legend .rar2{background:var(--rar2)}
+
+/* flags: the whole flag on a plain ground, never cropped */
+.photo:has(img[src$=".svg"]){background:var(--panel);aspect-ratio:4/3}
+.ph.flag{background:var(--panel)}
+.ph.flag img{aspect-ratio:4/3;object-fit:contain}
+.lightbox img[src$=".svg"]{width:min(640px,100%);border-radius:0;outline:1px solid rgba(246,248,246,.35)}
+.app.nomap .photo{width:auto;max-width:100%;height:min(34vh,360px);aspect-ratio:16/10;align-self:center}
+/* how a flag is seen: a switch under the picture */
+.looks{display:inline-flex;align-self:flex-start;border:1.5px solid var(--btn);border-radius:999px;overflow:hidden}
+.looks button{appearance:none;padding:1px 10px;border:0;background:transparent;color:var(--muted);font:500 .8rem/1.35 var(--sans);white-space:nowrap;cursor:pointer}
+.looks button + button{border-left:1.5px solid var(--btn)}
+.looks button:hover{color:var(--ink)}
+.looks button[aria-pressed="true"]{background:var(--btn);color:var(--btnink)}
+
+/* ---------- shape ---------- */
+.shape{display:block;width:100%;height:min(44vh,440px);height:min(44dvh,440px);flex:none}
+.shape svg{display:block;width:100%;height:100%;overflow:visible}
+.shape .fill path{--fill:color-mix(in srgb,var(--yellow) 55%,var(--card));fill:var(--fill);stroke:var(--fill);stroke-width:1;fill-rule:evenodd;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.shape .line{fill:none;fill-rule:evenodd;stroke:var(--ink);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.shape.got .fill path{--fill:var(--got)} .shape.t2 .fill path{--fill:var(--t2)} .shape.t3 .fill path{--fill:var(--t3)} .shape.miss .fill path{--fill:var(--miss)}
+.shape.pop{animation:pop .35s ease-out}
+
+@media (max-width:760px){
+  .dial .code{font-size:3.6rem} .dial .p{font-size:2.6rem} .dial .rest{font-size:1.05rem}
+  .info .dial .code{font-size:3.6rem} .info .dial .p{font-size:2.6rem}
+  .card{min-height:0;padding:12px 14px}
+  .sent{font-size:1.7rem}
+  .photo{width:auto;max-width:100%;height:19vh;height:19dvh;align-self:center}   /* a fifth of the screen tall, no black bars */
+  .feedback > .ph{width:64px}
+  .playing .panel:has(> #play > #photo:not([hidden])){max-height:56vh;max-height:56dvh}   /* a picture asked: more of the panel */
+  .app.nomap .bigname{font-size:3rem}
+  .app.nomap .photo{height:30vh;height:30dvh}
+  .app.nomap .shape{height:30vh;height:30dvh}
+  .app.nomap .sent{font-size:2.6rem}
+  .dial.km .code{font-size:2.8rem}
+  .dial.mx-shield{min-width:6rem;border-width:4px} .dial.mx-shield .code{font-size:3rem}
+  .dial.nz-shield{font-size:3rem}
+  .sent.shield{font-size:2.6rem} .sent.troad{font-size:2.4rem}
+  .sent.stone{font-size:2rem;padding-top:26px} .sent.stone::before{height:20px}
+}

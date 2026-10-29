@@ -1,0 +1,2 @@
+// uganda-regions: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"ugregions","map":"DATA.reg","size":[1000,1054],"pad":16,"maxZoom":40,"labelScale":0.25,"fly":{"pad":1.6,"min":0.0375},"hintLabel":"Color by district","exploreKind":"districts","kinds":[{"key":"regions","label":"Regions","noun":["region","regions"],"prompt":"name","hints":false},{"key":"districts","label":"Districts","noun":["district","districts"],"prompt":"name"}]};

@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 // hints: hint colors for an area quiz's groups, so groups that touch never share a color.
 //
-//   node tools/hints.mjs --in areas.geojson --group zone [--name "first digit"] --out quizzes/<folder>/style.css
+//   node tools/hints.mjs --in areas.geojson --group zone [--name "first digit"] --out data/quizzes/<id>/hints.css
+//        (or data/maps/<map>/hints.css, where every quiz on the map colours its groups alike)
 //
-// Each feature's properties[--group] is the value the quiz puts in the area's data-g (layers.js: g). Groups are
-// colored greedily, most neighbours first, from the shared palette (--h1…--h24 in shared/area-quiz.css, which
+// Each feature's properties[--group] is the value the quiz puts in the area's data-g (the quiz's facts.js: g). Groups are
+// colored greedily, most neighbours first, from the shared palette (--h1…--h24 in engine/css/quiz-map.css, which
 // avoids the answer colors). Writes `.r[data-g="…"]{--hint:var(--hN)}` rules into --out, inside a marked block
-// that is replaced on the next run (so several groupings can live in one style.css). Several --group properties
+// that is replaced on the next run (so several groupings can live in one hints.css). Several --group properties
 // can be given, comma separated, each getting its own block.
 import fs from 'node:fs';
 import { parseArgs } from 'node:util';
@@ -15,7 +16,7 @@ import { neighbors } from 'topojson-client';
 import { readGeoJSON } from './lib/geo.mjs';
 
 const { values: o } = parseArgs({ options: { in: { type: 'string' }, group: { type: 'string', default: 'id' }, out: { type: 'string' }, name: { type: 'string' } } });
-if (!o.in || !o.out) { console.error('usage: hints --in areas.geojson --group <property> --out style.css'); process.exit(1); }
+if (!o.in || !o.out) { console.error('usage: hints --in areas.geojson --group <property> --out hints.css'); process.exit(1); }
 const fc = readGeoJSON(o.in);
 const topo = topology({ a: fc }, 1e5);
 const nb = neighbors(topo.objects.a.geometries);

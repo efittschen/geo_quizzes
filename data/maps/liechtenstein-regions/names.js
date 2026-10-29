@@ -1,0 +1,3 @@
+// data/maps/liechtenstein-regions: the words of the map, the source the quizzes on it are made from (not loaded by a page)
+const MAP_NAMES = {};
+MAP_NAMES["data.js"] = {"DATA":{"reg":[{"name":"Balzers","wk":"Oberland"},{"name":"Eschen","wk":"Unterland"},{"name":"Gamprin","post":["9487 Gamprin-Bendern"],"wk":"Unterland"},{"name":"Mauren","wk":"Unterland"},{"name":"Planken","wk":"Oberland"},{"name":"Ruggell","wk":"Unterland"},{"name":"Schaan","wk":"Oberland"},{"name":"Schellenberg","wk":"Unterland"},{"name":"Triesen","wk":"Oberland"},{"name":"Triesenberg","wk":"Oberland"},{"name":"Vaduz","wk":"Oberland"}]}};

@@ -1,20 +1,20 @@
 # Easy to Hard (quizzes/world-places): MapTap's places of its past days (date, pos, name, lat, lng: from ./days.py)
-# -> quizzes/world-places/cities.js for the city quiz (shared/city-config.js) on the plain map of the world.
+# -> data/maps/world-places/cities.js for the city quiz (engine/types/city.js) on the plain map of the world.
 #
-#   python3 tools/builds/world-places/build.py maptap_cities.json [--out quizzes/world-places/cities.js]
+#   python3 tools/builds/world-places/build.py maptap_cities.json [--out data/maps/world-places/cities.js]
 #
 # Every place as MapTap gives it: its name (descriptions too: "the deepest lake in the United States") and its point.
 # An area without a point is placed at its centre (CENTRES); one without a centre here stops the run, and nothing is
 # written. Each day's place is a place of its own, at that day's point and position (pos, 1 to 5: easy to hard), so
 # one MapTap asked on five days is drawn five times as often (the user's choice, 2026-10-27): a round is one place of
-# each position, no name twice (quizzes/world-places/points.js). The map is
+# each position, no name twice (data/maps/world-places/points.js). The map is
 # world.js's own (Natural Earth, Web Mercator): the page has no land of its own, the world is drawn under it.
 # Each place's own country and continent (cc, ct: for the points' floors) are those of the world map at its point,
 # or, where the point lies off every outline (a coast drawn coarser than the town on it: New York, Rio), those of the
 # nearest outline within SNAP km (the user's choice, 2026-10-27); else none (Nauru, a point at sea).
 import json, sys, os, math, hashlib, collections, argparse
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-a = argparse.ArgumentParser(); a.add_argument('places'); a.add_argument('--out', default=os.path.join(ROOT, 'quizzes/world-places/cities.js'))
+a = argparse.ArgumentParser(); a.add_argument('places'); a.add_argument('--out', default=os.path.join(ROOT, 'data/maps/world-places/cities.js'))
 o = a.parse_args()
 CENTRES = {'Lake Baikal': (53.5, 108.2)}   # (the user's choice, 2026-10-27: the lake's centre)
 SNAP = 25
@@ -24,7 +24,7 @@ for ar in src.get('areas', []):
     if ar.get('highlight') not in CENTRES: sys.exit(f"STOP: no centre for the area {ar.get('highlight')!r} ({ar['date']}); nothing written")
     lat, lng = CENTRES[ar['highlight']]; places.append({**ar, 'lat': lat, 'lng': lng})
 
-w = open(os.path.join(ROOT, 'quizzes/shared/world.js'), encoding='utf-8').read()
+w = open(os.path.join(ROOT, 'data/maps/world/world.js'), encoding='utf-8').read()
 W = json.loads(w[w.index('{'):w.rindex('}') + 1])
 P = W['proj']; RAD = math.pi / 180
 my = lambda lat: math.log(math.tan(math.pi / 4 + lat * RAD / 2)) / RAD

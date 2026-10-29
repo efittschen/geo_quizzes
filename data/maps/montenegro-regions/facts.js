@@ -1,0 +1,3 @@
+// data/maps/montenegro-regions: the facts of the map, the source the quizzes on it are made from (not loaded by a page)
+const MAP_FACTS = {};
+MAP_FACTS["data.js"] = {"DATA":{"reg":[{"tel":"31","d1":"3"},{"tel":"51","d1":"5"},{"tel":"51","d1":"5"},{"tel":"51","d1":"5"},{"tel":"51","d1":"5"},{"tel":"20","d1":"2"},{"tel":"30","d1":"3"},{"tel":"50","d1":"5"},{"tel":"33","d1":"3"},{"tel":"41","d1":"4"},{"tel":"20","d1":"2"},{"tel":"20","d1":"2"},{"tel":"32","d1":"3"},{"tel":"50","d1":"5"},{"tel":"40","d1":"4"},{"tel":"52","d1":"5"},{"tel":"40","d1":"4"},{"tel":"32","d1":"3"},{"tel":"30","d1":"3"},{"tel":"40","d1":"4"},{"tel":"52","d1":"5"},{"tel":"51","d1":"5"},{"tel":"51","d1":"5"},{"tel":"20","d1":"2"},{"tel":"20","d1":"2"}]}};

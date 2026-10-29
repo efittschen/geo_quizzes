@@ -1,0 +1,2 @@
+// australia-states: the areas of every item, the items of every group, each area's hint group (written by the restructure's step 2 from the page's recipe, layers.js)
+const FACTS = {"g":{"st0":"1","st1":"2","st2":"3","st3":"4","st4":"5","st5":"6","st6":"7","st7":"8"},"groups":{"states":[["st4","st3","st2","st6","st5","st0"],["st7","st1"]]},"kinds":{"states":{"areas":{"st4":["st4"],"st3":["st3"],"st2":["st2"],"st6":["st6"],"st5":["st5"],"st0":["st0"],"st7":["st7"],"st1":["st1"]}}}};

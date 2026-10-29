@@ -1,5 +1,5 @@
 // US Bollards: config for ../shared/area-quiz.js. See a bollard, click a state it is found in.
-// The pictures are the US ones of ../world-bollards/photos.js that name their states (geohints lists them per
+// The pictures are the US ones of ../shared/pictures/bollards/photos.js that name their states (geohints lists them per
 // state DOT); a bollard found in several states is answered by any of them. The map is the area-code map of
 // ../us-codes/data.js, each state drawn as one area (its area codes together, under the state outlines).
 
@@ -24,7 +24,7 @@ const SEVERAL = 'Several regions';
 const NAME = Object.fromEntries(Object.entries(USPS).map(([name, code]) => [code, name]));
 const REGION = Object.fromEntries(CENSUS.flatMap(([region, states]) => states.map(st => [st, region])));
 
-// One area per state: its counties of the US Regions map joined (../us-states/states.js).
+// One area per state: its counties of the US Regions map joined (../shared/maps/us-states/states.js).
 const STATE_AREAS = Object.keys(USPS).map(st => { const r = US_STATES.reg.find(r => r.id === USPS[st]); return { id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' }; });
 
 const DIR = new URL('img/', document.querySelector('script[src$="photos.js"]').src).href;
@@ -41,9 +41,9 @@ const QUIZ = {
   key: 'usbollards',
   areas: STATE_AREAS,
   borders: [US_STATES.reg.map(r => r.d).join('')], // every state's outline, also where a round leaves it out
-  context: US_STATES.ctx,
-  proj: US_STATES.proj, kpu: US_STATES.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
-  street: {"bounds":[[24.4,-124.8],[49.4,-66.9]],"maxBounds":[[10,-200],[75,-50]]},
+  
+  proj: US_STATES.proj, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+  
   size: [US_STATES.w, US_STATES.h], pad: 16, maxZoom: 60, labelScale: 0.14, fly: { pad: 1.6, min: 0.03 },
   hintLabel: '', hintsDefault: false,
   exploreKind: 'photos',

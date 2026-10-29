@@ -10,9 +10,9 @@ const state = (id, name, part) => [id, name, part, AREAS_OF[id]];
 const FLAGS = {
   key: 'atflags', alt: 'state flag',
   map: {
-    areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' })), context: DATA.ctx,
-    proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
-    street: {"bounds":[[46.37,9.53],[49.02,17.16]],"maxBounds":[[43,4],[52,23]]},
+    areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' })), 
+    proj: DATA.proj, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+    
     size: [1000, 516], pad: 16, maxZoom: 40, labelScale: 0.25, fly: { pad: 1.8, min: 0.0375 },
   },
   parts: ['West', 'East'],

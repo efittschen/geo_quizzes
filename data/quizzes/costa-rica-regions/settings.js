@@ -1,0 +1,2 @@
+// costa-rica-regions: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"crregions","map":"DATA.reg","borders":"DATA.prov","size":[1000,1274],"pad":16,"maxZoom":40,"labelScale":0.2,"fly":{"pad":1.6,"min":0.035},"hintLabel":"Color by provincia","exploreKind":"cantones","kinds":[{"key":"provincias","label":"Provincias","noun":["province","provinces"],"prompt":"name","hints":false},{"key":"cantones","label":"Cantones","noun":["canton","cantons"],"prompt":"name"}]};

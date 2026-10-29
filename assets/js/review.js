@@ -2,7 +2,7 @@
 // world at the top), the settings: the clock's times, the limits per review and per day, "Cards per map" and the
 // schedule, and "Your data":
 // what this browser keeps, as a file to download or put back, and "Online copy": a place of the player's own where their
-// browsers meet (see sync.js). Only quizzes listed in data/quizzes.json are shown; the stack of a quiz
+// browsers meet (see sync.js). Only quizzes listed in data/site/quizzes.json are shown; the stack of a quiz
 // that left the list is kept.
 
 const $ = (id) => document.getElementById(id);
@@ -187,7 +187,7 @@ function render(index, nameByCode) {
       });
       const td = document.createElement("td");
       const a = document.createElement("a");
-      a.href = quizUrl(d.quiz);
+      a.href = d.quiz.url;
       a.textContent = d.quiz.title;
       td.title = d.quiz.title;
       td.append(a);
@@ -282,7 +282,7 @@ function renderDue(decks, placeOf, now) {
     due.append(dueWhen(c.due, now));
     // the place, the quiz (a link to it), and its layer and map
     const quiz = document.createElement("td"), a = document.createElement("a"), place = document.createElement("small"), rest = document.createElement("small");
-    a.href = quizUrl(d.quiz);
+    a.href = d.quiz.url;
     a.textContent = d.quiz.title;
     place.className = "q-place";
     place.textContent = `${placeOf.get(d.id)} · `;
@@ -393,7 +393,7 @@ function initData() {
   });
 }
 
-// Two things only a card's quiz page knows (see area-review.js): what the card is called (the record's `called`), and,
+// Two things only a card's quiz page knows (see engine/app/review.js): what the card is called (the record's `called`), and,
 // for a card from before a card was a question on one map that doesn't say its map, which map that is (the one
 // worked out from the best results, by the page's own rounds). So each quiz page with a card that lacks either is
 // opened here out of sight (…?cards), one after another, and says when it is done (or 20 s pass); the list is shown

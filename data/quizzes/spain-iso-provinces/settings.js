@@ -1,0 +1,2 @@
+// spain-iso-provinces: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"esisoprov","map":"DATA.reg","size":[1000,891],"pad":16,"maxZoom":40,"labelScale":0.25,"fly":{"pad":1.6,"min":0.0375},"hintLabel":"Color by community","exploreKind":"iso","circles":true,"top":true,"kinds":[{"key":"iso","label":"Codes","noun":["code","codes"],"prompt":"dial","detail":"Show community"}]};

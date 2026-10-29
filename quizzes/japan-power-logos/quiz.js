@@ -3,7 +3,7 @@
 // on poles, plates, covers and vans. The pictures (img/<utility>-<n>.jpg) are the ones of the player's reference
 // documents (logos, and the marks as seen in the street; Tohoku's two and Okinawa's second from the "English Guide to
 // Regional Plates on Japanese Utility Poles"), one to three per utility; NTT's, the telephone company's, is left out,
-// as it is the same everywhere. Learn shows them all, utility by utility, with the area each serves. The map is the utilities' areas of ../japan-regions/data.js (field
+// as it is the same everywhere. Learn shows them all, utility by utility, with the area each serves. The map is the utilities' areas of ../shared/maps/japan-regions/data.js (field
 // pw: prefectures split where a border between two utilities runs through them), each utility drawn as one region.
 
 // utility (pw in data.js) -> [region, utility, Japanese name, regions served]
@@ -50,9 +50,9 @@ const QUIZ = {
   key: 'jplogos',
   areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' })),
   borders: [],
-  context: DATA.ctx,
-  proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
-  street: {"bounds":[[24,123],[45.6,146]],"maxBounds":[[18,115],[50,158]]},
+  
+  proj: DATA.proj, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+  
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.22, fly: { pad: 1.6, min: 0.0375 },
   hintLabel: '', hintsDefault: false,
   exploreKind: 'photos',

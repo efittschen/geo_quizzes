@@ -16,9 +16,9 @@ const QUIZ = {
   key: 'huroads',
   areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: r.sector || '0' })),
   borders: [],
-  context: DATA.ctx,
+  
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.3, fly: { pad: 1.6, min: 1.5 / 40 },
-  proj: DATA.proj, kpu: DATA.kpu,
+  proj: DATA.proj, 
   street: { bounds: [[45.7, 16.1], [48.6, 22.9]], maxBounds: [[43, 12], [51, 27]] },
   hintLabel: 'Color by sector',
   exploreKind: 'roads',

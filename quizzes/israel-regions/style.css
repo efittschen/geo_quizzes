@@ -1,5 +1,0 @@
-/* Israel Regions: Hebrew names in Noto Sans Hebrew; hint colors by district (tools/hints.mjs), from the shared palette. */
-:root{--script:'Noto Sans Hebrew',var(--sans),sans-serif}
-/* hints: district (tools/hints.mjs) */
-.r[data-g="D"]{--hint:var(--h2)} .r[data-g="HA"]{--hint:var(--h3)} .r[data-g="JM"]{--hint:var(--h4)} .r[data-g="M"]{--hint:var(--h1)} .r[data-g="TA"]{--hint:var(--h5)} .r[data-g="Z"]{--hint:var(--h6)}
-/* end hints: district */

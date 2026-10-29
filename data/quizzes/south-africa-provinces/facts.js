@@ -1,0 +1,2 @@
+// south-africa-provinces: the areas of every item, the items of every group, each area's hint group (written by the restructure's step 2 from the page's recipe, layers.js)
+const FACTS = {"g":{"pv0":"1","pv1":"2","pv2":"3","pv3":"4","pv4":"5","pv5":"6","pv6":"7","pv7":"8","pv8":"9"},"groups":{"provinces":[["pv2","pv6","pv7","pv4","pv1","pv8","pv5","pv3","pv0"]]},"kinds":{"provinces":{"areas":{"pv2":["pv2"],"pv6":["pv6"],"pv7":["pv7"],"pv4":["pv4"],"pv1":["pv1"],"pv8":["pv8"],"pv5":["pv5"],"pv3":["pv3"],"pv0":["pv0"]}}}};

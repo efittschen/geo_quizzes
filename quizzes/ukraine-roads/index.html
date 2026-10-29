@@ -9,17 +9,21 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Noto+Sans:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../assets/css/base.css">
-<link rel="stylesheet" href="../shared/area-quiz.css">
-<link rel="stylesheet" href="../ukraine-regions/style.css">
+<link rel="stylesheet" href="../../engine/css/quiz-page.css">
+<link rel="stylesheet" href="../../engine/css/quiz-map.css">
+<link rel="stylesheet" href="../../engine/css/formats.css">
+<link rel="stylesheet" href="../../data/maps/ukraine-codes/hints.css">
 </head>
 <body data-kinds="roads" data-key="uaroads" data-dial="#···-····">
 <a class="back" href="../../country.html?code=804">← Ukraine</a>
 <h1>Ukraine Road Numbers</h1>
 <p class="note">Road codes: CMU Resolution 1318/2023 · Borders: geoBoundaries (© OpenStreetMap contributors, ODbL) · Street map © OpenStreetMap contributors</p>
-<script src="../shared/quiz-page.js"></script>
-<script src="../ukraine-codes/data.js"></script>
-<script src="../ukraine-regions/layers.js"></script>
-<script src="../shared/layer-config.js"></script>
-<script src="../shared/area-quiz.js"></script>
+<script src="../../engine/page.js"></script>
+<script src="../../data/maps/ukraine-codes/shapes.js"></script>
+<script src="../../data/quizzes/ukraine-roads/settings.js"></script>
+<script src="../../data/quizzes/ukraine-roads/names.js"></script>
+<script src="../../data/quizzes/ukraine-roads/facts.js"></script>
+<script src="../../engine/types/layer.js"></script>
+<script type="module" src="../../engine/main.js"></script>
 </body>
 </html>

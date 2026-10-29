@@ -1,0 +1,2 @@
+// canada-provinces: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"caprov","map":"PROVINCES","size":[1200,1564],"pad":16,"maxZoom":40,"labelScale":0.2,"fly":{"pad":1.6,"min":0.04},"hintLabel":"Color each province","exploreKind":"provinces","kinds":[{"key":"provinces","label":"Provinces","noun":["province","provinces"],"prompt":"name"}]};

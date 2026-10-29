@@ -1,4 +1,0 @@
-/* Botswana regions: census districts colored by district or town (tools/hints.mjs). */
-/* hints: district (tools/hints.mjs) */
-.r[data-g="01"]{--hint:var(--h9)} .r[data-g="02"]{--hint:var(--h12)} .r[data-g="03"]{--hint:var(--h13)} .r[data-g="04"]{--hint:var(--h14)} .r[data-g="06"]{--hint:var(--h15)} .r[data-g="07"]{--hint:var(--h16)} .r[data-g="08"]{--hint:var(--h4)} .r[data-g="09"]{--hint:var(--h3)} .r[data-g="10"]{--hint:var(--h2)} .r[data-g="11"]{--hint:var(--h6)} .r[data-g="12"]{--hint:var(--h1)} .r[data-g="13"]{--hint:var(--h10)} .r[data-g="14"]{--hint:var(--h7)} .r[data-g="15"]{--hint:var(--h11)} .r[data-g="16"]{--hint:var(--h5)} .r[data-g="17"]{--hint:var(--h8)}
-/* end hints: district */

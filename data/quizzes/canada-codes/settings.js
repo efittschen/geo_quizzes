@@ -1,0 +1,2 @@
+// canada-codes: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"cacodes","map":"DATA.reg","borders":"DATA.ent","size":[1200,1564],"pad":16,"maxZoom":50,"labelScale":0.38,"fly":{"pad":1.6,"min":0.03},"hintLabel":"Color by first digit","exploreKind":"codes","hintsDefault":false,"kinds":[{"key":"codes","label":"Area codes","noun":["code","codes"],"prompt":"dial","clickAll":true,"labelPerArea":true,"detail":"Show province","modes":["code"]}]};

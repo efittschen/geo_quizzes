@@ -1,7 +1,7 @@
 // Controller support. A game controller (any the browser's Gamepad API sees: Xbox, PlayStation, Switch Pro, Steam Deck…)
 // moves a cursor of its own over the page and clicks with it, through the same pointer, mouse and wheel events a mouse
 // sends. So every page and every quiz works with it as with a mouse, without code of its own: the map quizzes
-// (shared/area-quiz.js) and their street map (Leaflet), the town names' painting (shared/paint-quiz.js), the home map
+// (engine/) and their street map (map-tiles.js), the town names' painting (engine/paint.js), the home map
 // (D3) and the coverage map, also inside a country page's box (a frame of the same site, driven from the page around it).
 //
 //   left stick     the cursor; the left trigger held slows it, for small areas
@@ -17,7 +17,7 @@
 // The cursor shows with the first use of the controller and hides when the mouse moves. Its place is kept for the next
 // page in this tab (sessionStorage), so a review that moves from quiz to quiz keeps it. The browser hides the controller
 // from each page it opens until a button is pressed there; that press counts. Loaded by every page in the root
-// and, through quizzes/shared/quiz-page.js, by every quiz page.
+// and, through engine/page.js, by every quiz page.
 (() => {
   if (window.top !== window || !navigator.getGamepads) return;
   const ID = 7351; // the pointerId of the controller's cursor
@@ -25,7 +25,7 @@
   const DEAD = 0.15, WHEEL = 200, SAVE = 'geoquizzes-gamepad';
   const CLICKABLE = 'a[href], button, input:not([type=hidden]), select, textarea, summary, label.toggle, [role=tab], [role=link], [tabindex]:not([tabindex="-1"])';
   const FIELD = 'input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=file]), select, textarea';
-  const MAP = '#map, .leaflet-container'; // what the right stick pans: the town names' canvas has no panning, and a drag there paints
+  const MAP = 'canvas.glmap, .leaflet-container'; // what the right stick pans (a map quiz's map: its canvas, gl-map.js): the town names' canvas has no panning, and a drag there paints
   const CONTROLS = [
     ['Left stick', 'Move the cursor (hold LT to slow it)'], ['A / ✕', 'Click; hold to drag a map or paint'],
     ['B / ○', 'Back: leave a field, close a box or picture'], ['Right stick', 'Pan the map, or scroll a list'],
@@ -121,7 +121,7 @@
       const el = hit(x, y);
       if (!el.closest(MAP)) return false;
       // (a map drawn on, a Draw question of the map quizzes, moves with the middle button: its left one draws)
-      pan = { x, y, x0: x, y0: y, compat: true, init: el.closest('svg.sketch') ? { button: 1, buttons: 4 } : {} };
+      pan = { x, y, x0: x, y0: y, compat: true, init: document.querySelector('#map.sketch') ? { button: 1, buttons: 4 } : {} };
       pan.compat = fire(el, 'pointerdown', x, y, pan.init);
       if (pan.compat) fire(el, 'mousedown', x, y);
     }

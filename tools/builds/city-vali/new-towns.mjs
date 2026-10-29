@@ -19,7 +19,7 @@ for (const Q of Qs) {
   if (!fs.existsSync(lf)) continue;
   const L = JSON.parse(fs.readFileSync(lf, 'utf8')), T = Object.fromEntries(JSON.parse(fs.readFileSync(path.join(WORK, `${Q.cc}_towns.json`), 'utf8')).towns.map(t => [t.id, t]));
   const ctx = {}; vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.join(ROOT, 'quizzes', `${Q.slug}-cities`, 'cities.js'), 'utf8').replace('const CITIES', 'var CITIES'), ctx);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'data', 'maps', `${Q.slug}-cities`, 'cities.js'), 'utf8').replace('const CITIES', 'var CITIES'), ctx);
   const OLD = ctx.CITIES.list, have = new Set(OLD.map(c => c.id));
   for (const lv of L.levels) for (const id of lv.new) {
     if (have.has(id)) continue;

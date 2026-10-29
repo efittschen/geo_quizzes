@@ -11,21 +11,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@500;600&family=Noto+Sans+Khmer:wght@500;600&family=Battambang:wght@700&family=Moul&display=swap" rel="stylesheet" data-faces>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@600&text=%E4%B8%AD%E6%96%87%E9%A4%90%E5%8E%85&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../assets/css/base.css">
-<link rel="stylesheet" href="../shared/area-quiz.css">
-<link rel="stylesheet" href="../shared/faces.css">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="../../engine/css/quiz-page.css">
+<link rel="stylesheet" href="../../engine/css/quiz-map.css">
+<link rel="stylesheet" href="../../engine/css/formats.css">
+<link rel="stylesheet" href="../../data/maps/cambodia-regions/hints.css">
 </head>
-<body data-kinds="provinces khmer zones">
+<body data-han="sc" data-kinds="provinces khmer zones">
 <a class="back" href="../../country.html?code=116">← Cambodia</a>
 <h1>Cambodia Regions</h1>
 <p class="note">Regions, population: NIS 2019 census · Khmer names: Wikidata · Borders: geoBoundaries 2017 (ODbL) · Street map © OpenStreetMap contributors</p>
-<script src="../shared/quiz-page.js"></script>
-<script src="data.js"></script>
-<script src="layers.js"></script>
-<script src="../khmer-letters/khmer.js"></script>
-<script src="../shared/reading.js"></script>
-<script src="../shared/layer-config.js"></script>
-<script src="shapes.js"></script>
-<script src="../shared/area-quiz.js"></script>
+<script src="../../engine/page.js"></script>
+<script src="../../data/maps/cambodia-regions/shapes.js"></script>
+<script src="../../data/quizzes/cambodia-regions/settings.js"></script>
+<script src="../../data/quizzes/cambodia-regions/names.js"></script>
+<script src="../../data/quizzes/cambodia-regions/facts.js"></script>
+<script src="../../data/letters/khmer.js"></script>
+<script src="../../engine/types/reading.js"></script>
+<script src="../../engine/types/layer.js"></script>
+<script src="../../data/quizzes/cambodia-regions/shapes.js"></script>
+<script type="module" src="../../engine/main.js"></script>
 </body>
 </html>

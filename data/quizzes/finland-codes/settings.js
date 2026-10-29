@@ -1,0 +1,2 @@
+// finland-codes: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"fincodes","map":"DATA.reg","size":[1000,2035],"pad":16,"maxZoom":40,"labelScale":0.3,"fly":{"pad":1.6,"min":0.0375},"hintLabel":"Color by area code","exploreKind":"codes","kinds":[{"key":"codes","label":"Area codes","noun":["code","codes"],"prompt":"dial","hints":false,"detail":"Show area name","presets":[["Big cities",["9","2","3","8","14","17"]]],"modes":["code"]}]};

@@ -1,0 +1,2 @@
+// argentina-gba: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"argba","map":"DATA.reg","size":[1000,1400],"pad":16,"maxZoom":20,"labelScale":0.1,"fly":{"pad":1.8,"min":0.16666666666666666},"hintLabel":"Color each partido","exploreKind":"partidos","kinds":[{"key":"partidos","label":"Partidos","noun":["partido","partidos"],"prompt":"name","presets":[["Bordering the city",["06861","06371","06840","06427","06490","06434","06035"]]]}]};

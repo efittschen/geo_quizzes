@@ -9,18 +9,22 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../assets/css/base.css">
-<link rel="stylesheet" href="../shared/area-quiz.css">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="../../engine/css/quiz-page.css">
+<link rel="stylesheet" href="../../engine/css/quiz-map.css">
+<link rel="stylesheet" href="../../engine/css/formats.css">
+<link rel="stylesheet" href="../../data/quizzes/us-states/hints.css">
 </head>
 <body>
 <a class="back" href="../../country.html?code=840">← United States</a>
 <h1>US Regions</h1>
 <p class="note">Counties: US Census Bureau, cartographic boundaries 2021 (public domain) · simplified · Street map © OpenStreetMap contributors</p>
-<script src="../shared/quiz-page.js"></script>
-<script src="data.js"></script>
-<script src="layers.js"></script>
-<script src="../shared/layer-config.js"></script>
-<script src="shapes.js"></script>
-<script src="../shared/area-quiz.js"></script>
+<script src="../../engine/page.js"></script>
+<script src="../../data/maps/us-states/shapes.js"></script>
+<script src="../../data/quizzes/us-states/settings.js"></script>
+<script src="../../data/quizzes/us-states/names.js"></script>
+<script src="../../data/quizzes/us-states/facts.js"></script>
+<script src="../../engine/types/layer.js"></script>
+<script src="../../data/quizzes/us-states/shapes.js"></script>
+<script type="module" src="../../engine/main.js"></script>
 </body>
 </html>

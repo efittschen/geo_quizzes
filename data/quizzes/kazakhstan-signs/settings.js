@@ -1,0 +1,2 @@
+// kazakhstan-signs: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"kzsigns","map":"DATA.reg","size":[1000,550],"pad":16,"maxZoom":30,"labelScale":0.3,"fly":{"pad":1.6,"min":0.05},"hintLabel":"Color regions","exploreKind":"signs","circles":true,"top":true,"kinds":[{"key":"signs","label":"Sign codes","noun":["code","codes"],"prompt":"dial"}]};

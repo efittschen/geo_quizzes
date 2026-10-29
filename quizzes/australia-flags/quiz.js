@@ -6,9 +6,9 @@
 const FLAGS = {
   key: 'auflags', alt: 'state flag',
   map: {
-    areas: DATA.ent.map((d, i) => ({ id: 'st' + i, d, g: '', ...(DATA.entAt ? { lx: DATA.entAt[i][0], ly: DATA.entAt[i][1], s: DATA.entAt[i][2] } : {}) })), context: DATA.ctx,
-    proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
-    street: {"bounds":[[-43.7,113],[-10.6,153.7]],"maxBounds":[[-50,95],[0,170]]},
+    areas: DATA.ent.map((d, i) => ({ id: 'st' + i, d, g: '', ...(DATA.entAt ? { lx: DATA.entAt[i][0], ly: DATA.entAt[i][1], s: DATA.entAt[i][2] } : {}) })), 
+    proj: DATA.proj, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+    
     size: [1100, 1063], pad: 16, maxZoom: 40, labelScale: 0.2, fly: { pad: 1.6, min: 0.04 },
   },
   parts: ['States', 'Territories'],

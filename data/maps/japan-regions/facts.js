@@ -1,0 +1,3 @@
+// data/maps/japan-regions: the facts of the map, the source the quizzes on it are made from (not loaded by a page)
+const MAP_FACTS = {};
+MAP_FACTS["data.js"] = {"DATA":{"reg":[{"pf":1},{"pf":2},{"pf":3},{"pf":4},{"pf":5},{"pf":6},{"pf":7},{"pf":8},{"pf":9},{"pf":10},{"pf":11},{"pf":12},{"pf":13},{"pf":14},{"pf":15},{"pf":16},{"pf":17},{"pf":18},{"pf":18},{"pf":19},{"pf":20},{"pf":21},{"pf":21},{"pf":21},{"pf":22},{"pf":22},{"pf":23},{"pf":24},{"pf":24},{"pf":25},{"pf":26},{"pf":27},{"pf":28},{"pf":28},{"pf":29},{"pf":30},{"pf":31},{"pf":32},{"pf":33},{"pf":34},{"pf":35},{"pf":36},{"pf":37},{"pf":37},{"pf":38},{"pf":38},{"pf":39},{"pf":40},{"pf":41},{"pf":42},{"pf":43},{"pf":44},{"pf":45},{"pf":46},{"pf":47}]}};

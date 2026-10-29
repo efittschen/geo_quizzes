@@ -1,0 +1,2 @@
+// ecuador-codes: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"eccodes","map":"DATA.reg","size":[1000,393],"pad":16,"maxZoom":30,"labelScale":0.3,"fly":{"pad":1.6,"min":0.05},"hintLabel":"Color by region","exploreKind":"codes","kinds":[{"key":"codes","label":"Area codes","noun":["area code","area codes"],"prompt":"dial","modes":["code"]}]};

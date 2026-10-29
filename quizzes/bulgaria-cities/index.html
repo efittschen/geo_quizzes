@@ -10,21 +10,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Noto+Sans:wght@500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@500;600&family=PT+Serif:ital,wght@0,700;1,400&family=Oswald:wght@500&family=Caveat:wght@700&family=Russo+One&display=swap" rel="stylesheet" data-faces>
 <link rel="stylesheet" href="../../assets/css/base.css">
-<link rel="stylesheet" href="../shared/area-quiz.css">
-<link rel="stylesheet" href="../shared/faces.css">
-<link rel="stylesheet" href="../shared/city-quiz.css">
+<link rel="stylesheet" href="../../engine/css/quiz-page.css">
+<link rel="stylesheet" href="../../engine/css/quiz-map.css">
+<link rel="stylesheet" href="../../engine/css/formats.css">
 <style>:root{--sans:"Barlow","Noto Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--cond:"Barlow Condensed","Noto Sans",system-ui,sans-serif}</style>
 </head>
 <body data-dial="+359 (#)··· ····">
 <a class="back" href="../../country.html?code=100">← Bulgaria</a>
 <h1>Bulgaria Cities</h1>
 <p class="note">Cities: GeoNames (CC BY 4.0) · Names: Wikidata (CC0) · Borders: OpenStreetMap (© OpenStreetMap contributors, ODbL)</p>
-<script src="../shared/quiz-page.js"></script>
-<script src="cities.js"></script>
+<script src="../../engine/page.js"></script>
+<script src="../../data/maps/bulgaria-cities/cities.js"></script>
 <script>const CITY_OPTS = { key: 'bgcities', lang: 'Bulgarian', top: [10, 25, 50] };</script>
-<script src="../cyrillic-letters/cyrillic.js"></script>
-<script src="../shared/reading.js"></script>
-<script src="../shared/city-config.js"></script>
-<script src="../shared/area-quiz.js"></script>
+<script src="../../data/letters/cyrillic.js"></script>
+<script src="../../engine/types/reading.js"></script>
+<script src="../../engine/types/city.js"></script>
+<script type="module" src="../../engine/main.js"></script>
 </body>
 </html>

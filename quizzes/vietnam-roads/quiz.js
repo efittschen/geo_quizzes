@@ -16,9 +16,9 @@ const QUIZ = {
   key: 'vnroads',
   areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: String(r.dt[0])[0] })),
   borders: [],
-  context: DATA.ctx,
+  
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.3, fly: { pad: 1.6, min: 1.5 / 40 },
-  proj: DATA.proj, kpu: DATA.kpu,
+  proj: DATA.proj, 
   street: { bounds: [[8.4, 102.1], [23.4, 109.5]], maxBounds: [[3, 95], [28, 117]] },
   hintLabel: 'Color by first digit',
   exploreKind: 'blocks',

@@ -4,7 +4,7 @@
 // uses two designs; Saga may paint its design small or thin, Niigata and Ibaraki theirs thin). The plain unbroken
 // diamond is found everywhere, so it is not asked; a prefecture with nothing else paints only that one. The pictures
 // (img/<design>.svg) are drawings made for this quiz after those designs (tools/builds/japan-diamonds), not photos.
-// The map is the prefectures of ../japan-regions/data.js, those split there by power utility joined (prefs.js).
+// The map is the prefectures of ../shared/maps/japan-regions/data.js, those split there by power utility joined (prefs.js).
 
 const PREF = ['Hokkaido', 'Aomori', 'Iwate', 'Miyagi', 'Akita', 'Yamagata', 'Fukushima', 'Ibaraki', 'Tochigi', 'Gunma',
   'Saitama', 'Chiba', 'Tokyo', 'Kanagawa', 'Niigata', 'Toyama', 'Ishikawa', 'Fukui', 'Yamanashi', 'Nagano', 'Gifu',
@@ -54,9 +54,9 @@ const QUIZ = {
   key: 'jpdiamonds',
   areas: PREF_AREAS,
   borders: [],
-  context: DATA.ctx,
-  proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
-  street: {"bounds":[[24,123],[45.6,146]],"maxBounds":[[18,115],[50,158]]},
+  
+  proj: DATA.proj, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+  
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.22, fly: { pad: 1.6, min: 0.0375 },
   hintLabel: '', hintsDefault: false,
   exploreKind: 'diamonds',

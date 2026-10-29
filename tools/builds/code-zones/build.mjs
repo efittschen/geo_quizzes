@@ -14,14 +14,17 @@
 //
 // Inputs in this folder: <cc>.tsv (code, lat, lng, place, source: where each code is known), and <cc>.items.json
 // (what the quiz says of each item, per layer: names, towns, groups, and the areas of the old map it lies on).
-// Writes the quiz's data.js, geo.js and layers.js.
+// Writes the quiz's map, data/maps/<quiz>/, and its files, data/quizzes/<quiz>/ (settings.js, names.js, facts.js, from
+// the recipe made here: tools/lib/quiz-files.mjs). The base map: the regions quiz's, data/maps/<base>; Kazakhstan's
+// districts, which no page loads, are beside this file.
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { execFileSync } from 'node:child_process';
-import { ROOT, CACHE } from '../../lib/geo.mjs';
+import { ROOT, CACHE, latlng, latlngRings } from '../../lib/geo.mjs';
+import { readMap, writeMap, writeQuiz } from '../../lib/quiz-files.mjs';
 
-const HERE = path.dirname(new URL(import.meta.url).pathname), Q = f => path.join(ROOT, 'quizzes', f);
+const HERE = path.dirname(new URL(import.meta.url).pathname);
 const CONFIG = {
   BO: { quiz: 'bolivia-codes', base: 'bolivia-regions', key: 'bocodes', kinds: ['codes', 'first', 'prefixes'], finest: 'prefixes',
     parent: { first: f => f.slice(0, 2), codes: f => f[0] }, clicked: '{name} · {chipTitle}',
@@ -31,7 +34,7 @@ const CONFIG = {
     parent: { codes2: f => [f.slice(0, 2), '93'], codes: f => '33' + f[0] }, clicked: '{name} ({chipTitle})', areaName: 'n',
     explore: { code: '{codes3.name}', title: '{codes3.chipTitle}', sub: ['{codes2.name} · {codes2.chipTitle}'] },
     note: 'Senegal Area Codes: the land of each exchange, drawn from landline numbers on OpenStreetMap and in public directories.' },
-  KZ: { quiz: 'kazakhstan-codes', base: 'kazakhstan-codes', baseFiles: ['districts.js', 'districts-geo.js'], key: 'kzcodes', kinds: ['codes', 'zone', 'digit'], finest: 'codes',
+  KZ: { quiz: 'kazakhstan-codes', baseFile: 'tools/builds/code-zones/kazakhstan-districts.js', key: 'kzcodes', kinds: ['codes', 'zone', 'digit'], finest: 'codes',
     parent: { zone: f => f.slice(0, 3), digit: f => f.slice(0, 2) }, clicked: '{p} · {about1}',
     explore: { code: '{codes.p}', title: '{codes.chipTitle}', sub: ['{codes.about1}', '{zone.p} · {zone.chipTitle}'] },
     note: 'Kazakhstan Area Codes: the land of each code, drawn from the places the ITU numbering plan names for it (placed with GeoNames).' },
@@ -40,10 +43,9 @@ const cc = process.argv[2], C = CONFIG[cc];
 if (!C) { console.error('usage: build.mjs BO|SN|KZ'); process.exit(1); }
 
 const run = (file, name) => { const ctx = {}; vm.createContext(ctx); vm.runInContext(fs.readFileSync(file, 'utf8').replace(new RegExp(`^(?:const|let)\\s+${name}\\s*=`, 'm'), `var ${name} =`), ctx); return ctx[name]; };
-// Kazakhstan's zone map replaces its district map in the same folder: the districts are kept beside it as the base.
-const [baseData, baseGeo] = C.baseFiles || ['data.js', 'geo.js'];
-if (C.baseFiles && !fs.existsSync(path.join(Q(C.base), baseData))) { fs.renameSync(path.join(Q(C.base), 'data.js'), path.join(Q(C.base), baseData)); fs.renameSync(path.join(Q(C.base), 'geo.js'), path.join(Q(C.base), baseGeo)); }
-const BASE = run(path.join(Q(C.base), baseData), 'DATA'), BGEO = run(path.join(Q(C.base), baseGeo), 'GEO');
+const baseFile = C.baseFile && path.join(ROOT, C.baseFile);
+// The base areas' latitudes and longitudes, read off their outlines on the map (exact to its grain)
+const BASE = baseFile ? run(baseFile, 'DATA') : readMap(C.base).DATA, BGEO = Object.fromEntries(BASE.reg.map(r => [r.id, { rings: latlngRings(r.d, BASE.proj), lab: latlng(r.lx, r.ly, BASE.proj) }]));
 
 /* ---------- what the quiz says of each item ---------- */
 const itemsFile = path.join(HERE, `${cc}.items.json`);
@@ -99,13 +101,12 @@ if (together.length) console.log('one zone for several codes:', together.join(';
 /* ---------- the zones ---------- */
 const out = path.join('tools', 'cache', 'builds', 'code-zones', cc, 'out');
 fs.rmSync(path.join(ROOT, out), { recursive: true, force: true });
-console.log(execFileSync('node', ['tools/postcodes.mjs', '--cc', cc, '--out', out, '--voronoi', `quizzes/${C.base}`, '--data-file', baseData, '--geo-file', baseGeo, '--prefix', '^[0-9]+', '--frames', 'base:id', '--keep-all', '--min-area', '0.3',
+console.log(execFileSync('node', ['tools/postcodes.mjs', '--cc', cc, '--out', out, '--voronoi', baseFile ? path.relative(ROOT, baseFile) : C.base, '--prefix', '^[0-9]+', '--frames', 'base:id', '--keep-all', '--min-area', '0.3',
   '--points', path.join(work, 'points.txt'), '--source', 'tools/builds/code-zones'], { cwd: ROOT }).toString().trim().split('\n').slice(1, 2).join('\n'));
-const DATA = run(path.join(ROOT, out, 'data.js'), 'DATA'), GEO = run(path.join(ROOT, out, 'geo.js'), 'GEO');
+const DATA = run(path.join(ROOT, out, 'data.js'), 'DATA');
 const drawn = new Set(DATA.reg.map(r => r.id)), live = zones.filter(z => drawn.has(z.id));
-const head = `// ${C.note}\n// Made by tools/builds/code-zones/build.mjs on the areas of ../${C.base}${C.baseFiles ? '/' + baseData : ''}: inside each of them the land goes to the\n// nearest place a code is known in, so the lines between codes inside one area are estimates.\n`;
-fs.writeFileSync(path.join(Q(C.quiz), 'data.js'), `${head}const DATA = ${JSON.stringify({ ...DATA, ctx: BASE.ctx ?? DATA.ctx })};\n`);
-fs.writeFileSync(path.join(Q(C.quiz), 'geo.js'), `// Street-map rings [lat, lng] for the areas in data.js (same simplification)\nconst GEO = ${JSON.stringify(GEO)};\n`);
+const head = `// ${C.note}\n// Made by tools/builds/code-zones/build.mjs on the areas of ${baseFile ? path.relative(ROOT, baseFile) : `data/maps/${C.base}`}: inside each of them the land goes to the\n// nearest place a code is known in, so the lines between codes inside one area are estimates.\n`;
+writeMap(C.quiz, { DATA }, head);
 
 /* ---------- the quiz's data on the new map: every item is a group of zones ---------- */
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -125,11 +126,9 @@ const kinds = C.kinds.map(key => {
 });
 const whole = live.filter(z => !z.codes.length);
 if (whole.length) console.log('areas kept whole (no code of the finest layer):', whole.map(z => z.area).join(' '));
-const LAYERS = { key: C.key, ...(ITEMS.quiz.borders.length ? { borders: ITEMS.quiz.borders } : {}), size: ITEMS.quiz.size, pad: ITEMS.quiz.pad, maxZoom: Math.max(ITEMS.quiz.maxZoom, 40), labelScale: ITEMS.quiz.labelScale, fly: ITEMS.quiz.fly, street: ITEMS.quiz.street,
+const LAYERS = { key: C.key, ...(ITEMS.quiz.borders.length ? { borders: ITEMS.quiz.borders } : {}), size: ITEMS.quiz.size, pad: ITEMS.quiz.pad, maxZoom: Math.max(ITEMS.quiz.maxZoom, 40), labelScale: ITEMS.quiz.labelScale, fly: ITEMS.quiz.fly,
   hintLabel: ITEMS.quiz.hintLabel, exploreKind: C.finest, kinds, g: { x: Object.fromEntries(live.map(z => [z.id, ITEMS.g[z.area]])) },
   explore: whole.length ? { t: C.explore, x: Object.fromEntries(whole.map(z => [z.id, { code: K[C.kinds[0]].clickedOn[z.area], title: BASE.reg.find(r => r.id === z.area)[C.areaName] || '', sub: [] }])) } : C.explore };
-const ident = k => /^[A-Za-z_$][\w$]*$/.test(k) ? k : JSON.stringify(k);
-const lit = L => '{\n' + Object.entries(L).map(([k, v]) => k === 'kinds' ? '  kinds: [\n' + v.map(kind => '    {\n' + Object.entries(kind).map(([p, x]) => `      ${ident(p)}: ${JSON.stringify(x)},`).join('\n') + '\n    },').join('\n') + '\n  ],' : `  ${ident(k)}: ${JSON.stringify(v)},`).join('\n') + '\n}';
-fs.writeFileSync(path.join(Q(C.quiz), 'layers.js'), `${head}// Places: ${path.basename(tsv)} here; what is said of each code: ${path.basename(itemsFile)}.\n\nconst LAYERS = ${lit(LAYERS)};\n`);
+writeQuiz(C.quiz, LAYERS, C.quiz, { made: `tools/builds/code-zones/build.mjs (places: ${path.basename(tsv)}; what is said of each code: ${path.basename(itemsFile)})` });
 const lost = codes.filter(c => !live.some(z => z.codes.includes(c)));
 console.log(`${codes.length} codes on ${live.length} zones${lost.length ? '; codes without a zone: ' + lost.join(' ') : ''}`);

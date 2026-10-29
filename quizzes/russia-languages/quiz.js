@@ -84,7 +84,7 @@ const QUIZ = {
   areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: FAMILY[r.id] || 'none' })),
   borders: DATA.fd,
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 45, labelScale: 0.3, fly: { pad: 1.6, min: 1 / 30 },
-  proj: DATA.proj, kpu: DATA.kpu,
+  proj: DATA.proj, 
   street: { bounds: [[41.2, 19.6], [77.7, 190]], maxBounds: [[25, 0], [86, 215]] },
   hintLabel: 'Color by language family',
   exploreKind: 'langs',

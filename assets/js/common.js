@@ -1,6 +1,6 @@
 // Shared by the home and country pages.
 
-const WORLD_URL = "data/world.json"; // world-atlas countries-110m, plus the small countries only 50m has (Malta, Andorra…): tools/builds/world-atlas/build.mjs
+const WORLD_URL = "data/site/world.json"; // world-atlas countries-110m, plus the small countries only 50m has (Malta, Andorra…): tools/builds/world-atlas/build.mjs
 
 // world-atlas feature ids are ISO 3166-1 numeric codes ("076" = Brazil); quizzes use the same codes.
 function countryUrl(code) {
@@ -12,7 +12,7 @@ function quizCountries(quiz) {
   return [].concat(quiz.country ?? []);
 }
 // The two-letter code of a quiz's (first) country, where space is short: BR. The countries that have quizzes, from
-// the coverage data's table (data/coverage/home.json); a quiz without a country has none.
+// the coverage data's table (data/site/coverage/home.json); a quiz without a country has none.
 const COUNTRY_CODES = {"008":"AL","020":"AD","032":"AR","036":"AU","040":"AT","050":"BD","056":"BE","064":"BT","068":"BO","070":"BA","072":"BW","076":"BR","100":"BG","116":"KH","124":"CA","144":"LK","152":"CL","156":"CN","158":"TW","170":"CO","188":"CR","191":"HR","196":"CY","203":"CZ","208":"DK","218":"EC","233":"EE","246":"FI","250":"FR","268":"GE","275":"PS","276":"DE","288":"GH","300":"GR","320":"GT","348":"HU","352":"IS","356":"IN","360":"ID","372":"IE","376":"IL","380":"IT","392":"JP","398":"KZ","400":"JO","404":"KE","410":"KR","417":"KG","418":"LA","422":"LB","426":"LS","428":"LV","438":"LI","440":"LT","442":"LU","458":"MY","470":"MT","484":"MX","496":"MN","499":"ME","512":"OM","516":"NA","524":"NP","528":"NL","554":"NZ","566":"NG","578":"NO","591":"PA","600":"PY","604":"PE","608":"PH","616":"PL","620":"PT","634":"QA","642":"RO","643":"RU","646":"RW","674":"SM","686":"SN","688":"RS","702":"SG","703":"SK","704":"VN","705":"SI","710":"ZA","724":"ES","748":"SZ","752":"SE","756":"CH","764":"TH","784":"AE","788":"TN","792":"TR","800":"UG","804":"UA","807":"MK","826":"GB","840":"US","858":"UY"};
 const quizCode = (quiz) => COUNTRY_CODES[quizCountries(quiz)[0]] ?? null;
 // Countries without official Street View coverage (not in the location pool of tools/coverage.mjs): their quizzes are
@@ -32,7 +32,7 @@ function areaUrl(area) {
 // A suite is a short list of quizzes to play in order ({ name, title, quizzes: [ids] }), from which country to which
 // region to which area code. Its page lists them (country.html?suite=<name>). The suites have a file of their own,
 // so nothing that rewrites the list of quizzes can lose them; a missing file means no suites.
-const SUITES_URL = "data/suites.json";
+const SUITES_URL = "data/site/suites.json";
 async function loadSuites() {
   try { return (await d3.json(SUITES_URL)).suites ?? []; } catch (e) { return []; }
 }
@@ -43,14 +43,14 @@ function suiteQuizzes(index, suite) {
   return suite.quizzes.map((id) => index.quizzes.find((q) => q.id === id)).filter(Boolean);
 }
 
-// The list of quizzes (data/quizzes.json). A quiz marked `hidden` keeps its page, but no list, suite or review shows
+// The list of quizzes (data/site/quizzes.json). A quiz marked `hidden` keeps its page, but no list, suite or review shows
 // it: it is set aside until it is looked at again.
 async function loadIndex() {
-  const index = await (await fetch("data/quizzes.json")).json();
+  const index = await (await fetch("data/site/quizzes.json")).json();
   return { ...index, quizzes: index.quizzes.filter((q) => !q.hidden) };
 }
 
-// A country's quizzes come in one order everywhere (their `role` in data/quizzes.json): its regions, its cities, its
+// A country's quizzes come in one order everywhere (their `role` in data/site/quizzes.json): its regions, its cities, its
 // town names (a quiz of their own since 2026-10-23, no longer inside the city quiz's entry), its codes (area codes,
 // postcodes), then what is special to the country.
 const ROLES = ["regions", "cities", "names", "area-codes", "postcodes"];
@@ -61,13 +61,8 @@ function inOrder(quizzes) {
 // … and on the country's page in three groups: the basics (regions, cities, town names), the codes, the extras.
 const quizGroup = (q) => (["regions", "cities", "names"].includes(q.role) ? "Basics" : ROLES.includes(q.role) ? "Codes" : "Extra");
 
-// Quizzes with their own page set `url`; the rest use the generic multiple-choice page.
-function quizUrl(quiz) {
-  return quiz.url ?? `quiz.html?id=${encodeURIComponent(quiz.id)}`;
-}
-
 // Ratings: each map quiz keeps its progress per level in its record in this browser (`stars`, see store.js; worked
-// out in quizzes/shared/area-quiz.js): { levels: [0–1 per level, Beginner first], played }. A level's star is earned
+// out in engine/model/results.js): { levels: [0–1 per level, Beginner first], played }. A level's star is earned
 // at 1: every round perfect.
 const RATING_HELP = "One star per level · earned when every round of the level is perfect";
 function loadRating(id) {
@@ -107,7 +102,7 @@ function starsEl(levels) {
 
 // Two buttons that review some of the quizzes: "Due 12" asks their cards that are due, "All 80" everything learned
 // in them (one review asks 50 cards at most, and the due ones only until 200 are reviewed in a day: see srs.js).
-// index: data/quizzes.json; back: the page the review ends on. Null if nothing is learned in these quizzes.
+// index: data/site/quizzes.json; back: the page the review ends on. Null if nothing is learned in these quizzes.
 // layer: { id, key } keeps them to one layer of one quiz (its island groups, not its provinces), and { id, key, look }
 // to the cards of that layer played on one map (the street map); group: to one group of the layer (Gorontalo's
 // kabupaten and kota), on all its maps or on one.

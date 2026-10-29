@@ -1,0 +1,2 @@
+// luxembourg-regions: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"luregions","map":"DATA.reg","borders":"DATA.rb","size":[1000,1433],"pad":16,"maxZoom":40,"labelScale":0.22,"fly":{"pad":1.6,"min":0.0375},"hintLabel":"Color by canton","exploreKind":"communes","kinds":[{"key":"cantons","label":"Cantons","noun":["canton","cantons"],"prompt":"name","hints":false,"areaRank":false},{"key":"communes","label":"Communes","noun":["commune","communes"],"prompt":"name"}]};

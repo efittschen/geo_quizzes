@@ -1,0 +1,36 @@
+/* Script quizzes (lang-config.js): the board of tiles, on top of ./quiz-map.css and ./formats.css (the sign card
+   and each script's typefaces). A page loads the fonts of its script. */
+
+.board .sent{text-align:center}
+.board.letters .sent{font-size:5.5rem;line-height:1.2}
+.board.alphabets .sent{font-size:1.9rem;line-height:1.25}
+
+/* the board: a tile per answer, its label always on it; a tile outside the round is dimmed with its label */
+.board .r{--fill:var(--card)}
+.board #ctx path{fill:color-mix(in srgb,var(--panel) 55%,transparent);stroke:none}
+.board #labels text{font-size:30px;stroke:none}
+.board.words #labels text{font-size:21px}
+.board:has(script[src$="/japanese.js"]) #labels text{font-size:22px} /* a kanji's tile has two readings (kawa, gawa) */
+.board.alphabets #labels text{font:600 30px var(--script)} /* the letters themselves: every mark as the script's own face draws it */
+.board #labels text.off{display:inline}
+.board #labels text.out{opacity:.3}
+
+/* what is said in the script: answers, the tiles' letters in Explore, the chips of missed and picked ones */
+.board .feedback,.board .cd,.board .chip{font-family:var(--script)}
+.board .cd,.board .chip{font-weight:600}
+.board #eDial{white-space:normal;line-height:1.15}
+.board #eDial .code{font:600 3.4rem/1.15 var(--script);letter-spacing:0}
+.board.words #eDial .code{font-size:1.9rem}
+.board.alphabets #eDial.long .code{font-size:2rem} /* a language's letters */
+
+@media (max-width:760px){
+  .board.letters .sent{font-size:3.2rem}
+  .board #eDial .code{font-size:2.4rem}
+  .board.words #eDial .code{font-size:1.5rem}
+  .board.alphabets #eDial.long .code{font-size:1.6rem}
+  .board .zoom{display:none} /* the board fills the screen, and is fitted again with every round */
+  /* alphabets: tiles are tapped one after the other, so the answers' box keeps its place and size from the start
+     (three lines, a longer one cut short) and the board under it stays where it is */
+  .board.alphabets #fb,.board.alphabets #fb:empty{display:block;height:calc(4.1em + 14px);overflow:hidden}
+  .board.alphabets #fb p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}

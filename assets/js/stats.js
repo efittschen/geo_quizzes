@@ -14,7 +14,7 @@
 //   a question         (a click on one anywhere) every answer to it as a dot, by when and how long it took, and its
 //                      card's interval after each answer
 // Replays (a question asked again after a miss) count for none of the shares and times, only for the question's dots.
-// Practice opens the quiz with a round of exactly those questions (…?practice=<layer>&items=…, see area-quiz.js), in
+// Practice opens the quiz with a round of exactly those questions (…?practice=<layer>&items=…, see engine/model/custom.js), in
 // the way they were answered most and on the map they were answered on most.
 // The tab is its own address (review.html#stats). Everything is worked out anew each time the tab is shown.
 
@@ -53,7 +53,7 @@ function initStats(index, nameByCode) {
   const where = (quizId, kind) => { const q = byId.get(quizId), t = titleOf(quizId), l = layerOf(quizId, kind); return [q && placeOf(q), t, t.toLowerCase().includes(l.toLowerCase()) ? "" : l].filter(Boolean).join(" · "); };
   const givenName = (a, g) => (g.startsWith('"') ? `“${g.slice(1)}”` : nameOf(a.quiz, a.kind, g));
 
-  // A round of exactly these items on the quiz's page, the way most of these answers were given (see area-quiz.js).
+  // A round of exactly these items on the quiz's page, the way most of these answers were given (see engine/screens/setup.js).
   function practiceUrl(quizId, kind, items, answers) {
     const q = byId.get(quizId);
     if (!q || !items.length || !answers.some((a) => a.look)) return null; // (a quiz without a map has its own page, which knows no Practice)
@@ -62,7 +62,7 @@ function initStats(index, nameByCode) {
     if (mode !== "map" && mode !== "paint") p.set("mode", mode);
     if (map) p.set("map", map);
     if (back) p.set("back", back);
-    return `${quizUrl(q)}?${p}`;
+    return `${q.url}?${p}`;
   }
   function practiceBtn(label, url) {
     const a = el("a", "ghost small", label);

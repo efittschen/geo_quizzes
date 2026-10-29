@@ -88,7 +88,7 @@ const NAME = Object.fromEntries(Object.entries(USPS).map(([name, code]) => [code
 const REGION = Object.fromEntries(CENSUS.flatMap(([region, states]) => states.map(st => [st, region])));
 const NAMES = Object.keys(USPS).sort();
 
-// One area per state: its counties of the US Regions map joined (../us-states/states.js).
+// One area per state: its counties of the US Regions map joined (../shared/maps/us-states/states.js).
 const STATE_AREAS = Object.keys(USPS).map(st => { const r = US_STATES.reg.find(r => r.id === USPS[st]); return { id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' }; });
 
 const DIR = new URL('img/', document.currentScript.src).href;
@@ -111,9 +111,9 @@ const QUIZ = {
   key: 'usflags',
   areas: STATE_AREAS,
   borders: [US_STATES.reg.map(r => r.d).join('')], // every state's outline, also where a round leaves it out
-  context: US_STATES.ctx,
-  proj: US_STATES.proj, kpu: US_STATES.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
-  street: {"bounds":[[24.4,-124.8],[49.4,-66.9]],"maxBounds":[[10,-200],[75,-50]]},
+  
+  proj: US_STATES.proj, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+  
   size: [US_STATES.w, US_STATES.h], pad: 16, maxZoom: 60, labelScale: 0.14, fly: { pad: 1.6, min: 0.03 },
   hintLabel: '', hintsDefault: false,
   langsAlways: true, // every round box shows Clear | Blurred

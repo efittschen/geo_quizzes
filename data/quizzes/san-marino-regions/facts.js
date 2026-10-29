@@ -1,0 +1,2 @@
+// san-marino-regions: the areas of every item, the items of every group, each area's hint group (written by the restructure's step 2 from the page's recipe, layers.js)
+const FACTS = {"g":{"01":"01","02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08","09":"09"},"groups":{"units":[["01","06","02","07","03","04","05","08","09"]]},"kinds":{"units":{"areas":{"01":["01"],"06":["06"],"02":["02"],"07":["07"],"03":["03"],"04":["04"],"05":["05"],"08":["08"],"09":["09"]}}}};

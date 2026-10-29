@@ -33,9 +33,9 @@ const QUIZ = {
   key: 'usroadgrid',
   areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: r.ins })),
   borders: [DATA.lines],
-  context: DATA.ctx,
+  
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 30, labelScale: 0.5, fly: { pad: 1.6, min: 1.5 / 30 },
-  proj: DATA.proj, kpu: DATA.kpu,
+  proj: DATA.proj, 
   street: { bounds: [[24.4, -124.8], [49.4, -66.9]], maxBounds: [[10, -140], [60, -50]] },
   hintLabel: 'Color by band',
   exploreKind: 'ins',

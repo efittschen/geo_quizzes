@@ -1,0 +1,2 @@
+// us-states: the quiz's key and view, and its layers: how each is asked (written by tools/builds/us-counties/build.mjs)
+const SETTINGS = {"key":"usstates","map":"DATA.reg","borders":"DATA.ent","size":[1000,699],"pad":16,"maxZoom":60,"labelScale":0.14,"fly":{"pad":1.6,"min":0.03},"hintLabel":"Color by state","exploreKind":"counties","kinds":[{"key":"states","label":"States","noun":["state","states"],"prompt":"name"},{"key":"counties","label":"Counties","noun":["county","counties"],"prompt":"name"}]};

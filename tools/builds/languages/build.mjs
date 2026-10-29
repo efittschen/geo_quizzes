@@ -3,40 +3,42 @@
 //
 //   node tools/builds/languages/build.mjs
 //
-// A script is a row of SCRIPTS below and its file, quizzes/<script>-letters/<script>.js (SCRIPT: its letters, as
-// each country reads them, and the words of their signs: see quizzes/shared/reading.js). For each one this writes
+// A script is a row of SCRIPTS below and its file, data/letters/<script>.js (SCRIPT: its letters, as each country
+// reads them, and the words of their signs: see engine/types/reading.js). For each one this writes
 //   - SCRIPT.eg, at the end of that file: a place written with each letter, said with the letter's answer. The places
-//     are the cities of a country that writes the letter that way (READING below), from its cities.js (and then the
-//     real names of names/<script>.json, NAMES below), whose name
+//     are the cities of a country that writes the letter that way (READING below), from its city list,
+//     data/maps/<country>-cities/cities.js (and then the real names of names/<script>.json, NAMES below), whose name
 //     on the map is what its letters spell (not Delhi for दिल्ली: the example would contradict the letter's sound),
 //     first those that spell the letter the usual way (ভ as bh, not the v of Savar). Rare letters choose first, and
 //     each takes the largest city no letter has taken yet, so the examples differ; a letter no such city has gets
 //     none.
-//   - its pages, <script>-letters/ and <script>-words/ (quizzes/shared/lang-config.js), tabs of each other, and
+//   - its pages, quizzes/<script>-letters/ and <script>-words/ (engine/types/lang.js), tabs of each other, and
 //     with them, where several countries or regions write the script, <script>-countries/ or <script>-regions/ (a
-//     page of the world quizzes, see quizzes/shared/world-config.js). A script's own regions (SCRIPT.regions: the
-//     Hindi states as one area) are drawn for that page, regions.js beside it: the districts of India's district
-//     quiz melted into one outline per region (their shared borders drop out), on the world map.
-//   - their entries in data/quizzes.json: scope "Languages", the script's name as `area` (its folder in the
+//     page of the world quizzes, see engine/types/world.js). A script's own regions (SCRIPT.regions: the
+//     Hindi states as one area) are drawn for that page, data/maps/<script>-regions/regions.js: the districts of
+//     India's district map melted into one outline per region (their shared borders drop out), on the world map.
+//   - their entries in data/site/quizzes.json: scope "Languages", the script's name as `area` (its folder in the
 //     Languages folder of "All quizzes"), one star per level their rounds reach. (A language quiz without an `area`
 //     is not theirs: the home page lists those in a section of their own, which stays as it is.)
 // Latin has no letters to learn and no file written by hand. Its pages are written here, from the languages of
-// quizzes/world-languages/data.js: quizzes/latin-countries/ (their letters, by area) and quizzes/latin-words/, the
-// words of their signs with their meanings on the board of tiles, whose SCRIPT (latin.js beside the page) is made
-// of them: a theme per language, a column per area, so that an area is chosen first and then a language of it.
+// data/maps/world-languages/data.js: quizzes/latin-countries/ (their letters, by area) and quizzes/latin-words/, the
+// words of their signs with their meanings on the board of tiles, whose SCRIPT (data/maps/latin-words/latin.js) is
+// made of them: a theme per language, a column per area, so that an area is chosen first and then a language of it.
 // And quizzes/latin-alphabets/, the Countries page the other way round on the board of tiles: a country, click the
-// letters it writes. Its file (alphabets.js beside the page) is what the Countries page itself makes of the
-// languages (QUIZ.parts of quizzes/shared/world-config.js, run here), so both ask the same countries and letters.
-// And the Type mode of every name written in such a script, which is reading it (quizzes/shared/reading.js): each page
+// letters it writes. Its file (data/maps/latin-alphabets/alphabets.js) is what the Countries page itself makes of the
+// languages (QUIZ.parts of engine/types/world.js, run here), so both ask the same countries and letters.
+// And the Type mode of every name written in such a script, which is reading it (engine/types/reading.js): each page
 // with a script side, a city quiz's names in another script or a layer of them (below), gets the files of the scripts
-// its names are written in, reading.js, faces.css and the scripts' fonts, written in before its config. India's other
-// scripts (READING rows with a fourth field) take their places from the towns of their state(s), in
-// tools/builds/languages/towns/<fourth>.js (once small city quizzes of their own, removed on 2026-10-23).
+// its names are written in, reading.js and the scripts' fonts (their typefaces: engine/css/formats.css), written in
+// before its type's script (engine/types/city.js or layer.js). India's other scripts (READING rows with a fourth
+// field) take their places from the towns of their state(s), in tools/builds/languages/towns/<fourth>.js (once small
+// city quizzes of their own, removed on 2026-10-23).
 // Run it again after changing a script's file or the cities read from, and after a city or region page is written anew.
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import { readMap } from '../../lib/quiz-files.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 // [name, what its sounds follow, its tab after Letters and Words: the page that tells its countries or regions apart]
@@ -125,9 +127,9 @@ const FONTS = {
   orya: 'family=Noto+Sans:wght@500;600&family=Noto+Sans+Oriya:wght@500;600&family=Noto+Serif+Oriya:wght@600&family=Baloo+Bhaina+2:wght@700&family=Anek+Odia:wght@600',
 };
 const EG = '\n// A place written with each letter (made by tools/builds/languages/build.mjs: run it again, don\'t edit).\nSCRIPT.eg = ';
-// … and after it, the script among those the page loaded (a page may load several: quizzes/shared/reading.js)
-const LOADED = '// (one of the scripts the page loaded: ../shared/reading.js reads names in each)\n(globalThis.ALL_SCRIPTS ||= []).push(SCRIPT);\n';
-const READING_JS = fs.readFileSync(path.join(ROOT, 'quizzes', 'shared', 'reading.js'), 'utf8');
+// … and after it, the script among those the page loaded (a page may load several: engine/types/reading.js)
+const LOADED = '// (one of the scripts the page loaded: engine/types/reading.js reads names in each)\n(globalThis.ALL_SCRIPTS ||= []).push(SCRIPT);\n';
+const READING_JS = fs.readFileSync(path.join(ROOT, 'engine', 'types', 'reading.js'), 'utf8');
 const DOT = /^[़়਼઼଼಼]/; // the dot under a letter makes another letter of it (ढ़ is not ढ, ਸ਼ not ਸ)
 // scripts whose joined letters hide the shapes of the letters in them (their virama): a letter's place is first one
 // that writes it on its own, not next to the virama (Malayalam ന in പുനലൂർ, not in മട്ടന്നൂർ), and the virama's one that
@@ -137,7 +139,7 @@ const nf = s => s.normalize('NFC'), plain = s => s.normalize('NFD').replace(/\p{
 const tier = n => 1 + [10, 30, 60, Infinity].findIndex(max => n < max); // a round's level, by its size
 const read = (file, name) => vm.runInNewContext(fs.readFileSync(file, 'utf8') + `;${name}`);
 const cap = s => s[0].toUpperCase() + s.slice(1);
-const quiz = (...p) => path.join(ROOT, 'quizzes', ...p);
+const quiz = (...p) => path.join(ROOT, 'quizzes', ...p), data = (...p) => path.join(ROOT, 'data', ...p);
 
 const head = (title, description, script) => `<!doctype html>
 <html lang="en">
@@ -150,44 +152,48 @@ const head = (title, description, script) => `<!doctype html>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&${FONTS[script]}&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../assets/css/base.css">
-<link rel="stylesheet" href="../shared/area-quiz.css">
-<link rel="stylesheet" href="../shared/faces.css">
-<link rel="stylesheet" href="../shared/lang-quiz.css">
+<link rel="stylesheet" href="../../engine/css/quiz-page.css">
+<link rel="stylesheet" href="../../engine/css/quiz-map.css">
+<link rel="stylesheet" href="../../engine/css/formats.css">
+<link rel="stylesheet" href="../../engine/css/lang-quiz.css">
 </head>`;
 const body = (folders, back, title, note, scripts, cls = '') => `
 <body${cls ? ` class="${cls}"` : ''}${folders ? ` data-folders="${folders}"` : ''}>
 ${back}
 <h1>${title}</h1>
 <p class="note">${note}</p>
-<script src="../shared/quiz-page.js"></script>
+<script src="../../engine/page.js"></script>
 ${scripts}
-<script src="../shared/area-quiz.js"></script>
+<script type="module" src="../../engine/main.js"></script>
 </body>
 </html>
 `;
 
 // A page of the world quizzes (a script's countries on the map).
 const world = (title, description, script, folders, note, scripts) => head(title, description, script)
-  .replace('<link rel="stylesheet" href="../shared/faces.css">\n<link rel="stylesheet" href="../shared/lang-quiz.css">', '<link rel="stylesheet" href="../shared/photo-quiz.css">\n<link rel="stylesheet" href="../shared/world-quiz.css">')
+  .replace('\n<link rel="stylesheet" href="../../engine/css/lang-quiz.css">', '')
   + body(folders, '<a class="back" href="../../country.html?area=Languages">← Languages</a>', title, note,
-    `<script src="../shared/world.js"></script>\n<script src="../shared/world-facts.js"></script>\n<script src="../world-languages/data.js"></script>\n${scripts}\n<script src="../shared/world-config.js"></script>`, 'writing own-hover');
+    `<script src="../../data/maps/world/world.js"></script>\n<script src="../../data/maps/world/world-facts.js"></script>\n<script src="../../data/maps/world-languages/data.js"></script>\n${scripts}\n<script src="../../engine/types/world.js"></script>`, 'writing own-hover');
 
 /* ---------- a script's own regions, drawn on the world map ---------- */
-// The districts of quizzes/india-districts (their rings as latitude and longitude: geo.js) that belong to a region,
-// by state or one by one, melted into the region's outline: an edge two of them share drops out, the rest is joined
-// into rings. With them the region's whole countries, from the world map. All of it in the world map's own Web
+// The districts of India's map (data/maps/india-districts, read as tools/lib/quiz-files.mjs reads a map) that belong
+// to a region, by state or one by one, melted into the region's outline: an edge two of them share (point for point on
+// that map) drops out, the rest is joined into rings, each point put on the world map through the two maps'
+// projections. With them the region's whole countries, from the world map. All of it in the world map's own Web
 // Mercator, so the page draws it there as one more place.
 function regions(S) {
-  const WORLD = read(quiz('shared', 'world.js'), 'WORLD'), P = WORLD.proj, RAD = Math.PI / 180;
-  const D = read(quiz('india-districts', 'data.js'), 'DATA').reg, GEO = read(quiz('india-districts', 'geo.js'), 'GEO');
+  const WORLD = read(data('maps', 'world', 'world.js'), 'WORLD'), P = WORLD.proj, RAD = Math.PI / 180;
+  const IN = readMap('india-districts').DATA, D = IN.reg, PI = IN.proj;
+  const ringsOf = d => { if (/[^MLZ\d\s,.eE+-]/.test(d)) throw new Error(`a district not of straight lines: ${d.slice(0, 40)}`); return d.split('M').filter(Boolean).map(s => s.replace(/Z/g, '').split('L')); };
+  const latlng = ([x, y]) => [(2 * Math.atan(Math.exp((PI.y0 - y / PI.k) * RAD)) - Math.PI / 2) / RAD, PI.lng0 + x / PI.k];
   const r2 = v => Math.round(v * 100) / 100;
   const at = ([lat, lng]) => [r2((lng - P.lng0) * P.k), r2((P.y0 - Math.log(Math.tan(Math.PI / 4 + lat * RAD / 2)) / RAD) * P.k)];
   const out = {};
   for (const [id, R] of Object.entries(S.regions)) {
     const states = (R.states || '').split(' '), districts = (R.districts || '').split(' ');
     const edges = new Map();
-    for (const d of D) if (states.includes(d.st) || districts.includes(d.id)) for (const ring of GEO[d.id].rings) for (let i = 0; i < ring.length - 1; i++) {
-      const a = ring[i].join(','), b = ring[i + 1].join(',');
+    for (const d of D) if (states.includes(d.st) || districts.includes(d.id)) for (const ring of ringsOf(d.d)) for (let i = 0; i < ring.length; i++) {
+      const a = ring[i], b = ring[(i + 1) % ring.length];
       if (a === b) continue;
       const k = a < b ? `${a}|${b}` : `${b}|${a}`;
       if (edges.has(k)) edges.delete(k); else edges.set(k, [a, b]);
@@ -200,7 +206,7 @@ function regions(S) {
       const run = [e[0], e[1]];
       for (let end = e[1]; end !== run[0];) { const f = ends.get(end).find(f => !used.has(f)); if (!f) break; used.add(f); end = f[0] === end ? f[1] : f[0]; run.push(end); }
       if (run[0] !== run[run.length - 1]) throw new Error(`${id}: an outline that does not close`);
-      rings.push(run.slice(0, -1).map(p => at(p.split(',').map(Number))));
+      rings.push(run.slice(0, -1).map(p => at(latlng(p.split(',').map(Number)))));
     }
     // each ring's area and middle (shoelace); the label goes to the largest one
     const stats = rings.map(r => { let A = 0, cx = 0, cy = 0; r.forEach(([x0, y0], i) => { const [x1, y1] = r[(i + 1) % r.length], c = x0 * y1 - x1 * y0; A += c; cx += (x0 + x1) * c; cy += (y0 + y1) * c; }); return { A: Math.abs(A / 2), x: cx / (3 * A), y: cy / (3 * A) }; });
@@ -215,11 +221,11 @@ function regions(S) {
       b: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)].map(r2),
     };
   }
-  return `// Generated by tools/builds/languages/build.mjs: the regions of ${S.name} (quizzes/${S.name.toLowerCase()}-letters) as areas on the\n// world map (../shared/world.js), each the outline of its states and districts (India: © OpenStreetMap contributors, ODbL)\n// and countries. Read by ../shared/world-config.js.\nconst EXTRA_AREAS = ${JSON.stringify(out)};\n`;
+  return `// Generated by tools/builds/languages/build.mjs: the regions of ${S.name} (SCRIPT.regions of data/letters/${S.name.toLowerCase()}.js) as areas\n// on the world map (data/maps/world/world.js), each the outline of its states and districts (India: © OpenStreetMap\n// contributors, ODbL) and countries. Read by engine/types/world.js.\nconst EXTRA_AREAS = ${JSON.stringify(out)};\n`;
 }
 
 /* ---------- the list of quizzes: the entries of before go, the new ones are put in below ---------- */
-const LIST = path.join(ROOT, 'data', 'quizzes.json');
+const LIST = data('site', 'quizzes.json');
 let list = fs.readFileSync(LIST, 'utf8')
   .replace(/,\n    \{\n      "id": "[^"]+",\n      "scope": "Languages",\n      "area": "[^"]+",[\s\S]*?\n    \}/g, '') // (its own: each is in a script's folder; a language quiz without one is someone else's and stays)
   .replace(/,\n    \{\n      "id": "[^"]+",\n      "country": "\d+",\n      "title": "Reading(?: · [^"]+)?",[\s\S]*?\n    \}/g, '') // (the Reading pages of before 2026-10-21, now the Type mode)
@@ -230,13 +236,13 @@ const atEnd = text => { list = list.replace(/\n  \]\n\}\n$/, `,\n${text}\n  ]\n}
 /* ---------- the scripts ---------- */
 const BY_SCRIPT = {};
 for (const [name, system, third] of SCRIPTS) {
-  const file = quiz(`${name}-letters`, `${name}.js`);
+  const file = data('letters', `${name}.js`);
   const src = fs.readFileSync(file, 'utf8').split(EG)[0].replace(/\s*$/, '\n').replace(/^const SCRIPT = /m, 'var SCRIPT = '); // (var: a page may load several)
   const S = vm.runInNewContext(src + ';SCRIPT'), R = vm.runInNewContext(`${src}\n${READING_JS};READING`);
   const TAGS = Object.keys(S.langs), inScript = new RegExp(`\\p{Script=${S.unicode}}`, 'u');
   BY_SCRIPT[name] = { S, inScript, src };
 
-  // the letters asked (as lang-config.js makes them), each with the languages that read it so
+  // the letters asked (as engine/types/lang.js makes them), each with the languages that read it so
   const usual = (r, type) => (r[2] ? r[2].split(' ')[0] : /^[cj]$/.test(type || '') ? r[1].replace(/a$/, '') : r[1]).replace(/[^a-z]/g, '');
   const letters = new Map();
   for (const g of S.letters) for (const r of g.rows) { const forms = nf(r[0]).split(' '); letters.set(forms[0], { forms, usual: usual(r, g.type), langs: [TAGS[0]] }); }
@@ -248,7 +254,7 @@ for (const [name, system, third] of SCRIPTS) {
   // a place for each letter, from a country that reads it so
   const cities = {};
   for (const [country, script, tag, page] of [...READING, ...EXAMPLES]) if (script === name) {
-    cities[tag] = [...(cities[tag] || []), ...read(page ? path.join(ROOT, 'tools', 'builds', 'languages', 'towns', `${page}.js`) : quiz(`${country}-cities`, 'cities.js'), 'CITIES').list.filter(c => c.local && inScript.test(c.local) && R.of(tag).accepts(c.local, c.en))];
+    cities[tag] = [...(cities[tag] || []), ...read(page ? path.join(ROOT, 'tools', 'builds', 'languages', 'towns', `${page}.js`) : data('maps', `${country}-cities`, 'cities.js'), 'CITIES').list.filter(c => c.local && inScript.test(c.local) && R.of(tag).accepts(c.local, c.en))];
   }
   if (NAMES.includes(name)) for (const [tag, list] of Object.entries(JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'builds', 'languages', 'names', `${name}.json`), 'utf8')).names)) {
     cities[tag] = [...(cities[tag] || []), ...list.map(([local, en]) => ({ local: nf(local), en })).filter(c => inScript.test(c.local) && R.of(tag).accepts(c.local, c.en))];
@@ -271,7 +277,7 @@ for (const [name, system, third] of SCRIPTS) {
   const WORDS = S.words.themes.length > 0; // (a script whose sign words are not written yet has no Words page)
   const parts = ['Letters', ...(WORDS ? ['Words'] : []), ...(third ? [third] : [])], back = '<a class="back" href="../../country.html?area=Languages">← Languages</a>';
   const tabs = here => (parts.length < 2 ? '' : parts.map(t => (t === here ? t : `${t}=../${name}-${t.toLowerCase()}/index.html`)).join('|')); // (a page alone has no tabs)
-  const lang = `<script src="../${name}-letters/${name}.js"></script>\n<script src="../shared/reading.js"></script>`;
+  const lang = `<script src="../../data/letters/${name}.js"></script>\n<script src="../../engine/types/reading.js"></script>`;
   const countries = [...new Set(TAGS.flatMap(t => S.langs[t].where.split(' · ')))].join(', ');
   for (const [part, description, note] of [
     ['Letters', `Read ${/^[AEIOU]/.test(S.name) ? 'an' : 'a'} ${S.name} letter, click its sound: ${countries}.`, `Sounds: ${system}`],
@@ -280,14 +286,14 @@ for (const [name, system, third] of SCRIPTS) {
     const dir = quiz(`${name}-${part.toLowerCase()}`), title = `${S.name} ${part}`;
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'index.html'), head(title, description, S.script) + body(tabs(part), back, title, note,
-      `${lang}\n<script>const LANG_OPTS = { part: '${part.toLowerCase()}' };</script>\n<script src="../shared/lang-config.js"></script>`));
+      `${lang}\n<script>const LANG_OPTS = { part: '${part.toLowerCase()}' };</script>\n<script src="../../engine/types/lang.js"></script>`));
   }
-  if (third) { // the script's countries or regions on the world map
-    const dir = quiz(`${name}-${third.toLowerCase()}`), title = `${S.name} ${third}`;
+  if (third) { // the script's countries or regions on the world map (its own regions: data/maps/<page>/regions.js)
+    const id = `${name}-${third.toLowerCase()}`, dir = quiz(id), title = `${S.name} ${third}`;
     fs.mkdirSync(dir, { recursive: true });
-    if (S.regions) fs.writeFileSync(path.join(dir, 'regions.js'), regions(S));
+    if (S.regions) { fs.mkdirSync(data('maps', id), { recursive: true }); fs.writeFileSync(data('maps', id, 'regions.js'), regions(S)); }
     fs.writeFileSync(path.join(dir, 'index.html'), world(title, `Read a letter or a word in ${S.name}, click where it is written: ${countries}.`, S.script, tabs(third), 'Places with Street View · Map: Natural Earth' + (S.regions ? ' · Districts: © OpenStreetMap contributors (ODbL)' : ''),
-      `${S.regions ? '<script src="regions.js"></script>\n' : ''}${lang}\n<script>const WORLD_OPTS = { type: 'writing', script: '${S.script}', key: '${name}-${third.toLowerCase()}' };</script>`));
+      `${S.regions ? `<script src="../../data/maps/${id}/regions.js"></script>\n` : ''}${lang}\n<script>const WORLD_OPTS = { type: 'writing', script: '${S.script}', key: '${id}' };</script>`));
   }
 
   // the entries: one star per level the rounds reach, and the round of everything is the largest
@@ -299,7 +305,7 @@ for (const [name, system, third] of SCRIPTS) {
   atEnd(entry(`${name}-letters`, where, 'Letters', tier(letters.size)));
   if (WORDS) atEnd(entry(`${name}-words`, where, 'Words', tier(words.size)));
   if (third) {
-    // Its largest round asks every word of the table that not every country or region writes (see world-config.js).
+    // Its largest round asks every word of the table that not every country or region writes (see engine/types/world.js).
     const places = new Set(TAGS.map(t => S.langs[t].at)), by = {}; // word -> where it is written
     for (const t of S.words.themes) for (const [meaning, ...cells] of t.rows) TAGS.forEach(tag => {
       const L = S.langs[tag], word = (cells[COLS.indexOf(L.like || tag)] || '').split('|')[0], mine = L.but && word in L.but ? L.but[word] : word;
@@ -314,9 +320,9 @@ for (const [name, system, third] of SCRIPTS) {
 
 /* ---------- Latin: its Alphabets, its Words, and its Countries page ---------- */
 {
-  const src = ['shared/world.js', 'shared/world-facts.js', 'world-languages/data.js'].map(f => fs.readFileSync(quiz(...f.split('/')), 'utf8'));
-  const parts = vm.runInNewContext([...src, `const WORLD_OPTS = { type: 'writing', script: 'latn' };`, fs.readFileSync(quiz('shared', 'world-config.js'), 'utf8'), ';QUIZ.parts'].join('\n'),
-    { document: { currentScript: { src: 'file:///quizzes/shared/world-config.js' } }, console, URL });
+  const src = ['world/world.js', 'world/world-facts.js', 'world-languages/data.js'].map(f => fs.readFileSync(data('maps', ...f.split('/')), 'utf8'));
+  const parts = vm.runInNewContext([...src, `const WORLD_OPTS = { type: 'writing', script: 'latn' };`, fs.readFileSync(path.join(ROOT, 'engine', 'types', 'world.js'), 'utf8'), ';QUIZ.parts'].join('\n'),
+    { document: { currentScript: { src: 'file:///engine/types/world.js' } }, console, URL });
   // A question is the countries of an area that write exactly the same letters, the same ones of them rarely (Norway
   // and Denmark; not Sweden and Finland, where å is rare in Finland only): they have one answer. It names its
   // countries, or its languages where one of its language areas has more than three (Spanish, Mexico to Argentina).
@@ -334,17 +340,17 @@ for (const [name, system, third] of SCRIPTS) {
     ]) };
   });
   const dir = quiz('latin-alphabets');
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'alphabets.js'), `// Generated by tools/builds/languages/build.mjs from the language areas of ../latin-countries (QUIZ.parts, see\n// ../shared/world-config.js): each area's countries with the letters beyond a to z that they write, and their languages.\nconst SCRIPT = ${JSON.stringify({ name: 'Latin', script: 'latn', alphabets })};\n`);
+  for (const d of [dir, data('maps', 'latin-alphabets')]) fs.mkdirSync(d, { recursive: true });
+  fs.writeFileSync(data('maps', 'latin-alphabets', 'alphabets.js'), `// Generated by tools/builds/languages/build.mjs from the language areas of quizzes/latin-countries (QUIZ.parts, see\n// engine/types/world.js): each area's countries with the letters beyond a to z that they write, and their languages.\nconst SCRIPT = ${JSON.stringify({ name: 'Latin', script: 'latn', alphabets })};\n`);
   fs.writeFileSync(path.join(dir, 'index.html'), head('Latin Alphabets', 'A country: click every letter beyond a to z that is written there.', 'latn')
     + body('', '<a class="back" href="../../country.html?area=Languages">← Languages</a>', 'Latin Alphabets', 'Official and main sign languages · Places with Street View',
-      `<script src="alphabets.js"></script>\n<script>const LANG_OPTS = { part: 'alphabets' };</script>\n<script src="../shared/lang-config.js"></script>`));
+      `<script src="../../data/maps/latin-alphabets/alphabets.js"></script>\n<script>const LANG_OPTS = { part: 'alphabets' };</script>\n<script src="../../engine/types/lang.js"></script>`));
   atEnd(entry('latin-alphabets', '      "scope": "Languages",\n      "area": "Latin",\n', 'Alphabets', tier(Math.max(...alphabets.map(A => A.rows.length)))));
   console.log(`Latin Alphabets: ${alphabets.length} areas, ${alphabets.reduce((n, A) => n + A.rows.length, 0)} countries, ${alphabets.reduce((n, A) => n + new Set(A.rows.flatMap(r => r[1].split(' '))).size, 0)} tiles`);
 }
 {
-  const W = read(quiz('world-languages', 'data.js'), 'WRITING'), P = W.pages.latn, sv = new Set(read(quiz('shared', 'world-facts.js'), 'FACTS').sv), not = new Set((P.not || '').split(' '));
-  const NAME = Object.fromEntries(read(quiz('shared', 'world.js'), 'WORLD').reg.map(r => [r.id, r.n]));
+  const W = read(data('maps', 'world-languages', 'data.js'), 'WRITING'), P = W.pages.latn, sv = new Set(read(data('maps', 'world', 'world-facts.js'), 'FACTS').sv), not = new Set((P.not || '').split(' '));
+  const NAME = Object.fromEntries(read(data('maps', 'world', 'world.js'), 'WORLD').reg.map(r => [r.id, r.n]));
   const areas = P.areas.map(([label, ids]) => [label, ids.split(' ')]);
   const themes = [];
   for (const l of W.languages.filter(l => l.s === 'latn' && l.w.length)) {
@@ -356,11 +362,11 @@ for (const [name, system, third] of SCRIPTS) {
   }
   const SCRIPT = { name: 'Latin', script: 'latn', unicode: 'Latin', faces: 1, pick: ['Area', 'All areas'], langs: Object.fromEntries(areas.map(([label]) => [label, { name: label, where: label }])), letters: [], words: { one: true, themes } };
   const dir = quiz('latin-words');
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'latin.js'), `// Generated by tools/builds/languages/build.mjs from the Latin-script languages of ../world-languages/data.js: the\n// words of their signs, a theme per language, a column per area of its Countries page (see ../shared/reading.js).\nconst SCRIPT = ${JSON.stringify(SCRIPT)};\n`);
+  for (const d of [dir, data('maps', 'latin-words')]) fs.mkdirSync(d, { recursive: true });
+  fs.writeFileSync(data('maps', 'latin-words', 'latin.js'), `// Generated by tools/builds/languages/build.mjs from the Latin-script languages of data/maps/world-languages/data.js:\n// the words of their signs, a theme per language, a column per area of its Countries page (see engine/types/reading.js).\nconst SCRIPT = ${JSON.stringify(SCRIPT)};\n`);
   fs.writeFileSync(path.join(dir, 'index.html'), head('Latin Words', 'Read a word from a sign in a Latin-script language, click its meaning.', 'latn')
     + body('', '<a class="back" href="../../country.html?area=Languages">← Languages</a>', 'Latin Words', 'Words seen on signs',
-      `<script src="latin.js"></script>\n<script src="../shared/reading.js"></script>\n<script>const LANG_OPTS = { part: 'words' };</script>\n<script src="../shared/lang-config.js"></script>`));
+      `<script src="../../data/maps/latin-words/latin.js"></script>\n<script src="../../engine/types/reading.js"></script>\n<script>const LANG_OPTS = { part: 'words' };</script>\n<script src="../../engine/types/lang.js"></script>`));
   atEnd(entry('latin-words', '      "scope": "Languages",\n      "area": "Latin",\n', 'Words', tier(new Set(themes.flatMap(t => t.rows.map(r => `${r[0]}:${r.slice(1).find(Boolean).split('|')[0]}`))).size)));
   console.log(`Latin Words: ${themes.length} languages, ${themes.reduce((n, t) => n + t.rows.length, 0)} words`);
 }
@@ -377,35 +383,37 @@ for (const [name, system, third] of SCRIPTS) {
 /* ---------- the pages with names in a script: their Type mode reads them ---------- */
 // A city quiz's names in another script (its kind 'local', CITY_OPTS.lang) and a layer of names in another script (a
 // kind `of` another, asked by its text; of those the page shows: data-kinds) are read in their Type mode
-// (quizzes/shared/reading.js, READING.name). Such a page loads the files of the scripts its names are written in,
-// reading.js, faces.css and the scripts' fonts (the link marked data-faces), all written in here, before its config;
-// a page whose names no script here writes is left without them (its Type mode then the usual one).
+// (engine/types/reading.js, READING.name). Such a page loads the files of the scripts its names are written in,
+// reading.js and the scripts' fonts (the link marked data-faces), all written in here, before its type's script
+// (engine/types/city.js or layer.js); a page whose names no script here writes is left without them (its Type mode
+// then the usual one).
 const RCTX = vm.createContext({}); // every script, and reading.js, as a page with all of them runs them
 for (const [name] of SCRIPTS) vm.runInContext(BY_SCRIPT[name].src + LOADED, RCTX);
 const NAME = vm.runInContext(`${READING_JS};READING.name`, RCTX), FILE = Object.fromEntries(SCRIPTS.map(([n]) => [BY_SCRIPT[n].S.script, n]));
-const LAYER_LIB = fs.readFileSync(quiz('shared', 'layer-config.js'), 'utf8').split("\n// The page's quiz.")[0];
-// The names of a page's script side, [text, language]…, from its own scripts, run as the page runs them.
+const TYPE = /^\.\.\/\.\.\/engine\/types\/(city|layer)\.js$/; // (the type scripts of the pages with a script side)
+// The names of a page's script side, [text, language]…: a city page's from its own scripts, run as the page runs them;
+// a map-type page's from its SETTINGS and NAMES (data/quizzes/<id>/settings.js, names.js: every kind written out in
+// full, and the texts it shows).
 function namesOf(dir, html) {
-  const tags = [...html.matchAll(/<script(?: src="([^"]+)")?>([\s\S]*?)<\/script>/g)], at = tags.findIndex(m => /shared\/(?:city|layer)-config\.js$/.test(m[1] || ''));
-  const own = tags.slice(0, at).filter(([, src]) => !src || !/shared\/|-letters\/|(?:^|\/)geo\.js$/.test(src)); // (not the engine's, the scripts' or the street map's shapes)
+  const tags = [...html.matchAll(/<script(?: src="([^"]+)")?>([\s\S]*?)<\/script>/g)], at = tags.findIndex(m => TYPE.test(m[1] || ''));
+  const city = TYPE.exec(tags[at][1])[1] === 'city';
+  const own = tags.slice(0, at).filter(([, src]) => (city ? !src || !/^\.\.\/\.\.\/(?:engine|data\/letters)\//.test(src) : /\/data\/quizzes\/[^/]+\/(?:settings|names)\.js$/.test(src || ''))); // (a city page's: not the engine's or the scripts')
   const text = own.map(([, src, inline]) => (src ? fs.readFileSync(path.join(dir, src), 'utf8') : inline));
-  const city = /city-config/.test(tags[at][1]);
-  if (!city && !(text.some(t => /\bof:\s*["']/.test(t)) && text.some(t => /prompt:\s*["']text["']/.test(t)))) return []; // (no layer in another language asked by its text)
-  const ctx = vm.createContext({ GEO: {} });
+  // (no names in another language: no CITY_OPTS.lang, no layer asked by its text; such a page's scripts are not run,
+  // some need a browser: world-places)
+  if (city ? !text.some(t => /\blang:\s*["']/.test(t)) : !text.some(t => /"of":"/.test(t) && /"prompt":"text"/.test(t))) return [];
+  const ctx = vm.createContext({});
   for (const t of text) vm.runInContext(t, ctx);
   if (city) {
     const O = vm.runInContext('typeof CITY_OPTS === "object" ? CITY_OPTS : {}', ctx), C = O.list ? { ...vm.runInContext('CITIES', ctx), ...O.list } : vm.runInContext('CITIES', ctx);
     const LATIN = /^[\p{Script=Latin}\p{Script=Common}\p{Script=Inherited}]*$/u;
     return O.lang ? C.list.filter(c => c.local && !LATIN.test(c.local)).map(c => [c.local, c.lang]) : [];
   }
-  vm.runInContext(`${LAYER_LIB};globalThis.LIB_ = layerLib`, ctx);
-  const L = vm.runInContext('LAYERS', ctx), lib = ctx.LIB_, M = lib.model(L, n => vm.runInContext(n, ctx));
+  const S = vm.runInContext('SETTINGS', ctx), N = vm.runInContext('NAMES', ctx);
   const shown = (/<body[^>]* data-kinds="([^"]*)"/.exec(html) || [])[1], out = [];
-  for (let k of L.kinds) {
-    if (k.like) k = { ...L.kinds.find(b => b.key === k.like), ...k };
+  for (const k of S.kinds) {
     if (!k.of || k.typed || k.groupsOnly || k.prompt !== 'text' || (shown && !shown.split(/\s+/).includes(k.key))) continue;
-    const K = lib.layer(M, k);
-    for (const id of K.ids) { const t = K.T.text && K.T.text[id]; if (t && t.text) out.push([t.text, t.lang]); }
+    for (const t of Object.values(N.kinds[k.key].text || {})) if (t && t.text) out.push([t.text, t.lang]);
   }
   return out;
 }
@@ -419,13 +427,13 @@ function fontsOf(scripts) {
   }
   return [...seen.values()].join('&');
 }
-const SCRIPT_LINES = /\n<script src="\.\.\/[a-z]+-letters\/[a-z]+\.js"><\/script>|\n<script src="\.\.\/shared\/reading\.js"><\/script>|\n<link [^>]*data-faces>|\n<link rel="stylesheet" href="\.\.\/shared\/faces\.css">/g;
+const SCRIPT_LINES = /\n<script src="\.\.\/\.\.\/data\/letters\/[a-z]+\.js"><\/script>|\n<script src="\.\.\/\.\.\/engine\/types\/reading\.js"><\/script>|\n<link [^>]*data-faces>/g;
 const wired = [];
 for (const dir of fs.readdirSync(quiz()).sort()) {
   const file = quiz(dir, 'index.html');
   if (!fs.existsSync(file)) continue;
   const html = fs.readFileSync(file, 'utf8');
-  if (!/<script src="\.\.\/shared\/(?:city|layer)-config\.js"><\/script>/.test(html)) continue;
+  if (!/<script src="\.\.\/\.\.\/engine\/types\/(?:city|layer)\.js"><\/script>/.test(html)) continue;
   const names = namesOf(quiz(dir), html), by = {};
   for (const [text, tag] of names) { const r = NAME(text, tag); if (r) by[FILE[r.script]] = (by[FILE[r.script]] || 0) + 1; }
   const scripts = SCRIPTS.map(([n]) => n).filter(n => by[n]);
@@ -433,8 +441,7 @@ for (const dir of fs.readdirSync(quiz()).sort()) {
   if (scripts.length) {
     const fonts = `<link href="https://fonts.googleapis.com/css2?${fontsOf(scripts)}&display=swap" rel="stylesheet" data-faces>`;
     out = /<link href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]*" rel="stylesheet">/.test(out) ? out.replace(/(<link href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]*" rel="stylesheet">)/, `$1\n${fonts}`) : out.replace('<link rel="stylesheet" href="../../assets/css/base.css">', `${fonts}\n$&`);
-    out = out.replace('<link rel="stylesheet" href="../shared/area-quiz.css">', '$&\n<link rel="stylesheet" href="../shared/faces.css">')
-      .replace(/\n<script src="\.\.\/shared\/(?:city|layer)-config\.js"><\/script>/, m => `\n${scripts.map(n => `<script src="../${n}-letters/${n}.js"></script>`).join('\n')}\n<script src="../shared/reading.js"></script>${m}`);
+    out = out.replace(/\n<script src="\.\.\/\.\.\/engine\/types\/(?:city|layer)\.js"><\/script>/, m => `\n${scripts.map(n => `<script src="../../data/letters/${n}.js"></script>`).join('\n')}\n<script src="../../engine/types/reading.js"></script>${m}`);
     wired.push(`${dir} (${scripts.map(n => `${n} ${by[n]}`).join(', ')} of ${names.length})`);
   }
   if (out !== html) fs.writeFileSync(file, out);

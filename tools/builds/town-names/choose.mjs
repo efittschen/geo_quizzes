@@ -26,7 +26,7 @@ const run = (cmd, args, log) => { const r = spawnSync(cmd, args, { cwd: ROOT, en
 
 const kept = [];
 for (const [slug, cc] of Object.entries(ISO2)) {
-  if (!fs.existsSync(path.join(ROOT, 'quizzes', `${slug}-cities`, 'cities.js'))) continue;
+  if (!fs.existsSync(path.join(ROOT, 'data', 'maps', `${slug}-cities`, 'cities.js'))) continue;
   const places = path.join(DIR, `${cc}.places.json`), out = path.join(DIR, `${cc}.json`), log = path.join(DIR, `${cc}.log`), t0 = Date.now();
   fs.writeFileSync(log, '');
   const ok = (!FRESH && fs.existsSync(places) || run(process.execPath, ['--max-old-space-size=8192', path.join(HERE, 'places.mjs'), slug, cc, places], log)) && run(PY, ['-u', path.join(HERE, 'ratio.py'), places, out], log);

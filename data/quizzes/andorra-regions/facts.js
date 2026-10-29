@@ -1,0 +1,2 @@
+// andorra-regions: the areas of every item, the items of every group, each area's hint group (written by the restructure's step 2 from the page's recipe, layers.js)
+const FACTS = {"g":{"02":"02","03":"03","04":"04","05":"05","06":"06","07":"07","08":"08"},"groups":{"units":[["02","03","05","04","07","06","08"]]},"kinds":{"units":{"areas":{"02":["02"],"03":["03"],"05":["05"],"04":["04"],"07":["07"],"06":["06"],"08":["08"]}}}};

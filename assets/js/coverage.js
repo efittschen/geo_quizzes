@@ -1,9 +1,9 @@
 // Coverage page: the world as a street map with Google Street View coverage drawn on it.
-// The coverage is a tile layer of its own, data/coverage/<z>/<x>/<y>.png, made by tools/coverage.mjs: 1024 px tiles,
+// The coverage is a tile layer of its own, data/site/coverage/<z>/<x>/<y>.png, made by tools/coverage.mjs: 1024 px tiles,
 // z = map zoom - 2, colored by the newest capture at each spot. meta.json lists the tiles that exist (most of the
 // world has none), the finest zoom they were drawn for, the color steps and the date of the data.
 // ?tiles=dirA,dirB shows other builds of the layer instead (one at a time, picked in the corner), to compare
-// levels of detail before one of them becomes data/coverage.
+// levels of detail before one of them becomes data/site/coverage.
 (async function () {
   // Other builds can be shown next to the layer, to compare levels of detail: those named in the layer's meta.json
   // (`also`, set by tools/coverage.mjs tiles --also) or in the address (?tiles=dirA,dirB). Each gets a button.
@@ -12,7 +12,7 @@
   // ?embed: the map alone, without the page header (a country page shows it in a box); ?fit=west,south,east,north:
   // the box the map opens on; ?outline=<key>: the country to pick out, by shading everything else.
   if (params.has('embed')) document.body.classList.add('embed');
-  let sets = (await Promise.all((asked || 'data/coverage').split(',').map(load))).filter(Boolean);
+  let sets = (await Promise.all((asked || 'data/site/coverage').split(',').map(load))).filter(Boolean);
   if (!asked && sets[0]?.meta.also) sets = sets.concat((await Promise.all(sets[0].meta.also.map(load))).filter(Boolean));
   const main = sets[0], meta = main.meta;
   sets.sort((a, b) => a.meta.zoom - b.meta.zoom);
@@ -132,12 +132,12 @@
     around();
   }
 
-  // One country picked out: everything outside its border (data/coverage/outline/, made by tools/coverage.mjs) is
+  // One country picked out: everything outside its border (data/site/coverage/outline/, made by tools/coverage.mjs) is
   // shaded, as one shape, the world with the country's rings cut out of it. A ring is a flat list of whole numbers:
   // latitude and longitude of its first point in thousandths of a degree, then the step to each next point.
   const key = params.get('outline');
   if (key && /^[\w-]+$/.test(key)) {
-    fetch(`data/coverage/outline/${key}.json`).then((r) => (r.ok ? r.json() : null), () => null).then((rings) => {
+    fetch(`data/site/coverage/outline/${key}.json`).then((r) => (r.ok ? r.json() : null), () => null).then((rings) => {
       if (!rings) return;
       const holes = rings.map((flat) => {
         const ring = [];

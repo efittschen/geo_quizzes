@@ -82,7 +82,7 @@ function renderQuizList(index, nameByCode, suites) {
   function file(quiz) {
     const li = document.createElement("li");
     const a = document.createElement("a");
-    a.href = quizUrl(quiz);
+    a.href = quiz.url;
     const name = document.createElement("span");
     name.className = "name";
     name.textContent = quiz.title;
@@ -164,7 +164,7 @@ function renderMap(world, quizzesByCode, roads) {
   const svg = d3.select("#map").attr("viewBox", `0 0 ${WIDTH} ${HEIGHT}`);
   const projection = d3
     .geoNaturalEarth1()
-    // fitted to world-atlas's 110m countries, without the small ones added from 50m (data/world.json): the projection
+    // fitted to world-atlas's 110m countries, without the small ones added from 50m (data/site/world.json): the projection
     // the coverage pictures of the roads are drawn in (tools/coverage.mjs)
     .fitSize([WIDTH, HEIGHT], { type: "FeatureCollection", features: countries.filter((f) => !f.properties.small) });
   const path = d3.geoPath(projection);
@@ -265,7 +265,7 @@ function renderMap(world, quizzesByCode, roads) {
   window.addEventListener("resize", () => sizeDots(zoomed));
 
   // While the pointer is on a country, the roads there with Google Street View coverage are drawn on it: a picture
-  // in the map's own projection (data/coverage/home/, made by tools/coverage.mjs countries), which comes in several
+  // in the map's own projection (data/site/coverage/home/, made by tools/coverage.mjs countries), which comes in several
   // scales (pixels per map unit); the one that fits the zoom and the screen is shown. Each country has a picture element
   // of its own, made when it is first pointed at: a browser may go on showing an element's last picture until the next
   // one is ready (Firefox does), and in one shared element that was another country's roads, stretched to this
@@ -278,7 +278,7 @@ function renderMap(world, quizzesByCode, roads) {
   const roadsOf = (d) => roads && (roads.ids[d.id] ?? roads.names[d.properties.name]);
   const roadUrl = (r, k) => {
     const need = (k * svg.node().clientWidth / WIDTH) * devicePixelRatio;
-    return `data/coverage/home/${r[0]}_${roads.scales.find((s) => s >= need) ?? roads.scales.at(-1)}.png`;
+    return `data/site/coverage/home/${r[0]}_${roads.scales.find((s) => s >= need) ?? roads.scales.at(-1)}.png`;
   };
   let pointed = null;
   let shown = null;
@@ -318,7 +318,7 @@ async function init() {
       loadIndex(),
       loadSuites(),
       // the countries' roads with coverage; the map works without them
-      fetch("data/coverage/home.json").then((r) => (r.ok ? r.json() : null), () => null),
+      fetch("data/site/coverage/home.json").then((r) => (r.ok ? r.json() : null), () => null),
     ]);
     // Quizzes are keyed by ISO 3166-1 numeric code, which world-atlas uses as feature ids.
     const quizzesByCode = new Map();

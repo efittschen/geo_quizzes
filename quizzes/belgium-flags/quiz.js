@@ -10,9 +10,9 @@ const FLEMISH = ['VAN', 'VLI', 'VOV', 'VBR', 'VWV'], WALLOON = ['WBR', 'WHT', 'W
 const FLAGS = {
   key: 'beflags', alt: 'flag',
   map: {
-    areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' })), context: DATA.ctx,
-    proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
-    street: {"bounds":[[49.5,2.54],[51.51,6.41]],"maxBounds":[[47,-1],[54,10]]},
+    areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' })), 
+    proj: DATA.proj, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+    
     size: [DATA.w, DATA.h], pad: 16, maxZoom: 30, labelScale: 0.3, fly: { pad: 1.6, min: 0.05 },
   },
   parts: ['Regions', 'Vlaanderen', 'Wallonie'],

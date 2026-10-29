@@ -1,0 +1,2 @@
+// united-kingdom-london: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"uklondon","map":"DATA.reg","size":[1000,927],"pad":16,"maxZoom":30,"labelScale":0.35,"fly":{"pad":1.8,"min":0.03333333333333333},"hintLabel":"Color by postal area","exploreKind":"districts","kinds":[{"key":"areas","label":"Postal areas","noun":["area","areas"],"prompt":"name","hints":false,"areaRank":false},{"key":"districts","label":"Districts","noun":["district","districts"],"prompt":"name"}]};

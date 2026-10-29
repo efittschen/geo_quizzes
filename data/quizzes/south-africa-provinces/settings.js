@@ -1,0 +1,2 @@
+// south-africa-provinces: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"zaprov","map":{"paths":"DATA.ent","ids":["pv0","pv1","pv2","pv3","pv4","pv5","pv6","pv7","pv8"]},"size":[1100,969],"pad":16,"maxZoom":30,"labelScale":0.25,"fly":{"pad":1.6,"min":0.05},"hintLabel":"Color each province","exploreKind":"provinces","kinds":[{"key":"provinces","label":"Provinces","noun":["province","provinces"],"prompt":"name"}]};

@@ -45,7 +45,7 @@ const FLOORS = [10000, 5000, 2000, 1000], ENOUGH = 200;
 
 // the old list of the city quiz: what it left out by hand
 // (the copy kept before quiz.mjs wrote the new list, tools/cache/builds/city-vali/old/; never the new list itself)
-const oldFile = path.join(WORK, 'old', `${Q.slug}-cities.js`), quizFile = path.join(ROOT, 'quizzes', `${Q.slug}-cities`, 'cities.js');
+const oldFile = path.join(WORK, 'old', `${Q.slug}-cities.js`), quizFile = path.join(ROOT, 'data', 'maps', `${Q.slug}-cities`, 'cities.js');
 const oldSrc = fs.readFileSync(fs.existsSync(oldFile) ? oldFile : quizFile, 'utf8');
 if (oldSrc.includes('"A Moving World"')) { console.error(`${cc}: the quiz has the new list already and no copy of the old one is kept; ${cc}_towns.json stays as it is`); process.exit(1); }
 const ctx = {}; vm.createContext(ctx);

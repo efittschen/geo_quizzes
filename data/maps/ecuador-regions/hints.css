@@ -1,0 +1,3 @@
+/* hints: natural region (tools/hints.mjs) */
+.r[data-g="A"]{--hint:var(--h2)} .r[data-g="C"]{--hint:var(--h3)} .r[data-g="G"]{--hint:var(--h4)} .r[data-g="S"]{--hint:var(--h1)}
+/* end hints: natural region */

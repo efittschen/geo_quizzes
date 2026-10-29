@@ -52,9 +52,9 @@ const QUIZ = {
   key: 'caroutes',
   areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: r.id })),
   borders: [],
-  context: DATA.ctx,
+  
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.2, fly: { pad: 1.6, min: 1 / 25 },
-  proj: DATA.proj, kpu: DATA.kpu,
+  proj: DATA.proj, 
   street: { bounds: [[41.7, -141], [62, -52.6]], maxBounds: [[35, -175], [85, -40]] },
   hintLabel: 'Color each area',
   exploreKind: 'routes',

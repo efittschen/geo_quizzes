@@ -1,4 +1,4 @@
-// New Zealand State Highways: config for ../shared/area-quiz.js, on the base areas of ../new-zealand-regions/data.js.
+// New Zealand State Highways: config for ../shared/area-quiz.js, on the base areas of ../shared/maps/new-zealand-regions/data.js.
 // HIGHWAYS (highways.js) lists the areas each state highway runs through. Two-digit numbers go north to south: 10–59 in
 // the North Island, 60–99 in the South Island; the first digit is a band of neighbouring districts. Single-digit highways
 // (and their lettered spurs) run through many regions. A click on any district a highway runs through counts.
@@ -21,9 +21,9 @@ const QUIZ = {
   key: 'nzhighways',
   areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: r.rc === 'Area Outside Region' ? 'CI' : regionName(r.rc) })),
   borders: [],
-  context: DATA.inset,
+  
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.3, fly: { pad: 1.6, min: 1.5 / 40 },
-  proj: DATA.proj, kpu: DATA.kpu,
+  proj: DATA.proj, 
   street: { bounds: [[-47.4, 166.3], [-34.3, 178.7]], maxBounds: [[-55, 155], [-28, 190]] },
   hintLabel: 'Color by region',
   exploreKind: 'sh',

@@ -1,25 +1,33 @@
 #!/usr/bin/env node
-// postcodes: the zones of a postcode quiz (quizzes/shared/post-config.js), from the GeoNames postal codes
+// postcodes: the zones of a postcode quiz (engine/types/post.js), from the GeoNames postal codes
 // (download.geonames.org/export/zip, CC BY 4.0): one point per postcode and place.
 //
-//   node tools/postcodes.mjs --cc DE --out quizzes/germany-postcodes --base quizzes/germany-codes --levels 1,2,3
-//   node tools/postcodes.mjs --cc GB --out quizzes/united-kingdom-postcodes --voronoi quizzes/united-kingdom-regions
+//   node tools/postcodes.mjs --cc ES --out spain-postcodes --base spain-regions --levels 2
+//   node tools/postcodes.mjs --cc GB --out united-kingdom-postcodes --voronoi united-kingdom-regions
 //        --prefix '^[A-Z]{1,2}' --levels 2 [--mask '##-###'] [--names c=5] [--head] [--skip '^(AA|AE|AP)$']
+//
+// --out takes the quiz id: post.js (and with --voronoi the zones' own map, data.js) go to data/maps/<id>/, the hint
+// colours to data/quizzes/<id>/hints.css. --base and --voronoi take the name of a map in data/maps/, read by readMap
+// (tools/lib/quiz-files.mjs: from its split files or its data.js, whichever it has; a city list from its cities.js).
+// For tools/builds/code-zones, which draws zones that are no page: a value with a "/" is a path from the repository
+// (--out a folder that gets every file, --base or --voronoi a file holding DATA). A quiz folder holds its page
+// only, so quizzes/… is refused.
 //
 // A zone is every postcode starting with the same characters (--levels: the prefix lengths asked, coarse to fine;
 // --prefix: a regular expression whose match is the zone, for letter systems). Two ways to draw the zones:
-//   --base <folder>     the areas of an existing map (its data.js + geo.js) are the building blocks: each area gets
-//                       the zones of the postcodes inside it (every zone with at least --min-share of the area's
-//                       postcodes, default 0.2, and each zone at least where it has the most postcodes). The page
-//                       loads the base map itself; this tool writes only post.js and style.css. Areas without
+//   --base <map>        the areas of an existing map (in its own map units, a postcode placed on it by the map's
+//                       projection) are the building blocks: each area gets the zones of the postcodes inside it
+//                       (every zone with at least --min-share of the area's postcodes, default 0.2, and each zone at
+//                       least where it has the most postcodes). The page
+//                       loads the base map itself; this tool writes only post.js and hints.css. Areas without
 //                       a postcode point take the zone of the nearest area that has one (--parent <field>: first
 //                       among the areas with the same value of that field, e.g. the same county). Where the
 //                       coordinates are rough, --match 5:name finds the area by name instead (GeoNames column 5,
 //                       admin2, against the base map's `name` field; --alias 'Comilla=Cumilla,…' for other spellings).
-//   --voronoi <folder>  the zones get their own map, in the map space of an existing one (its projection, land and
-//                       neighbours from data.js or cities.js): every point of land goes to the zone of the nearest
-//                       postcode. Single points with no neighbour of their zone are dropped as misplaced. Writes
-//                       data.js, geo.js, post.js and style.css. --frames keeps "nearest" inside one region at a
+//   --voronoi <map>     the zones get their own map, in the map space of an existing one (its projection, land and
+//                       neighbours: its areas, or a city list's land): every point of land goes to the zone of the
+//                       nearest postcode. Single points with no neighbour of their zone are dropped as misplaced.
+//                       Writes data.js, post.js and hints.css. --frames keeps "nearest" inside one region at a
 //                       time, so zones that follow state lines get the real line: --frames ne (the country's
 //                       states, Natural Earth admin-1, which then also give the land) or --frames base:<field>
 //                       (the map's own areas, grouped by a field).
@@ -51,6 +59,7 @@ import { presimplify, simplify } from 'topojson-simplify';
 import { feature, merge, neighbors } from 'topojson-client';
 import { geoProject } from 'd3-geo-projection';
 import { cached, unzipText, readGeoJSON, projectionFrom, labelAndArea, svgPath, ROOT, CACHE } from './lib/geo.mjs';
+import { readMap } from './lib/quiz-files.mjs';
 
 const { values: o } = parseArgs({
   options: {
@@ -58,19 +67,22 @@ const { values: o } = parseArgs({
     levels: { type: 'string', default: '1,2' }, prefix: { type: 'string' }, mask: { type: 'string' },
     pattern: { type: 'string' }, skip: { type: 'string' }, names: { type: 'string', default: '' }, head: { type: 'boolean', default: false },
     'min-share': { type: 'string', default: '0.2' }, 'min-area': { type: 'string', default: '0.8' },
-    'data-file': { type: 'string', default: 'data.js' }, 'geo-file': { type: 'string', default: 'geo.js' },
     'skip-region': { type: 'string' }, 'need-accuracy': { type: 'boolean', default: false }, 'need-region': { type: 'boolean', default: false },
     match: { type: 'string' }, alias: { type: 'string', default: '' }, frames: { type: 'string' }, parent: { type: 'string' },
     points: { type: 'string' }, source: { type: 'string' }, 'keep-all': { type: 'boolean', default: false },
     full: { type: 'boolean', default: false }, areas: { type: 'string' },
   },
 });
-if (!o.cc || !o.out || (!o.base && !o.voronoi)) { console.error('usage: postcodes --cc XX --out quizzes/<folder> (--base <folder> | --voronoi <folder>) [--levels 1,2]'); process.exit(1); }
+if (!o.cc || !o.out || (!o.base && !o.voronoi)) { console.error('usage: postcodes --cc XX --out <quiz id> (--base <map> | --voronoi <map>) [--levels 1,2]'); process.exit(1); }
+for (const k of ['out', 'base', 'voronoi']) if (/^quizzes\//.test(o[k] || '')) { console.error(`--${k} ${o[k]}: a quiz folder holds its page only; give the quiz id or the map's name`); process.exit(1); }
 const CC = o.cc.toUpperCase(), LEVELS = o.levels.split(',').map(Number), FINE = LEVELS[LEVELS.length - 1];
 const PREFIX = o.prefix ? new RegExp(o.prefix) : null, SKIP = o.skip ? new RegExp(o.skip) : null, SKIP_REGION = o['skip-region'] ? new RegExp(o['skip-region']) : null;
 const NAMES = { r: 3, c: 2, ...Object.fromEntries(o.names.split(',').filter(Boolean).map(s => { const [k, v] = s.split('='); return [k, +v]; })) };
 const round = (v, n) => Math.round(v * 10 ** n) / 10 ** n;
-const out = f => path.join(ROOT, o.out, f);
+// where the files go: the quiz's map (post.js, data.js) and its own folder (hints.css); a path: one folder for all
+const [OUT_MAP, OUT_QUIZ] = o.out.includes('/') ? [o.out, o.out] : [`data/maps/${o.out}`, `data/quizzes/${o.out}`];
+const out = f => path.join(ROOT, OUT_MAP, f);
+const mapPath = m => (m.includes('/') ? m : `data/maps/${m}`);
 
 /* ---------- postcodes ---------- */
 const SOURCE = o.source || 'GeoNames postal codes, CC BY 4.0';
@@ -116,16 +128,21 @@ for (const r of rows) {
   }
 }
 /* ---------- an existing map: its areas, projection and land ---------- */
-function loadMap(folder) {
-  const dir = path.join(ROOT, folder), ctx = {};
+// (a map of data/maps/ by readMap; a city list (no shapes.js, no data.js) by its cities.js; a path: that file)
+function loadMap(map) {
+  const dir = path.join(ROOT, 'data/maps', map), has = f => fs.existsSync(path.join(dir, f));
+  if (!map.includes('/') && (has('shapes.js') || has('data.js'))) return { D: readMap(map).DATA };
+  const ctx = {};
   vm.createContext(ctx);
-  const has = f => fs.existsSync(path.join(dir, f));
-  const dataFile = has(o['data-file']) ? o['data-file'] : 'cities.js';
-  let src = fs.readFileSync(path.join(dir, dataFile), 'utf8');
-  if (has(o['geo-file'])) src += '\n' + fs.readFileSync(path.join(dir, o['geo-file']), 'utf8');
-  vm.runInContext(src + '\nthis.D = typeof DATA !== "undefined" ? DATA : CITIES; this.G = typeof GEO !== "undefined" ? GEO : null;', ctx);
-  return { D: ctx.D, G: ctx.G };
+  vm.runInContext(fs.readFileSync(map.includes('/') ? path.join(ROOT, map) : path.join(dir, 'cities.js'), 'utf8') + '\nthis.D = typeof DATA !== "undefined" ? DATA : CITIES;', ctx);
+  return { D: ctx.D };
 }
+// An SVG path's rings, [x, y] points (an area drawn as a circle: a ring of 32 points around it)
+const ringsOf = d => d.split(/M/).filter(Boolean).map(s => {
+  const n = s.match(/-?\d*\.?\d+(?:e-?\d+)?/g).map(Number);
+  if (/a/i.test(s)) { const r = n[2], cx = n[0] + r, cy = n[1]; return Array.from({ length: 32 }, (_, i) => [cx + r * Math.cos(i * Math.PI / 16), cy + r * Math.sin(i * Math.PI / 16)]); }
+  const ring = []; for (let i = 0; i + 1 < n.length; i += 2) ring.push([n[i], n[i + 1]]); return ring;
+}).filter(r => r.length >= 3);
 const inRings = (rings, x, y) => { // even-odd, rings of [a, b] pairs; (x, y) in the same order
   let inside = false;
   for (const ring of rings) for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -140,14 +157,20 @@ let AREA = {}, bounds, styleRules = '', townZone = null;
 const DIGIT_HINT = { 0: 11, 1: 1, 2: 8, 3: 2, 4: 7, 5: 3, 6: 12, 7: 5, 8: 6, 9: 4 };
 
 if (o.base) {
-  /* ---------- building blocks: the areas of an existing map ---------- */
-  const { D, G } = loadMap(o.base);
-  const atoms = D.reg.filter(r => G[r.id]).map(r => {
-    const rings = G[r.id].rings; let s = 90, w = 180, n = -90, e = -180;
-    for (const ring of rings) for (const [la, ln] of ring) { if (la < s) s = la; if (la > n) n = la; if (ln < w) w = ln; if (ln > e) e = ln; }
-    return { id: r.id, rings, lab: G[r.id].lab, box: [s, w, n, e], zones: new Map() };
+  /* ---------- building blocks: the areas of an existing map, in its own map units ---------- */
+  const { D } = loadMap(o.base);
+  const proj = projectionFrom(D.proj), xy = (lat, lng) => proj([lng, lat]), ll = ([x, y]) => { const [lng, lat] = proj.invert([x, y]); return [lat, lng]; };
+  const atoms = D.reg.map(r => {
+    const rings = ringsOf(r.d); let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const ring of rings) for (const [x, y] of ring) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    return { id: r.id, rings, lab: ll([r.lx, r.ly]), box: [x0, y0, x1, y1], zones: new Map() };
   });
-  bounds = [[Math.min(...atoms.map(a => a.box[0])), Math.min(...atoms.map(a => a.box[1]))], [Math.max(...atoms.map(a => a.box[2])), Math.max(...atoms.map(a => a.box[3]))]];
+  const near = (a, x, y, m = 0) => x >= a.box[0] - m && x <= a.box[2] + m && y >= a.box[1] - m && y <= a.box[3] + m;
+  const atomAt = (x, y) => atoms.find(a => near(a, x, y) && inRings(a.rings, x, y));
+  { // (Mercator: west and east by x, north and south by y)
+    const [s, w] = ll([Math.min(...atoms.map(a => a.box[0])), Math.max(...atoms.map(a => a.box[3]))]), [n, e] = ll([Math.max(...atoms.map(a => a.box[2])), Math.min(...atoms.map(a => a.box[1]))]);
+    bounds = [[s, w], [n, e]];
+  }
   let outside = 0, far = 0;
   const [mcol, mprop] = (o.match || '').split(':'), norm = s => String(s || '').normalize('NFD').replace(/[^a-z]/gi, '').toLowerCase();
   const alias = Object.fromEntries(o.alias.split(',').filter(Boolean).map(s => s.split('=').map(norm)));
@@ -156,16 +179,17 @@ if (o.base) {
   for (const r of rows) {
     let hit = null;
     if (o.match) { const k = norm(r.f[+mcol]); hit = byName[alias[k] || k]; if (!hit) unmatched.set(r.f[+mcol], (unmatched.get(r.f[+mcol]) || 0) + 1); }
-    hit ??= atoms.find(a => r.lat >= a.box[0] && r.lat <= a.box[2] && r.lng >= a.box[1] && r.lng <= a.box[3] && inRings(a.rings, r.lat, r.lng));
-    if (!hit) { // off the simplified coast or on a small island: the area with the nearest border point, if close
+    const [x, y] = xy(r.lat, r.lng);
+    hit ??= atomAt(x, y);
+    if (!hit) { // off the simplified coast or on a small island: the area with the nearest border point, within 60 km
       outside++;
-      const kx = Math.cos(r.lat * Math.PI / 180), reach = 0.7; // degrees: only areas whose box is this near
-      let best = null, bd = Infinity;
+      const reach = 60 / (111.32 * Math.cos(r.lat * Math.PI / 180) / D.proj.k); // (60 km in map units there)
+      let best = null, bd = Infinity, at = null;
       for (const a of atoms) {
-        if (r.lat < a.box[0] - reach || r.lat > a.box[2] + reach || r.lng < a.box[1] - reach / kx || r.lng > a.box[3] + reach / kx) continue;
-        for (const ring of a.rings) for (const [la, ln] of ring) { const dd = (la - r.lat) ** 2 + ((ln - r.lng) * kx) ** 2; if (dd < bd) { bd = dd; best = a; } }
+        if (!near(a, x, y, reach)) continue;
+        for (const ring of a.rings) for (const p of ring) { const dd = (p[0] - x) ** 2 + (p[1] - y) ** 2; if (dd < bd) { bd = dd; best = a; at = p; } }
       }
-      if (!best || Math.sqrt(bd) * 111 > 60) { far++; continue; }
+      if (!best || km([r.lat, r.lng], ll(at)) > 60) { far++; continue; }
       hit = best;
     }
     if (!hit.zones.has(r.zone)) hit.zones.set(r.zone, new Set());
@@ -198,20 +222,17 @@ if (o.base) {
     a.keep = [best.keep[0]]; filled++;
   }
   for (const a of atoms) AREA[a.id] = a.keep.sort();
-  townZone = (lat, lng) => { const a = atoms.find(a => lat >= a.box[0] && lat <= a.box[2] && lng >= a.box[1] && lng <= a.box[3] && inRings(a.rings, lat, lng)); return a && a.keep.length === 1 ? a.keep[0] : null; };
+  townZone = (lat, lng) => { const a = atomAt(...xy(lat, lng)); return a && a.keep.length === 1 ? a.keep[0] : null; };
   if (unmatched.size) console.log('names not matched (placed by coordinates):', [...unmatched].map(([k, v]) => `${k} ${v}`).join(', '));
   console.log(`areas ${atoms.length}; points off the map ${outside} (dropped as too far: ${far}); zones placed by most postcodes only: ${forced}; areas without points: ${filled}`);
   if (!PREFIX) styleRules = Object.entries(DIGIT_HINT).map(([d, h]) => `.r[data-g="${d}"]{--hint:var(--h${h})}`).join(' ');
 } else {
   /* ---------- own map: nearest postcode, in the map space of an existing map ---------- */
   const { D } = loadMap(o.voronoi);
-  const usa = D.proj.type === 'albersUsa';
-  const proj = usa ? d3.geoAlbersUsa().scale(D.proj.scale).translate(D.proj.translate) : projectionFrom(D.proj);
-  const ringsOf = d => d.split(/M/).filter(Boolean).map(s => { const n = s.match(/-?\d+\.?\d*(?:e-?\d+)?/g).map(Number), ring = []; for (let i = 0; i + 1 < n.length; i += 2) ring.push([n[i], n[i + 1]]); return ring; }).filter(r => r.length >= 3);
+  const proj = projectionFrom(D.proj);
   const evenOdd = d => { const rings = ringsOf(d); return rings.length ? polygonClipping.xor(...rings.map(r => [[r]])) : []; };
   const land = D.land ? evenOdd(D.land) : polygonClipping.union(...D.reg.map(r => evenOdd(r.d)).filter(mp => mp.length));
-  // frames: "nearest postcode" is decided inside one frame at a time. Albers USA draws Alaska and Hawaii as insets,
-  // so without --frames they are frames of their own and no mainland postcode claims inset land.
+  // frames: "nearest postcode" is decided inside one frame at a time (without --frames, all the land is one).
   let landFrames;
   if (o.frames === 'ne') {
     const ne = readGeoJSON(path.join(CACHE, 'ne_10m_admin_1_states_provinces.geojson'));
@@ -221,15 +242,7 @@ if (o.base) {
     const prop = o.frames.slice(5), groups = {};
     for (const r of D.reg) (groups[r[prop]] ??= []).push(evenOdd(r.d));
     landFrames = Object.values(groups).map(g => polygonClipping.union(...g.filter(mp => mp.length)));
-  } else {
-    const frameOf = ([lng, lat]) => !usa ? 0 : lat > 50 || lng < -170 ? 1 : lat < 30 && lng < -150 ? 2 : 0;
-    landFrames = usa ? [[], [], []] : [[]];
-    for (const poly of land) {
-      let sx = 0, sy = 0; for (const [x, y] of poly[0]) { sx += x; sy += y; }
-      const ll = proj.invert([sx / poly[0].length, sy / poly[0].length]);
-      landFrames[ll ? frameOf(ll) : 0].push(poly);
-    }
-  }
+  } else landFrames = [land];
   const FR = landFrames.map((_, i) => i);
   const boxes = landFrames.map(mp => { let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; for (const poly of mp) for (const [x, y] of poly[0]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } return [x0, y0, x1, y1]; });
   const frameAt = (x, y) => FR.find(i => x >= boxes[i][0] && x <= boxes[i][2] && y >= boxes[i][1] && y <= boxes[i][3] && landFrames[i].some(poly => inRings(poly, x, y)));
@@ -294,7 +307,9 @@ if (o.base) {
   const fc = { type: 'FeatureCollection', features: Object.entries(byZone).map(([z, parts]) => ({ type: 'Feature', properties: { id: z }, geometry: { type: 'MultiPolygon', coordinates: parts.length > 1 ? joined(parts) : parts[0] } })) };
   const topo = simplify(presimplify(topology({ a: fc }, 1e6)), +o['min-area']);
   const areaOf = poly => Math.abs(d3.geoPath(null).area({ type: 'Polygon', coordinates: poly }));
-  const reg = [], GEO = {};
+  // (points as fine as the map's own, a step finer for a zone drawn in its own shape; s: a zone's size on the ground,
+  // which "largest area" goes by, from its size on the map at its latitude)
+  const digits = D.proj.grain ? Math.round(-Math.log10(D.proj.grain)) : Math.min(3, Math.max(1, Math.ceil(-Math.log10(0.002 * D.proj.k)))), reg = [];
   let s = 90, w = 180, n = -90, e = -180;
   const inv = ([x, y]) => { const ll = proj.invert([x, y]); return ll ? [round(ll[1], 3), round(ll[0], 3)] : null; };
   const done = feature(topo, topo.objects.a).features, raw = Object.fromEntries(fc.features.map(f => [f.properties.id, f.geometry.coordinates]));
@@ -311,10 +326,10 @@ if (o.base) {
     if (!kept.length) { console.warn(`zone ${f.properties.id} vanished`); continue; }
     const g = { type: 'Feature', properties: f.properties, geometry: { type: 'MultiPolygon', coordinates: kept } };
     const { lx, ly, a } = labelAndArea(g);
-    (fine ? small : reg).push({ id: f.properties.id, d: svgPath(g.geometry, fine ? 2 : 1), lx, ly, a });
+    const lat = inv([lx, ly])[0], s = Math.round(a * (111.32 * Math.cos(lat * Math.PI / 180) / D.proj.k) ** 2);
+    (fine ? small : reg).push({ id: f.properties.id, d: svgPath(g.geometry, fine ? digits + 1 : digits), lx, ly, a, s });
     const rings = kept.flatMap(poly => poly.map(ring => ring.map(inv).filter(Boolean)));
     for (const ring of rings) for (const [la, ln] of ring) { if (la < s) s = la; if (la > n) n = la; if (ln < w) w = ln; if (ln > e) e = ln; }
-    GEO[f.properties.id] = { rings, lab: inv([lx, ly]) };
     AREA[f.properties.id] = [f.properties.id];
   }
   reg.push(...small);
@@ -332,9 +347,8 @@ if (o.base) {
     styleRules = ids.slice().sort().map(id => `.r[data-g="${id}"]{--hint:var(--h${color[id]})}`).join(' ');
   }
   fs.mkdirSync(out(''), { recursive: true });
-  const DATA = { w: D.w, h: D.h, kpu: D.kpu, proj: D.proj, reg, ctx: D.ctx || '' };
-  fs.writeFileSync(out('data.js'), `// Generated by tools/postcodes.mjs: ${reg.length} postcode zones (nearest postcode, ${SOURCE}),\n// in the map space of ../${path.basename(o.voronoi)} (${D.w}x${D.h} map units)\nconst DATA = ${JSON.stringify(DATA)};\n`);
-  fs.writeFileSync(out('geo.js'), `// Street-map rings [lat, lng] for the zones in data.js (same simplification)\nconst GEO = ${JSON.stringify(GEO)};\n`);
+  const DATA = { w: D.w, h: D.h, kpu: D.kpu, proj: D.proj, reg };
+  fs.writeFileSync(out('data.js'), `// Generated by tools/postcodes.mjs: ${reg.length} postcode zones (nearest postcode, ${SOURCE}),\n// in the map space of ${mapPath(o.voronoi)} (${D.w}x${D.h} map units)\nconst DATA = ${JSON.stringify(DATA)};\n`);
   console.log(`places ${pts.length} (dropped as misplaced: ${dropped}); zones drawn ${reg.length} of ${new Set(rows.map(r => r.zone)).size}`);
 }
 
@@ -366,7 +380,7 @@ for (const [p, z] of Object.entries(Z)) {
   N[p] = z.codes.size;
 }
 
-/* ---------- post.js, style.css ---------- */
+/* ---------- post.js, hints.css ---------- */
 const shown = new Set(Object.values(AREA).flatMap(zs => zs.flatMap(prefixesOf)));
 const pick = obj => Object.fromEntries(Object.entries(obj).filter(([k]) => shown.has(k)).sort(([a], [b]) => a.localeCompare(b)));
 const POST = {
@@ -376,7 +390,8 @@ const POST = {
 fs.mkdirSync(out(''), { recursive: true });
 const cmd = process.argv.slice(2).map(a => /^[\w./:,=-]+$/.test(a) ? a : `'${a}'`).join(' ');
 fs.writeFileSync(out('post.js'), `// Generated by tools/postcodes.mjs from the postcodes of ${CC} (${SOURCE}): the zones of each map area,\n// and per zone its regions, largest places and number of postcodes\n//   node tools/postcodes.mjs ${cmd}\nconst POST = ${JSON.stringify(POST)};\n`);
-const css = out('style.css'), block = `/* hints: postcode zone (tools/postcodes.mjs) */\n${styleRules}\n/* end hints: postcode zone */\n`;
+fs.mkdirSync(path.join(ROOT, OUT_QUIZ), { recursive: true });
+const css = path.join(ROOT, OUT_QUIZ, 'hints.css'), block = `/* hints: postcode zone (tools/postcodes.mjs) */\n${styleRules}\n/* end hints: postcode zone */\n`;
 const old = fs.existsSync(css) ? fs.readFileSync(css, 'utf8') : '';
 fs.writeFileSync(css, /\/\* hints: postcode zone[\s\S]*?end hints: postcode zone \*\/\n?/.test(old) ? old.replace(/\/\* hints: postcode zone[\s\S]*?end hints: postcode zone \*\/\n?/, block) : old + block);
 const missing = [...new Set(rows.map(r => r.zone))].filter(z => !shown.has(z));

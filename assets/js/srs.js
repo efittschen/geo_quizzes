@@ -10,10 +10,10 @@
 // good moves on, easy ends them. Every answer counts, whenever it is given: there is no waiting for a step to be
 // due. A card missed and asked again (a replay: at the end of the same review, or in an ordinary round's Retry) was
 // just shown: answered right, it is rated by hand, hard (the default, also when none is picked in time), good or easy;
-// wrong, it is not known again (area-review.js). Only a card's first answer in a review counts for the review's result and the day's
+// wrong, it is not known again (engine/app/review.js). Only a card's first answer in a review counts for the review's result and the day's
 // count.
 // A review asks the cards that are due, or all of them ("refresh everything").
-// Answers are rated by the clock instead of by buttons (see quizzes/shared/area-review.js), with Anki's four ratings:
+// Answers are rated by the clock instead of by buttons (see engine/app/review.js), with Anki's four ratings:
 //   again  (not known)  a wrong click, or no answer before the time limit
 //   hard   (unsure)     right on the first click, but slower than the "known" time
 //   good   (known)      right on the first click within the "known" time
@@ -39,7 +39,7 @@
 //     Turned on again, they stay one, and perfect rounds on other maps make cards of their own again.
 //     (Cards from before have no look in their key, '<kind>|<item id>': one that keeps its m and b is that
 //     map's card, under the new key once its quiz page next opens. One without is given a map by its quiz page
-//     when it next opens, once: the one worked out from the best results (reviewModes in area-quiz.js); until then
+//     when it next opens, once: the one worked out from the best results (engine/model/review.js); until then
 //     it counts and is reviewed like any card.) A page's cards fall into its layers by their <kind> (a
 //     regions quiz: island groups, provinces, kabupaten), and a layer's cards by their look: the review page lists
 //     and reviews each on its own (`layers` and their `maps`, and `kinds` of a run: "<kind>" or "<kind>@<look>").
@@ -272,7 +272,7 @@ const SRS = (() => {
   /* ---------- "Cards per map" off: one card a question, whatever the map ---------- */
   // How hard a map is (a look): the quiz map, the overlay, the street map, the bare map, the satellite map; in a city
   // quiz the dots before the map by distance, each on the drawn map, the overlay, the street map, the bare map, the
-  // satellite map (as EASIEST in area-quiz.js,
+  // satellite map (as MAPS in engine/model/results.js,
   // and the backgrounds' picker). A card without a map is the easiest.
   const hardness = look => { const [map, back] = look.split('+'); return LOOKS.indexOf(map) * 10 + Math.max(0, LOOKS.indexOf(back)); };
   const question = key => kindOf(key) + key.slice(key.indexOf('|')); // '<kind>|<item id>'
@@ -441,7 +441,7 @@ const SRS = (() => {
   }
 
   /* ---------- across quizzes: a review of one quiz, one country or everything ---------- */
-  // The decks whose quiz is in data/quizzes.json (its "quizzes"), with their numbers; longest due first.
+  // The decks whose quiz is in data/site/quizzes.json (its "quizzes"), with their numbers; longest due first.
   function overview(quizzes, now) {
     const byId = new Map(quizzes.filter(q => q.url).map(q => [q.id, q]));
     return decks().filter(d => byId.has(d.id))
@@ -450,13 +450,13 @@ const SRS = (() => {
   }
   // A review over several quizzes is shuffled in groups: a card can only be asked on its own quiz's page (its map),
   // and every change of page has to load, so a page asks a few of its cards before the review moves on to a quiz
-  // picked at random (see area-review.js). Cards that weren't known are asked again at the end, until they are.
+  // picked at random (see engine/app/review.js). Cards that weren't known are asked again at the end, until they are.
   const GROUP = 3; // cards asked on a quiz's page before the review may move to another
   const run = () => ({ back: "review.html", t: Infinity, total: 0, left: {}, again: {}, res: [], ...STORE.review().run });
   const setRun = r => STORE.setReview(v => { v.run = r; });
   const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
   // The run's cards still to ask, per quiz: [{ id, quiz, keys }]. Once every card has been asked, those that weren't
-  // known. Quizzes that are not (or no longer) listed in data/quizzes.json are left out, and so are cards whose
+  // known. Quizzes that are not (or no longer) listed in data/site/quizzes.json are left out, and so are cards whose
   // question is gone.
   function pools(quizzes) {
     const r = run(), byId = new Map(quizzes.filter(q => q.url).map(q => [q.id, q]));

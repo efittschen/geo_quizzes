@@ -1,13 +1,14 @@
 #!/usr/bin/env node
-// geohints: the pictures of a geohints.com meta page -> the data of a picture quiz ("which country is this?").
+// geohints: the pictures of a geohints.com meta page -> a picture set, data/pictures/<set>/ (the data of a picture
+// quiz: "which country is this?").
 //
-//   node tools/geohints.mjs --meta bollards --out quizzes/world-bollards [--width 800] [--quality 72]
+//   node tools/geohints.mjs --meta bollards --out data/pictures/bollards [--width 800] [--quality 72]
 //
 // Reads https://geohints.com/meta/<meta>: every picture with its country, continent, note (e.g. the US states a
 // bollard is found in) and Street View link, and its rarity (the page's Common / Uncommon / Rare filter, read from
 // the three filtered views). Writes:
 //   <out>/photos.js     const PHOTOS = { meta, source, continent: { [place id]: continent }, items: [{ n, c, r, t, m }] }
-//                       n: picture number, c: place id in quizzes/shared/world.js, r: 0 common, 1 uncommon, 2 rare,
+//                       n: picture number, c: place id in data/maps/world/world.js, r: 0 common, 1 uncommon, 2 rare,
 //                       t: note, m: Street View link without https://
 //   <out>/img/<n>.webp  the pictures, scaled down (needs cwebp)
 // Pages and pictures are kept in tools/cache/geohints, so a second run downloads nothing. Run tools/worldmap.mjs first.
@@ -19,7 +20,7 @@ import { execFileSync } from 'node:child_process';
 import { cached, sleep, CACHE, ROOT } from './lib/geo.mjs';
 
 const { values: o } = parseArgs({ options: { meta: { type: 'string' }, out: { type: 'string' }, width: { type: 'string', default: '800' }, quality: { type: 'string', default: '72' } } });
-if (!o.meta || !o.out) { console.error('usage: geohints --meta bollards --out quizzes/world-bollards'); process.exit(1); }
+if (!o.meta || !o.out) { console.error('usage: geohints --meta bollards --out data/pictures/bollards'); process.exit(1); }
 
 const SITE = 'https://geohints.com';
 const RARITY = ['Common', 'Uncommon', 'Rare'];
@@ -66,7 +67,7 @@ const unrated = all.filter(e => !rarity.has(e.src));
 if (rarity.size && unrated.length) throw new Error(`${unrated.length} pictures without a rarity, e.g. ${unrated[0].src}`);
 
 // Places by name, from the world map.
-const world = vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'quizzes', 'shared', 'world.js'), 'utf8') + ';WORLD');
+const world = vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'data', 'maps', 'world', 'world.js'), 'utf8') + ';WORLD');
 const byName = new Map(world.reg.map(r => [r.n, r.id]));
 const idOf = name => byName.get(ALIAS[name] || name);
 const unknown = [...new Set(all.map(e => e.country))].filter(n => !idOf(n));

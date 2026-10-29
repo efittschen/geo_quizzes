@@ -9,17 +9,18 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../assets/css/base.css">
-<link rel="stylesheet" href="../shared/area-quiz.css">
-<link rel="stylesheet" href="../shared/city-quiz.css">
+<link rel="stylesheet" href="../../engine/css/quiz-page.css">
+<link rel="stylesheet" href="../../engine/css/quiz-map.css">
+<link rel="stylesheet" href="../../engine/css/formats.css">
 </head>
 <body>
 <a class="back" href="../../country.html?code=858">← Uruguay</a>
 <h1>Uruguay Cities</h1>
 <p class="note">Cities: GeoNames (CC BY 4.0) · Names: Wikidata · Borders: © OpenStreetMap contributors (ODbL)</p>
-<script src="../shared/quiz-page.js"></script>
-<script src="cities.js"></script>
+<script src="../../engine/page.js"></script>
+<script src="../../data/maps/uruguay-cities/cities.js"></script>
 <script>const CITY_OPTS = { key: 'uycities', names: 'es', top: [10, 25, 50] };</script>
-<script src="../shared/city-config.js"></script>
-<script src="../shared/area-quiz.js"></script>
+<script src="../../engine/types/city.js"></script>
+<script type="module" src="../../engine/main.js"></script>
 </body>
 </html>

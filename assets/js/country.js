@@ -10,15 +10,15 @@ function showEmpty(message) {
 }
 
 // The country's outline. With the pointer on it, the roads there with Google Street View coverage are drawn on it:
-// a picture made for exactly this outline (data/coverage/shape/, by tools/coverage.mjs countries; `roads` is the
-// country's entry in data/coverage/home.json). A click opens the coverage map on the country, in a box over the page.
+// a picture made for exactly this outline (data/site/coverage/shape/, by tools/coverage.mjs countries; `roads` is the
+// country's entry in data/site/coverage/home.json). A click opens the coverage map on the country, in a box over the page.
 function drawShape(feature, roads) {
   const size = 120;
   const svg = d3.select("#country-shape").attr("viewBox", `0 0 ${size} ${size}`);
   // centred on the country, so one that lies across the 180th meridian (Russia, Fiji) is drawn in one piece
   const projection = d3.geoMercator().rotate([-d3.geoCentroid(feature)[0], 0]).fitSize([size, size], feature);
   svg.append("path").attr("d", d3.geoPath(projection)(feature));
-  if (roads) svg.append("image").attr("class", "roads").attr("href", `data/coverage/shape/${roads[0]}.png`).attr("width", size).attr("height", size);
+  if (roads) svg.append("image").attr("class", "roads").attr("href", `data/site/coverage/shape/${roads[0]}.png`).attr("width", size).attr("height", size);
 
   // The map opens on the country's coverage, or on the country itself if it has none (on its largest piece of land
   // where it lies across the 180th meridian and its box would span the globe).
@@ -82,7 +82,7 @@ function renderQuizzes(quizzes, placeOf, inside = () => [], group = null) {
     const li = document.createElement("li");
     const a = document.createElement("a");
     a.className = "quiz-card";
-    a.href = quizUrl(quiz);
+    a.href = quiz.url;
     const title = document.createElement("strong");
     const place = placeOf && !quiz.scope ? placeOf(quiz) : "";
     title.textContent = place || quiz.title;
@@ -106,7 +106,7 @@ function renderQuizzes(quizzes, placeOf, inside = () => [], group = null) {
       above.classList.add("has-inside");
       const b = document.createElement("a");
       b.className = "quiz-card inside";
-      b.href = quizUrl(more);
+      b.href = more.url;
       const name = document.createElement("strong");
       name.textContent = more.title;
       const stars = starsEl(quizLevels(more));
@@ -178,7 +178,7 @@ async function init() {
       d3.json(WORLD_URL),
       loadIndex(),
       // the countries' roads with coverage; the page works without them
-      fetch("data/coverage/home.json").then((r) => (r.ok ? r.json() : null), () => null),
+      fetch("data/site/coverage/home.json").then((r) => (r.ok ? r.json() : null), () => null),
     ]);
     const feature = topojson
       .feature(world, world.objects.countries)

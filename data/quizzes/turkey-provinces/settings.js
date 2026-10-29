@@ -1,0 +1,2 @@
+// turkey-provinces: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"trprov","map":"DATA.reg","size":[1200,508],"pad":16,"maxZoom":40,"labelScale":0.22,"fly":{"pad":1.6,"min":0.0375},"hintLabel":"Color by region","exploreKind":"provinces","kinds":[{"key":"provinces","label":"Provinces","noun":["province","provinces"],"prompt":"name"}]};

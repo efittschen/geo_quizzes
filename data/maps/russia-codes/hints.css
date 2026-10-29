@@ -1,0 +1,3 @@
+/* Russia quizzes: regions are colored by the first digit of their codes;
+   hint colors come from the shared palette in ../shared/quiz-map.css, picked so neighbouring zones differ. */
+.r[data-g="3"]{--hint:var(--h11)} .r[data-g="4"]{--hint:var(--h3)} .r[data-g="8"]{--hint:var(--h6)}

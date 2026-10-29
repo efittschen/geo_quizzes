@@ -9,7 +9,7 @@
 //   node tools/builds/postcodes/brazil-cnefe.mjs points   writes BR.txt in the layout of the GeoNames postal files,
 //                                                         for tools/postcodes.mjs --points: the places where each
 //                                                         three-digit zone has addresses, finer where zones meet
-//   node tools/builds/postcodes/brazil-cnefe.mjs counts quizzes/brazil-postcodes/post.js
+//   node tools/builds/postcodes/brazil-cnefe.mjs counts data/maps/brazil-postcodes/post.js
 //                                                         after the build: the real number of CEPs per zone (IBGE's
 //                                                         Agregados por CEP), in place of the number of points
 import fs from 'node:fs';

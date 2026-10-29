@@ -1,0 +1,2 @@
+// australia-states: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"austates","map":{"paths":"DATA.ent","ids":["st0","st1","st2","st3","st4","st5","st6","st7"]},"size":[1100,1063],"pad":16,"maxZoom":40,"labelScale":0.2,"fly":{"pad":1.6,"min":0.04},"hintLabel":"Color each state","exploreKind":"states","kinds":[{"key":"states","label":"States","noun":["state","states"],"prompt":"name"}]};

@@ -1,0 +1,2 @@
+// lesotho-regions: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"lsregions","map":"DATA.reg","borders":"DATA.db","size":[1000,992],"pad":16,"maxZoom":40,"labelScale":0.22,"fly":{"pad":1.6,"min":0.05},"hintLabel":"Color by district","exploreKind":"councils","kinds":[{"key":"districts","label":"Districts","noun":["district","districts"],"prompt":"name","hints":false},{"key":"councils","label":"Councils","noun":["council","councils"],"prompt":"name"}]};

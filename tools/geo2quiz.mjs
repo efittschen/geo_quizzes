@@ -1,59 +1,54 @@
 #!/usr/bin/env node
-// geo2quiz: boundary polygons (GeoJSON, WGS84) -> the map files of an area quiz.
+// geo2quiz: boundary polygons (GeoJSON, WGS84) -> the map of an area quiz, ready in Web Mercator.
 //
-//   node tools/geo2quiz.mjs --in areas.geojson --out quizzes/<folder> --iso3 THA [--width 1000] [--props name,code]
-//        [--min-area 1.5] [--base] [--note "Borders: geoBoundaries (CC BY 4.0)"]
+//   node tools/geo2quiz.mjs --in areas.geojson --out <map> [--width 1000] [--props name,code]
+//        [--min-area 1.5] [--base] [--note "Borders: geoBoundaries (CC BY 4.0)"] [--data-var DATA]
 //
-// Every feature needs a unique properties.id. Writes:
-//   <out>/data.js  const DATA = { w, h, kpu, proj, reg: [{ id, d, lx, ly, a, ...props }], ctx, land, lines }
-//                  reg: one entry per area (SVG path in map units, label point, size); ctx: neighbouring land
-//                  (Natural Earth); land/lines (with --base): the country and its inner borders; proj: the projection,
-//                  so cities and pins can be placed in the same map space (tools/lib/geo.mjs projectionFrom)
-//   <out>/geo.js   const GEO = { [id]: { rings: [[[lat, lng]…]…], lab: [lat, lng] } } for the street map
+// Every feature needs a unique properties.id. Writes the map data/maps/<map>/ (lib/quiz-files.mjs writeMap: its
+// outlines in shapes.js, the words of --props in names.js, the rest in facts.js) from
+//   const DATA = { w, h, kpu, proj, reg: [{ id, d, lx, ly, a, s, ...props }], land, lines }
+//   reg: one entry per area: its outline in map units, its label point and size on the map (a), and its size on the
+//   ground in km² (s), which "largest area" goes by; land/lines (with --base): the country and its inner borders;
+//   proj: the map's Web Mercator frame (tools/lib/geo.mjs mercatorFrame), so the tools place anything else on it
+//   exactly (projectionFrom). The map lies on the world's map (data/maps/world/world.js), so no neighbouring land.
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
-import { readGeoJSON, fitProjection, planarFeatures, labelAndArea, geoRings, contextPath, landAndLines, kmPerUnit, svgPath } from './lib/geo.mjs';
+import * as d3 from 'd3-geo';
+import { ROOT, readGeoJSON, mercatorFrame, planarFeatures, labelAndArea, landAndLines, svgPath } from './lib/geo.mjs';
+import { writeMap } from './lib/quiz-files.mjs';
 
 const { values: o } = parseArgs({
   options: {
-    in: { type: 'string' }, out: { type: 'string' }, iso3: { type: 'string' },
-    width: { type: 'string', default: '1000' }, pad: { type: 'string', default: '0' },
+    in: { type: 'string' }, out: { type: 'string' }, width: { type: 'string', default: '1000' },
     props: { type: 'string', default: '' }, 'min-area': { type: 'string', default: '1.5' }, base: { type: 'boolean', default: false },
-    note: { type: 'string', default: '' }, 'no-context': { type: 'boolean', default: false },
-    'data-var': { type: 'string', default: 'DATA' }, 'geo-var': { type: 'string', default: 'GEO' },
-    'data-file': { type: 'string', default: 'data.js' }, 'geo-file': { type: 'string', default: 'geo.js' },
+    note: { type: 'string', default: '' }, 'data-var': { type: 'string', default: 'DATA' },
   },
 });
-if (!o.in || !o.out || !o.iso3) { console.error('usage: geo2quiz --in areas.geojson --out quizzes/<folder> --iso3 XXX'); process.exit(1); }
+if (!o.in || !o.out) { console.error('usage: geo2quiz --in areas.geojson --out <map>'); process.exit(1); }
 
 const fc = readGeoJSON(o.in);
 const ids = fc.features.map(f => f.properties?.id);
 if (ids.some(id => id === undefined || id === null)) throw new Error('every feature needs properties.id');
 if (new Set(ids.map(String)).size !== ids.length) throw new Error('feature ids must be unique');
 
-const width = +o.width;
-const { proj, w, h, def } = fitProjection(fc, width, +o.pad);
+const { proj, w, h, kpu, def, digits } = mercatorFrame(fc, +o.width);
 const { topo, features } = planarFeatures(fc, proj, { minArea: +o['min-area'] });
 const props = o.props ? o.props.split(',').map(s => s.trim()).filter(Boolean) : [];
 
-const reg = [], GEO = {};
+const ground = Object.fromEntries(fc.features.map(f => [String(f.properties.id), Math.round(d3.geoArea(f) * 6371 ** 2)]));
+const reg = [];
 for (const f of features) {
   const id = String(f.properties.id);
-  const d = svgPath(f.geometry);
+  const d = svgPath(f.geometry, digits);
   if (!d) { console.warn(`warning: ${id} vanished during simplification`); continue; }
   const { lx, ly, a } = labelAndArea(f);
   const extra = Object.fromEntries(props.filter(p => f.properties[p] !== undefined).map(p => [p, f.properties[p]]));
-  reg.push({ id, ...extra, d, lx, ly, a });
-  const [lat, lng] = (() => { const [x, y] = proj.invert([lx, ly]); return [Math.round(y * 1e4) / 1e4, Math.round(x * 1e4) / 1e4]; })();
-  GEO[id] = { rings: geoRings(f, proj), lab: [lat, lng] };
+  reg.push({ id, ...extra, d, lx, ly, a, s: ground[id] });
 }
-const ctx = o['no-context'] ? '' : await contextPath(proj, w, h, o.iso3);
-const DATA = { w, h, kpu: kmPerUnit(proj, w, h), proj: def, reg, ctx, ...(o.base ? landAndLines(topo) : {}) };
+const DATA = { w, h, kpu, proj: def, reg, ...(o.base ? landAndLines(topo, 'a', digits) : {}) };
 
-fs.mkdirSync(o.out, { recursive: true });
-const head = `// Generated by tools/geo2quiz.mjs from ${path.basename(o.in)} (${reg.length} areas, equal-area conic, ${w}x${h} map units)${o.note ? `\n// ${o.note}` : ''}\n`;
-fs.writeFileSync(path.join(o.out, o['data-file']), `${head}const ${o['data-var']} = ${JSON.stringify(DATA)};\n`);
-fs.writeFileSync(path.join(o.out, o['geo-file']), `// Street-map rings [lat, lng] for the areas in ${o['data-file']} (same simplification)\nconst ${o['geo-var']} = ${JSON.stringify(GEO)};\n`);
-const kb = f => (fs.statSync(path.join(o.out, f)).size / 1024).toFixed(0) + ' KB';
-console.log(`${reg.length} areas, map ${w}x${h}, ${o['data-file']} ${kb(o['data-file'])}, ${o['geo-file']} ${kb(o['geo-file'])}`);
+const head = `// Generated by tools/geo2quiz.mjs from ${path.basename(o.in)} (${reg.length} areas, Web Mercator, ${w}x${h} map units)${o.note ? `\n// ${o.note}` : ''}`;
+writeMap(o.out, { [o['data-var']]: DATA }, head);
+const kb = f => (fs.existsSync(path.join(ROOT, 'data/maps', o.out, f)) ? (fs.statSync(path.join(ROOT, 'data/maps', o.out, f)).size / 1024).toFixed(0) + ' KB' : '-');
+console.log(`${reg.length} areas, map ${w}x${h}, data/maps/${o.out}: shapes.js ${kb('shapes.js')}, names.js ${kb('names.js')}, facts.js ${kb('facts.js')}`);

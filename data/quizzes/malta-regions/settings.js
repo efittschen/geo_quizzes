@@ -1,0 +1,2 @@
+// malta-regions: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"mtregions","map":"DATA.reg","borders":"DATA.rb","size":[1000,930],"pad":16,"maxZoom":40,"labelScale":0.22,"fly":{"pad":1.6,"min":0.0375},"hintLabel":"Color by region","exploreKind":"councils","kinds":[{"key":"regions","label":"Regions","noun":["region","regions"],"prompt":"name","hints":false,"areaRank":false},{"key":"councils","label":"Local councils","noun":["council","councils"],"prompt":"name"}]};

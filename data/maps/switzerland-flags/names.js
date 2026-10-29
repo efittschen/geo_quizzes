@@ -1,0 +1,3 @@
+// data/maps/switzerland-flags: the words of the map, the source the quizzes on it are made from (not loaded by a page)
+const MAP_NAMES = {};
+MAP_NAMES["data.js"] = {"DATA":{"reg":[{"name":"Valais"},{"name":"Ticino"},{"name":"Graubünden"},{"name":"Schaffhausen"},{"name":"Thurgau"},{"name":"Zürich"},{"name":"Aargau"},{"name":"Basel-Stadt"},{"name":"Basel-Landschaft"},{"name":"St. Gallen"},{"name":"Solothurn"},{"name":"Jura"},{"name":"Genève"},{"name":"Vaud"},{"name":"Neuchâtel"},{"name":"Bern"},{"name":"Luzern"},{"name":"Zug"},{"name":"Uri"},{"name":"Schwyz"},{"name":"Glarus"},{"name":"Nidwalden"},{"name":"Fribourg"},{"name":"Obwalden"},{"name":"Appenzell Ausserrhoden"},{"name":"Appenzell Innerrhoden"}]}};

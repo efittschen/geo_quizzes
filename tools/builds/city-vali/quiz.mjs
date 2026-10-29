@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// A country's city quiz from lloyd.py's levels: quizzes/<slug>-cities/cities.js gets the new list (the old one goes),
-// its index.html the rounds Top 10 and Top 25 (and All, the 100).
+// A country's city quiz from lloyd.py's levels: its city list (data/maps/<slug>-cities/cities.js, which its town-name
+// quiz loads too) gets the new list (the old one goes), its page (quizzes/<slug>-cities/index.html) the rounds Top 10
+// and Top 25 (and All, the 100).
 //
 //   node tools/builds/city-vali/quiz.mjs <cc> [--dry]
 //
@@ -14,24 +15,23 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { geoAlbersUsa, geoDistance } from 'd3-geo';
 import { ROOT, CACHE, UA, cached, projectionFrom, sleep } from '../../lib/geo.mjs';
 
 const cc = (process.argv[2] || '').toUpperCase(), DRY = process.argv.includes('--dry');
-const WORK = path.join(CACHE, 'builds', 'city-vali'), EARTH = 6371;
+const WORK = path.join(CACHE, 'builds', 'city-vali');
 const Q = JSON.parse(fs.readFileSync(path.join(WORK, 'countries.json'), 'utf8')).find(q => q.cc === cc);
 if (!Q) { console.error('usage: quiz.mjs <cc> [--dry]'); process.exit(1); }
 const L = JSON.parse(fs.readFileSync(path.join(WORK, `${cc}_MovingWorld_200000_levels.json`), 'utf8'));
 const TOWNS = Object.fromEntries(JSON.parse(fs.readFileSync(path.join(WORK, `${cc}_towns.json`), 'utf8')).towns.map(t => [t.id, t]));
-const file = path.join(ROOT, 'quizzes', `${Q.slug}-cities`, 'cities.js'), page = path.join(ROOT, 'quizzes', `${Q.slug}-cities`, 'index.html');
+const file = path.join(ROOT, 'data', 'maps', `${Q.slug}-cities`, 'cities.js'), page = path.join(ROOT, 'quizzes', `${Q.slug}-cities`, 'index.html');
 // the old list: the copy kept before the first write (tools/cache/builds/city-vali/old/), else the file as it is
 const oldFile = path.join(WORK, 'old', `${Q.slug}-cities.js`), src = fs.readFileSync(fs.existsSync(oldFile) ? oldFile : file, 'utf8'), ctx = {}; vm.createContext(ctx);
 vm.runInContext(src.replace('const CITIES', 'var CITIES'), ctx);
 const C = ctx.CITIES, OLD = Object.fromEntries(C.list.map(c => [c.id, c]));
-// the map itself (its land, lines, projection and size): the file as it is now, made ready in Web Mercator
-// (tools/builds/mercator); every town is placed on it by its latitude and longitude
+// the map itself (its land, lines, projection and size): the file as it is now, in Web Mercator; every town is placed
+// on it by its latitude and longitude
 { const now = {}; vm.createContext(now); vm.runInContext(fs.readFileSync(file, 'utf8').replace('const CITIES', 'var CITIES'), now);
-  for (const k of ['w', 'h', 'kpu', 'proj', 'land', 'lines', 'span', 'world', 'ctx', 'inset']) { if (k in now.CITIES) C[k] = now.CITIES[k]; else delete C[k]; } }
+  for (const k of ['w', 'h', 'kpu', 'proj', 'land', 'lines', 'span', 'world']) { if (k in now.CITIES) C[k] = now.CITIES[k]; else delete C[k]; } }
 const ids = L.levels.flatMap(l => l.new), cut = L.levels.map(l => l.k);
 
 // the local language of a region: what the old list's towns there are in
@@ -67,7 +67,7 @@ for (const id of ids) { const a = (OLD[id] || TOWNS[id]).adm; regions[a] ??= ADM
 
 // points of the old lists set right
 const FIX = { JP: { 16201: { lat: 36.6959, lng: 137.2137 } } }; // Toyama: the old point lay 18 km off, in the middle of the municipality's mountains
-const proj = C.proj.type === 'albersUsa' ? geoAlbersUsa().scale(C.proj.scale).translate(C.proj.translate) : projectionFrom(C.proj);
+const proj = projectionFrom(C.proj);
 const round = (v, n) => Math.round(v * 10 ** n) / 10 ** n;
 // what a Wikidata or GeoNames name carries besides the town's name on signs, per language
 const AFFIX = {
@@ -86,7 +86,6 @@ const list = ids.map(id => {
   const admin = /\b(gewog|district|union|upazila|municipality|commune|township|county|province|region|prefecture|department|parish|ward|division|rural|urban|council)\b|[,(]/i;
   const c = { id, en: bare(nm.en && !admin.test(nm.en) ? nm.en : t.name, 'en'), local: lang === 'en' ? null : (nm[lang] && bare(nm[lang].split(/\s*[,(（]/)[0], lang)) || null, lang, lat: round(t.lat, 4), lng: round(t.lng, 4), x: round(x, 1), y: round(y, 1), pop: t.pop, adm: t.adm, fc: t.fc };
   Object.assign(c, NAMEFIX[cc]?.[id]);
-  if (C.proj.type === 'albersUsa') c.k = round(geoDistance(proj.invert([x - 0.5, y]), proj.invert([x + 0.5, y])) * EARTH, 3); // km per map unit, as the old list has it
   return c;
 });
 const fmt = n => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1000) + 'k';

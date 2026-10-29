@@ -3,7 +3,7 @@
 // "Japan Pole Plates Infographic Map", one utility each (Kanto: TEPCO, Chubu: Chubu Electric…). The pictures
 // (img/<picture>.svg) are drawings made for this quiz after those designs, not photos; the yellow plates of Hokkaido
 // and Chubu are pictures of their own. NTT's plates (the telephone poles') are much the same everywhere, so they are
-// not asked. The map is the utilities' areas of ../japan-regions/data.js (field pw: prefectures split where a
+// not asked. The map is the utilities' areas of ../shared/maps/japan-regions/data.js (field pw: prefectures split where a
 // border between two utilities runs through them), each utility drawn as one region.
 
 // region key (pw in data.js) -> [region, utility]
@@ -47,9 +47,9 @@ const QUIZ = {
   key: 'jppoles',
   areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' })),
   borders: [],
-  context: DATA.ctx,
-  proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
-  street: {"bounds":[[24,123],[45.6,146]],"maxBounds":[[18,115],[50,158]]},
+  
+  proj: DATA.proj, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+  
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.22, fly: { pad: 1.6, min: 0.0375 },
   hintLabel: '', hintsDefault: false,
   exploreKind: 'photos',

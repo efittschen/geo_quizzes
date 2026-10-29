@@ -42,9 +42,9 @@ const QUIZ = {
   key: 'aupower',
   areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: r.op })),
   borders: [STATE_LINES],
-  context: DATA.ctx,
+  
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 60, labelScale: 0.25, fly: { pad: 1.6, min: 1 / 60 },
-  proj: DATA.proj, kpu: DATA.kpu,
+  proj: DATA.proj, 
   street: { bounds: [[-43.7, 113], [-10.6, 153.7]], maxBounds: [[-50, 95], [0, 170]] },
   hintLabel: 'Color each network',
   exploreKind: 'net',

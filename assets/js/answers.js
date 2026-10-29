@@ -1,11 +1,11 @@
 // The answer log: every answer given in a quiz, in an ordinary round or a review, whatever the way to answer (on the
 // map, List, Type, Pairs, Pick, Type code, Draw; a city quiz's dots or its map by distance; a town-name painting): when,
 // where and how it was given, how long it took, and what was given instead. The review page's Stats (stats.js) and a
-// quiz page's My stats (quizzes/shared/area-stats.js) are worked out from it.
+// quiz page's My stats (engine/screens/stats.js) are worked out from it.
 //
 // It is kept in this browser in IndexedDB (database "geoquizzes", store "log"), since it only grows. A page hands an
 // answer over (add) and goes on: answers are written some seconds later, several at once, so that the rating of a
-// replay, which comes after its answer (area-review.js), is in it (graded, called by srs.js). Answers not yet written
+// replay, which comes after its answer (engine/app/review.js), is in it (graded, called by srs.js). Answers not yet written
 // when a page closes wait in localStorage ("geoquizzes.answers") until the next page opens, which writes them.
 //
 // The log is in chunks, each a browser's answers of one day: id "<browser>.<yyyymmdd>.<part>", the browser being a
@@ -120,7 +120,7 @@ const ANSWERS = (() => {
   }
 
   // An answer: { at, quiz, kind, item, look, mode, review, replay, r, ms, v, given, names: { item: name }, layer: the
-  // layer's name, card: '<card kind>|<item>' (the card it counts for, see area-review.js) }.
+  // layer's name, card: '<card kind>|<item>' (the card it counts for, see engine/model/review.js) }.
   function add(a) {
     if (broken || !a || !a.quiz || a.item == null) return;
     const e = { at: a.at || Date.now(), quiz: a.quiz, kind: a.kind, item: String(a.item), look: a.look || '', mode: a.mode || 'map',

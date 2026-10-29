@@ -9,17 +9,18 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../assets/css/base.css">
-<link rel="stylesheet" href="../shared/area-quiz.css">
-<link rel="stylesheet" href="../shared/city-quiz.css">
+<link rel="stylesheet" href="../../engine/css/quiz-page.css">
+<link rel="stylesheet" href="../../engine/css/quiz-map.css">
+<link rel="stylesheet" href="../../engine/css/formats.css">
 </head>
 <body>
 <a class="back" href="../../country.html?code=020">← Andorra</a>
 <h1>Andorra Cities</h1>
 <p class="note">Places and names: GeoNames (CC BY 4.0) · Borders: © OpenStreetMap contributors (ODbL)</p>
-<script src="../shared/quiz-page.js"></script>
-<script src="cities.js"></script>
+<script src="../../engine/page.js"></script>
+<script src="../../data/maps/andorra-cities/cities.js"></script>
 <script>const CITY_OPTS = { key: 'adcities', names: 'ca', top: [10, 25] };</script>
-<script src="../shared/city-config.js"></script>
-<script src="../shared/area-quiz.js"></script>
+<script src="../../engine/types/city.js"></script>
+<script type="module" src="../../engine/main.js"></script>
 </body>
 </html>

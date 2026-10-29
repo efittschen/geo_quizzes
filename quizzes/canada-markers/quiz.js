@@ -3,7 +3,7 @@
 // ("Each province has its own unique kilometre markers"; Ontario's white square at the bottom is the one named there
 // as unique). The pictures (img/<postal code>.svg) are drawings made for this quiz after those designs, not photos.
 // Prince Edward Island, the Northwest Territories and Nunavut have none there, so no question is about them.
-// The map is the provinces of ../canada-codes/provinces.js, as in ../canada-provinces.
+// The map is the provinces of ../shared/maps/canada-codes/provinces.js, as in ../canada-provinces.
 
 // [postal code, what tells it apart]
 const MARKERS = [
@@ -34,9 +34,9 @@ const QUIZ = {
   key: 'camarkers',
   areas: PROVINCES.map(p => ({ id: p.id, d: p.d, lx: p.lx, ly: p.ly, a: p.a, s: p.s, g: '' })),
   borders: [],
-  context: DATA.ctx,
-  proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
-  street: {"bounds":[[41.7,-141],[62,-52.6]],"maxBounds":[[35,-175],[85,-40]]},
+  
+  proj: DATA.proj, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+  
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 40, labelScale: 0.2, fly: { pad: 1.6, min: 0.04 },
   hintLabel: '', hintsDefault: false,
   exploreKind: 'photos',

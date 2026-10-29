@@ -10,17 +10,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Noto+Sans+Khmer:wght@500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@600&text=%E4%B8%AD%E6%96%87%E9%A4%90%E5%8E%85&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../assets/css/base.css">
-<link rel="stylesheet" href="../shared/area-quiz.css">
-<link rel="stylesheet" href="../cambodia-regions/style.css">
+<link rel="stylesheet" href="../../engine/css/quiz-page.css">
+<link rel="stylesheet" href="../../engine/css/quiz-map.css">
+<link rel="stylesheet" href="../../engine/css/formats.css">
+<link rel="stylesheet" href="../../data/maps/cambodia-regions/hints.css">
 </head>
-<body data-kinds="clues" data-key="khroads">
+<body data-han="sc" data-kinds="clues" data-key="khroads">
 <a class="back" href="../../country.html?code=116">← Cambodia</a>
 <h1>Cambodia Roads & Signs</h1>
 <p class="note">Regions, population: NIS 2019 census · Roads: OpenStreetMap, unofficial · Khmer–Chinese signs: press reports · Borders: geoBoundaries 2017 (ODbL) · Street map © OpenStreetMap contributors</p>
-<script src="../shared/quiz-page.js"></script>
-<script src="../cambodia-regions/data.js"></script>
-<script src="../cambodia-regions/layers.js"></script>
-<script src="../shared/layer-config.js"></script>
-<script src="../shared/area-quiz.js"></script>
+<script src="../../engine/page.js"></script>
+<script src="../../data/maps/cambodia-regions/shapes.js"></script>
+<script src="../../data/quizzes/cambodia-roads/settings.js"></script>
+<script src="../../data/quizzes/cambodia-roads/names.js"></script>
+<script src="../../data/quizzes/cambodia-roads/facts.js"></script>
+<script src="../../engine/types/layer.js"></script>
+<script type="module" src="../../engine/main.js"></script>
 </body>
 </html>

@@ -59,9 +59,9 @@ const QUIZ = {
     g: r.id === 'S' ? 'II-V' : rangesOf(r.id)[0].id,
   })),
   borders: [],
-  context: DATA.ctx,
+  
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 60, labelScale: 0.12, fly: { pad: 1.6, min: 1 / 30 },
-  proj: DATA.proj, kpu: DATA.kpu,
+  proj: DATA.proj, 
   street: { bounds: [[-55.1, -73.6], [-21.8, -53.6]], maxBounds: [[-60, -90], [-15, -40]] },
   hintLabel: 'Color by number range',
   exploreKind: 'ranges',

@@ -9,19 +9,20 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../assets/css/base.css">
-<link rel="stylesheet" href="../shared/area-quiz.css">
-<link rel="stylesheet" href="../shared/city-quiz.css">
+<link rel="stylesheet" href="../../engine/css/quiz-page.css">
+<link rel="stylesheet" href="../../engine/css/quiz-map.css">
+<link rel="stylesheet" href="../../engine/css/formats.css">
 </head>
 <body>
 <a class="back" href="../../country.html?area=World">← World</a>
 <h1>Easy to Hard</h1>
 <p class="note">Map: Natural Earth</p>
-<script src="../shared/quiz-page.js"></script>
-<script src="../shared/world.js"></script>
-<script src="cities.js"></script>
-<script src="points.js"></script>
+<script src="../../engine/page.js"></script>
+<script src="../../data/maps/world/world.js"></script>
+<script src="../../data/maps/world-places/cities.js"></script>
+<script src="../../data/maps/world-places/points.js"></script>
 <script>const CITY_OPTS = { key: 'world-places', single: WORLD_PLACES, back: 'sat', maxZoom: 400, dotKm: 15 };</script>
-<script src="../shared/city-config.js"></script>
-<script src="../shared/area-quiz.js"></script>
+<script src="../../engine/types/city.js"></script>
+<script type="module" src="../../engine/main.js"></script>
 </body>
 </html>

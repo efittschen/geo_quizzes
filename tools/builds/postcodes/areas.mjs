@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The postcodes that have an area of their own, for tools/postcodes.mjs --only. Without the list the postcodes of
+// The postcodes that have an area of their own, for tools/postcodes.mjs --areas. Without the list the postcodes of
 // PO boxes and single organisations count too, and are drawn as land around their post office.
 //
 //   node tools/builds/postcodes/areas.mjs US AU     writes tools/cache/builds/postcode-areas/<CC>.txt, one per line

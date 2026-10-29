@@ -1,0 +1,2 @@
+// oman-codes: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"omcodes","map":"DATA.reg","size":[1000,1338],"pad":16,"maxZoom":40,"labelScale":0.3,"fly":{"pad":1.6,"min":0.0375},"hintLabel":"Color by governorate","exploreKind":"codes","kinds":[{"key":"codes","label":"Area codes","noun":["code","codes"],"prompt":"dial","modes":["code"]}]};

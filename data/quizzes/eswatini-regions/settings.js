@@ -1,0 +1,2 @@
+// eswatini-regions: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"szregions","map":"DATA.reg","borders":"DATA.rb","size":[1000,1331],"pad":16,"maxZoom":40,"labelScale":0.25,"fly":{"pad":1.6,"min":0.05},"hintLabel":"Color by region","exploreKind":"tinkhundla","kinds":[{"key":"regions","label":"Regions","noun":["region","regions"],"prompt":"name","hints":false},{"key":"tinkhundla","label":"Tinkhundla","noun":["inkhundla","tinkhundla"],"prompt":"name"}]};

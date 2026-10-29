@@ -16,9 +16,9 @@ const county = (id, name, part, areas = en(id)) => [id, name, part, areas];
 const FLAGS = {
   key: 'gbflags', alt: 'flag',
   map: {
-    areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' })), context: DATA.ctx,
-    proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
-    street: {"bounds":[[49.9,-8.2],[60.9,1.8]],"maxBounds":[[45,-20],[64,10]]},
+    areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' })), 
+    proj: DATA.proj, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+    
     size: [1000, 1874], pad: 16, maxZoom: 60, labelScale: 0.22, fly: { pad: 1.6, min: 0.025 },
   },
   parts: ['Nations and isles', 'North of England', 'East Midlands', 'West Midlands', 'East of England', 'South East', 'South West'],

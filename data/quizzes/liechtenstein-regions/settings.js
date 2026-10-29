@@ -1,0 +1,2 @@
+// liechtenstein-regions: the quiz's key and view, and its layers: how each is asked (written by the restructure's step 2 from the page's recipe, layers.js)
+const SETTINGS = {"key":"liregions","map":"DATA.reg","size":[1000,2000],"pad":16,"maxZoom":12,"labelScale":0.3,"fly":{"pad":1.6,"min":0.1},"hintLabel":"Color by Gemeinde","exploreKind":"units","kinds":[{"key":"wahlkreise","label":"Wahlkreise","noun":["Wahlkreis","Wahlkreise"],"prompt":"name","hints":false,"groupsOnly":true},{"key":"units","label":"Gemeinden","noun":["Gemeinde","Gemeinden"],"prompt":"name"}]};

@@ -1,6 +1,6 @@
 // Everything the site keeps in this browser (localStorage), all of it under "geoquizzes.":
 //
-//   geoquizzes.quiz.<quiz id>   one record per quiz page (its folder name, as in data/quizzes.json), with what it has of:
+//   geoquizzes.quiz.<quiz id>   one record per quiz page (its folder name, as in data/site/quizzes.json), with what it has of:
 //     title    the page's title (set with its first review card)
 //     moved    the keys cards were moved from by the player (sorted onto a map, or converted to another), or as a
 //              question's cards became one ("Cards per map" off, see srs.js):
@@ -34,8 +34,8 @@
 //              record is then this mark alone (see takeIn)
 //   geoquizzes.settings         { easy, known, limit: the review clock's three times in seconds; perReview, perDay: the most
 //                                 cards in one review and in one day; sound: false once answers are no longer said
-//                                 aloud (see "sound" in area-quiz.js); listOpen: true once a quiz's list of answers
-//                                 to pick from is opened (it starts folded; see "choices" in area-quiz.js); the review schedule (see srs.js): scheduler
+//                                 aloud (see engine/formats/index.js); listOpen: true once a quiz's list of answers
+//                                 to pick from is opened (it starts folded; see engine/modes/typed.js); the review schedule (see srs.js): scheduler
 //                                 ("fsrs" or "sm2"), retention, steps, missStep, kept, firstInterval, ease, unsure, longest;
 //                                 perMap: false where "Cards per map" is off (a question's cards on several maps are
 //                                 one, see srs.js); open: the folders open in "All quizzes"; changed: when any but `open` last

@@ -9,18 +9,22 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../assets/css/base.css">
-<link rel="stylesheet" href="../shared/area-quiz.css">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="../../engine/css/quiz-page.css">
+<link rel="stylesheet" href="../../engine/css/quiz-map.css">
+<link rel="stylesheet" href="../../engine/css/formats.css">
+<link rel="stylesheet" href="../../data/quizzes/canada-counties/hints.css">
 </head>
 <body data-dial="+1 (#)···-····">
 <a class="back" href="../../country.html?code=124">← Canada</a>
 <h1>Ontario Counties</h1>
 <p class="note">Borders: Statistics Canada 2021 census divisions (OGL-Canada) · Regions: Statistics Canada economic regions · Street map © OpenStreetMap contributors</p>
-<script src="../shared/quiz-page.js"></script>
-<script src="data.js"></script>
-<script src="layers.js"></script>
-<script src="../shared/layer-config.js"></script>
-<script src="shapes.js"></script>
-<script src="../shared/area-quiz.js"></script>
+<script src="../../engine/page.js"></script>
+<script src="../../data/maps/canada-counties/shapes.js"></script>
+<script src="../../data/quizzes/canada-counties/settings.js"></script>
+<script src="../../data/quizzes/canada-counties/names.js"></script>
+<script src="../../data/quizzes/canada-counties/facts.js"></script>
+<script src="../../engine/types/layer.js"></script>
+<script src="../../data/quizzes/canada-counties/shapes.js"></script>
+<script type="module" src="../../engine/main.js"></script>
 </body>
 </html>

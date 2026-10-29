@@ -48,8 +48,8 @@ const QUIZ = {
   key: 'scripts',
   areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: RS[r.id][0], ...(r.dot ? { dot: true } : {}) })),
   borders: DATA.cty,
-  proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
-  street: {"bounds":[[6.5,68],[35.7,97.5]],"maxBounds":[[0,55],[42,110]]},
+  proj: DATA.proj, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+  
   size: [DATA.w, DATA.h], pad: 16, maxZoom: 50, labelScale: 0.38, fly: { pad: 1.6, min: 1.5 / 50 },
   hintLabel: 'Color by script',
   hintsDefault: false,

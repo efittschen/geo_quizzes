@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// coverage: where Google Street View has official coverage -> data/coverage/ (the map tiles of coverage.html).
+// coverage: where Google Street View has official coverage -> data/site/coverage/ (the map tiles of coverage.html).
 //
 //   node tools/coverage.mjs fetch [--only RU,BO] [--jobs 6]   the location pool -> tools/cache/coverage/ (about 20 GB
 //                                                             to download, 4 GB kept; a second run fetches only new files)
@@ -18,8 +18,8 @@
 // the joins up to --gap km.
 //
 // Cache: one <region>.loc per pool file (points: lat, lng, date; joins: pairs of points) and index.json.
-// Home map and country pages: data/coverage/home/<alpha-2>_<scale>.png, shape/<alpha-2>.png and home.json (see `countries`).
-// Tiles: data/coverage/<z>/<x>/<y>.png, 1024 px, z = map zoom - 2 (Leaflet: tileSize 1024, zoomOffset -2), four
+// Home map and country pages: data/site/coverage/home/<alpha-2>_<scale>.png, shape/<alpha-2>.png and home.json (see `countries`).
+// Tiles: data/site/coverage/<z>/<x>/<y>.png, 1024 px, z = map zoom - 2 (Leaflet: tileSize 1024, zoomOffset -2), four
 // colors: clear, and the newest capture at that spot in three steps (see YEARS).
 import fs from 'node:fs';
 import path from 'node:path';
@@ -42,7 +42,7 @@ const { values: o, positionals: [cmd] } = parseArgs({
   allowPositionals: true,
   options: { only: { type: 'string' }, jobs: { type: 'string', default: '6' }, zoom: { type: 'string', default: '9' }, gap: { type: 'string', default: '3' }, out: { type: 'string' }, also: { type: 'string' }, part: { type: 'string' } },
 });
-const OUT = o.out ? path.resolve(o.out) : path.join(ROOT, 'data', 'coverage');
+const OUT = o.out ? path.resolve(o.out) : path.join(ROOT, 'data', 'site', 'coverage');
 const ONLY = o.only ? new Set(o.only.toUpperCase().split(',')) : null;
 fs.mkdirSync(DIR, { recursive: true });
 const index = fs.existsSync(INDEX) ? JSON.parse(fs.readFileSync(INDEX, 'utf8')) : {};
@@ -237,7 +237,7 @@ async function fetchAll() {
   if (failed.length) { console.error(`FAILED (${failed.length}):\n` + failed.join('\n')); process.exit(1); }
 }
 
-/* ---------- tiles: .loc -> data/coverage/<z>/<x>/<y>.png ---------- */
+/* ---------- tiles: .loc -> data/site/coverage/<z>/<x>/<y>.png ---------- */
 const T = 1024;
 const COLORS = ['000000', '6fb7f0', '2a7de1', '0b3596']; // clear, then oldest to newest
 const crcChunk = (type, data) => {
@@ -399,15 +399,15 @@ async function tiles() {
 
 /* ---------- countries: each country's roads for the home map ---------- */
 // The home map (assets/js/map.js) draws a country's covered roads on it while the pointer is on the country. They
-// are pictures in the home map's own projection: data/coverage/home/<alpha-2>_<scale>.png, the roads in one color
+// are pictures in the home map's own projection: data/site/coverage/home/<alpha-2>_<scale>.png, the roads in one color
 // on a clear ground, at SCALES pixels per unit of the map (it is 960 units wide, and zooms in 12 times), so the page
 // can take the one that fits its zoom. home.json lists them by the ISO numeric code the home map uses for its
 // countries, and by name for the few without one (Kosovo): [alpha-2, x, y, width, height] in map units, then the
 // box around the country's coverage as [west, south, east, north].
 // The country page draws the same roads on its outline of the country, which has a projection of its own (see
-// drawShape in assets/js/country.js): data/coverage/shape/<alpha-2>.png, the outline's 120 x 120 square at 4 pixels
+// drawShape in assets/js/country.js): data/site/coverage/shape/<alpha-2>.png, the outline's 120 x 120 square at 4 pixels
 // per unit. The box around the coverage is what its coverage map opens on.
-// That map shades everything but the country: data/coverage/outline/<key>.json is the country's border (Natural
+// That map shades everything but the country: data/site/coverage/outline/<key>.json is the country's border (Natural
 // Earth 1:10m, thinned to about 400 m, islets dropped), for every country of the home map; <key> is its ISO numeric
 // code, or its name in lower-case letters and dashes where it has none. A file is a list of rings, each a flat list
 // of whole numbers: latitude and longitude of the first point in thousandths of a degree, then the step to each
@@ -415,7 +415,7 @@ async function tiles() {
 // The pool has a few locations filed under a country far away from it. So a location more than a degree outside
 // the boxes around its country's pieces of land (Natural Earth 1:50m) counts only if at least five others are in
 // the same one-degree square: islands that Natural Earth leaves out (San Andrés, Fernando de Noronha) stay in.
-const WORLD_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'; // the home map's projection is fitted to these (assets/js/map.js), data/world.json's small countries left out
+const WORLD_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'; // the home map's projection is fitted to these (assets/js/map.js), data/site/world.json's small countries left out
 const HOME = [960, 500], SCALES = [2, 4, 8, 16], ROAD = 'f2b705'; // --yellow of base.css
 
 // A picture of pixel values 0 (clear) and 1 (road), as a PNG with one bit per pixel.

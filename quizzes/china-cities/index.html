@@ -10,21 +10,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Noto+Sans+SC:wght@500;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@500;600&family=Noto+Sans+TC:wght@500;600&family=Noto+Sans+SC:wght@500;600&family=Noto+Serif+TC:wght@600&family=LXGW+WenKai+TC&display=swap" rel="stylesheet" data-faces>
 <link rel="stylesheet" href="../../assets/css/base.css">
-<link rel="stylesheet" href="../shared/area-quiz.css">
-<link rel="stylesheet" href="../shared/faces.css">
-<link rel="stylesheet" href="../shared/city-quiz.css">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="../../engine/css/quiz-page.css">
+<link rel="stylesheet" href="../../engine/css/quiz-map.css">
+<link rel="stylesheet" href="../../engine/css/formats.css">
 </head>
-<body>
+<body data-han="sc">
 <a class="back" href="../../country.html?code=156">← China</a>
 <h1>China Cities</h1>
 <p class="note">Cities &amp; names: GeoNames (CC BY 4.0) · Pinyin: pinyin-pro · Borders: OCHA COD-AB (CC BY-IGO)</p>
-<script src="../shared/quiz-page.js"></script>
-<script src="cities.js"></script>
+<script src="../../engine/page.js"></script>
+<script src="../../data/maps/china-cities/cities.js"></script>
 <script>const CITY_OPTS = { key: 'cncities', lang: 'Chinese' };</script>
-<script src="../chinese-letters/chinese.js"></script>
-<script src="../shared/reading.js"></script>
-<script src="../shared/city-config.js"></script>
-<script src="../shared/area-quiz.js"></script>
+<script src="../../data/letters/chinese.js"></script>
+<script src="../../engine/types/reading.js"></script>
+<script src="../../engine/types/city.js"></script>
+<script type="module" src="../../engine/main.js"></script>
 </body>
 </html>

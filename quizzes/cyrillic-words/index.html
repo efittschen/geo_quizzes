@@ -9,19 +9,20 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Noto+Sans:wght@500;600&family=PT+Serif:ital,wght@0,700;1,400&family=Oswald:wght@500&family=Caveat:wght@700&family=Russo+One&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../assets/css/base.css">
-<link rel="stylesheet" href="../shared/area-quiz.css">
-<link rel="stylesheet" href="../shared/faces.css">
-<link rel="stylesheet" href="../shared/lang-quiz.css">
+<link rel="stylesheet" href="../../engine/css/quiz-page.css">
+<link rel="stylesheet" href="../../engine/css/quiz-map.css">
+<link rel="stylesheet" href="../../engine/css/formats.css">
+<link rel="stylesheet" href="../../engine/css/lang-quiz.css">
 </head>
 <body data-folders="Letters=../cyrillic-letters/index.html|Words|Countries=../cyrillic-countries/index.html">
 <a class="back" href="../../country.html?area=Languages">← Languages</a>
 <h1>Cyrillic Words</h1>
 <p class="note">Words seen on signs</p>
-<script src="../shared/quiz-page.js"></script>
-<script src="../cyrillic-letters/cyrillic.js"></script>
-<script src="../shared/reading.js"></script>
+<script src="../../engine/page.js"></script>
+<script src="../../data/letters/cyrillic.js"></script>
+<script src="../../engine/types/reading.js"></script>
 <script>const LANG_OPTS = { part: 'words' };</script>
-<script src="../shared/lang-config.js"></script>
-<script src="../shared/area-quiz.js"></script>
+<script src="../../engine/types/lang.js"></script>
+<script type="module" src="../../engine/main.js"></script>
 </body>
 </html>

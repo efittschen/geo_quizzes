@@ -18,9 +18,9 @@ const REGIONS = [
 const FLAGS = {
   key: 'itflags', alt: 'regional flag',
   map: {
-    areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' })), context: DATA.ctx,
-    proj: DATA.proj, kpu: DATA.kpu, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
-    street: {"bounds":[[35.4,6.6],[47.1,18.6]],"maxBounds":[[31,0],[51,26]]},
+    areas: DATA.reg.map(r => ({ id: r.id, d: r.d, lx: r.lx, ly: r.ly, a: r.a, s: r.s, g: '' })), 
+    proj: DATA.proj, // the map made ready in Web Mercator (tools/builds/mercator), the street map under it
+    
     size: [1000, 1304], pad: 16, maxZoom: 30, labelScale: 0.22, fly: { pad: 1.6, min: 0.05 },
   },
   parts: ['North-West', 'North-East', 'Centre', 'South', 'Islands'],
