@@ -8,7 +8,8 @@
 // asked again (a replay), answered right it is rated by hand: Easy, Good or Hard in a column over the map (the keys 4,
 // 3, 2; Enter: Hard), Hard when its bar runs out, and nothing goes on until then. Only a card's first answer counts for
 // the review's result and the day's count. Only the last answer stays coloured on the map, and the areas of everything
-// learned so far stay lit, so the map gives nothing away. A map picked during a review is the one for the rest of it.
+// learned so far stay lit, so the map gives nothing away (on the overlay all of them, each there to be tapped). A map
+// picked during a review is the one for the rest of it.
 // Ordinary rounds count too, quietly, for cards on the stack: a wrong try is "not known", a first-try answer within the
 // known time "known"; a perfect round puts its questions on the stack.
 //
@@ -79,13 +80,14 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
     if (l.back && quiz.backs.includes(l.back)) out.back = l.back;
     return out;
   };
+  const light = P0 => { if (P0.kind.dim !== false) map.dim(map.overlaid() ? map.ids : S.lit(P0)); };
   function nextRound() {
     const { play: key, ids, way } = S.rounds.shift(), P0 = model.kinds.playOf(key), fb = $('fb');
     S.way = way;
     // a new round clears the panel and the map; the last answer and what was said of it stay
     const said = S.asked ? [fb.className, [...fb.childNodes]] : null;
     play({ play: P0, items: ids, retry: true, review: true, look: { map: way.map, back: way.back, ...lookFor(way) }, t0: S.t0 });
-    if (P0.kind.dim !== false) map.dim(S.lit(P0));
+    light(P0);
     const label = $('sScore').nextElementSibling; if (label) label.textContent = 'Known';
     if (said) { fb.className = said[0]; fb.replaceChildren(...said[1]); }
     if (S.prev) map.mark(S.prev.areas, S.prev.cls);
@@ -280,6 +282,6 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
     hooks: { grade, asked, missed, answered, after, finished },
     active: () => !!(game.def && game.def.review),
     rating: () => !!R,
-    look(l) { if (!S) return; S.look = { ...S.look, ...l }; if (S.chain) { const r = SRS.run(); r.look = S.look; SRS.setRun(r); } },
+    look(l) { if (!S) return; S.look = { ...S.look, ...l }; light(game.def.play); if (S.chain) { const r = SRS.run(); r.look = S.look; SRS.setRun(r); } },
   };
 }

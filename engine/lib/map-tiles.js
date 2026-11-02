@@ -117,15 +117,18 @@ function mapTiles(stage, C, AHEAD = 192) {
      the picture to show for it, or of null (optional: else the tile itself), failed(address), shown(on) }.
      Each tile is a picture of its own, placed once on a sheet that holds one zoom level's tiles, and a move or a zoom
      only moves and sizes the sheet (as the street map's own library does it). Nothing is drawn again: the browser
-     moves pictures it has. A sheet of another zoom level is laid over the last one, which goes once the new one's
-     tiles are there; while the map is being zoomed through levels, only once it has stayed at one for SETTLE ms. Tiles
-     are looked for while the map moves (every FILL ms), AHEAD pixels beyond the stage. (A tile's pixel is
+     moves pictures it has. A sheet of another zoom level is laid over the last whole one, which goes once the new one's
+     tiles are there; while the map is being zoomed through levels, once it has stayed at one for SETTLE ms, or every
+     PATIENCE ms of a zoom that goes on. A sheet the zoom has passed before it was whole goes, its pictures still on
+     their way called off, so that they don't hold up those of the level now. Tiles are looked for while the map moves
+     (every FILL ms), AHEAD pixels beyond the stage, the middle of the view first. (A tile's pixel is
      1/k · 360 / (SIZE · 2^z) map units; zoom level: the one whose tiles are as fine as the screen's pixels.) */
   function layer(L) {
-    const SIZE = L.size, FILL = 100, SETTLE = 250, { k: kp, lng0, y0 } = C.proj, box = document.createElement('div');
+    const SIZE = L.size, FILL = 100, SETTLE = 250, PATIENCE = 600, { k: kp, lng0, y0 } = C.proj, box = document.createElement('div');
+    const NONE = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';   // (a picture's address taken from it: the browser calls off the request)
     box.id = L.id; box.className = 'tiles'; box.hidden = true;
     if (L.over) stage.querySelector('#map, #paint').after(box); else stage.prepend(box);
-    let on = false, sheet = null, old = null, timer = 0, filled = 0;
+    let on = false, sheet = null, old = null, timer = 0, filled = 0, zooming = 0;
     // A sheet of zoom level z: unit, map units to a tile pixel; B, its own pixels to a map unit (a tile is a whole
     // px of them); [mx, my], the map point at its corner; its tiles by 'column,row' (null: none there).
     function make(z) {
@@ -135,16 +138,27 @@ function mapTiles(stage, C, AHEAD = 192) {
     }
     const place = s => { s.el.style.transform = `translate(${(s.mx - want.x) * want.k}px,${(s.my - want.y) * want.k}px) scale(${want.k / s.B})`; };
     const level = () => Math.max(L.minZ, Math.min(L.maxZ, Math.round(Math.log2(want.k * kp * 360 / SIZE))));
+    // a tile not wanted any more (one still on its way is no longer waited for); a whole sheet not wanted; the last
+    // whole sheet gone, once the one over it is whole
+    function drop(s, img) { if (img.onload) { img.onload = img.onerror = null; s.wait--; img.src = NONE; } img.remove(); }
+    function discard(s) { for (const img of s.tiles.values()) if (img) drop(s, img); s.tiles.clear(); s.el.remove(); }
+    function whole(s) { if (!s.wait && s === sheet && old) { discard(old); old = null; } }
     function fill() {
-      clearTimeout(timer); timer = 0; filled = performance.now();
+      clearTimeout(timer); timer = 0; filled = performance.now(); zooming = 0;
       if (!on || !want || !stage.clientWidth || !stage.clientHeight) return;
       const z = level();
-      if (!sheet || sheet.z !== z) { if (old) old.el.remove(); old = sheet; sheet = make(z); }
+      if (!sheet || sheet.z !== z) {
+        if (sheet && sheet.wait && old) discard(sheet); else { if (old) discard(old); old = sheet; }
+        sheet = make(z);
+      }
       const s = sheet, a = AHEAD / want.k, W = stage.clientWidth / want.k, H = stage.clientHeight / want.k;
       const col = x => Math.floor((s.cx + x / s.unit) / SIZE), row = y => Math.floor((s.cy + y / s.unit) / SIZE);
       const c0 = col(want.x - a), c1 = col(want.x + W + a), r0 = Math.max(0, row(want.y - a)), r1 = Math.min(s.n - 1, row(want.y + H + a));
-      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
-        const key = c + ',' + r; if (s.tiles.has(key)) continue;
+      const todo = [], mc = (col(want.x) + col(want.x + W)) / 2, mr = (row(want.y) + row(want.y + H)) / 2;
+      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) if (!s.tiles.has(c + ',' + r)) todo.push([c, r]);
+      todo.sort((a, b) => Math.hypot(a[0] - mc, a[1] - mr) - Math.hypot(b[0] - mc, b[1] - mr));
+      for (const [c, r] of todo) {
+        const key = c + ',' + r;
         const url = L.url(s.z, ((c % s.n) + s.n) % s.n, r);
         if (!url) { s.tiles.set(key, null); continue; }
         const img = new Image(); img.decoding = 'async'; img.alt = ''; img.draggable = false;
@@ -152,21 +166,25 @@ function mapTiles(stage, C, AHEAD = 192) {
         img.style.left = Math.round(((c * SIZE - s.cx) * s.unit - s.mx) * s.B) + 'px'; img.style.top = Math.round(((r * SIZE - s.cy) * s.unit - s.my) * s.B) + 'px';
         img.style.width = img.style.height = s.px + 1 + 'px';
         s.wait++;
-        img.onload = img.onerror = () => { img.onload = img.onerror = null; if (!img.naturalWidth) { img.remove(); if (L.failed) L.failed(url); } if (!--s.wait && s === sheet && old) { old.el.remove(); old = null; } };
-        if (L.pic) L.pic(url).then(src => { if (src) img.src = src; else { if (s.tiles.get(key) === img) s.tiles.delete(key); if (img.onerror) img.onerror(); } }); else img.src = url;
+        img.onload = img.onerror = () => { img.onload = img.onerror = null; if (!img.naturalWidth) { img.remove(); if (L.failed) L.failed(url); } s.wait--; whole(s); };
+        if (L.pic) L.pic(url).then(src => { if (s.tiles.get(key) !== img) return; if (src) img.src = src; else { s.tiles.delete(key); if (img.onerror) img.onerror(); } }); else img.src = url;
         s.el.append(img); s.tiles.set(key, img);
       }
       // the tiles more than a stage away go (the browser keeps the pictures for a while: coming back loads none)
-      for (const [key, img] of s.tiles) { const [c, r] = key.split(',').map(Number); if (c < c0 - (c1 - c0) || c > c1 + (c1 - c0) || r < r0 - (r1 - r0) || r > r1 + (r1 - r0)) { if (img) img.remove(); s.tiles.delete(key); } }
+      for (const [key, img] of s.tiles) { const [c, r] = key.split(',').map(Number); if (c < c0 - (c1 - c0) || c > c1 + (c1 - c0) || r < r0 - (r1 - r0) || r > r1 + (r1 - r0)) { if (img) drop(s, img); s.tiles.delete(key); } }
+      whole(s);
       place(s); if (old) place(old);
     }
     const me = {
       show(yes) { on = yes; box.hidden = !yes; L.shown(yes); if (yes) fill(); },
-      reset() { if (sheet) sheet.el.remove(); if (old) old.el.remove(); sheet = old = null; if (on) fill(); },   // the addresses changed
+      reset() { if (sheet) discard(sheet); if (old) discard(old); sheet = old = null; if (on) fill(); },   // the addresses changed
       moved() {
         if (!on || !want) return;
         if (sheet) place(sheet); if (old) place(old);
-        if (sheet && level() !== sheet.z) { clearTimeout(timer); timer = setTimeout(fill, SETTLE); } // (waits while the zoom goes on)
+        if (sheet && level() !== sheet.z) { // (waits while the zoom goes on, though not for long)
+          clearTimeout(timer); zooming ||= performance.now();
+          timer = setTimeout(fill, Math.max(0, Math.min(SETTLE, zooming + PATIENCE - performance.now())));
+        }
         else if (!timer) timer = setTimeout(fill, Math.max(0, FILL - (performance.now() - filled)));
       },
     };
