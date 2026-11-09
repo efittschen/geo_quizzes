@@ -77,7 +77,7 @@ function render(index, nameByCode) {
     $("review-go").append(next);
   }
   const result = reviewResult();
-  document.querySelector(".run")?.remove();
+  document.querySelector(".run-done")?.remove();
   if (result) $("review-go").after(result);
 
   // Countries (or areas like South Asia, or the world or a continent as a whole) with their quizzes, most due first.

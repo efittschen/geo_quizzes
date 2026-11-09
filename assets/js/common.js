@@ -140,24 +140,38 @@ function reviewButtons(index, quizzes, back, small = false, layer = null) {
   }
   return buttons;
 }
-// The result of the review that just ended on this page (…?done): known, unsure and not known answers.
+// The result of the review that just ended on this page (…?done): known, unsure and not known answers, and with the
+// setting "Rating" at "Pick at the end" its answers, each to be graded again (SRS.gradeList).
 function reviewResult() {
   if (typeof SRS === "undefined" || !new URLSearchParams(window.location.search).has("done")) return null;
-  const [missed, unsure, known] = SRS.tally(SRS.run().res);
+  const run = SRS.run(), [missed, unsure, known] = SRS.tally(run.res);
   if (!(missed + unsure + known)) return null;
+  const box = document.createElement("div");
+  box.className = "run-done";
   const ul = document.createElement("ul");
   ul.className = "run";
   ul.setAttribute("aria-label", "Last review");
-  for (const [className, n, label] of [["got", known, "Known"], ["t2", unsure, "Unsure"], ["miss", missed, "Not known"]]) {
-    const li = document.createElement("li");
-    const swatch = document.createElement("i");
-    swatch.className = className;
-    const count = document.createElement("b");
-    count.textContent = n;
-    li.append(swatch, count, label);
-    ul.append(li);
+  const counts = () => {
+    const [missed, unsure, known] = SRS.tally(SRS.run().res);
+    ul.replaceChildren(...[["got", known, "Known"], ["t2", unsure, "Unsure"], ["miss", missed, "Not known"]].map(([className, n, label]) => {
+      const li = document.createElement("li");
+      const swatch = document.createElement("i");
+      swatch.className = className;
+      const count = document.createElement("b");
+      count.textContent = n;
+      li.append(swatch, count, label);
+      return li;
+    }));
+  };
+  counts();
+  box.append(ul);
+  const list = run.rated || [];
+  if (list.length) {
+    const quizzes = [...new Set(list.map((e) => e.q))];
+    const titles = quizzes.length > 1 ? Object.fromEntries(quizzes.map((q) => [q, SRS.deck(q).t || q])) : null;
+    box.append(SRS.gradeList(list, (j, g) => { if (!SRS.regradeRun(j, g)) return false; counts(); return true; }, titles));
   }
-  return ul;
+  return box;
 }
 // The header's Review link shows how many cards are due.
 function showReviewDue(index) {

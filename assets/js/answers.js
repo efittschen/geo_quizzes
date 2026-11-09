@@ -10,7 +10,8 @@
 //
 // The log is in chunks, each a browser's answers of one day: id "<browser>.<yyyymmdd>.<part>", the browser being a
 // random id of its own (store "meta", "device"), a new part after PART answers. Only the browser a chunk is named after
-// adds to it, so of two copies of a chunk the longer one holds the other, and the logs of two browsers together are
+// adds to it, so of two copies of a chunk the longer one holds the other (as long, the online copy's: the browser it
+// is named after may have put a rating given later into it, see graded), and the logs of two browsers together are
 // the union of their chunks: an answer is never counted twice. A chunk: { id, t0, s, n, a, sent }
 //   t0     the day's start (midnight there, ms)
 //   s      the texts its answers refer to, by their place in it: quiz ids, layers, items, maps, modes, typed texts
@@ -42,6 +43,7 @@ const ANSWERS = (() => {
   const PART = 500; // answers in a chunk's part (some 15,000 characters: a sheet's cell holds 50,000)
   const WAIT = 6000; // ms an answer waits before it is written (a replay is rated within 4 s)
   const KEEP = 120000; // ms within which a rating finds its answer
+  const NEAR = 5000; // ms between an answer's time as the log has it and as the review gave it, at most (a late rating)
   const SPILL = 'geoquizzes.answers', SYNCED = 'quiz._log.', ID = /^[a-z0-9]+\.\d{8}\.\d+$/;
 
   /* ---------- the database ---------- */
@@ -132,14 +134,40 @@ const ANSWERS = (() => {
   }
   // A card answered (srs.js, after its schedule changed): its rating goes with the answer it was for, whether that
   // comes before (a review's first answer) or after (a replay rated by hand). step: the card was in its learning steps.
-  function graded(quiz, key, g, card, step) {
-    const bar = key.indexOf('|'), at = key.lastIndexOf('@', bar), join = `${quiz}|${key.slice(0, at >= 0 ? at : bar)}|${key.slice(bar + 1)}`;
-    const now = Date.now(), it = { g, iv: card && card.d ? Math.max(0, Math.round((card.d - now) / 6e4)) : null, step: !!step, t: now };
+  // when: the answer's time, for a rating given by hand later on (the setting "Rating": the review waiting for a
+  // pick, or a grade changed in the results): the answer is found by it, and where it has been written already the
+  // rating is put into its chunk there, which is sent to the online copy again (rewrite).
+  function graded(quiz, key, g, card, step, when = null) {
+    const bar = key.indexOf('|'), at = key.lastIndexOf('@', bar), item = key.slice(bar + 1), join = `${quiz}|${key.slice(0, at >= 0 ? at : bar)}|${item}`;
+    const now = Date.now(), it = { g, iv: card && card.d ? Math.max(0, Math.round((card.d - (when ?? now)) / 6e4)) : null, step: !!step, t: now };
     for (const [k, v] of early) if (now - v.t > KEEP) early.delete(k);
-    const a = [...pending, ...spilled].reverse().find(a => a.card === join && now - a.at < KEEP);
-    if (!a) { early.set(join, it); return; }
-    rate(a, it);
-    if (spilled.includes(a)) spill();
+    const a = [...pending, ...spilled].reverse().find(a => a.card === join && (when == null ? now - a.at < KEEP : Math.abs(a.at - when) <= NEAR));
+    if (a) { rate(a, it); if (spilled.includes(a)) spill(); return; }
+    if (when == null) early.set(join, it);
+    else if (!broken) writing = writing.then(() => rewrite(quiz, item, when, it)).catch(() => {});
+  }
+  // A rating put into the answer it was for, written already: the last answer to the item within NEAR of `when`, in
+  // this browser's chunks of that day; the chunk is sent to the online copy again from that answer on.
+  function rewrite(quiz, item, when, it) {
+    return tx('readwrite', async (log, meta) => {
+      device ||= await req(meta.get('device'));
+      if (!device) return;
+      const pre = `${device}.${dayOf(when)}.`;
+      for (const id of (await req(log.getAllKeys(IDBKeyRange.bound(pre, pre + '￿')))).reverse()) {
+        const c = await req(log.get(id)), q = c.s.indexOf(quiz), i = c.s.indexOf(item);
+        if (q < 0 || i < 0) continue;
+        for (let j = c.a.length - 1; j >= 0; j--) {
+          const row = c.a[j];
+          if (row[1] !== q || row[3] !== i || Math.abs(c.t0 + row[0] * 1000 - when) > NEAR) continue;
+          while (row.length < 11) row.push(null);
+          if (row[9] == null && it.step) row[6] |= 4;
+          row[9] = it.g; row[10] = it.iv;
+          c.sent = Math.min(c.sent || 0, j);
+          log.put(c);
+          return;
+        }
+      }
+    }).then(() => tell('written'));
   }
   // (an answer graded twice, a miss then a rating: the card's state is the one before the first)
   const rate = (a, it) => { if (!a.rated && it.step) a.f |= 4; a.rated = true; a.g = it.g; a.iv = it.iv; };
@@ -197,11 +225,13 @@ const ANSWERS = (() => {
   }).catch(() => {});
   // Chunks from elsewhere, [[id, chunk]]: each kept as the longer of the two copies, their names together. there: they
   // are the online copy's, as it has them now (else, from a data file, it is told of what it lacks).
-  const take = (list, there) => (broken || !list.length ? Promise.resolve() : tx('readwrite', async log => {
+  // (another browser's chunk as long as the copy here: the online copy's, as a rating may have been put in since)
+  const take = (list, there) => (broken || !list.length ? Promise.resolve() : tx('readwrite', async (log, meta) => {
+    if (there) device ||= await req(meta.get('device'));
     for (const [id, v] of list) {
       if (!valid(id, v)) continue;
       const c = await req(log.get(id)), n = { ...(c && c.n), ...v.n };
-      if (!c || v.a.length > c.a.length) log.put({ id, t0: v.t0, s: v.s, n, a: v.a, sent: there ? v.a.length : (c && c.sent) || 0 });
+      if (!c || v.a.length > c.a.length || (there && v.a.length === c.a.length && !id.startsWith(device + '.'))) log.put({ id, t0: v.t0, s: v.s, n, a: v.a, sent: there ? v.a.length : (c && c.sent) || 0 });
       else log.put({ ...c, n, sent: there ? v.a.length : c.sent || 0 }); // (the copy there shorter: the rest is sent again)
     }
   }).then(() => tell('taken'), () => {}));

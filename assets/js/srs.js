@@ -19,6 +19,15 @@
 //   good   (known)      right on the first click within the "known" time
 //   easy   (instantly)  right on the first click within the "easy" time, and only the card's first answer of the day
 // A replay answered right by buttons instead: Hard, Good, Easy.
+// The setting "Rating" (rate) lets the player rate a review's right answers by hand, the clock's grade the one filled
+// (a replay's: Hard), with the buttons Easy, Good, Hard (see engine/app/review.js for how each plays):
+//   clock  Clock only: by the clock, a replay by hand (the default)
+//   quick  Pick in 4 s: every right answer, the next question asked at once; the clock's grade if none is picked
+//          within 4 s or before the next answer
+//   wait   Pick and wait: every right answer, the review waiting for the pick
+//   slow   Pick when slow: as wait, for an answer slower than "known" and a replay; quicker ones by the clock
+//   end    Pick at the end: by the clock at once (a replay: Hard), every grade changeable in the review's results
+//          (regrade: the card back as it was before the answer, and answered again)
 // Ordinary rounds count too, for cards on the stack: a wrong click is not known, a quick first-try answer known.
 // One review asks at most 50 cards, and at 200 cards reviewed in a day the due ones wait for the next day; both
 // limits are settings. Putting new cards on the stack has no limit: players arrive knowing a lot already.
@@ -56,6 +65,7 @@
 //   the settings  { easy, fast, limit }: seconds for "easy", for "known" and for the time limit;
 //                 { round, day }: the most cards one review asks, and the most reviewed in a day;
 //                 perMap: false where "Cards per map" is off (see above);
+//                 rate: how a review's answers are rated, "clock", "quick", "wait", "slow" or "end" (see above);
 //                 the schedule, named as in Anki's options: { algo: "fsrs" or "sm2", retain: FSRS's target
 //                 retention in %, steps: a new card's learning steps in minutes,
 //                 restep: the relearning step after a miss in minutes (0: none), max: the longest interval in days,
@@ -66,14 +76,15 @@
 //                 { back: the page it ends on, t: when it began (ms), total: its cards,
 //                   left: { quiz id: [cards still to ask] },
 //                   again: { quiz id: [cards that weren't known, asked again at the end] },
-//                   res: the cards' first answers in order (0 not known, 1 unsure, 2 known, 3 instantly) }
+//                   res: the cards' first answers in order (0 not known, 1 unsure, 2 known, 3 instantly),
+//                   rated: with "Pick at the end", every answer, to be graded again in the results (see regrade) }
 
 const SRS = (() => {
   const MISSED = 0, UNSURE = 1, KNOWN = 2, INSTANT = 3; // the answers; as ratings (1 to 4): again, hard, good, easy
   const DAY = 864e5, MINUTE = 6e4;
   const ROLLOVER = 4; // a day starts at 4 am, as in Anki
   const MIN_EASE = 1.3, EASY_BONUS = 1.3, EASY_DAYS = 4; // SM-2, as in Anki: the least ease, and what easy adds
-  const OPTS = { easy: 2, fast: 6, limit: 15, round: 50, day: 200, perMap: true, algo: "fsrs", retain: 90, steps: [1, 10], restep: 10, keep: 50, first: 1, ease: 250, hard: 120, max: 36500 };
+  const OPTS = { easy: 2, fast: 6, limit: 15, round: 50, day: 200, perMap: true, rate: "clock", algo: "fsrs", retain: 90, steps: [1, 10], restep: 10, keep: 50, first: 1, ease: 250, hard: 120, max: 36500 };
 
 
   // Start (4 am) of the day ts falls in, or of the day n days later: by the calendar, so clock changes don't shift it.
@@ -427,17 +438,66 @@ const SRS = (() => {
     save(id, d);
     return card;
   }
-  // chosen: a rating the player gave (a replay's buttons), not the clock's. The clock gives "easy" only to a card's
-  // first answer of the day: answered again the same day (a round played again, a review after a round) it was just
-  // seen, and is "known" at most (the user's rule, 2026-10-21: quick repeats had pushed cards months ahead).
-  function answer(id, key, g, now, chosen = false) {
+  // The clock gives "easy" only to a card's first answer of the day: answered again the same day (a round played
+  // again, a review after a round) it was just seen, and is "known" at most (the user's rule, 2026-10-21: quick
+  // repeats had pushed cards months ahead). clocked: the rating the clock gives an answer at `now` (g: by its times).
+  const seenToday = (card, now) => !!card && card.l != null && dayStart(card.l) === dayStart(now);
+  const clocked = (id, key, g, now) => (g === INSTANT && seenToday(deck(id).c[key], now) ? KNOWN : g);
+  // chosen: a rating the player gave (by the buttons), not the clock's. late: the answer was given at `now` and is
+  // rated only since, by hand: the answer log finds it by that time, written already or not.
+  function answer(id, key, g, now, chosen = false, late = false) {
     const d = deck(id), card = d.c[key];
     if (!card) return null;
-    if (!chosen && g === INSTANT && card.l != null && dayStart(card.l) === dayStart(now)) g = KNOWN;
+    if (!chosen && g === INSTANT && seenToday(card, now)) g = KNOWN;
     const step = card.s; // (its rating and new interval go into the answer log, with whether it was being learned)
     grade(card, g, now); save(id, d);
-    if (typeof ANSWERS === "object") ANSWERS.graded(id, key, g, card, step);
+    if (typeof ANSWERS === "object") ANSWERS.graded(id, key, g, card, step, late ? now : null);
     return card;
+  }
+  // "Pick at the end": an answer graded again, e { q: quiz, k: card key, g: its grade, b: the card before the answer,
+  // at: when it was given (ms) }: the card put back as it was before, and answered again at that time with g (by
+  // hand). Not where the card has been answered since: null then, and the grade stays.
+  function regrade(e, g) {
+    const d = deck(e.q), card = d.c[e.k];
+    if (!card || !e.b || card.l !== e.at) return null;
+    const again = { ...e.b }, step = again.s;
+    grade(again, g, e.at); d.c[e.k] = again; save(e.q, d);
+    if (typeof ANSWERS === "object") ANSWERS.graded(e.q, e.k, g, again, step, e.at);
+    e.g = g;
+    return again;
+  }
+  // The list of a review's answers with "Pick at the end", in its results: each right one with Easy, Good and Hard,
+  // its grade pressed. list: [{ q, k, n: its name, s: seconds, g, r: 1 a replay }] (see regrade); change(j, g): the
+  // j-th graded again, false where it can't be (the card answered since); titles: { quiz id: title }, under each
+  // answer's name where the list spans several quizzes.
+  function gradeList(list, change, titles = null) {
+    const box = document.createElement("div"), el = (tag, cls, text) => { const x = document.createElement(tag); if (cls) x.className = cls; if (text != null) x.textContent = text; return x; };
+    box.className = "rate-list";
+    box.setAttribute("aria-label", "Grades");
+    list.forEach((e, j) => {
+      const row = el("div", "rl-row"), name = el("b", null, e.n), secs = el("span", "s");
+      if (e.r) name.append(el("small", null, "again"));
+      if (titles && titles[e.q]) name.append(el("small", "quiz", titles[e.q]));
+      if (e.g === MISSED) { row.append(name, secs, el("span", "tag", "Not known")); box.append(row); return; }
+      secs.textContent = `${e.s.toFixed(1)} s`;
+      const seg = el("div", "grades");
+      seg.setAttribute("role", "group");
+      seg.setAttribute("aria-label", e.n);
+      const buttons = [["Easy", INSTANT], ["Good", KNOWN], ["Hard", UNSURE]].map(([label, g]) => {
+        const b = el("button", null, label);
+        b.type = "button";
+        b.setAttribute("aria-pressed", String(e.g === g));
+        b.onclick = () => {
+          if (b.getAttribute("aria-pressed") === "true" || change(j, g) === false) return;
+          for (const x of buttons) x.setAttribute("aria-pressed", String(x === b));
+        };
+        return b;
+      });
+      seg.append(...buttons);
+      row.append(name, secs, seg);
+      box.append(row);
+    });
+    return box;
   }
 
   /* ---------- across quizzes: a review of one quiz, one country or everything ---------- */
@@ -494,6 +554,17 @@ const SRS = (() => {
     setRun(r);
     return first;
   }
+  // A first answer of the run rated by hand after it was noted (its place in res, i).
+  const rerun = (i, g) => { const r = run(); if (i != null && i < r.res.length) { r.res[i] = g; setRun(r); } };
+  // "Pick at the end": an answer of the run kept for its results (see regrade), and graded again there (j: its place).
+  const keepRated = e => { const r = run(); (r.rated ||= []).push(e); setRun(r); };
+  function regradeRun(j, g) {
+    const r = run(), e = r.rated && r.rated[j];
+    if (!e || !regrade(e, g)) return false;
+    if (e.i != null && e.i < r.res.length) r.res[e.i] = g;
+    setRun(r);
+    return true;
+  }
   // [not known, unsure, known] among answers (a run's res); instantly is known too.
   const tally = res => [MISSED, UNSURE, KNOWN].map(g => res.filter(x => Math.min(x, KNOWN) === g).length);
   // The address of a quiz in review mode (…?review), or of the page the run ends on (…?done). root: the site.
@@ -513,8 +584,9 @@ const SRS = (() => {
     return stopUrl(root, nextStop(quizzes));
   }
 
+  const RATINGS = ["clock", "quick", "wait", "slow", "end"]; // the setting "Rating" (see the top)
   // The settings' names in store.js.
-  const KEPT_AS = [["easy", "easy"], ["fast", "known"], ["limit", "limit"], ["round", "perReview"], ["day", "perDay"], ["perMap", "perMap"], ["algo", "scheduler"], ["retain", "retention"],
+  const KEPT_AS = [["easy", "easy"], ["fast", "known"], ["limit", "limit"], ["round", "perReview"], ["day", "perDay"], ["perMap", "perMap"], ["rate", "rating"], ["algo", "scheduler"], ["retain", "retention"],
     ["steps", "steps"], ["restep", "missStep"], ["keep", "kept"], ["first", "firstInterval"], ["ease", "ease"], ["hard", "unsure"], ["max", "longest"]];
   function opts() {
     const kept = STORE.settings(), o = { ...OPTS };
@@ -525,6 +597,7 @@ const SRS = (() => {
     if (!(o.easy >= 0 && o.easy < o.fast)) o.easy = Math.min(OPTS.easy, o.fast / 2); // 0: no answer is "easy"
     if (o.algo !== "sm2") o.algo = "fsrs";
     if (typeof o.perMap !== "boolean") o.perMap = OPTS.perMap;
+    if (!RATINGS.includes(o.rate)) o.rate = OPTS.rate;
     if (!Array.isArray(o.steps) || !o.steps.every(m => m > 0)) o.steps = OPTS.steps;
     sane("retain", 70, 97); sane("restep", 0); sane("keep", 0, 100); sane("first", 1); sane("ease", MIN_EASE * 100); sane("hard", 50); sane("max", 1);
     return o;
@@ -546,5 +619,5 @@ const SRS = (() => {
   if (!opts().perMap) single();
   addEventListener("geoquizzes:fresh", () => { if (!opts().perMap) single(); });
 
-  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, setGroups, setNames, cardList, reschedule, setLooks, looksOf, sort, clash, convert, keyOf, single, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, overview, run, setRun, nextStop, stretch, ran, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
+  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, setGroups, setNames, cardList, reschedule, setLooks, looksOf, sort, clash, convert, keyOf, single, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, clocked, regrade, gradeList, overview, run, setRun, nextStop, stretch, ran, rerun, keepRated, regradeRun, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
 })();

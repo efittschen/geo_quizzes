@@ -62,6 +62,20 @@ a{color:inherit}
 .toggle{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
 .toggle input{width:18px;height:18px;accent-color:var(--ink);margin:0}
 
+/* "Pick at the end" (srs.js gradeList): a review's answers in its results, each right one with Easy, Good, Hard */
+.rate-list{display:grid;gap:4px}
+.rl-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:4px 10px;padding:5px 0;border-bottom:1px solid var(--line)}
+.rl-row:last-child{border-bottom:0}
+.rl-row b{font-weight:600;overflow-wrap:anywhere}
+.rl-row b small{font-weight:500;color:var(--muted);font-size:.78rem;margin-left:6px}
+.rl-row b small.quiz{display:block;margin-left:0}
+.rl-row .s{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums}
+.rl-row .tag{font-size:.82rem;font-weight:600;color:var(--bad);padding-right:4px}
+.grades{display:flex;gap:2px;padding:2px;border:1.5px solid var(--line);border-radius:8px}
+.grades button{appearance:none;border:0;background:transparent;padding:3px 9px;border-radius:6px;font:600 .85rem/1.2 var(--sans);color:var(--muted);cursor:pointer}
+.grades button:hover{color:var(--ink)}
+.grades button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+
 /* star ratings: one star per level; solid when earned, a lighter partial fill while in progress */
 .stars{display:inline-flex;gap:2px;flex:none;vertical-align:middle}
 .star{position:relative;display:inline-block;width:14px;height:14px;flex:none;vertical-align:middle}

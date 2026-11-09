@@ -4,7 +4,8 @@
 
 const $ = (id) => document.getElementById(id);
 
-// The settings (see srs.js): the three times of the clock, the two limits, "Cards per map", and the schedule: which
+// The settings (see srs.js): the three times of the clock and "Rating" (by the clock, or by hand: Pick in 4 s, Pick
+// and wait, Pick when slow, Pick at the end), the two limits, "Cards per map", and the schedule: which
 // scheduler (FSRS or SM-2), and its options, with the names they have in Anki; only those of the chosen scheduler show.
 // onChange: the limits change the buttons; onCards: "Cards per map" turned off has made a question's cards one.
 function initSettings(onChange, onCards) {
@@ -14,6 +15,7 @@ function initSettings(onChange, onCards) {
     const o = SRS.opts();
     for (const key of NUMBERS) $(key).value = o[key];
     $("perMap").checked = o.perMap;
+    $("rate").value = o.rate;
     $("algo").value = o.algo;
     $("steps").value = o.steps.join(" "); // minutes, one step after the other: "1 10"
     for (const label of document.querySelectorAll("[data-algo]")) label.hidden = label.dataset.algo !== o.algo;
@@ -32,6 +34,7 @@ function initSettings(onChange, onCards) {
     onChange();
   };
   for (const key of ["algo", "steps", ...NUMBERS]) $(key).addEventListener("change", save);
+  $("rate").addEventListener("change", (event) => SRS.setOpts({ rate: event.target.value }));
   // (turned off: a question's cards on several maps become one at once; turned on: they stay one)
   $("perMap").addEventListener("change", (event) => {
     SRS.setOpts({ perMap: event.target.checked });

@@ -138,6 +138,7 @@ main > .map-wrap:first-child{margin-top:24px}
 .run i{width:12px;height:12px;border-radius:3px}
 .run .got{background:var(--got)} .run .t2{background:var(--t2)} .run .miss{background:var(--miss)}
 .run b{font:700 1.3rem/1 var(--cond);color:var(--ink);font-variant-numeric:tabular-nums}
+.run-done .rate-list{margin-top:14px;max-width:520px}
 .review-page{max-width:860px}
 .decks{width:100%;border-collapse:collapse}
 .decks th,.decks td{padding:8px 14px;text-align:left;border-top:1px solid var(--line);font-weight:400}

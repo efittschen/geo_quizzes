@@ -180,9 +180,10 @@ body{overflow:hidden}
 .rv-timer::before,.rv-timer::after{content:"";position:absolute;z-index:1;top:0;bottom:0;width:2px;background:var(--panel)}
 .rv-timer::before{left:var(--easy,87%)} .rv-timer::after{left:var(--known,60%)}
 .feedback.unsure{border-left-color:var(--yellow)}
-/* a replay's rating: Easy, Good, Hard in a column over the map at its right edge, in the middle (clear
-   of the zoom buttons under it), each with its key; Hard (the default) filled, and beside them the bar that runs down
-   to Hard. Where the map is hidden (.nomap), at the screen's right edge. */
+/* a rating by hand (a replay's, or every answer's with the setting "Rating"): Easy, Good, Hard in a column over the
+   map at its right edge, in the middle (clear of the zoom buttons under it), each with its key; the one taken if none
+   is picked filled (the clock's grade, a replay's Hard), and beside them the bar of its 4 s, where it has them. Where
+   the map is hidden (.nomap), at the screen's right edge. */
 .rv-rate{position:absolute;right:14px;top:max(80px,min(50%,calc(100% - 215px)));transform:translateY(-50%);z-index:1300;display:flex;gap:8px;align-items:stretch}
 body > .rv-rate{position:fixed;top:50%}
 .rv-rate div{display:flex;flex-direction:column;gap:8px}
