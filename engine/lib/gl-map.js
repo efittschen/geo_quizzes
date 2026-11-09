@@ -442,15 +442,23 @@ function glMap(stage, svg, S) {
     const shown = cs.visibility === 'visible' && cs.display !== 'none' && !hiddenAbove(el), op = shown ? +cs.opacity : 0;
     const sw = parseFloat(cs.strokeWidth) || 0, scaled = cs.vectorEffect !== 'non-scaling-stroke';
     const anim = cs.animationName && cs.animationName !== 'none' ? ANIMS[cs.animationName.split(',')[0].trim()] || 0 : 0;
-    // a dot whose size follows the dots' (--dot, which grows with the zoom): its share of it
+    // the part of a width on the screen that follows the dots' size (--dot, which grows with the zoom): the width read
+    // again with --dot larger, so that whatever the stylesheet sizes by it (a dot, a ring, the hover's shade) grows with it
     const dot = dotOf();
-    const share = !scaled && dot && (n.classList.contains('dot') || (svg.classList.contains('dots') && n.classList.contains('r'))) ? sw / dot : 0;
+    let share = 0;
+    if (!scaled && dot && sw > 0) {
+      const was = el.style.getPropertyValue('--dot');
+      el.style.setProperty('--dot', (dot + 1000) + 'px');
+      share = ((parseFloat(cs.strokeWidth) || 0) - sw) / 1000;
+      if (was) el.style.setProperty('--dot', was); else el.style.removeProperty('--dot');
+      if (Math.abs(share) < 1e-3) share = 0;
+    }
     const dash = cs.strokeDasharray && cs.strokeDasharray !== 'none' ? cs.strokeDasharray.split(/[ ,]+/).map(parseFloat).filter(v => v >= 0) : null;
     // (an animated color is kept at full opacity: the animation gives it its own)
     const fillOp = anim === 3 ? op : +cs.fillOpacity * op, strokeOp = anim === 2 ? op : +cs.strokeOpacity * op;
     return {
       fill: paint(cs.fill, fillOp), stroke: sw > 0 || anim ? paint(cs.stroke, strokeOp) : null,
-      wpx: scaled || share ? 0 : sw, wmap: scaled ? sw : 0, wdot: share,
+      wpx: scaled ? 0 : sw - share * dot, wmap: scaled ? sw : 0, wdot: share,
       dash: dash && dash.length && dash.some(v => v > 0) ? [dash[0], dash[1] ?? dash[0]] : null, anim,
       // for taps, whether a fill or an outline is painted at all (a see-through fill takes taps); for the triangles, how
       // holes count, and dots (round caps)
