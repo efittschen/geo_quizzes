@@ -480,7 +480,7 @@ const SRS = (() => {
       if (titles && titles[e.q]) name.append(el("small", "quiz", titles[e.q]));
       if (e.g === MISSED) { row.append(name, secs, el("span", "tag", "Not known")); box.append(row); return; }
       secs.textContent = `${e.s.toFixed(1)} s`;
-      const seg = el("div", "grades");
+      const seg = el("div", "rate-grades");
       seg.setAttribute("role", "group");
       seg.setAttribute("aria-label", e.n);
       const buttons = [["Easy", INSTANT], ["Good", KNOWN], ["Hard", UNSURE]].map(([label, g]) => {

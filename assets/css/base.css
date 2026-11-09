@@ -71,10 +71,10 @@ a{color:inherit}
 .rl-row b small.quiz{display:block;margin-left:0}
 .rl-row .s{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums}
 .rl-row .tag{font-size:.82rem;font-weight:600;color:var(--bad);padding-right:4px}
-.grades{display:flex;gap:2px;padding:2px;border:1.5px solid var(--line);border-radius:8px}
-.grades button{appearance:none;border:0;background:transparent;padding:3px 9px;border-radius:6px;font:600 .85rem/1.2 var(--sans);color:var(--muted);cursor:pointer}
-.grades button:hover{color:var(--ink)}
-.grades button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.rate-grades{display:flex;gap:2px;padding:2px;border:1.5px solid var(--line);border-radius:8px}
+.rate-grades button{appearance:none;border:0;background:transparent;padding:3px 9px;border-radius:6px;font:600 .85rem/1.2 var(--sans);color:var(--muted);cursor:pointer}
+.rate-grades button:hover{color:var(--ink)}
+.rate-grades button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 
 /* star ratings: one star per level; solid when earned, a lighter partial fill while in progress */
 .stars{display:inline-flex;gap:2px;flex:none;vertical-align:middle}
