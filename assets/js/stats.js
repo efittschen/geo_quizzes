@@ -1,13 +1,16 @@
-// Stats: the review page's second tab, beside Review (the stack and the settings). What the answer log (answers.js)
+// Stats: the review page's second tab, beside Stack. What the answer log (answers.js)
 // and the stack (srs.js) say of the player's play, top down:
-//   Today, This week   answers given, the share right at once, the median time; cards due today, tomorrow, this week
-//   Forecast           the cards due on each of the next 30 days (today's with those overdue)
+//   Today, This week   answers given, the share right at once, the median time (what is due: the page's top, review.js)
+//   Forecast           the cards due on each of the next 30 days (today's with those overdue; its column cut where
+//                      it would flatten the others), and beside it
 //   Retention          in reviews, the share of cards out of their learning steps that were known (unsure counts as
-//                      known, as in Anki), over 30 days and week by week, against the target retention (srs.js)
+//                      known, as in Anki), over 30 days and week by week from the first week with reviews, against
+//                      the target retention (srs.js)
 //   Weak spots         the questions of the last 30 days with the lowest share right at once (Accuracy) or the
-//                      slowest answers (Speed), asked 3 times or more, by quiz and layer: Practice plays them
-//   Mix-ups            what was given instead of what was asked, two items of a layer, counted both ways: Practice
-//                      plays the two
+//                      slowest answers (Speed), asked 3 times or more, by quiz and layer: Practice plays a quiz's,
+//                      and on top, all of them, quiz after quiz (SRS.startPractice)
+//   Mix-ups            what was given instead of what was asked, two items of a layer, counted both ways, by quiz and
+//                      layer: Practice plays the two, a quiz's, or on top all of them, quiz after quiz
 //   Quizzes            every quiz with cards or answers, by country: its cards, those out of their learning steps,
 //                      those due, the share right, the median time, when it was last played; a quiz opens to its
 //                      questions, worst first
@@ -69,6 +72,13 @@ function initStats(index, nameByCode) {
     if (url) a.href = url; else { a.setAttribute("aria-disabled", "true"); a.classList.add("off"); }
     return a;
   }
+  // Practice for a whole list: the practices of its groups (stops, their addresses) one after another, each quiz's
+  // straight on to the next as in a review, then back here (SRS.startPractice).
+  function practiceAllBtn(label, stops) {
+    const a = practiceBtn(label, stops.length ? stops[0] : null);
+    if (stops.length) a.onclick = (e) => { e.preventDefault(); window.location.href = SRS.startPractice(window.location.href, stops, "review.html#stats"); };
+    return a;
+  }
   const empty = (text) => el("p", "empty small", text);
 
   /* ---------- the tabs ---------- */
@@ -113,8 +123,8 @@ function initStats(index, nameByCode) {
     return out;
   }
   // A chart's frame: an SVG as wide as its box, y from 0 at the bottom; returns it and the plot's sizes.
-  function frame(box, height, left = 34) {
-    const W = Math.max(280, box.clientWidth || 600), H = height, M = { l: left, r: 10, t: 12, b: 22 };
+  function frame(box, height, left = 34, top = 12) {
+    const W = Math.max(280, box.clientWidth || 600), H = height, M = { l: left, r: 10, t: top, b: 22 };
     const svg = svgEl("svg", { class: "chart", viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "img" });
     return { svg, W, H, M, w: W - M.l - M.r, h: H - M.t - M.b };
   }
@@ -132,24 +142,37 @@ function initStats(index, nameByCode) {
     return svgEl("path", { d: h <= 0 ? "" : `M${x},${y0}V${y1 + r}Q${x},${y1} ${x + r},${y1}H${x + w - r}Q${x + w},${y1} ${x + w},${y1 + r}V${y0}Z` });
   }
 
-  // The cards due on each of the next 30 days (the first: today's and those overdue).
+  // The cards due on each of the next 30 days (the first: today's and those overdue). Today's column, where it is more
+  // than twice the highest of the others, is cut at the top of their scale, with its number over it, so that the
+  // other days still show.
   function forecastChart(box, counts, now) {
-    const f = frame(box, 150), max = Math.max(...counts), t = ticks(max, 3), top = t[t.length - 1];
-    const slot = f.w / counts.length, bw = Math.min(18, slot - 2), y = (v) => f.M.t + f.h - (v / top) * f.h;
+    const rest = Math.max(...counts.slice(1)), cut = rest > 0 && counts[0] > 2 * rest;
+    const f = frame(box, 162, 34, cut ? 24 : 12), t = ticks(cut ? rest : Math.max(...counts), 3), top = t[t.length - 1];
+    const slot = f.w / counts.length, bw = Math.min(18, slot - 2), y = (v) => f.M.t + f.h - (Math.min(v, top) / top) * f.h;
     yAxis(f, t, y, (v) => v.toLocaleString("en-US"));
     counts.forEach((n, i) => {
       const x = f.M.l + i * slot + (slot - bw) / 2, bar = column(x, y(0), y(n), bw);
       bar.setAttribute("class", "bar");
       const hit = svgEl("rect", { class: "hit", x: f.M.l + i * slot, y: f.M.t, width: slot, height: f.h });
       tipOn(hit, [i ? dateShort(SRS.dayStart(now, i)) : "Today", `${n.toLocaleString("en-US")} ${n === 1 ? "card" : "cards"}`]);
-      f.svg.append(bar, hit);
+      f.svg.append(bar);
+      if (i === 0 && cut) {
+        // (two strokes across the column near its top, in the box's color, and its number over it)
+        const at = y(top) + 10, mark = svgEl("path", { class: "cut", d: `M${x - 1},${at + 3}L${x + bw + 1},${at - 3}M${x - 1},${at + 9}L${x + bw + 1},${at + 3}` });
+        const label = svgEl("text", { class: "tick big", x: x + bw / 2, y: f.M.t - 7, "text-anchor": "middle" });
+        label.textContent = n.toLocaleString("en-US");
+        f.svg.append(mark, label);
+      }
+      f.svg.append(hit);
     });
     for (const i of [0, 7, 14, 21, 28]) if (i < counts.length) xLabel(f, f.M.l + i * slot + slot / 2, i ? dateShort(SRS.dayStart(now, i)) : "Today");
     return f.svg;
   }
-  // Retention week by week (dots on a line, weeks with enough reviews), and the target as a line of its own.
+  // Retention week by week (dots on a line, weeks with enough reviews, each with its share where there is room), and
+  // the target as a line of its own. The scale from 80% (lower where a week or the target is near it) to 100%.
   function retentionChart(box, weeks, target) {
-    const f = frame(box, 150), lo = Math.min(50, ...weeks.filter((w) => w.n).map((w) => Math.floor(w.r * 10) * 10)), y = (v) => f.M.t + f.h - ((v - lo) / (100 - lo)) * f.h;
+    const low = Math.min(target, ...weeks.filter((w) => w.n >= 5).map((w) => w.r * 100)), lo = Math.max(0, Math.min(80, Math.floor((low - 5) / 10) * 10));
+    const f = frame(box, 162), y = (v) => f.M.t + f.h - ((v - lo) / (100 - lo)) * f.h; // (as high as the forecast beside it)
     const step = f.w / Math.max(1, weeks.length - 1), x = (i) => f.M.l + i * step;
     yAxis(f, ticks(100 - lo, 2).map((v) => v + lo).filter((v) => v <= 100), y, (v) => `${v}%`);
     f.svg.append(svgEl("line", { class: "target", x1: f.M.l, x2: f.W - f.M.r, y1: y(target), y2: y(target) }));
@@ -160,8 +183,10 @@ function initStats(index, nameByCode) {
       const dot = svgEl("circle", { class: "dot", cx: px, cy: py, r: 4 });
       tipOn(dot, [`Week of ${dateShort(w.from)}`, `${pct(w.r)} · ${w.n} reviews`]);
       f.svg.append(dot);
+      if (step >= 36) { const v = svgEl("text", { class: "tick", x: px, y: py - 9, "text-anchor": "middle" }); v.textContent = pct(w.r); f.svg.append(v); }
     }
-    weeks.forEach((w, i) => { if (i % 4 === 0 || i === weeks.length - 1) xLabel(f, x(i), dateShort(w.from), i === 0 ? "start" : i === weeks.length - 1 ? "end" : "middle"); });
+    const every = weeks.length <= 6 ? 1 : 4, end = weeks.length - 1;
+    weeks.forEach((w, i) => { if (i % every === 0 || i === end) xLabel(f, x(i), dateShort(w.from), i === 0 ? "start" : i === end ? "end" : "middle"); });
     return f.svg;
   }
   // A question's answers: each a dot by when and how long it took (right: a filled dot; wrong: a cross; a replay smaller).
@@ -209,29 +234,34 @@ function initStats(index, nameByCode) {
     NAMES = names;
     const decks = SRS.decks().filter((d) => byId.has(d.id));
     DATA = { answers, decks, now };
-    root.replaceChildren(stripSection(answers, decks, now), forecastSection(decks, now), retentionSection(answers, now), weakSection(answers, now), mixSection(answers), quizSection(answers, decks, now));
+    const charts = el("div", "charts");
+    charts.append(forecastSection(decks, now), retentionSection(answers, now));
+    root.replaceChildren(stripSection(answers, now), charts, weakSection(answers, now), mixSection(answers), quizSection(answers, decks, now));
     for (const [box, make] of later) box.replaceChildren(make()); // (charts once their boxes have a width)
     later = [];
   }
   let later = [];
   const chartBox = (make) => { const box = el("div", "chart-box"); later.push([box, () => make(box)]); return box; };
   const section = (title, ...kids) => { const s = el("section"); s.append(el("h2", "", title), ...kids); return s; };
+  // A section whose head holds more than its title (a switch, Practice for the whole list): the head and a place for
+  // those, filled as the list is.
+  const headed = (title) => { const s = el("section"), head = el("div", "sec-head"), acts = el("div", "sec-acts"); head.append(el("h2", "", title), acts); s.append(head); return { s, acts }; };
+  // A list in a framed box.
+  const boxed = (table) => { const box = el("div", "tree"); box.append(table); return box; };
   // first answers (not replays)
   const firsts = (list) => list.filter((a) => !a.replay);
   const summary = (list) => { const f = firsts(list); return { n: list.length, right: f.length ? f.filter((a) => a.r === 0).length / f.length : null, ms: median(f.map((a) => a.ms || 0)) }; };
 
-  function stripSection(answers, decks, now) {
+  // (what is due: at the page's top, see review.js)
+  function stripSection(answers, now) {
     const today = SRS.dayStart(now), week = SRS.dayStart(now, -6);
     const t = summary(answers.filter((a) => a.at >= today)), w = summary(answers.filter((a) => a.at >= week));
-    const dues = decks.flatMap((d) => SRS.all(d).map((k) => d.c[k].d));
-    const due = (to, from = -Infinity) => dues.filter((x) => x >= from && x < to).length;
     const tile = (label, value) => { const d = el("div", "tile"); d.append(el("b", "", value), el("span", "", label)); return d; };
     const group = (title, ...tiles) => { const g = el("div", "tiles"); g.append(el("h3", "", title), ...tiles); return g; };
     const strip = el("div", "strip");
     strip.append(
       group("Today", tile("Answers", t.n.toLocaleString("en-US")), tile("Right", pct(t.right)), tile("Median", secs(t.ms))),
       group("This week", tile("Answers", w.n.toLocaleString("en-US")), tile("Right", pct(w.right)), tile("Median", secs(w.ms))),
-      group("Due", tile("Today", due(SRS.dayStart(now, 1)).toLocaleString("en-US")), tile("Tomorrow", due(SRS.dayStart(now, 2), SRS.dayStart(now, 1)).toLocaleString("en-US")), tile("This week", due(SRS.dayStart(now, 7)).toLocaleString("en-US"))),
     );
     const s = el("section", "first");
     s.append(strip);
@@ -254,7 +284,8 @@ function initStats(index, nameByCode) {
     if (!month.length) return section("Retention", empty("No reviews yet"));
     const share = (list) => list.filter((a) => a.g >= SRS.UNSURE).length / list.length;
     const start = SRS.dayStart(now, -7 * 11 - (new Date(SRS.dayStart(now)).getDay() + 6) % 7); // (12 weeks, each from a Monday)
-    const weeks = Array.from({ length: 12 }, (_, i) => { const from = start + i * 7 * DAY, list = reviews.filter((a) => a.at >= from && a.at < from + 7 * DAY); return { from, n: list.length, r: list.length ? share(list) : 0 }; });
+    const all = Array.from({ length: 12 }, (_, i) => { const from = start + i * 7 * DAY, list = reviews.filter((a) => a.at >= from && a.at < from + 7 * DAY); return { from, n: list.length, r: list.length ? share(list) : 0 }; });
+    const weeks = all.slice(Math.max(0, all.findIndex((w) => w.n))); // (from the first week with reviews)
     const head = el("p", "chart-head");
     head.append(el("b", "", pct(share(month))), ` · target ${target}% · ${month.length} reviews · 30 days`);
     return section("Retention", head, chartBox((box) => retentionChart(box, weeks, target)));
@@ -263,44 +294,54 @@ function initStats(index, nameByCode) {
   // Questions of the last 30 days asked 3 times or more (first answers): the lowest share right, or the slowest.
   let weakBy = "accuracy";
   function weakSection(answers, now) {
-    const s = section("Weak spots"), body = el("div");
+    const { s, acts } = headed("Weak spots"), body = el("div"), all = el("span");
     const seg = el("div", "view-pick");
     seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Weak spots by");
     for (const [v, label] of [["accuracy", "Accuracy"], ["speed", "Speed"]]) {
-      const b = el("button", "ghost small", label); b.type = "button"; b.setAttribute("aria-pressed", v === weakBy);
+      const b = el("button", "", label); b.type = "button"; b.setAttribute("aria-pressed", v === weakBy);
       b.onclick = () => { weakBy = v; for (const x of seg.children) x.setAttribute("aria-pressed", x === b); fill(); };
       seg.append(b);
     }
+    acts.append(seg, all);
     const by = new Map();
     for (const a of firsts(answers)) if (a.at >= now - 30 * DAY) (by.get(keyOf(a)) || by.set(keyOf(a), []).get(keyOf(a))).push(a);
     const items = [...by.values()].filter((l) => l.length >= 3).map((l) => ({ a: l[0], list: l, right: l.filter((a) => a.r === 0).length / l.length, ms: median(l.map((a) => a.ms || 0)) }));
     function fill() {
       const top = weakBy === "accuracy" ? items.filter((x) => x.right < 1).sort((x, y) => x.right - y.right || y.list.length - x.list.length).slice(0, 20)
         : items.slice().sort((x, y) => y.ms - x.ms).slice(0, 20);
-      if (!top.length) { body.replaceChildren(empty(items.length ? "None" : "Not enough answers yet")); return; }
-      // by quiz and layer, in the order of their worst question
+      if (!top.length) { all.replaceChildren(); body.replaceChildren(empty(items.length ? "None" : "Not enough answers yet")); return; }
+      // by quiz and layer, in the order of their worst question; Practice for each, and for all of them (on top)
       const groups = new Map();
       for (const x of top) { const g = `${x.a.quiz}|${x.a.kind}`; (groups.get(g) || groups.set(g, []).get(g)).push(x); }
+      const stops = [];
+      let n = 0;
       const table = el("table", "decks stats-list");
+      table.innerHTML = '<thead><tr><th></th><th class="num">Right</th><th class="num">Time</th><th class="num">Asked</th></tr></thead>';
       table.append(...[...groups.values()].map((list) => {
         const { quiz, kind } = list[0].a, tb = el("tbody"), head = el("tr", "place"), th = el("th", "", where(quiz, kind));
         th.colSpan = 3; th.scope = "rowgroup";
-        const acts = el("td", "acts-cell"); acts.append(practiceBtn(`Practice ${list.length}`, practiceUrl(quiz, kind, list.map((x) => x.a.item), list.flatMap((x) => x.list))));
+        const url = practiceUrl(quiz, kind, list.map((x) => x.a.item), list.flatMap((x) => x.list)), acts = el("td", "acts-cell");
+        if (url) { stops.push(url); n += list.length; }
+        acts.append(practiceBtn(`Practice ${list.length}`, url));
         head.append(th, acts);
         tb.append(head, ...list.map((x) => itemRow(x.a, [pct(x.right), secs(x.ms), `×${x.list.length}`])));
         return tb;
       }));
-      body.replaceChildren(table);
+      all.replaceChildren(practiceAllBtn(`Practice ${n}`, stops));
+      body.replaceChildren(boxed(table));
     }
     fill();
-    s.append(seg, body);
+    s.append(body);
     return s;
   }
-  // A question's line: its name (a click opens it) and some numbers.
+  // A question's name as two parts: what is asked, and what more its quiz says of it ("Batanes", "Cagayan Valley").
+  const parts = (name) => { const i = name.indexOf(" · "); return i < 0 ? [name, ""] : [name.slice(0, i), name.slice(i + 3)]; };
+  // A question's line: its name (a click opens it), the rest of it smaller, and some numbers.
   function itemRow(a, nums) {
-    const tr = el("tr", "item"), td = el("td"), b = el("button", "linkish", nameOf(a.quiz, a.kind, a.item));
+    const [ask, more] = parts(nameOf(a.quiz, a.kind, a.item)), tr = el("tr", "item"), td = el("td"), b = el("button", "linkish", ask);
     b.type = "button"; b.onclick = () => openItem(a.quiz, a.kind, a.item);
     td.append(b);
+    if (more) td.append(" ", el("small", "", more));
     tr.append(td, ...nums.map((n) => el("td", "num", n)));
     return tr;
   }
@@ -317,18 +358,36 @@ function initStats(index, nameByCode) {
     }
     const top = [...pairs.values()].sort((p, q) => q.xy + q.yx - (p.xy + p.yx)).slice(0, 15);
     if (!top.length) return section("Mix-ups", empty("No mix-ups yet"));
-    const table = el("table", "decks stats-list mixups"), tb = el("tbody");
-    tb.append(...top.map((p) => {
-      const tr = el("tr", "item"), td = el("td"), [from, to] = p.yx > p.xy ? [p.y, p.x] : [p.x, p.y];
-      const link = (item) => { const b = el("button", "linkish", nameOf(p.quiz, p.kind, item)); b.type = "button"; b.onclick = () => openItem(p.quiz, p.kind, item); return b; };
-      td.append(link(from), el("span", "arrow", p.xy && p.yx ? " ⇄ " : " → "), link(to), el("small", "", ` ${where(p.quiz, p.kind)}`));
-      const n = el("td", "num", `×${p.xy + p.yx}`), acts = el("td", "acts-cell");
-      acts.append(practiceBtn("Practice", practiceUrl(p.quiz, p.kind, [p.x, p.y], p.list)));
-      tr.append(td, n, acts);
-      return tr;
+    // by quiz and layer, in the order of their biggest pair; Practice for each pair, each group (the questions of its
+    // pairs) and all of them (on top)
+    const groups = new Map();
+    for (const p of top) { const g = `${p.quiz}|${p.kind}`; (groups.get(g) || groups.set(g, []).get(g)).push(p); }
+    const { s, acts: all } = headed("Mix-ups"), stops = [], table = el("table", "decks stats-list mixups");
+    let n = 0;
+    table.append(...[...groups.values()].map((list) => {
+      const { quiz, kind } = list[0], items = [...new Set(list.flatMap((p) => [p.x, p.y]))], url = practiceUrl(quiz, kind, items, list.flatMap((p) => p.list));
+      if (url) { stops.push(url); n += items.length; }
+      const tb = el("tbody"), head = el("tr", "place"), th = el("th", "", where(quiz, kind)), acts = el("td", "acts-cell");
+      th.colSpan = 2; th.scope = "rowgroup";
+      acts.append(practiceBtn(`Practice ${items.length}`, url));
+      head.append(th, acts);
+      tb.append(head, ...list.map((p) => {
+        const tr = el("tr", "item"), td = el("td"), [from, to] = p.yx > p.xy ? [p.y, p.x] : [p.x, p.y], arrow = p.xy && p.yx ? " ⇄ " : " → ";
+        const [a, aMore] = parts(nameOf(quiz, kind, from)), [b, bMore] = parts(nameOf(quiz, kind, to));
+        const link = (item, text) => { const x = el("button", "linkish", text); x.type = "button"; x.onclick = () => openItem(quiz, kind, item); return x; };
+        // (the names, and under them the rest of them: "Central Luzon (Region III) ⇄ Ilocos Region (Region I)")
+        td.append(link(from, a), el("span", "arrow", arrow), link(to, b));
+        if (aMore || bMore) td.append(el("small", "also", `${aMore || "–"}${arrow}${bMore || "–"}`));
+        const count = el("td", "num", `×${p.xy + p.yx}`), act = el("td", "acts-cell");
+        act.append(practiceBtn("Practice", practiceUrl(quiz, kind, [p.x, p.y], p.list)));
+        tr.append(td, count, act);
+        return tr;
+      }));
+      return tb;
     }));
-    table.append(tb);
-    return section("Mix-ups", table);
+    all.append(practiceAllBtn(`Practice ${n}`, stops));
+    s.append(boxed(table));
+    return s;
   }
 
   // Every quiz with cards or answers, by country; a quiz opens to its questions.
@@ -381,7 +440,7 @@ function initStats(index, nameByCode) {
       }
       table.append(tb);
     }
-    return section("Quizzes", table);
+    return section("Quizzes", boxed(table));
   }
 
   /* ---------- a question ---------- */

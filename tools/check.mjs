@@ -297,6 +297,30 @@ async function stats(c) {
   c.ok(col === 16, 'My stats: the 16 states coloured', col);
 }
 
+/* ---------- k. Practice for a whole list: two stops played, straight on from one to the next, then back to Stats ---------- */
+async function practiceRun(c) {
+  const { page } = await c.open('review.html', { wait: 'main' });
+  if (!(await page.evaluate(() => typeof SRS === 'object' && typeof SRS.startPractice === 'function'))) c.skip('no SRS.startPractice');
+  const stops = ['quizzes/germany-regions/?practice=states&items=BY,NI&name=Practice', 'quizzes/germany-regions/?practice=states&items=HE&name=Practice'];
+  await go(page, await page.evaluate(s => SRS.startPractice(location.href, s, 'review.html#stats'), stops), '#play:not([hidden])');
+  const played = [];
+  for (let stop = 1; stop <= 2; stop++) {
+    await mapStill(page).catch(() => {});
+    if (!c.ok(page.url().includes(`run=${stop}`), `stop ${stop} opened`, page.url().replace(base, ''))) return;
+    for (let n = 0; n < 4 && page.url().includes(`run=${stop}`); n++) {
+      const it = await askedItem(page, 'states', 3000).catch(() => null); // (the page may move on under the check)
+      if (!it) break;
+      played.push(it.id);
+      await clickItem(page, 'states', it.id).catch(() => {});
+    }
+    await page.waitForURL(u => !String(u).includes(`run=${stop}`), { timeout: 8000 }).catch(() => {});
+    if (stop === 1) await page.waitForSelector('#play:not([hidden])', { timeout: 15000 }).catch(() => {});
+  }
+  await page.waitForSelector('#stats .tile b', { timeout: 10000 }).catch(() => {});
+  c.ok(/review\.html#stats$/.test(page.url()) && played.sort().join() === 'BY,HE,NI', 'played BY, NI, then HE, then back on Stats', { played, at: page.url().replace(base, '') });
+  c.ok(await page.evaluate(() => STORE.review().practice == null), 'the practice is over');
+}
+
 /* ---------- g. Cards per map off: a perfect round on another map makes no new cards ---------- */
 async function cardsPerMap(c) {
   const { page } = await c.open('settings.html', { wait: 'main' });
@@ -383,7 +407,7 @@ async function sync(c) {
 
 /* ---------- running: the long checks first, the page loads between them; at most JOBS pages at once ---------- */
 const CHECKS = [
-  ['c', 'draw', draw], ['e', 'review', review], ['f', 'stats', stats], ['g', 'cards per map off', cardsPerMap],
+  ['c', 'draw', draw], ['e', 'review', review], ['f', 'stats', stats], ['k', 'practice a whole list', practiceRun], ['g', 'cards per map off', cardsPerMap],
   ['d', 'name it, shape', nameShape], ['b', 'map answers, hard mode', mapAnswers], ['h', 'bare map', bareMap], ['j', 'satellite map', c => bareMap(c, 'sat')], ['i', 'sync', sync],
 ].filter(([k]) => !ONLY || ONLY.includes(k));
 const results = {};

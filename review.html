@@ -14,27 +14,32 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="index.html">🌍 Geo Quizzes</a>
+    <div class="brand-row"><a class="brand" href="index.html">🌍 Geo Quizzes</a><h1 class="page-title">Review</h1></div>
     <nav><a href="index.html">← Back to map</a></nav>
   </header>
 
   <main class="review-page">
     <section>
-      <h1>Review</h1>
-      <div class="review-go" id="review-go"></div>
-      <div class="view-pick tabs" id="tabs" role="tablist" aria-label="Page">
-        <button type="button" class="ghost small" role="tab" data-tab="review" aria-selected="true">Review</button>
-        <button type="button" class="ghost small" role="tab" data-tab="stats" aria-selected="false">Stats</button>
+      <div class="review-top" id="review-top" hidden>
+        <div class="rt-due"><b id="rt-due"></b><span>due</span></div>
+        <div class="rt-next"><div><b id="rt-tomorrow"></b><span>Tomorrow</span></div><div><b id="rt-week"></b><span>This week</span></div></div>
+        <div class="review-go" id="review-go"></div>
+      </div>
+      <div class="tabs" id="tabs" role="tablist" aria-label="Page">
+        <button type="button" role="tab" data-tab="review" aria-selected="true">Stack</button>
+        <button type="button" role="tab" data-tab="stats" aria-selected="false">Stats</button>
       </div>
     </section>
 
     <div class="stats-page" id="stats" hidden></div>
 
     <section>
-      <h2>Stack</h2>
-      <div class="view-pick" id="view-pick" role="group" aria-label="View" hidden>
-        <button type="button" class="ghost small" data-view="tree" aria-pressed="true">By quiz</button>
-        <button type="button" class="ghost small" data-view="due" aria-pressed="false">By due</button>
+      <div class="list-bar" id="list-bar" hidden>
+        <span class="count" id="stack-count"></span>
+        <div class="view-pick" id="view-pick" role="group" aria-label="View">
+          <button type="button" data-view="tree" aria-pressed="true">By quiz</button>
+          <button type="button" data-view="due" aria-pressed="false">By due</button>
+        </div>
       </div>
       <div class="tree" id="due-list" hidden>
         <table class="decks stack due-list">
@@ -45,8 +50,8 @@
       </div>
       <div class="tree" id="decks" hidden>
         <table class="decks stack">
-          <colgroup><col><col class="c-due"><col class="c-learned"><col class="c-acts"></colgroup>
-          <thead><tr><th>Quiz</th><th class="num">Due</th><th class="num learned">Learned</th><th></th></tr></thead>
+          <colgroup><col><col class="c-due"><col class="c-learned"><col class="c-more"></colgroup>
+          <thead><tr><th></th><th class="mid">Due</th><th class="mid">Learned</th><th></th></tr></thead>
           <tbody id="deck-rows"></tbody>
         </table>
       </div>

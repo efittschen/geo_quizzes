@@ -68,17 +68,24 @@ function render(index, nameByCode) {
   const decks = SRS.overview(index.quizzes, now);
   const sum = (list, key) => list.reduce((total, d) => total + d[key], 0);
 
-  // The whole world, and when nothing is due, when the next card is.
-  $("review-go").replaceChildren(...(reviewButtons(index, index.quizzes, BACK) ?? []));
+  // The top: the cards due now, tomorrow and up to the end of the seventh day (now's with them), the buttons that
+  // review the whole world, and when nothing is due, when the next card is.
+  const listed = new Set(decks.map((d) => d.id)), dues = SRS.decks().filter((d) => listed.has(d.id)).flatMap((d) => SRS.all(d).map((k) => d.c[k].d));
+  const dueIn = (to, from = -Infinity) => dues.filter((x) => x >= from && x < to).length.toLocaleString("en-US");
+  $("review-top").hidden = !decks.length;
+  $("rt-due").textContent = sum(decks, "due").toLocaleString("en-US");
+  $("rt-tomorrow").textContent = dueIn(SRS.dayStart(now, 2), SRS.dayStart(now, 1));
+  $("rt-week").textContent = dueIn(SRS.dayStart(now, 7));
+  $("review-go").replaceChildren(...(reviewButtons(index, index.quizzes, BACK, "top", null, decks) ?? []));
   if (decks.length && !sum(decks, "due")) {
     const next = document.createElement("span");
     next.className = "label";
     next.textContent = `Next ${SRS.until(decks[0].next, now)}`;
-    $("review-go").append(next);
+    $("review-go").prepend(next);
   }
   const result = reviewResult();
   document.querySelector(".run-done")?.remove();
-  if (result) $("review-go").after(result);
+  if (result) $("review-top").after(result);
 
   // Countries (or areas like South Asia, or the world or a continent as a whole) with their quizzes, most due first.
   const places = new Map(), placeOf = new Map();
@@ -88,11 +95,14 @@ function render(index, nameByCode) {
     placeOf.set(d.id, place);
   }
   for (const b of document.querySelectorAll("#view-pick button")) b.setAttribute("aria-pressed", b.dataset.view === VIEW);
-  $("view-pick").hidden = !decks.length;
+  $("list-bar").hidden = !decks.length;
+  const count = (n, one) => `${n.toLocaleString("en-US")} ${one}${n === 1 ? "" : "s"}`;
+  $("stack-count").textContent = VIEW === "due" ? count(sum(decks, "total"), "card") : count(places.size, "place");
   $("decks").hidden = !decks.length || VIEW !== "tree";
   $("due-list").hidden = !decks.length || VIEW !== "due";
   $("empty").hidden = decks.length > 0;
   if (VIEW === "due") { renderDue(decks, placeOf, now); return; }
+  DUE_JOB++;
   // The tree: each row a branch (node) under another (parent), shown while every branch above it is open.
   const parents = new Map();
   const showTree = () => {
@@ -127,23 +137,23 @@ function render(index, nameByCode) {
     }
     return tr;
   };
+  // A line: its name, then under Due the button that reviews its due cards (with nothing due: when the soonest of its
+  // cards is), under Learned the one that reviews all of them, and its ⋯.
   const row = (cls, head, list, extra = [], layer = null) => {
     const tr = document.createElement("tr");
     tr.className = cls;
     const cell = (content, className) => {
       const td = document.createElement("td");
-      td.append(content);
+      td.append(...content);
       if (className) td.className = className;
       tr.append(td);
     };
     tr.append(head);
-    const next = Math.min(...list.map((d) => d.next)); // (when the soonest of its cards is due)
-    cell(dueWhen(next, now), next <= now ? "num due" : "num");
-    cell(sum(list, "total"), "num learned");
-    const acts = document.createElement("div");
-    acts.className = "acts";
-    acts.append(...(reviewButtons(index, layer ? [layer.quiz] : list.map((d) => d.quiz), BACK, true, layer) ?? []), ...extra);
-    cell(acts);
+    const [due, all] = reviewButtons(index, layer ? [layer.quiz] : list.map((d) => d.quiz), BACK, "chip", layer, list) ?? [];
+    if (due && sum(list, "due")) cell([due], "mid");
+    else cell([dueWhen(Math.min(...list.map((d) => d.next)), now)], "mid when");
+    cell(all ? [all] : [], "mid");
+    cell(extra, "more-cell");
     return tr;
   };
   const byDue = (a, b) => sum(b[1], "due") - sum(a[1], "due") || a[0].localeCompare(b[0]);
@@ -176,9 +186,9 @@ function render(index, nameByCode) {
         const name = cardCell(called, c);
         if (lines.length) name.style.setProperty("--lines", lines.map((x) => `linear-gradient(var(--line),var(--line)) no-repeat ${x}px 0/1.5px 100%`).join(","));
         const cell = (text, cls) => { const td = document.createElement("td"); td.textContent = text; if (cls) td.className = cls; return td; };
-        const due = cell("", c.due <= now ? "num due" : "num");
+        const due = cell("", c.due <= now ? "mid due" : "mid");
         due.append(dueWhen(c.due, now));
-        tr.append(name, due, cell(span(c.interval), "num learned"), cell(""));
+        tr.append(name, due, cell(span(c.interval), "mid"), cell(""));
         return tree(tr, null, parent);
       });
       const td = document.createElement("td");
@@ -261,8 +271,12 @@ function render(index, nameByCode) {
 }
 
 // The other view: every card on the stack by when it is due, soonest first, with the quiz it is in (and its layer
-// and map, where the quiz has cards of several).
+// and map, where the quiz has cards of several). The first lines at once, the rest a moment later, a part at a time
+// (a thousand lines, each with its buttons, take a while to make): a list shown anew stops the one before (DUE_JOB).
+const DUE_FIRST = 60, DUE_PART = 250;
+let DUE_JOB = 0;
 function renderDue(decks, placeOf, now) {
+  const job = ++DUE_JOB;
   const rows = decks.flatMap((d) => {
     const called = STORE.quiz(d.id).called || {}, cards = SRS.cardList(d.id), city = d.quiz.role === "cities";
     // (a layer named like its quiz, its main one, is not named again: "Brazil · Area Codes", not "… · Area codes")
@@ -271,7 +285,7 @@ function renderDue(decks, placeOf, now) {
     const shown = new Set(d.layers.filter((l) => l.groups.length > 1).map((l) => l.key)); // (layers whose cards are in several groups)
     return cards.map((c) => ({ c, d, called, within: [...(d.layers.length > 1 || c.kind.includes("~") ? [layerOf.get(c.kind)] : []), ...(shown.has(c.kind) && groupOf[c.kind] ? [groupOf[c.kind].get(c.item)] : []), ...(maps && c.look ? [lookLabel(c.look, city)] : [])].filter(Boolean) }));
   }).sort((a, b) => a.c.due - b.c.due || a.d.quiz.title.localeCompare(b.d.quiz.title));
-  $("due-rows").replaceChildren(...rows.map(({ c, d, called, within }) => {
+  const line = ({ c, d, called, within }) => {
     const tr = document.createElement("tr");
     const due = document.createElement("td");
     due.className = c.due <= now ? "num due" : "num";
@@ -310,7 +324,14 @@ function renderDue(decks, placeOf, now) {
     grades.append(box);
     tr.append(due, cardCell(called, c, true), quiz, grades);
     return tr;
-  }));
+  };
+  $("due-rows").replaceChildren(...rows.slice(0, DUE_FIRST).map(line));
+  const more = (from) => {
+    if (job !== DUE_JOB || from >= rows.length) return;
+    $("due-rows").append(...rows.slice(from, from + DUE_PART).map(line));
+    setTimeout(() => more(from + DUE_PART));
+  };
+  requestAnimationFrame(() => setTimeout(() => more(DUE_FIRST))); // (once the first lines are on the screen)
 }
 
 // The name of a map cards are played on (their look, see srs.js): the quiz map, the overlay, the street map, the bare

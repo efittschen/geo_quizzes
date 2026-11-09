@@ -7,7 +7,7 @@
 // Sent are the entries of store.js, each under its name ("settings", "review", "quiz.<quiz id>"), without the parts
 // that belong to one browser: a record's `last` and its paint `choice`, a card's `missing` (a quiz page's own finding
 // that the card's question is not in the quiz it has: a browser with older code may not know a card's key, and must
-// not hide it everywhere), the settings' `open`, the review's `run`.
+// not hide it everywhere), the settings' `open`, the review's `run` and `practice`.
 //
 // Two copies of an entry become one like this (`merge`), with nothing lost that either side learned:
 //   cards      each card from the copy where it was answered last, with how it is reviewed (map, back) from the copy
@@ -63,7 +63,7 @@ const SYNC = (() => {
   // An entry as it is sent: without what belongs to this browser, and without a town-name quiz not played yet.
   function sent(name, v) {
     if (name === 'settings') { const { open, ...rest } = v; return rest; }
-    if (name === 'review') { const { run, ...rest } = v; return rest; }
+    if (name === 'review') { const { run, practice, ...rest } = v; return rest; }
     const { last, ...rest } = v;
     if (rest.paint) { const { choice, ...paint } = rest.paint; if (empty(paint.best)) delete rest.paint; else rest.paint = paint; }
     if (rest.cards) rest.cards = Object.fromEntries(Object.entries(rest.cards).map(([k, { missing, ...c }]) => [k, c]));

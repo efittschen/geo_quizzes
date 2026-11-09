@@ -584,6 +584,27 @@ const SRS = (() => {
     return stopUrl(root, nextStop(quizzes));
   }
 
+  // A practice over several quizzes: the review page's Practice for a whole list (Weak spots, Mix-ups). Its stops are
+  // quiz pages' practice addresses (…?practice=…&items=…, see stats.js), played one after another: a page opened as
+  // one has ?run=<its place, from 1>, and when its round is over the next one opens, straight on as in a review
+  // (engine/app/review.js), then the page the practice started from (back). Kept as the review's `practice`, which
+  // belongs to this browser like its `run`. Returns the address to open first.
+  function startPractice(root, stops, back) {
+    STORE.setReview(v => { v.practice = { stops, back }; });
+    return practiceStop(root, 0);
+  }
+  // The address of the practice's stop i (from 0), or once past the last, of the page it ends on (the practice then over).
+  function practiceStop(root, i) {
+    const p = STORE.review().practice;
+    if (p && i < p.stops.length) {
+      const u = new URL(p.stops[i], root);
+      u.searchParams.set("run", i + 1);
+      return u.href;
+    }
+    STORE.setReview(v => { delete v.practice; });
+    return new URL(p ? p.back : "review.html", root).href;
+  }
+
   const RATINGS = ["clock", "quick", "wait", "slow", "end"]; // the setting "Rating" (see the top)
   // The settings' names in store.js.
   const KEPT_AS = [["easy", "easy"], ["fast", "known"], ["limit", "limit"], ["round", "perReview"], ["day", "perDay"], ["perMap", "perMap"], ["rate", "rating"], ["algo", "scheduler"], ["retain", "retention"],
@@ -619,5 +640,5 @@ const SRS = (() => {
   if (!opts().perMap) single();
   addEventListener("geoquizzes:fresh", () => { if (!opts().perMap) single(); });
 
-  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, setGroups, setNames, cardList, reschedule, setLooks, looksOf, sort, clash, convert, keyOf, single, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, clocked, regrade, gradeList, overview, run, setRun, nextStop, stretch, ran, rerun, keepRated, regradeRun, tally, stopUrl, startRun, opts, setOpts, resetOpts, until, dayStart, days };
+  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, setGroups, setNames, cardList, reschedule, setLooks, looksOf, sort, clash, convert, keyOf, single, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, clocked, regrade, gradeList, overview, run, setRun, nextStop, stretch, ran, rerun, keepRated, regradeRun, tally, stopUrl, startRun, startPractice, practiceStop, opts, setOpts, resetOpts, until, dayStart, days };
 })();

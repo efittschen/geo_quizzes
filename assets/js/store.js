@@ -40,7 +40,8 @@
 //                                 perMap: false where "Cards per map" is off (a question's cards on several maps are
 //                                 one, see srs.js); open: the folders open in "All quizzes"; changed: when any but `open` last
 //                                 changed here (a time, for the online copy) }
-//   geoquizzes.review           { day: { date, reviewed }: cards reviewed today; run: a review in progress (srs.js) }
+//   geoquizzes.review           { day: { date, reviewed }: cards reviewed today; run: a review in progress; practice: a practice over
+//                                 several quizzes in progress (both srs.js) }
 //   geoquizzes.sync             the online copy, if the player named one (see sync.js): its link and what was seen
 //                                 of it. It belongs to this browser: no data file holds it, and none replaces it.
 //   geoquizzes.maps             the player's own Google Maps key, if they named one (see gmaps.js): { key, session,

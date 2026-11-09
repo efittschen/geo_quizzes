@@ -100,39 +100,55 @@ function starsEl(levels) {
 // Review (see srs.js): learned questions come back on a schedule. The pages that start a review share its buttons,
 // its result and the header's link.
 
-// Two buttons that review some of the quizzes: "Due 12" asks their cards that are due, "All 80" everything learned
-// in them (one review asks 50 cards at most, and the due ones only until 200 are reviewed in a day: see srs.js).
+// Two buttons that review some of the quizzes: one asks their cards that are due, the other everything learned in
+// them (one review asks 50 cards at most, and the due ones only until 200 are reviewed in a day: see srs.js).
 // index: data/site/quizzes.json; back: the page the review ends on. Null if nothing is learned in these quizzes.
+// Three looks:
+//   "big"    a country page: "Due 12" the main button, "All 80" beside it
+//   "top"    the review page's top: "Review" the main button (the number due stands big beside it), "All 1,055"
+//   "chip"   a line of the review page's stack: the numbers alone, under its columns Due and Learned; the due one
+//            tinted while something is due
 // layer: { id, key } keeps them to one layer of one quiz (its island groups, not its provinces), and { id, key, look }
 // to the cards of that layer played on one map (the street map); group: to one group of the layer (Gorontalo's
-// kabupaten and kota), on all its maps or on one.
-function reviewButtons(index, quizzes, back, small = false, layer = null) {
+// kabupaten and kota), on all its maps or on one. made: what the buttons count, where the page has it from
+// SRS.overview already (the review page: its decks, and on each line of its stack the decks, layer, map or group of
+// that line), so that it is not worked out again for every button (SRS.overview reads every quiz's cards).
+function reviewButtons(index, quizzes, back, look = "big", layer = null, made = null) {
   if (typeof SRS === "undefined") return null;
-  const whole = SRS.overview(quizzes, Date.now());
-  const layers = layer ? whole.filter((d) => d.id === layer.id).flatMap((d) => d.layers.filter((l) => l.key === layer.key)) : null;
-  const within = !layer || layer.group == null ? layers : layers && layers.flatMap((l) => l.groups.filter((g) => g.title === layer.group)); // (a group of the layer: its cards only)
-  const decks = !layer ? whole : layer.look == null ? within : within.flatMap((l) => l.maps.filter((m) => m.look === layer.look));
+  const decks = made ?? (() => {
+    const whole = SRS.overview(quizzes, Date.now());
+    const layers = layer ? whole.filter((d) => d.id === layer.id).flatMap((d) => d.layers.filter((l) => l.key === layer.key)) : null;
+    const within = !layer || layer.group == null ? layers : layers && layers.flatMap((l) => l.groups.filter((g) => g.title === layer.group)); // (a group of the layer: its cards only)
+    return !layer ? whole : layer.look == null ? within : within.flatMap((l) => l.maps.filter((m) => m.look === layer.look));
+  })();
   if (!decks.length) return null;
   const ids = quizzes === index.quizzes ? null : quizzes.map((q) => q.id); // null: every quiz
   const kinds = layer ? { [layer.id]: [(layer.look == null ? layer.key : `${layer.key}@${layer.look}`) + (layer.group == null ? "" : `#${layer.group}`)] } : null;
   const limit = !SRS.dayLeft(Date.now()); // enough cards reviewed for today: the due ones wait
-  const button = (label, key, all, className) => {
-    const n = decks.reduce((sum, d) => sum + d[key], 0);
+  const button = (key, all) => {
+    const n = decks.reduce((sum, d) => sum + d[key], 0), named = `${all ? "All" : "Due"} ${n}`;
     const b = document.createElement("button");
     b.type = "button";
-    b.className = className;
-    b.textContent = `${label} ${n}`;
+    if (look === "chip") {
+      b.className = all || !n ? "chip" : "chip due";
+      b.textContent = n.toLocaleString("en-US");
+      b.setAttribute("aria-label", named);
+      b.title = named;
+    } else if (look === "top") {
+      b.className = all ? "ghost" : "primary";
+      b.textContent = all ? `All ${n.toLocaleString("en-US")}` : "Review";
+    } else {
+      b.className = all ? "ghost" : "primary";
+      b.textContent = named;
+    }
     b.disabled = !n || (limit && !all);
     b.addEventListener("click", () => {
       window.location.href = SRS.startRun(window.location.href, index.quizzes, { ids, all, back, kinds });
     });
     return b;
   };
-  const buttons = [
-    button("Due", "due", false, small ? "ghost small" : "primary"),
-    button("All", "total", true, small ? "ghost small" : "ghost"),
-  ];
-  if (limit && !small && decks.some((d) => d.due)) {
+  const buttons = [button("due", false), button("total", true)];
+  if (limit && look !== "chip" && decks.some((d) => d.due)) {
     const label = document.createElement("span");
     label.className = "label";
     label.textContent = "Daily limit";
@@ -173,7 +189,7 @@ function reviewResult() {
   }
   return box;
 }
-// The header's Review link shows how many cards are due.
+// The home page header's Review link shows how many cards are due.
 function showReviewDue(index) {
   const link = document.getElementById("review-link");
   if (!link || typeof SRS === "undefined") return;

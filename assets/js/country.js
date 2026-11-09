@@ -142,7 +142,6 @@ function renderArea(index, area) {
   if (quizzes.length) renderQuizzes(quizzes, null, undefined, scoped.some((q) => q.area) ? (q) => q.area ?? "" : null);
   else showEmpty(`No quizzes for ${area} yet.`);
   renderReview(index, quizzes, areaUrl(area));
-  showReviewDue(index);
 }
 
 // A suite (country.html?suite=Beginner): its quizzes in order, numbered, each with its place. No outline to draw.
@@ -162,7 +161,6 @@ function renderSuite(index, world, suites, name) {
   $("quiz-cards").classList.add("ordered");
   renderQuizzes(quizzes, (q) => q.area ?? nameByCode.get(quizCountries(q)[0]) ?? "");
   renderReview(index, quizzes, suiteUrl(suite.name));
-  showReviewDue(index);
 }
 
 async function init() {
@@ -201,7 +199,6 @@ async function init() {
     if (quizzes.length) renderQuizzes(ordered, null, undefined, quizGroup);
     else showEmpty(`No quizzes for ${name} yet.`);
     renderReview(index, quizzes, countryUrl(code));
-    showReviewDue(index);
   } catch (err) {
     console.error(err);
     $("country-name").textContent = "Something went wrong";

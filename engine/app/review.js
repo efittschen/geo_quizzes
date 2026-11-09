@@ -2,8 +2,9 @@
 //
 // Due and All beside the page's title start a review of this page's cards: the due ones, or all of them. A review over
 // several quizzes, started on the review page or a country page, comes here as ?review=1 and asks three of this page's
-// cards drawn at random, then goes on to the next quiz the run draws. Every question has a clock: a bar under it that
-// runs down to the time limit, green while a right answer still counts as known, a notch where "easy" ends and one where
+// cards drawn at random, then goes on to the next quiz the run draws. A practice over several quizzes (the review
+// page's Practice for a whole list) comes here as ?run=<n> and goes on the same way once its round is played. Every
+// question has a clock: a bar under it that runs down to the time limit, green while a right answer still counts as known, a notch where "easy" ends and one where
 // "known" ends; run out, the answer shows and must still be given. A card not known comes back at the end of the review;
 // asked again (a replay), answered right it is rated by hand: Easy, Good or Hard in a column over the map (the keys 4,
 // 3, 2; Enter: the one filled, Hard), Hard when its bar runs out, and nothing goes on until then. Only a card's first
@@ -131,6 +132,8 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
 
   /* ---------- several quizzes ---------- */
   let index = null;
+  // (this page as a stop of a practice over several quizzes: its place in it, from 1; see srs.js startPractice)
+  const practiceAt = Math.max(0, parseInt(new URLSearchParams(location.search).get('run'), 10) || 0);
   async function travel() {
     stack();
     index ||= fetch(root + 'data/site/quizzes.json').then(r => r.json()).then(j => j.quizzes.filter(q => !q.hidden)).catch(() => [{ id: page, url: location.pathname }]);
@@ -384,6 +387,13 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
       if (n) $('rLine').textContent += ` · +${n} review`;
     }
     syncButtons();
+    // a stop of a practice over several quizzes (?run): its round played, on to the next stop after a moment, as a
+    // review goes from quiz to quiz (a round ended early stays, with its results)
+    if (practiceAt && !result.def.review && !result.ended) {
+      $('app').classList.add('moving');
+      setTimeout(() => { location.href = SRS.practiceStop(root, practiceAt); }, GROUP_PAUSE);
+      return;
+    }
     if (!result.def.review || !S || S.leaving) return;
     if (!result.ended && S.rounds.length) { nextRound(); return; }
     cancelAnimationFrame(raf); bar.hidden = true;
