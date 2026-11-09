@@ -269,6 +269,64 @@ body > .rv-rate{position:fixed;top:50%}
   .app.nomap .panel,.app.nomap.playing .panel{max-height:none;padding-top:18px;gap:14px}
   .app.nomap .picks button{min-height:56px;font-size:1.15rem}
 }
+/* Cards (modes/cards.js): the question on a card in the middle of the page, a little smaller than it, on a table a
+   shade darker than the panel; the panel a line above it (the page's name, the score, the round's buttons, the ticks
+   under them). Turned over, the card shows the map with the place lit (a Plonkit map's picture instead, .pic), what is
+   said of it, and Easy, Good, Hard, Missed. While it turns (.turning, 0.5 s) both its sides are on it, each seen from
+   its own side only; at rest only the side up, and nothing turned but the map side while it is down (not hidden by
+   visibility: the map reads its looks from the page's styles, and would read every shape as not shown). */
+.flip{display:none}
+.app.cards{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);background:color-mix(in srgb,var(--ink) 5%,var(--panel))}
+.app.cards .panel{grid-row:1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 24px;padding:14px 24px 0;border:0;background:transparent;overflow:visible;max-height:none}
+.app.cards .brand{display:flex;align-items:baseline;gap:12px}
+.app.cards .brand .back{margin:0}
+.app.cards .brand h1{margin:0;font-size:1.5rem}
+.app.cards #play{flex:1 1 auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 22px}
+.app.cards #play > .stats{display:flex;gap:18px}
+.app.cards #play > .stats div{flex-direction:row;align-items:baseline;gap:5px}
+.app.cards #play > .stats b{font-size:1.25rem}
+.app.cards #play > .row{margin-left:auto}
+.app.cards #play > .ticks{order:1;flex:1 0 100%;height:4px}
+.app.cards .flip{grid-row:2;display:flex;justify-content:center;min-height:0;padding:14px 24px 24px;perspective:2000px}
+.flip-card{position:relative;flex:1;max-width:1080px;transform-style:preserve-3d}
+.flip-card.turning{transition:transform .5s cubic-bezier(.45,.05,.3,1);pointer-events:none}
+.flip-face{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;background:var(--card);border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.12),0 14px 40px rgba(0,0,0,.16);backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.flip-card.turning .flip-back{transform:rotateY(180deg)}
+.flip-card:not(.turning)[data-side="front"] .flip-back{transform:rotateY(180deg);pointer-events:none}
+.flip-card:not(.turning)[data-side="back"] .flip-front{visibility:hidden}
+.flip-q{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:22px;cursor:pointer}
+.flip-q .photo{flex:1 1 0;min-height:0;width:100%;height:auto;aspect-ratio:auto;border:0;border-radius:6px;background:transparent;cursor:pointer}
+.flip-q .bigname{font-size:clamp(2.2rem,6vw,4.2rem);text-align:center}
+.flip-bar{flex:none;display:flex;justify-content:center;gap:8px;padding:14px 18px 16px}
+.flip-show{flex:0 1 220px;min-height:46px;justify-content:space-between;padding:0 16px}
+.flip kbd{font:inherit;font-size:.8rem;opacity:.6}
+.flip-back > .stage{flex:1;min-height:0}
+.flip-pic{display:none;flex:1;min-height:0;align-items:center;justify-content:center;padding:16px;background:var(--panel)}
+.flip-pic img{max-width:100%;max-height:100%;object-fit:contain}
+.flip-back.pic > .stage{display:none}
+.flip-back.pic > .flip-pic{display:flex}
+.flip-back > .feedback{flex:none;min-height:0;margin:0;padding:12px 18px 0;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;cursor:pointer}
+.flip-rate button{appearance:none;flex:0 1 150px;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:46px;padding:0 14px;border:1.5px solid var(--ink);border-radius:var(--radius);background:var(--panel);color:var(--ink);font:600 1rem/1 var(--sans);cursor:pointer}
+.flip-rate button:hover{background:color-mix(in srgb,var(--ink) 8%,var(--panel))}
+.flip-rate .miss{margin-left:14px}
+/* Hard and Missed in the colours their answers take on the map and the ticks (unsure, missed) */
+.flip-rate .hard{border-color:color-mix(in srgb,var(--t2) 70%,var(--ink));background:var(--t2)}
+.flip-rate .hard:hover{background:color-mix(in srgb,var(--t2) 85%,var(--ink))}
+.flip-rate .miss{border-color:color-mix(in srgb,var(--miss) 70%,var(--ink));background:var(--miss)}
+.flip-rate .miss:hover{background:color-mix(in srgb,var(--miss) 85%,var(--ink))}
+@media (max-width:760px){
+  .app.cards .panel{padding:8px 12px 0;gap:4px 12px}
+  .app.cards #play{gap:4px 12px}
+  .app.cards #play > .stats{gap:12px}
+  .app.cards .flip{padding:8px 10px 10px}
+  .flip-q{padding:12px}
+  .flip-bar{padding:10px 10px 12px}
+  .flip-rate{gap:6px}
+  .flip-rate button{padding:0 6px;justify-content:center;font-size:.95rem}
+  .flip-rate .miss{margin-left:6px}
+  .flip kbd{display:none}
+  .flip-back > .feedback{padding:8px 12px 0}
+}
 /* picks (Pick, Pick back): four to pick from, two by two */
 .picks{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .picks button{appearance:none;min-height:44px;padding:8px 10px;border:1.5px solid var(--line);border-radius:var(--radius);background:var(--card);color:var(--ink);font:600 1rem/1.2 var(--sans);text-align:center;cursor:pointer}

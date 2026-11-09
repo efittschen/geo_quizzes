@@ -16,6 +16,7 @@
 //   picks   one of four
 //   pairs   questions matched with names on a board
 //   draw    the place drawn on the map
+//   cards   the question on a card, turned over to the answer, then rated Easy, Good, Hard or Missed
 
 import { makeMapTap } from './map-tap.js';
 import { makeMapPlay } from './map-play.js';
@@ -24,6 +25,7 @@ import { makeTyped } from './typed.js';
 import { makePicks } from './picks.js';
 import { makePairs } from './pairs.js';
 import { makeDraw } from './draw.js';
+import { makeCards } from './cards.js';
 
 export function createModes(deps) {
   const $ = id => document.getElementById(id), { map, game } = deps;
@@ -39,7 +41,7 @@ export function createModes(deps) {
     map.blink(key, [area], 'flash', 800, () => map.tag(K, area, key, false));
   };
   const shared = { ...deps, $, flash, flashArea };
-  const makers = { map: makeMapTap, free: makeMapPlay, all: makeAllAreas, list: makeTyped, type: makeTyped, picks: makePicks, pairs: makePairs, draw: makeDraw };
+  const makers = { map: makeMapTap, free: makeMapPlay, all: makeAllAreas, list: makeTyped, type: makeTyped, picks: makePicks, pairs: makePairs, draw: makeDraw, cards: makeCards };
   const made = {};
   return {
     make(P, look) {

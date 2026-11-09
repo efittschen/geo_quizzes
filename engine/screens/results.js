@@ -30,7 +30,7 @@ export function makeResults({ quiz, map, formats, ui }) {
       $('chips').replaceChildren(...R.queue.map((id, i) => [id, R.res[i]]).filter(([, t]) => t > 0).sort((a, b) => K.ids.indexOf(a[0]) - K.ids.indexOf(b[0])).map(([id, t]) => {
         const b = document.createElement('button');
         b.type = 'button'; b.className = 'chip ' + RESULT[t]; b.dataset.id = id; b.item = id; b.play = P;
-        b.textContent = K.chip(id); b.title = K.chipTitle(id);
+        b.textContent = K.chip(id); b.title = K.chipTitle ? K.chipTitle(id) : ''; // (a layer without chip titles)
         if (K.photo) { const p = K.photo(id), im = document.createElement('img'); im.src = p.src; im.alt = ''; im.loading = 'lazy'; b.classList.add('ph'); b.textContent = K.name(id); b.prepend(im); }
         return b;
       }));

@@ -10,7 +10,10 @@
 //                               { option } one of the four to pick ({ word, id }: the item it is the word of)
 //                               { point }  map play: a tap anywhere
 //                               { drawn }  Draw: the share the drawing has in common with the place (0 to 1)
-//                             -> an outcome (below). grade(missed) -> a review's result: 0 known, 1 unsure, 3 missed
+//                               { rated }  Cards: the player's rating once the answer was shown, as the review's
+//                                          grades: 3 easy, 2 good, 1 hard, 0 missed
+//                             -> an outcome (below). grade(missed, rated) -> a review's result: 0 known, 1 unsure,
+//                             3 missed (rated: Cards' rating, which it takes as it is, not the clock's)
 //   r.board(), r.match(question, tile, grade)   Pairs: the next board; a pair picked (tile: { name, owner })
 //   r.reveal()                the answer shown without a try (a review's time run out): the player still gives it
 //   r.giveUp(grade)           Type code: the codes shown, the question missed
@@ -119,6 +122,9 @@ export function makeRound(def, { quiz, random, now }) {
       S.points += pts;
       return done(def.review && grade ? grade(pts < 4000) : cls, { km, points: pts, single: s, cls });
     }
+    // (Cards: out of a review, easy, good and hard are known at the first try, missed is missed; the rating goes to the
+    // card's schedule all the same, outcome.rated)
+    if ('rated' in input) return done(def.review && grade ? grade(input.rated === 0, input.rated) : input.rated === 0 ? MAX_TRIES : 0, { rated: input.rated });
     if ('drawn' in input) {
       const pct = Math.round(input.drawn * 100), ok = pct >= PASS && !q.revealed;
       return done(def.review && grade ? grade(!ok) : ok ? 0 : MAX_TRIES, { pct });

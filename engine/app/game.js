@@ -8,23 +8,28 @@
 //   game.answer(input)            what the mode was given (see model/round.js); -> the outcome
 //   game.match(question, tile)    Pairs: a pair picked
 //   game.giveUp(), game.timeUp()  Type code's Give up; a review's time run out (the answer shown, still to be given)
+//   game.show()                   Cards: the answer shown (the card turned over the first time), to be rated;
+//                                 game.shownAt: when, null before
+// Cards: a card's place is not named on the map once rated (the next card's map must not show it), the next card is
+// asked once the card is edge-on as it turns back (CARD_TURN), and the results show every card's place again.
 //   game.stop()                   End round: the results of what was answered
 //   game.round, game.def, game.mode, game.asked
 //   game.on(event, fn)            'start' (def), 'ask' (question), 'outcome' (outcome), 'done' (result)
 //   game.review                   the review's side, set by it: { grade(missed), asked(q), missed(id), answered(id,
 //                                 result, members), after(go), finished(result, ended) }; null: none
 
-const RESULT = ['got', 't2', 't3', 'miss'], FRESH_MS = 700;
+const RESULT = ['got', 't2', 't3', 'miss'], FRESH_MS = 700, CARD_TURN = 250; // (half of modes/cards.js' TURN)
 
 export function createGame({ quiz, model, map, storage, formats }) {
   const listeners = {};
   const emit = (event, value) => { for (const f of listeners[event] || []) f(value); };
   let round = null, def = null, mode = null, format = null, opts = {}, asked = null, askedAt = 0, back = null, ending = 0, lastTap = 0, lastPoint = null;
+  let shownAt = null;
   const now = () => performance.now();
   const K = () => def.play.kind;
 
   function play(d, m, o = {}) {
-    clearTimeout(ending);
+    clearTimeout(ending); rating = false; // (a round begun while the last answer was held: nothing waits any more)
     if (mode) mode.close();
     def = { ...d, look: { ...d.look } };
     const P = def.play;
@@ -44,10 +49,18 @@ export function createGame({ quiz, model, map, storage, formats }) {
   }
   function layout() { map.draw(def.play.drawn, { hints: opts.hints, letters: opts.letters, asking: true }); }
 
+  function show() {
+    if (!round || !asked || shownAt !== null || rating) return;
+    shownAt = now();
+    const areas = K().areas[asked.id];
+    if (areas.length) { map.mark(areas, 'ans'); showAnswer(areas); map.highlight(areas); }
+    emit('outcome', { kind: 'shown', id: asked.id });
+  }
+
   function ask() {
     asked = round.asked();
     if (!asked) return;
-    askedAt = now();
+    askedAt = now(); shownAt = null;
     map.highlight(null);
     if (back) { map.setView(back); back = null; } // (the view before it flew to a shown answer)
     format.show(asked.id, asked);
@@ -121,12 +134,12 @@ export function createGame({ quiz, model, map, storage, formats }) {
       return;
     }
     if (out.kind !== 'right') { emit('outcome', out); return; }
-    const cls = RESULT[out.result], fresh = P.fresh || k.fresh;
+    const cls = RESULT[out.result], fresh = P.fresh || k.fresh, named = P.mode !== 'cards';
     if (fresh || opts.hard) map.fade(0, opts.hard);
     for (const m of out.members) {
       map.mark(k.areas[m], ['ans', 'flash', 'found', 'pick', ...RESULT], false); map.mark(k.areas[m], cls);
       if (k.rare) for (const a of k.areas[m]) map.mark([a], 'rare', !!k.rare(m, a));
-      map.label(k, m);
+      if (named) map.label(k, m);
     }
     if (fresh || opts.hard) map.fade(FRESH_MS, opts.hard);
     format.answered(out.id, cls);
@@ -139,13 +152,15 @@ export function createGame({ quiz, model, map, storage, formats }) {
     formats.say(P, out.id);
     const ms = now() - askedAt;
     out.members.forEach((m, n) => {
-      const seen = game.review ? game.review.answered(m, out.result, n) : null;
+      const seen = game.review ? game.review.answered(m, out.result, n, out.rated) : null;
       log(m, out, ms, !!(seen && seen.replay));
     });
     if (P.mode === 'pairs') askedAt = now(); // (the next pair's clock starts)
     emit('outcome', out);
+    const hold = P.mode === 'cards' ? CARD_TURN : 0;
     onward(() => {
       if (P.mode === 'pairs') { if (out.cleared) { if (round.asked()) ending = setTimeout(board, 450); else ending = setTimeout(finish, 450); } return; }
+      if (hold) { rating = true; ending = setTimeout(() => { rating = false; if (round.asked()) ask(); else finish(); }, hold); return; }
       if (round.asked()) ask();
       else if (def.look.map === 'free') ending = setTimeout(finish, 1500);
       else finish();
@@ -183,11 +198,12 @@ export function createGame({ quiz, model, map, storage, formats }) {
   }
 
   function finish() {
-    clearTimeout(ending);
+    clearTimeout(ending); rating = false;
     const k = K(), R = { ...round.result(), retry: def.retry };
     map.highlight(null); map.ask(null);
     for (const id of def.items) map.label(k, id);
-    if (opts.hard && !k.fresh) { map.unfade(); R.queue.forEach((id, i) => { if (R.res[i] !== undefined) map.mark(k.areas[id], RESULT[R.res[i]]); }); }
+    // (Hard mode and Cards took the answers off the map as they went: back on it, in their results' colours)
+    if ((opts.hard && !k.fresh) || def.play.mode === 'cards') { map.unfade(); R.queue.forEach((id, i) => { if (R.res[i] !== undefined) map.mark(k.areas[id], RESULT[R.res[i]]); }); }
     const kept = def.review ? { prev: null, better: false } : model.results.keep(def.play, R, def.look.map);
     mode.close(); format.hide();
     const result = { ...R, ...kept, def, ended: R.n < R.items.length };
@@ -196,7 +212,8 @@ export function createGame({ quiz, model, map, storage, formats }) {
   }
 
   const game = {
-    play, answer, match, giveUp, timeUp, layout,
+    play, answer, match, giveUp, timeUp, layout, show,
+    get shownAt() { return shownAt; },
     stop() { if (round) finish(); },
     get round() { return round; }, get def() { return def; }, get mode() { return mode; }, get asked() { return asked; },
     get rating() { return rating; }, get opts() { return opts; },

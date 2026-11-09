@@ -5,6 +5,8 @@
 //   prompt         what its question shows: 'name', 'dial' (a code), 'text', 'photo', 'area' (its place outlined)
 //   of, lang       the items of kind `of` in another language or under another label; start: the one shown first
 //   cards          '<kind>': it shares that kind's review cards
+//   asCards        it is played as cards too (Cards: the question on a card, turned over to the answer, then rated)
+//   onlyCards      it is played as cards alone (a map to learn, with no place to tap or draw)
 //   modes, defaultMode, answer(id), answers(id) (other spellings that count), typeMode, typed(id, text) (or true: typed,
 //                  checked from its name and answers), choices(), time(id)
 //   rankings, areaRank, primary(area), presets, pickAll, clickAll, fresh, areaLabel, labelPerArea, dim, plates
@@ -17,12 +19,13 @@
 //   sub, pickTitle "16 states", "States to practice"
 //
 // A play: a kind and a way to answer it (WAYS). Every kind is played on the map ('map'), and in the ways its config
-// names (modes), Name it and Shape where it names one place (nameable), Draw where a place is tapped (drawable). A
+// names (modes), Name it and Shape where it names one place (nameable), Draw where a place is tapped (drawable),
+// Cards where it says so (asCards). A
 // play other than the map is kept apart under '<kind>~<way>': its best results, its review cards, its stars.
 //   play.kind, play.way, play.key, play.cards, play.label
 //   play.format    how the question shows: name, code, text, picture, outline, shape
 //   play.mode      how it is answered: map, all (every area: tapped, or picked and checked), list, type, picks,
-//                  pairs, draw ('free', map play, is chosen by the map instead)
+//                  pairs, draw, cards ('free', map play, is chosen by the map instead)
 //   play.answerName(id)   the name answered (the kind it is `of` names it, else its own answer or name)
 //   play.drawn            the kind as the map draws it in this play (its layout: map/layouts.js)
 //   play.time(id, ask)    how many times a tap's time the review's clock gives it (ask: { all: every area to tap,
@@ -30,7 +33,7 @@
 
 import { codeChecks, namedChecks, plainName, typedOf } from './checks.js';
 
-export const WAYS = { map: 'Map', list: 'List', type: 'Type', pairs: 'Pairs', pick: 'Pick', pickback: 'Pick back', code: 'Type code', name: 'Name it', shape: 'Shape', draw: 'Draw' };
+export const WAYS = { map: 'Map', list: 'List', type: 'Type', pairs: 'Pairs', pick: 'Pick', pickback: 'Pick back', code: 'Type code', name: 'Name it', shape: 'Shape', draw: 'Draw', cards: 'Cards' };
 const FORMAT = { name: 'name', dial: 'code', text: 'text', photo: 'picture', area: 'outline' };
 
 export function makeKinds(quiz, geo) {
@@ -56,7 +59,7 @@ export function makeKinds(quiz, geo) {
   const drawable = K => !quiz.dots && !quiz.board && K.prompt !== 'area' && !K.typed && !K.fresh && !K.pickAll;
   // (Name it, Shape: one place a question, asked by its name, or its name in another script or on a sign)
   const nameable = K => !quiz.board && (K.prompt === 'name' || K.prompt === 'text') && !K.typed && !K.fresh && !K.pickAll && !K.clickAll && !K.areaLabel && !K.labelPerArea;
-  const ways = K => ['map', ...(K.modes || []), ...(nameable(K) ? ['name', ...(quiz.dots ? [] : ['shape'])] : []), ...(drawable(K) ? ['draw'] : [])];
+  const ways = K => K.onlyCards ? ['cards'] : ['map', ...(K.modes || []), ...(nameable(K) ? ['name', ...(quiz.dots ? [] : ['shape'])] : []), ...(drawable(K) ? ['draw'] : []), ...(K.asCards ? ['cards'] : [])];
 
   const answerNameOf = K => K.answer || (byKey[K.of] ? i => byKey[K.of].name(i) : K.name);
   // (Name it and Shape share their names, made as the page opens: a text drawn at random is drawn there)
@@ -93,6 +96,7 @@ export function makeKinds(quiz, geo) {
     else if (way === 'code') Object.assign(lazy(P, 'code', () => codeChecks(K)), { format: 'outline', mode: 'type', fresh: true, keyboard: K.plates ? 'text' : 'numeric', time: (i, ask) => 3 * Math.max(1, ((ask && ask.group) || []).length) });
     else if (way === 'name' || way === 'shape') Object.assign(P, { format: way === 'name' ? 'outline' : 'shape', mode: 'list', ...named.get(key), time: () => 3 });
     else if (way === 'draw') Object.assign(P, { format: FORMAT[K.prompt] || 'name', mode: 'draw', time: () => 6 });
+    else if (way === 'cards') Object.assign(P, { format: FORMAT[K.prompt] || 'name', mode: 'cards' }); // (no time: rated by hand, never by the clock)
     plays.set(id, P);
     return P;
   }

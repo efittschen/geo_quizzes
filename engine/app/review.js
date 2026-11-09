@@ -24,8 +24,10 @@
 //                   it ends on
 // Whatever the column, a click anywhere else on the page (not a drag of the map) takes the one filled; what it clicks
 // still does its own job, but a tap on the map never answers the next question as well.
+// Cards (modes/cards.js) are rated by the player on the card itself, Easy, Good, Hard or Missed, never by the clock:
+// no bar, no column, whatever the setting Rating says, and a replay is rated the same way.
 // Ordinary rounds count too, quietly, for cards on the stack: a wrong try is "not known", a first-try answer within the
-// known time "known"; a perfect round puts its questions on the stack.
+// known time "known", a card of Cards as it is rated; a perfect round puts its questions on the stack.
 //
 //   const review = makeReview(deps)   (deps.play(def): a round started as the App starts one)
 //   review.hooks          what the Game asks of it (game.review): grade, asked, missed, answered, after, finished
@@ -106,7 +108,7 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
     light(P0);
     const label = $('sScore').nextElementSibling; if (label) label.textContent = 'Known';
     if (said) { fb.className = said[0]; fb.replaceChildren(...said[1]); }
-    if (S.prev) map.mark(S.prev.areas, S.prev.cls);
+    if (S.prev && P0.mode !== 'cards') map.mark(S.prev.areas, S.prev.cls); // (a card's map shows its own place alone)
     showStats();
   }
   // the review's answers so far: kept in the run over several quizzes, so they carry on from page to page
@@ -162,7 +164,16 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
     if ((C && C.wait) || pend.length) rate(null, 'quiet');
     hand = null;
     if (!q) return;
-    const P0 = game.def.play, o = SRS.opts(), t = rules.times(P0, q.id, { all: game.round.needAll(), group: q.group }, o);
+    const P0 = game.def.play, o = SRS.opts(), cards = P0.mode === 'cards';
+    if (cards) { // (rated by hand: no clock)
+      if (!game.def.review) { P = null; return; }
+      if (S.prev) unmark();
+      Object.assign(S, { t: performance.now(), late: false, again: false, rate: o.rate });
+      if (!S.asked) map.home();
+      showStats(); bar.hidden = true; cancelAnimationFrame(raf);
+      return;
+    }
+    const t = rules.times(P0, q.id, { all: game.round.needAll(), group: q.group }, o);
     // a card asked again after a miss was just shown: never "easy" by the clock
     const key = cardFor(P0, q.id, game.def.review ? S.way.look : here());
     const replay = game.def.review ? (S.chain ? (SRS.run().again[page] || []).includes(key) : S.counted.has(key)) : game.def.retry;
@@ -187,12 +198,13 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
     }
     raf = requestAnimationFrame(tick);
   }
-  function grade(missed) {
+  // (rated: Cards' rating, taken as it is)
+  function grade(missed, rated) {
     if (C && !C.wait) rate(null, 'next'); // (Pick in 4 s: an answer closes the rating still open)
     const t = Math.max(0, performance.now() - S.t);
-    S.g = rules.grade({ ms: t, wrong: missed, late: S.late, easy: S.easy, known: S.fast });
+    S.g = rated ?? rules.grade({ ms: t, wrong: missed, late: S.late, easy: S.easy, known: S.fast });
     S.secs = t / 1000;
-    S.how = byHand(S.g, S.again);
+    S.how = rated == null ? byHand(S.g, S.again) : null;
     return CLASS[S.how && S.how.green ? KNOWN : S.g]; // (a pick waited for: green on the map meanwhile)
   }
   // How the setting "Rating" has a right answer rated: null, by the clock; else { wait: the review waits for it,
@@ -213,12 +225,14 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
     P.missed = true;
     SRS.answer(page, cardFor(game.def.play, id, here()), MISSED, Date.now());
   }
-  function answered(id, result, n) {
-    const P0 = game.def.play, K = P0.kind, right = result === 0;
+  // (rated: Cards' rating, whatever the round: the card's schedule takes it as it is)
+  function answered(id, result, n, rated) {
+    const P0 = game.def.play, K = P0.kind, right = result === 0, cards = rated != null;
     if (!game.def.review) {
       if (n && !right && P) P.missed = false; // (each missed code of a group counts as missed)
       const key = cardFor(P0, id, here()), c = SRS.deck(page).c[key];
-      if (!right) missed(id);
+      if (cards) SRS.answer(page, key, rated, Date.now(), true);
+      else if (!right) missed(id);
       else if (game.def.retry) { if (c && !c.x && P && !P.missed) pend.push(key); } // (the Retry round: a replay, rated by hand)
       else if (P && !P.missed && performance.now() - P.t <= P.fast) SRS.answer(page, key, performance.now() - P.t <= P.easy ? INSTANT : KNOWN, Date.now());
       return null;
@@ -229,12 +243,12 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
     // listed for the results (Pick at the end).
     const first = S.chain ? SRS.ran(page, key, g) : !S.counted.has(key), replay = !first && g !== MISSED;
     const ri = S.chain && first ? SRS.run().res.length - 1 : null, si = S.res.length; // (its places in the results)
-    const how = byHand(g, replay), listed = S.rate === 'end', told = screens.question.told(P0, id);
-    const rec = replay ? UNSURE : SRS.clocked(page, key, g, now); // (the one filled: the clock's, a replay's Hard)
+    const how = cards ? null : byHand(g, replay), listed = !cards && S.rate === 'end', told = screens.question.told(P0, id);
+    const rec = cards ? g : replay ? UNSURE : SRS.clocked(page, key, g, now); // (the one filled: the clock's, a replay's Hard)
     const before = listed && g !== MISSED ? SRS.deck(page).c[key] : null;
     let card = null;
     if (how) (hand ||= { items: [], rec, ...how }).items.push({ key, at: now, first, si, ri, tick: S.chain ? ri : si });
-    else card = SRS.answer(page, key, listed ? rec : g, now, replay);
+    else card = SRS.answer(page, key, listed ? rec : g, now, replay || cards);
     if (listed) {
       const e = { q: page, k: key, n: told, s: Math.round(S.secs * 10) / 10, g: g === MISSED ? MISSED : rec, r: replay ? 1 : 0, b: before, at: now, i: ri, si, f: first };
       if (S.chain) SRS.keepRated(e); else S.list.push(e);
@@ -245,7 +259,7 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
     if (S.prev) unmark();
     S.prev = { K, id, key, areas: K.areas[id], cls: RESULT[CLASS[how && how.green ? KNOWN : g]] };
     queueMicrotask(() => { // (after the Game has said its own)
-      screens.question.said(how && how.green ? 'ok' : SAID[g], g === MISSED ? told : `✓ ${told} · ${S.secs.toFixed(1)} s`, card ? [`Next ${SRS.until(card.d, now)}`] : []);
+      screens.question.said(how && how.green ? 'ok' : SAID[g], g === MISSED ? told : cards ? `✓ ${told}` : `✓ ${told} · ${S.secs.toFixed(1)} s`, card ? [`Next ${SRS.until(card.d, now)}`] : []);
     });
     if (g === MISSED && !S.chain) {
       if (S.rounds.length) rules.enqueue(S.rounds, P0.key, id, S.way); else { game.round.again(id); $('ticks').append(document.createElement('i')); }
