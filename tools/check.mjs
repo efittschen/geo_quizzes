@@ -73,7 +73,7 @@ function pickPages() {
     for (let i = 0; i < Math.min(n, qs.length); i++) out.push({ kind: k, url: qs[Math.floor((i + 0.5) * qs.length / Math.min(n, qs.length))].url });
   }
   const country = quizzes.find(q => q.country)?.country || '276';
-  out.push({ kind: 'home', url: 'index.html', wait: '#quiz-tree a' }, { kind: 'country page', url: `country.html?code=${country}`, wait: '#quiz-cards a' }, { kind: 'review page', url: 'review.html', wait: 'main' });
+  out.push({ kind: 'home', url: 'index.html', wait: '#quiz-tree a' }, { kind: 'country page', url: `country.html?code=${country}`, wait: '#quiz-cards a' }, { kind: 'review page', url: 'review.html', wait: 'main' }, { kind: 'settings page', url: 'settings.html', wait: 'main' });
   return out;
 }
 async function loadOne(p) {
@@ -299,7 +299,7 @@ async function stats(c) {
 
 /* ---------- g. Cards per map off: a perfect round on another map makes no new cards ---------- */
 async function cardsPerMap(c) {
-  const { page } = await c.open('review.html', { wait: 'main' });
+  const { page } = await c.open('settings.html', { wait: 'main' });
   const box = page.locator('#perMap');
   if (!(await box.count())) c.skip('no Cards per map');
   await box.uncheck();

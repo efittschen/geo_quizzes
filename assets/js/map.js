@@ -127,7 +127,6 @@ function renderQuizList(index, nameByCode, suites) {
   // The language quizzes, in their section: a plain list, as there are no places to fold them under.
   document.getElementById("language-list").hidden = !languages.length;
   document.getElementById("language-tree").replaceChildren(files(languages, "files flat"));
-  document.getElementById("language-link").hidden = !languages.length;
 
   // The world and the continents with quizzes of their own, and the suites, as links above the map: only on a page
   // that has a place for them (<nav id="areas">, <nav id="suites">); the home page has none at present.
