@@ -18,61 +18,48 @@
     <nav><a href="index.html">← Back to map</a></nav>
   </header>
 
-  <main class="review-page">
-    <section>
-      <h2>Timer</h2>
-      <div class="timer-opts">
-        <label>Easy within <input type="number" id="easy" min="0" max="60" step="1" inputmode="numeric"> s</label>
-        <label>Known within <input type="number" id="fast" min="1" max="120" step="1" inputmode="numeric"> s</label>
-        <label>Time limit <input type="number" id="limit" min="2" max="300" step="1" inputmode="numeric"> s</label>
-        <label>Rating <select id="rate"><option value="clock">Clock only</option><option value="quick">Pick in 4 s</option><option value="wait">Pick and wait</option><option value="slow">Pick when slow</option><option value="end">Pick at the end</option></select></label>
-      </div>
+  <main class="settings-page">
+    <h2>Review</h2>
+
+    <section class="set-card">
+      <h3>Timer</h3>
+      <div class="set-row"><label for="easy">Easy within</label><span class="set-ctl"><input type="number" id="easy" min="0" max="60" step="1" inputmode="numeric"> s</span></div>
+      <div class="set-row"><label for="fast">Known within</label><span class="set-ctl"><input type="number" id="fast" min="1" max="120" step="1" inputmode="numeric"> s</span></div>
+      <div class="set-row"><label for="limit">Time limit</label><span class="set-ctl"><input type="number" id="limit" min="2" max="300" step="1" inputmode="numeric"> s</span></div>
+      <div class="set-row"><label for="rate">Rating</label><span class="set-ctl"><select id="rate"><option value="clock">Clock only</option><option value="quick">Pick in 4 s</option><option value="wait">Pick and wait</option><option value="slow">Pick when slow</option><option value="end">Pick at the end</option></select></span></div>
     </section>
 
-    <section>
-      <h2>Limits</h2>
-      <div class="timer-opts">
-        <label>Cards per review <input type="number" id="round" min="1" step="1" inputmode="numeric"></label>
-        <label>Cards per day <input type="number" id="day" min="1" step="1" inputmode="numeric"></label>
-        <span id="today"></span>
-        <label class="toggle"><input type="checkbox" id="perMap"> Cards per map</label>
-      </div>
+    <section class="set-card">
+      <h3>Limits</h3>
+      <div class="set-row"><label for="round">Cards per review</label><span class="set-ctl"><input type="number" id="round" min="1" step="1" inputmode="numeric"></span></div>
+      <div class="set-row"><label for="day">Cards per day</label><span class="set-ctl"><input type="number" id="day" min="1" step="1" inputmode="numeric"> <span id="today" class="set-note"></span></span></div>
+      <div class="set-row"><label for="perMap">Cards per map</label><span class="set-ctl"><input type="checkbox" id="perMap" class="set-box"></span></div>
     </section>
 
-    <section>
-      <h2>Schedule</h2>
-      <div class="timer-opts">
-        <label>Scheduler <select id="algo"><option value="fsrs">FSRS</option><option value="sm2">SM-2</option></select></label>
-        <label data-algo="fsrs">Target retention <input type="number" id="retain" min="70" max="97" step="1" inputmode="numeric"> %</label>
-        <label>New card steps <input type="text" id="steps" inputmode="decimal"> min</label>
-        <label>Step after a miss <input type="number" id="restep" min="0" step="1" inputmode="numeric"> min</label>
-        <label data-algo="sm2">Kept after a miss <input type="number" id="keep" min="0" max="100" step="5" inputmode="numeric"> %</label>
-        <label data-algo="sm2">First interval <input type="number" id="first" min="1" step="1" inputmode="numeric"> days</label>
-        <label data-algo="sm2">Starting ease <input type="number" id="ease" min="130" step="5" inputmode="numeric"> %</label>
-        <label data-algo="sm2">Unsure interval <input type="number" id="hard" min="50" step="5" inputmode="numeric"> %</label>
-        <label>Longest interval <input type="number" id="max" min="1" step="1" inputmode="numeric"> days</label>
-        <button type="button" class="linkbtn" id="defaults">Defaults</button>
-      </div>
+    <section class="set-card">
+      <div class="set-head"><h3>Schedule</h3><button type="button" class="linkbtn" id="defaults">Defaults</button></div>
+      <div class="set-row"><label for="algo">Scheduler</label><span class="set-ctl"><select id="algo"><option value="fsrs">FSRS</option><option value="sm2">SM-2</option></select></span></div>
+      <div class="set-row" data-algo="fsrs"><label for="retain">Target retention</label><span class="set-ctl"><input type="number" id="retain" min="70" max="97" step="1" inputmode="numeric"> %</span></div>
+      <div class="set-row"><label for="steps">New card steps</label><span class="set-ctl"><input type="text" id="steps" inputmode="decimal"> min</span></div>
+      <div class="set-row"><label for="restep">Step after a miss</label><span class="set-ctl"><input type="number" id="restep" min="0" step="1" inputmode="numeric"> min</span></div>
+      <div class="set-row" data-algo="sm2"><label for="keep">Kept after a miss</label><span class="set-ctl"><input type="number" id="keep" min="0" max="100" step="5" inputmode="numeric"> %</span></div>
+      <div class="set-row" data-algo="sm2"><label for="first">First interval</label><span class="set-ctl"><input type="number" id="first" min="1" step="1" inputmode="numeric"> days</span></div>
+      <div class="set-row" data-algo="sm2"><label for="ease">Starting ease</label><span class="set-ctl"><input type="number" id="ease" min="130" step="5" inputmode="numeric"> %</span></div>
+      <div class="set-row" data-algo="sm2"><label for="hard">Unsure interval</label><span class="set-ctl"><input type="number" id="hard" min="50" step="5" inputmode="numeric"> %</span></div>
+      <div class="set-row"><label for="max">Longest interval</label><span class="set-ctl"><input type="number" id="max" min="1" step="1" inputmode="numeric"> days</span></div>
     </section>
 
-    <section>
-      <h2>Your data</h2>
-      <div class="timer-opts">
-        <button type="button" class="ghost small" id="download">Download</button>
-        <button type="button" class="ghost small" id="upload">Upload</button>
-        <input type="file" id="upload-file" accept="application/json,.json" hidden>
-      </div>
-    </section>
+    <h2>Maps</h2>
 
-    <section>
-      <h2>Google street map</h2>
-      <div class="timer-opts">
-        <input type="password" id="maps-key" placeholder="Google Maps API key" aria-label="Google Maps API key" autocomplete="off" spellcheck="false">
+    <section class="set-card">
+      <h3>Google street map</h3>
+      <div class="set-row"><label for="maps-key">API key</label><span class="set-ctl">
+        <input type="password" id="maps-key" class="set-long" placeholder="Google Maps API key" autocomplete="off" spellcheck="false">
         <button type="button" class="ghost small" id="maps-on">Use</button>
         <button type="button" class="ghost small" id="maps-off" hidden>Remove</button>
-        <span id="maps-state"></span>
-        <label class="toggle"><input type="checkbox" id="maps-unofficial"> Google Maps (unofficial)</label>
-      </div>
+        <span id="maps-state" class="set-note"></span>
+      </span></div>
+      <div class="set-row"><label for="maps-unofficial">Google Maps (unofficial)</label><span class="set-ctl"><input type="checkbox" id="maps-unofficial" class="set-box"></span></div>
       <details class="steps">
         <summary>Setup</summary>
         <ol>
@@ -86,14 +73,25 @@
       </details>
     </section>
 
-    <section>
-      <h2>Online copy</h2>
-      <div class="timer-opts">
-        <input type="url" id="sync-url" placeholder="Web app link" aria-label="Web app link" autocomplete="off" spellcheck="false">
+    <h2>Your data</h2>
+
+    <section class="set-card">
+      <h3>Backup</h3>
+      <div class="set-row"><span class="set-name">Data file</span><span class="set-ctl">
+        <button type="button" class="ghost small" id="download">Download</button>
+        <button type="button" class="ghost small" id="upload">Upload</button>
+        <input type="file" id="upload-file" accept="application/json,.json" hidden>
+      </span></div>
+    </section>
+
+    <section class="set-card">
+      <h3>Online copy</h3>
+      <div class="set-row"><label for="sync-url">Web app link</label><span class="set-ctl">
+        <input type="url" id="sync-url" class="set-long" placeholder="Web app link" autocomplete="off" spellcheck="false">
         <button type="button" class="ghost small" id="sync-on">Connect</button>
         <button type="button" class="ghost small" id="sync-off" hidden>Disconnect</button>
-        <span id="sync-state"></span>
-      </div>
+        <span id="sync-state" class="set-note"></span>
+      </span></div>
       <details class="steps" id="sync-steps">
         <summary>Setup</summary>
         <ol>

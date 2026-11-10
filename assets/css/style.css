@@ -253,15 +253,29 @@ main > .map-wrap:first-child{margin-top:24px}
 .list-bar .count{color:var(--muted);font-size:.9rem}
 .decks.due-list td{font-size:.92rem}
 .decks.due-list col.c-due{width:118px}
-.timer-opts{display:flex;flex-wrap:wrap;gap:10px 28px;color:var(--muted)}
-.timer-opts input[type=text]{width:7em}
-.timer-opts #max{width:6.4em}
-.timer-opts select{margin:0 4px;padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit}
-.timer-opts input{width:4.6em;margin:0 4px;padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;background:transparent;color:var(--ink);font:inherit}
-.timer-opts input[type=url],.timer-opts input[type=password]{width:26em;max-width:100%;margin:0}
-.timer-opts input[readonly]{color:var(--muted)}
-.timer-opts .toggle input{width:18px;height:18px;margin:0;padding:0;border:0}
-.steps{margin-top:12px;color:var(--muted);font-size:.92rem}
+/* Settings page (settings.html): groups (Review, Maps, Your data), each of cards; a card holds one setting per row, its
+   name in a column of the same width on every card and its box beside it; a card's Setup steps under its rows */
+.settings-page{padding-bottom:64px}
+.settings-page > *{max-width:680px}
+.settings-page h2:first-child{margin-top:28px}
+.set-card{margin:0 0 14px;padding:4px 18px 6px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card)}
+.set-card h3{margin:0;font:600 1.05rem/1.3 var(--sans)}
+.set-card > h3,.set-head{padding:12px 0 8px}
+.set-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.set-row{display:grid;grid-template-columns:clamp(8.5em,36%,12em) minmax(0,1fr);align-items:center;gap:6px 14px;padding:9px 0;border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent)}
+.set-row > label,.set-row > .set-name{color:var(--muted)}
+.set-row > label{cursor:pointer}
+.set-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;min-width:0;color:var(--muted)}
+.set-ctl input,.set-ctl select{margin:0;padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;background:transparent;color:var(--ink);font:inherit}
+.set-ctl select{background:var(--card)}
+.set-ctl input{width:4.6em}
+.set-ctl input[type=text]{width:7em}
+.set-ctl #max{width:6.4em}
+.set-ctl input.set-long{flex:1 1 12em;width:auto;min-width:0}
+.set-ctl input[readonly]{color:var(--muted)}
+.set-ctl input.set-box{width:18px;height:18px;padding:0;border:0;accent-color:var(--ink);cursor:pointer}
+.set-note{font-size:.9rem;white-space:nowrap}
+.steps{margin:0;padding:9px 0 6px;border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent);color:var(--muted);font-size:.92rem}
 .steps summary{width:fit-content;cursor:pointer}
 .steps ol{margin:8px 0 0;padding-left:1.5em;line-height:1.8}
 
