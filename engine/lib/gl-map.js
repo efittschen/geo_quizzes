@@ -11,8 +11,10 @@
    which holds nothing else and is never shown, and kept until the map's classes, the stage's or the theme change. The
    sample sits where the shape would, so every selector of the stylesheets (a page's own too) applies to it as it did.
 
-   A shape's triangles come from its outline alone: a closed outline (an area) is cut into the triangles of its fill
-   (earcut.js) and the strips of its line, an open one into its line; lines are strips of their width on the screen
+   A shape's outline is text (a path's d), or numbers where they are at hand (ReadyPath: the map's stored shapes, the
+   world under it), which are never made into text to be read back. Its triangles come from its outline alone: a closed
+   outline (an area) is cut into the triangles of its fill (earcut.js) and the strips of its line, an open one into its
+   line; lines are strips of their width on the screen
    (dashed where the look says so), dots (lines of no length with round caps) discs, circles rings; a line as wide on
    the map with round caps and joins (Draw's brush) has a disc at every point, so its ends and bends are round. They are kept on
    the shape until its outline changes, and those of the outlines a zoom step will need are made ahead while the page
@@ -40,6 +42,23 @@
                                       (outline), 'r' (outline with round caps), 'j' (round caps and joins), 'x'
                                       (a drawn outline's fill, see loopsOf)
 */
+// An outline in numbers: its parts as an outline's text is read, { p: [x, y, x, y, …], closed }, each of which keeps the
+// triangles made of it under their kind (n, x: a fill, s, r, j: a line; part.n may come with the part, cut by a tool). It
+// becomes text only where it is asked for as text.
+class ReadyPath {
+  constructor(parts) { this.parts = parts; this.text = null; this.fill = null; }
+  toString() {
+    if (this.text === null) {
+      let d = '';
+      for (const { p, closed } of this.parts) {
+        for (let i = 0; i < p.length; i += 2) d += (i ? 'L' : 'M') + p[i] + ',' + p[i + 1];
+        if (closed) d += 'Z';
+      }
+      this.text = d;
+    }
+    return this.text;
+  }
+}
 function mapShapes() {
   const LAYERS = ['ctx', 'free', 'regions', 'borders', 'hl', 'sketch', 'labels', 'pins'];
   const S = { LAYERS, changed: () => {} };
@@ -90,7 +109,7 @@ function mapShapes() {
     get id() { return this.attrs.get('id') || ''; }
     set id(v) { this.setAttribute('id', v); }
     setAttribute(k, v) {
-      v = String(v);
+      if (!(v instanceof ReadyPath)) v = String(v);
       if (k === 'class') return this.classList.reset(v);
       if (this.attrs.get(k) === v) return;
       this.attrs.set(k, v); touch(this, GEOMETRY.has(k) ? 'shapes' : TEXT.has(k) ? 'labels' : 'looks');
@@ -387,6 +406,11 @@ function glMap(stage, svg, S) {
   const keep = (map, key, make) => { let v = map.get(key); if (v === undefined) { v = make(); map.set(key, v); if (map.size > 20000) map.delete(map.keys().next().value); } return v; };
   const SPLIT = /(?=M)/;
   function trianglesOf(d, kind, arcs = false) {
+    if (d instanceof ReadyPath) {
+      if (kind === 'e') return (d.fill ??= fillOf(d.parts, true));
+      const of = s => (s[kind] ??= kind === 'n' || kind === 'x' ? fillOf([s], false, kind === 'x') : strokeOf([s], kind !== 's', kind === 'j'));
+      return d.parts.length === 1 ? of(d.parts[0]) : join(d.parts.map(of));
+    }
     const a = arcs ? 'a' : '';
     if (kind === 'e') return keep(WHOLES, kind + a + d, () => fillOf(parse(d, arcs), true));
     const make = piece => kind === 'n' || kind === 'x' ? fillOf(parse(piece, arcs), false, kind === 'x') : strokeOf(parse(piece, arcs), kind !== 's', kind === 'j');
@@ -400,12 +424,12 @@ function glMap(stage, svg, S) {
   // box where it lies, for taps (worked out at the first tap).
   function geoOf(n, d, arcs) {
     const g = n.geo;
-    return g && g.d === d && g.arcs === arcs ? g : (n.geo = { d, arcs, area: /[Zz]/.test(d), tris: {}, tap: null });
+    return g && g.d === d && g.arcs === arcs ? g : (n.geo = { d, arcs, area: d instanceof ReadyPath ? d.parts.some(s => s.closed) : /[Zz]/.test(d), tris: {}, tap: null });
   }
   const trisOf = (g, kind) => (g.tris[kind] ??= trianglesOf(g.d, kind, g.arcs));
   function tapOf(g, place) {
     const pk = place.join(',');
-    if (!g.tap || g.tap.pk !== pk) { const parts = placed(parse(g.d, false), place), all = parts.flatMap(s => s.p); g.tap = { pk, parts, box: all.length ? boxOf(all) : [0, 0, 0, 0] }; }
+    if (!g.tap || g.tap.pk !== pk) { const parts = placed(g.d instanceof ReadyPath ? g.d.parts.map(s => ({ p: [...s.p], closed: s.closed })) : parse(g.d, false), place), all = parts.flatMap(s => s.p); g.tap = { pk, parts, box: all.length ? boxOf(all) : [0, 0, 0, 0] }; }
     return g.tap;
   }
 
@@ -648,6 +672,9 @@ function glMap(stage, svg, S) {
     document.fonts.load(font).then(done, done);
     return false;
   }
+  // A page's fonts of other scripts come from Google Fonts in a stylesheet that does not hold the page back (media="print"
+  // until it is there). Labels drawn before it came are drawn again in the fonts it brings.
+  for (const l of document.querySelectorAll('link[media="print"]')) l.addEventListener('load', () => { FONTS.clear(); PICS.clear(); labelsChanged = true; schedule(); });
   // The texts of the layers that show them, each where it is: its size on the screen is its own (font-size, set by the
   // engine's labels) or its look's, and an area's name is drawn at its largest; its dy is on the screen too.
   function buildLabels() {

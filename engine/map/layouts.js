@@ -16,6 +16,11 @@
 //
 //   const layouts = makeLayouts(quiz, shapes)
 //   layouts.of(kind)             { units, pre, color } or null (every area drawn itself)
+//   layouts.takes(kind)          whether drawing it takes the areas' own outlines, not only stored shapes
+//   layouts.outlined()           the areas' outlines have come: what was waiting for them is worked out
+//   layouts.boxOf(area)          the box of the unit it is drawn in as one shape, or null
+//   layouts.oneEach(kind)        whether each of its items is one stored unit (its place needs no areas' outlines)
+//   layouts.linesFor(areas)      their outline from the stored shapes, where they make up whole units
 //   layouts.draw(kind)           the kind drawn as its layout; layouts.drawn: its key
 //   layouts.changed(areas)       their states changed: drawn themselves while they have one of their own
 //   layouts.dimmed()             a unit whose areas are all dimmed has its outline dimmed, drawn first
@@ -27,7 +32,7 @@
 //   layouts.hintLabel(kind)      the text of the option that colours the map
 //   layouts.dump(kinds)          for the layer-shapes tool: what shapes.js keeps
 
-import { DETAIL, FINE, arcReader, bandOf, dissolve, neighbours, outlines, pathOf } from './geometry.js';
+import { DETAIL, FINE, arcReader, bandOf, dissolve, neighbours, outlines, pathOf, signature, unitsOf } from './geometry.js';
 
 const PALETTE = Array.from({ length: 10 }, (_, i) => `var(--h${i + 1})`);
 // an area's own states, which draw it itself inside a unit drawn as one shape; and its classes that are never its unit's
@@ -41,33 +46,77 @@ export function makeLayouts(quiz, shapes) {
   let drawn, lines = [], under = [], underOf = {}, version = 0, band = 0; // (drawn: the key of the layout on the map, null for none; undefined before the first)
 
   // A unit's points at band T (a ring left with fewer than four corners keeps all its points: an island too small to
-  // see stays one), as a path.
-  const ringsD = (runs, T) => runs.map(r => { let p = arcs.run(r, T); if (T && p.length < 5) p = arcs.run(r, 0); return 'M' + p.slice(0, -1).join('L') + 'Z'; }).join('');
-  const runsD = (runs, T) => runs.map(r => 'M' + arcs.run(r, T).join('L')).join('');
+  // see stays one), as an outline in numbers (ReadyPath, gl-map.js). A run has one part for each number of points it
+  // has: a band only leaves points out, so the same number is the same points, with the triangles already made of them.
+  const parts = [new Map(), new Map()];
+  const partOf = (r, p, closed) => {
+    const m = parts[+closed], at = m.get(r) || m.set(r, new Map()).get(r);
+    let s = at.get(p.length); if (!s) at.set(p.length, s = { p, closed });
+    return s;
+  };
+  const ringsD = (runs, T) => (runs.length ? new ReadyPath(runs.map(r => { let p = arcs.run(r, T); if (T && p.length < 10) p = arcs.run(r, 0); p.length -= 2; return partOf(r, p, true); })) : '');
+  const runsD = (runs, T) => (runs.length ? new ReadyPath(runs.map(r => partOf(r, arcs.run(r, T), false))) : '');
 
-  // (a fingerprint of the units and of the outlines they are made of, as the page's data writes them)
-  function sigOf(units) {
-    let n = 0; for (const u of units) for (const a of u) n += A(a).d.length;
-    const [w, h] = shapes.size, s = units.map(u => u.join(',')).join('|') + '|' + Math.round(w) + 'x' + Math.round(h) + '|' + n + '|' + ((quiz.proj && quiz.proj.grain) || '');
-    let x = 2166136261; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619); }
-    return (x >>> 0).toString(36) + ':' + units.length;
-  }
+  // (the outlines' length: stored where the outlines may not be here yet)
+  const sigOf = units => {
+    let n = stored && stored.n;
+    if (n === undefined || n === null) { n = 0; for (const u of units) for (const a of u) n += (A(a).d || '').length; }
+    return signature(units, n, shapes.size, quiz.proj && quiz.proj.grain);
+  };
 
   function of(K) {
     if (made.has(K.key)) return made.get(K.key);
     let L = null;
     if (!K.clickAll && !K.areaLabel && K.merge !== false) {
-      const by = new Map();
-      for (const a of ids) { const k = K.at[a] ? [...K.at[a]].sort().join('|') : 'area:' + a; by.set(k, [...(by.get(k) || []), a]); }
-      const units = [...by.values()];
+      const units = unitsOf(K, ids);
       if (units.some(u => u.length > 1)) {
         const P = stored && (stored.kinds[K.key] || stored.kinds[K.like]), pre = P && P.sig === sigOf(units) ? P : null;
+        // (what is worked out from the areas' outlines waits for them, and is not kept until then)
+        if (!shapes.outlined() && (!pre || (!pre.color && own(K)))) return null;
         // (stored colours where shapes.js has them; a kind whose hint colours would give the answer away gets its own)
         L = { key: K.key, units, pre, color: pre && pre.color ? Object.fromEntries(units.flatMap((u, i) => u.map(a => [a, pre.color[i]]))) : pre && !own(K) ? null : colours(K, units) };
       }
     }
     made.set(K.key, L);
     return L;
+  }
+
+  // Stored shapes draw a kind without the areas' outlines: every unit of several areas has its shape, and what is drawn
+  // itself (a unit of one area, an area on top) has its outline in shapes.js (own, for the layer a page opens on).
+  function takes(K) {
+    if (shapes.outlined()) return false;
+    const L = of(K);
+    return !L || !L.pre || L.units.some((u, i) => { const f = fillOf(u); return f.length > 1 ? !L.pre.fill[i] || u.some(a => !f.includes(a) && !A(a).d) : u.some(a => !A(a).d); });
+  }
+  function outlined() { drawn = undefined; }
+  const unitOf = L => (L.unitOf ??= new Map(L.units.flatMap((u, i) => u.map(a => [a, i]))));
+  function oneEach(K) {
+    const L = of(K); if (!L || !L.pre) return false;
+    const at = unitOf(L);
+    return K.ids.every(id => new Set(K.areas[id].map(a => at.get(a))).size === 1);
+  }
+  function linesFor(areas) {
+    const L = drawn && made.get(drawn); if (!L || !L.pre) return '';
+    const at = unitOf(L), set = new Set(areas), done = new Set();
+    let d = '';
+    for (const a of set) {
+      const i = at.get(a);
+      if (done.has(i)) continue;
+      done.add(i);
+      if (L.units[i].every(x => set.has(x)) && fillOf(L.units[i]).length > 1) d += String(linesOf(L, DETAIL.length - 1, 0).line(i));
+      else if (A(a).d) d += A(a).d;
+    }
+    return d;
+  }
+  function boxOf(a) {
+    const p = under[underOf[a]], d = p && p.whole && p.getAttribute('d');
+    if (!d || !d.parts) return null;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const { p: pts } of d.parts) for (let i = 0; i < pts.length; i += 2) {
+      if (pts[i] < x0) x0 = pts[i]; if (pts[i] > x1) x1 = pts[i];
+      if (pts[i + 1] < y0) y0 = pts[i + 1]; if (pts[i + 1] > y1) y1 = pts[i + 1];
+    }
+    return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
   }
 
   // (a kind of places whose hint colours are its answers: colours of its own; a picture's kind keeps none)
@@ -122,7 +171,7 @@ export function makeLayouts(quiz, shapes) {
       under = L.units.map((u, i) => {
         const areas = fillOf(u); if (areas.length < 2) return null;
         const p = S.el('path'), d = whole(L, i, band), hint = el(areas[0]).style.getPropertyValue('--hint');
-        p.setAttribute('d', d || areas.map(a => A(a).d).join(''));
+        p.setAttribute('d', d || areas.map(a => A(a).d || '').join(''));
         p.dataset.g = A(areas[0]).g; p.dataset.u = i;
         if (hint) p.style.setProperty('--hint', hint);
         for (const a of areas) underOf[a] = i;
@@ -244,10 +293,10 @@ export function makeLayouts(quiz, shapes) {
   }
 
   return {
-    of, draw, changed, dimmed, detail, ahead, outline, unitAt, underAt, hintLabel, dump,
+    of, takes, outlined, boxOf, oneEach, linesFor, draw, changed, dimmed, detail, ahead, outline, unitAt, underAt, hintLabel, dump,
     get drawn() { return drawn; },
-    whole: (K, i) => { const L = of(K); return L ? whole(L, i, band) : null; },
+    whole: (K, i) => { const L = of(K), d = L && whole(L, i, band); return d ? String(d) : null; },
     // a unit as one shape at the band of k screen pixels per map unit (Shape, Learn)
-    wholeAt: (L, i, k) => whole(L, i, banded && k > 0 ? bandOf(k, q) : 0),
+    wholeAt: (L, i, k) => { const d = whole(L, i, banded && k > 0 ? bandOf(k, q) : 0); return d ? String(d) : d; },
   };
 }

@@ -15,7 +15,8 @@
 //
 // The engine checks that the units it finds in the page's data are the ones the shapes were made for (sig) and
 // else works everything out itself, as before: data changed and this not run again only makes the page slower to
-// open. Run it again after a change to a page's areas, its kinds, or the engine's way of drawing units.
+// open. Run it again after a change to a page's areas, its kinds, or the engine's way of drawing units, and then
+// tools/builds/open-layer (what a stored layer draws by the area itself, which a page leaving the outlines out needs).
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -36,6 +37,8 @@ const server = http.createServer((req, res) => {
   const stored = /^\/(data\/quizzes|quizzes)\/[^/]+\/shapes\.js$/.test(rel); // (a page's stored shapes, not the engine's shapes.js)
   if (!file.startsWith(ROOT) || stored || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end('not found'); }
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
+  // (a page that leaves the areas' outlines for later has them from the start here: the shapes are made from them)
+  if (file.endsWith('.html')) return res.end(fs.readFileSync(file, 'utf8').replace(/ data-outlines="([^"]*)"/, '').replace(/(<script src="[^"]*data\/maps\/[^"/]+\/(?:shapes|data)\.js"><\/script>)/, (m, tag) => { const o = /data-outlines="([^"]*)"/.exec(fs.readFileSync(file, 'utf8')); return o ? `${tag}<script src="${o[1]}"></script>` : tag; }));
   fs.createReadStream(file).pipe(res);
 });
 await new Promise(r => server.listen(0, '127.0.0.1', r));

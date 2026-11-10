@@ -37,7 +37,7 @@
 
 const RATE_TIME = 4000, LEAD = 1500, GROUP_PAUSE = 700;
 
-export function makeReview({ quiz, model, map, game, storage, screens, setup, play, root, srs: SRS }) {
+export function makeReview({ quiz, model, map, game, storage, screens, setup, play, root, srs: SRS, waitsFor }) {
   const { $, feedback, fmt } = screens.ui, rules = model.review, page = storage.page;
   const { MISSED, UNSURE, KNOWN, INSTANT } = SRS, CLASS = [3, 1, 0, 0], RESULT = ['got', 't2', 't3', 'miss'], SAID = ['bad', 'unsure', 'ok', 'ok'];
   const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -101,6 +101,8 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
   };
   const light = P0 => { if (P0.kind.dim !== false) map.dim(map.overlaid() ? map.ids : S.lit(P0)); };
   function nextRound() {
+    const wait = waitsFor(model.kinds.playOf(S.rounds[0].play));
+    if (wait.length) { Promise.all(wait).then(nextRound, () => {}); return; }
     const { play: key, ids, way } = S.rounds.shift(), P0 = model.kinds.playOf(key), fb = $('fb');
     S.way = way;
     // a new round clears the panel and the map; the last answer and what was said of it stay

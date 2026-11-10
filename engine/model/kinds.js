@@ -34,6 +34,7 @@
 //   play.drawn            the kind as the map draws it in this play (its layout: map/layouts.js)
 //   play.time(id, ask)    how many times a tap's time the review's clock gives it (ask: { all: every area to tap,
 //                         group: the codes asked together })
+// A layer's words may come later (quiz.later: engine/app/words.js): kinds.waiting(K), kinds.got(key).
 
 import { codeChecks, namedChecks, plainName, typedOf } from './checks.js';
 
@@ -66,8 +67,9 @@ export function makeKinds(quiz, geo) {
   const ways = K => K.ways ? K.ways : K.onlyCards ? ['cards'] : ['map', ...(K.modes || []), ...(nameable(K) ? ['name', ...(quiz.dots ? [] : ['shape'])] : []), ...(drawable(K) ? ['draw'] : []), ...(K.asCards ? ['cards'] : [])];
 
   const answerNameOf = K => K.answer || (byKey[K.of] ? i => byKey[K.of].name(i) : K.name);
-  // (Name it and Shape share their names, made as the page opens: a text drawn at random is drawn there)
-  const named = new Map(list.filter(nameable).map(K => [K.key, namedChecks(K, answerNameOf(K))]));
+  // (Name it and Shape share their names, made when first asked for: a text drawn at random is drawn there)
+  const named = new Map(), namedOf = K => named.get(K.key) || named.set(K.key, namedChecks(K, answerNameOf(K))).get(K.key);
+  const later = new Set(quiz.later || []);
   const plays = new Map();
   function play(key, way = 'map') {
     const K = byKey[key], id = way === 'map' ? key : key + '~' + way;
@@ -98,7 +100,10 @@ export function makeKinds(quiz, geo) {
     } else if (way === 'pairs') Object.assign(P, { format: FORMAT[K.prompt] || 'name', mode: 'pairs', time: () => 1.5 });
     else if (way === 'pick' || way === 'pickback') Object.assign(P, { format: way === 'pickback' ? 'name' : FORMAT[K.prompt] || 'name', mode: 'picks', back: way === 'pickback', time: () => 1.5 });
     else if (way === 'code') Object.assign(lazy(P, 'code', () => codeChecks(K)), { format: 'outline', mode: 'type', fresh: true, keyboard: K.plates ? 'text' : 'numeric', time: (i, ask) => 3 * Math.max(1, ((ask && ask.group) || []).length) });
-    else if (way === 'name' || way === 'shape') Object.assign(P, { format: way === 'name' ? 'outline' : 'shape', mode: 'list', ...named.get(key), time: () => 3 });
+    else if (way === 'name' || way === 'shape') {
+      Object.assign(P, { format: way === 'name' ? 'outline' : 'shape', mode: 'list', time: () => 3 });
+      for (const n of ['ownName', 'choices', 'choiceForms', 'typed', 'tell']) lazy(P, n, () => namedOf(K)[n]);
+    }
     else if (way === 'draw') Object.assign(P, { format: FORMAT[K.prompt] || 'name', mode: 'draw', time: () => 6 });
     else if (way === 'cards') Object.assign(P, { format: FORMAT[K.prompt] || 'name', mode: 'cards' }); // (no time: rated by hand, never by the clock)
     plays.set(id, P);
@@ -115,5 +120,5 @@ export function makeKinds(quiz, geo) {
   // A play's key read back: '<kind>' or '<kind>~<way>'.
   const playOf = id => { const [key, way] = id.split('~'); return play(key, way); };
 
-  return { byKey, list, grouping, ways, wayLabel, play, playOf, WAYS };
+  return { byKey, list, grouping, ways, wayLabel, play, playOf, WAYS, waiting: K => later.has(K.key), got: key => later.delete(key), later };
 }

@@ -12,11 +12,13 @@
 //   size, pad      the map's size [w, h] in map units and its padding; home: [x0, y0, x1, y1], the part shown at first
 //   maxZoom, labelScale, fly: { pad, min }, flyAnswer   how far it zooms, its labels' size, how it flies to a place
 //   proj, kpu      its Web Mercator projection (see mercator.js) and km per map unit; worldMap: its map is the world's
+//   outlineOf(id)  an area's outline, where the page leaves them for later (<body data-outlines>: map/shapes.js)
 //   board          the map is a board of tiles (engine/types/lang.js)
 // The quiz
 //   key            the quiz's short name (what it kept before its record had the page's name; data-key replaces it)
 //   kinds          what can be asked, one kind per layer of items (see model/kinds.js)
 //   rounds         hand-made rounds (else the standard rule, model/rounds.js)
+//   later          the kinds whose words come when they are opened (<body data-words>: engine/app/words.js)
 //   explore(area) -> { code, title, sub, photos }; exploreKind; exploreList { label, items: [{ label, areas, rare,
 //                  code, title, sub }] }; learn { title, sub, sections: [{ title, sub, areas, photos }] }
 //   hintLabel, hintsDefault, lettersLabel   the options' texts and defaults

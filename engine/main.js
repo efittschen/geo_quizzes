@@ -9,7 +9,8 @@
 //   formats   how a question is shown: name, code, text, picture, outline, shape
 //   modes     how a question is answered: map, map play, all areas, list, type, picks, pairs, draw
 //   screens   the panel's parts: setup, the play panel, results, explore, learn, my stats
-//   app       the views and where the map's taps go (app.js); a round played (game.js); the review run (review.js)
+//   app       the views and where the map's taps go (app.js); a round played (game.js); the review run (review.js);
+//             a layer's words when it is opened (words.js)
 // For the layer-shapes tool (window.SHAPES_DUMP): what shapes.js keeps, in window.SHAPES_OUT.
 
 import { readQuiz } from './model/quiz.js';
@@ -21,6 +22,7 @@ import { createModes } from './modes/index.js';
 import { createScreens } from './screens/index.js';
 import { createGame } from './app/game.js';
 import { createApp } from './app/app.js';
+import { makeWords } from './app/words.js';
 
 const root = new URL('../', import.meta.url).href; // (the site)
 const page = document.body.dataset.quiz || location.pathname.replace(/\/(index\.html)?$/, '').split('/').pop();
@@ -31,9 +33,10 @@ const model = createModel(quiz, { now: () => performance.now(), random: Math.ran
 if (window.SHAPES_DUMP) window.SHAPES_OUT = map.dump(model.kinds.list);
 // For the review-map tool (tools/builds/review-map, window.REVIEW_DUMP): the quiz, its model and its map, to read out.
 if (window.REVIEW_DUMP) window.REVIEW_IN = { quiz, model, map };
+const words = makeWords(model.kinds);
 const formats = createFormats({ quiz, model, map, storage });
 const game = createGame({ quiz, model, map, storage, formats });
 const modes = createModes({ quiz, model, map, formats, game, storage });
-const screens = createScreens({ quiz, model, map, formats, storage, game });
-const app = createApp({ quiz, model, map, game, modes, formats, screens, storage, root });
+const screens = createScreens({ quiz, model, map, formats, storage, game, words });
+const app = createApp({ quiz, model, map, game, modes, formats, screens, storage, root, words });
 app.start();

@@ -98,7 +98,8 @@ export function makeReview(quiz, kinds, rounds, results) {
     const names = {}, called = {}, grouped = {};
     for (const c in deck.c) { const f = parse(c).family, P = kinds.list.flatMap(K => kinds.ways(K).map(w => kinds.play(K.key, w))).find(P => P.cards === f); if (P) names[f] = P.label; }
     if (Object.keys(names).length) srs.setLayers(page, names);
-    for (const c in items) { const [key, id] = items[c]; called[parse(c).family + '|' + id] ??= cardName(kinds.playOf(key).kind, id); }
+    const known = srs.calledOf(page); // (a layer whose words are not here keeps the names its cards have)
+    for (const c in items) { const [key, id] = items[c], K = kinds.playOf(key).kind, at = parse(c).family + '|' + id; if (!kinds.waiting(K)) called[at] ??= cardName(K, id); else if (known[at]) called[at] = known[at]; }
     srs.setNames(page, called);
     for (const c in items) {
       const [key, id] = items[c], K = kinds.playOf(key).kind, f = parse(c).family;

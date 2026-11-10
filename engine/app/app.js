@@ -14,7 +14,7 @@
 
 import { makeReview } from './review.js';
 
-export function createApp({ quiz, model, map, game, modes, formats, screens, storage, root }) {
+export function createApp({ quiz, model, map, game, modes, formats, screens, storage, root, words }) {
   const { $ } = screens.ui, { setup, explore, stats, learn, results } = screens;
   let view = 'setup', review = null, hold = { def: null };
 
@@ -24,6 +24,7 @@ export function createApp({ quiz, model, map, game, modes, formats, screens, sto
   // every label (lettersLabel, while playing)
   function layout() {
     const K = activeKind(), o = setup.options();
+    words.bring(K.key).catch(() => {}); // (the layer open: its words, so that Start does not wait for them)
     map.draw(view === 'play' || view === 'done' ? game.def.play.drawn : K, { hints: o.hints, letters: o.letters && view === 'play', asking: view === 'play' });
   }
   setup.onMap = layout;
@@ -67,9 +68,15 @@ export function createApp({ quiz, model, map, game, modes, formats, screens, sto
     layout();
   }
 
+  // What a play waits for: the areas' own outlines where it takes them, its layer's words (and those of the layer it is
+  // in another language of)
+  const waitsFor = P => [...(map.wants(P) ? [map.outlines()] : []), ...[P.kind.key, P.kind.of].filter(key => key && model.kinds.byKey[key] && model.kinds.waiting(model.kinds.byKey[key])).map(words.bring)];
   function play(def) {
     hold.def = def;
-    game.play(def, modes.make(def.play, def.look.map), setup.options());
+    const go = () => game.play(def, modes.make(def.play, def.look.map), setup.options()), wait = waitsFor(def.play);
+    if (!wait.length) return go();
+    const start = $('startBtn'); start.disabled = true;
+    Promise.all(wait).then(go, () => {}).finally(() => { start.disabled = false; });
   }
   game.on('start', () => show('play'));
   game.on('done', r => { results.show(r); show('done'); });
@@ -97,12 +104,13 @@ export function createApp({ quiz, model, map, game, modes, formats, screens, sto
   $('endBtn').onclick = () => { if (game.round.state.res.some(r => r !== undefined)) game.stop(); else if (!(review && review.away())) openSetup(); };
   $('menuBtn').onclick = openSetup;
   $('eBack').onclick = openSetup;
-  $('exploreBtn').onclick = () => { enterExplore(); explore.open(setup.round()); };
-  function enterExplore() { if (game.mode) game.mode.close(); map.use(setup.look.map); map.clear(); show('explore'); }
-  stats.button.onclick = () => { stats.close(); enterExplore(); explore.hidePick(true); stats.open(setup.kind()); };
-  stats.pick.onchange = () => { enterExplore(); explore.hidePick(true); stats.open(stats.pick.value); };
+  $('exploreBtn').onclick = () => { words.bring(quiz.exploreKind).then(() => { enterExplore(); explore.open(setup.round()); }, () => {}); };
+  function enterExplore() { if (game.mode) game.mode.close(); map.outlines().catch(() => {}); map.use(setup.look.map); map.clear(); show('explore'); }
+  const openStats = key => words.bring(key).then(() => { enterExplore(); explore.hidePick(true); stats.open(key); }, () => {});
+  stats.button.onclick = () => { stats.close(); openStats(setup.kind()); };
+  stats.pick.onchange = () => openStats(stats.pick.value);
   $('eBack').addEventListener('click', () => { if (stats.kind()) stats.close(); explore.hidePick(false); });
-  if ($('learnBtn')) $('learnBtn').onclick = learn.open;
+  if ($('learnBtn')) $('learnBtn').onclick = () => map.outlines().then(learn.open, () => {});
   $('zIn').onclick = () => map.zoom(1.6); $('zOut').onclick = () => map.zoom(1 / 1.6); $('zFit').onclick = () => frame(true);
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') return;
@@ -120,7 +128,7 @@ export function createApp({ quiz, model, map, game, modes, formats, screens, sto
 
   /* ---------- the review ---------- */
   storage.schedule().then(SRS => {
-    review = makeReview({ quiz, model, map, game, storage, screens, setup, play, root, srs: SRS });
+    review = makeReview({ quiz, model, map, game, storage, screens, setup, play, root, srs: SRS, waitsFor });
     game.review = review.hooks;
     // a map picked during a review: for the rest of it, from the question on screen; the setup's choice stays
     setup.onPick = look => {

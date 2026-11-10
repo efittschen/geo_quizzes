@@ -265,25 +265,49 @@ export function neighbours(units, ringsOf, w, h) {
   return adj;
 }
 
+/* ---------- a kind's units, and the fingerprint its stored shapes carry ---------- */
+
+// The areas answered by exactly the same items form a unit (an area of no item is one of its own).
+export function unitsOf(K, ids) {
+  const by = new Map();
+  for (const a of ids) { const k = K.at[a] ? [...K.at[a]].sort().join('|') : 'area:' + a; (by.get(k) || by.set(k, []).get(k)).push(a); }
+  return [...by.values()];
+}
+// (a fingerprint of the units and of the outlines they are made of, as the page's data writes them: n, their length)
+export function signature(units, n, [w, h], grain) {
+  const s = units.map(u => u.join(',')).join('|') + '|' + Math.round(w) + 'x' + Math.round(h) + '|' + n + '|' + (grain || '');
+  let x = 2166136261; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619); }
+  return (x >>> 0).toString(36) + ':' + units.length;
+}
+
 /* ---------- stored arcs at a view's detail ---------- */
 
 // A view keeps the points that lie half a screen pixel or more off the line without them: band T keeps the points of
 // level T or more (shapes.js: lv, made by the layer-shapes tool), a tolerance of 2^(T-1)/q map units.
 export const bandOf = (s, q) => { const t = .5 / s * q; return t < 1 ? 0 : Math.floor(Math.log2(t)) + 1; };
 
-// Arc i of stored shapes as points (its first point, then steps, in 1/q), all of them or those of band T.
+// Arc i of stored shapes as points [x, y, x, y, …] (its first point, then steps, in 1/q), all of them or those of band T.
 export function arcReader({ arcs, lv, q }) {
   const all = [], bands = [];
   const full = i => all[i] ??= (() => {
-    const a = arcs[i], pts = [[a[0] / q, a[1] / q]];
-    for (let j = 2, x = a[0], y = a[1]; j < a.length; j += 2) { x += a[j]; y += a[j + 1]; pts.push([x / q, y / q]); }
+    const a = arcs[i], pts = new Array(a.length);
+    for (let j = 0, x = 0, y = 0; j < a.length; j += 2) { x += a[j]; y += a[j + 1]; pts[j] = x / q; pts[j + 1] = y / q; }
     return pts;
   })();
-  const arc = (i, T) => (!T ? full(i) : ((bands[T] ??= [])[i] ??= full(i).filter((_, j, p) => j === 0 || j === p.length - 1 || lv[i][j - 1] >= T)));
+  const arc = (i, T) => (!T ? full(i) : ((bands[T] ??= [])[i] ??= (() => {
+    const f = full(i), l = lv[i], m = f.length / 2, pts = [];
+    for (let j = 0; j < m; j++) if (j === 0 || j === m - 1 || l[j - 1] >= T) pts.push(f[2 * j], f[2 * j + 1]);
+    return pts;
+  })()));
   // a run: a list of arcs (~i: arc i backwards), end to end
   const run = (r, T) => {
     const pts = [];
-    for (const i of r) { const a = i < 0 ? arc(~i, T).slice().reverse() : arc(i, T); pts.pop(); pts.push(...a); }
+    for (const i of r) {
+      const a = arc(i < 0 ? ~i : i, T);
+      pts.length = Math.max(0, pts.length - 2);
+      if (i < 0) for (let j = a.length - 2; j >= 0; j -= 2) pts.push(a[j], a[j + 1]);
+      else for (let j = 0; j < a.length; j++) pts.push(a[j]);
+    }
     return pts;
   };
   return { run };

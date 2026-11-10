@@ -56,7 +56,12 @@ export function makeMarks(quiz, shapes, layouts, labels, view) {
   }
   const highlight = areas => S.ansUse.setAttribute('d', areas ? layouts.outline(areas) : '');
 
-  const box = a => { const s = shapes.hit(a); return { x: s.x0, y: s.y0, width: s.x1 - s.x0, height: s.y1 - s.y0 }; };
+  // (where the areas' outlines are not here: the unit it is drawn in)
+  const box = a => {
+    const b = !A(a).d && layouts.boxOf(a); if (b) return b;
+    if (!A(a).d) return { x: A(a).lx, y: A(a).ly, width: 0, height: 0 };
+    const s = shapes.hit(a); return { x: s.x0, y: s.y0, width: s.x1 - s.x0, height: s.y1 - s.y0 };
+  };
   const boundsOf = areas => {
     const bs = areas.map(box);
     return [Math.min(...bs.map(b => b.x)), Math.min(...bs.map(b => b.y)), Math.max(...bs.map(b => b.x + b.width)), Math.max(...bs.map(b => b.y + b.height))];
@@ -65,6 +70,7 @@ export function makeMarks(quiz, shapes, layouts, labels, view) {
   // two parts is one outline). Where neighbours' borders don't line up, a line between them stays. A place drawn as a
   // circle: its own outline, whole.
   function edges(areas) {
+    if (!shapes.outlined()) return layouts.linesFor(areas); // (where the areas' outlines are not here: the stored shapes')
     const q = shapes.q, pt = p => Math.round(p[0] * q) + ',' + Math.round(p[1] * q), key = (p, n) => { const a = pt(p), b = pt(n); return a < b ? a + ' ' + b : b + ' ' + a; };
     const curved = a => /[AaCcQqSsTtHhVv]/.test(A(a).d), own = [...new Set(areas)].filter(a => A(a));
     const rings = own.filter(a => !curved(a)).flatMap(shapes.rings), count = new Map();

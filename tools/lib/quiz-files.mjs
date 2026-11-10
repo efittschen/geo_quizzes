@@ -3,6 +3,7 @@
 //   shapes.js   loaded by the pages: each global of the map (DATA …) with its outlines, label points, sizes and lines
 //               only, and in `drawn` what its quizzes add to its drawing (circles, top, pins, lines:
 //               engine/types/layer.js)
+//   outlines.js the outlines of DATA.reg where tools/builds/open-layer has taken them out of shapes.js
 //   names.js    MAP_NAMES: the words of its areas (the fields whose values are words), row by row as in shapes.js
 //   facts.js    MAP_FACTS: everything else (codes, groups, populations …), the same way
 // names.js and facts.js are the source the quizzes on the map are made from; no page loads them. A quiz of the map
@@ -37,11 +38,13 @@ const run = (src, names) => new Function(src + `;return {${names.join(',')}}`)()
 /* ---------- a map ---------- */
 export function readMap(map) {
   const dir = path.join(MAPS, map), file = f => path.join(dir, f);
+  // (the areas' outlines where they are a file of their own: tools/builds/open-layer)
+  const outlined = out => { if (fs.existsSync(file('outlines.js'))) new Function('DATA', fs.readFileSync(file('outlines.js'), 'utf8'))(out.DATA); return out; };
   if (!fs.existsSync(file('shapes.js'))) { // (a map not split yet: its data.js)
     const src = fs.readFileSync(file('data.js'), 'utf8');
-    return run(src, globalsOf(src));
+    return outlined(run(src, globalsOf(src)));
   }
-  const src = fs.readFileSync(file('shapes.js'), 'utf8'), out = run(src, globalsOf(src));
+  const src = fs.readFileSync(file('shapes.js'), 'utf8'), out = outlined(run(src, globalsOf(src)));
   const part = f => (fs.existsSync(file(f)) ? new Function(fs.readFileSync(file(f), 'utf8') + `;return ${f === 'names.js' ? 'MAP_NAMES' : 'MAP_FACTS'}`)() : {});
   for (const source of [part('names.js'), part('facts.js')]) for (const [, globals] of Object.entries(source)) for (const [g, fields] of Object.entries(globals)) {
     const v = out[g];
@@ -77,6 +80,7 @@ export function writeMap(map, globals, head = '') {
     if (Object.keys(ft).length) facts.map = { ...facts.map, [g]: ft };
   }
   fs.mkdirSync(dir, { recursive: true });
+  fs.rmSync(path.join(dir, 'outlines.js'), { force: true }); // (shapes.js has them again, until tools/builds/open-layer)
   const top = (head ? head.trimEnd() + '\n' : '') + `// (data/maps/${map}: the outlines, label points and sizes; its words are in names.js, the rest in facts.js.)\n`;
   fs.writeFileSync(path.join(dir, 'shapes.js'), top + shapes.join('\n') + '\n');
   const source = (what, name, o) => `// data/maps/${map}: the ${what} of the map, the source the quizzes on it are made from (not loaded by a page)\nconst ${name} = {};\n${name}["data.js"] = ${JSON.stringify(o.map || {})};\n`;
@@ -200,6 +204,9 @@ export function addDrawn(map, holder, drawn) {
 export function writeQuiz(id, LAYERS, map, { extra = '', made } = {}) {
   const globals = readMap(map), { QUIZ, lib, resolve } = runRecipe(globals, LAYERS, extra);
   const split = splitQuiz(QUIZ, LAYERS, lib, resolve);
+  // (names.js has all its words again, until tools/builds/open-layer)
+  const own = path.join(QUIZZES, id);
+  if (fs.existsSync(own)) for (const f of fs.readdirSync(own)) if (/^names-.+\.js$/.test(f)) fs.rmSync(path.join(own, f));
   for (const [f, t] of Object.entries(quizFiles(id, split, made))) { fs.mkdirSync(path.dirname(path.join(ROOT, f)), { recursive: true }); fs.writeFileSync(path.join(ROOT, f), t); }
   if (Object.keys(split.drawn).length) addDrawn(map, split.holder, split.drawn);
   return split;

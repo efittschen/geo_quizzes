@@ -11,14 +11,21 @@
 //   shapes.rings(id), shapes.hit(id)     its rings; a shape to test points on (geometry.js)
 //   shapes.near(x, y)                    the areas whose box holds a point (areas on top keep their own border: not these)
 //   shapes.q, shapes.size                the map's quantum and its size [w, h]
+//   shapes.outlined(), shapes.outlines() whether the areas' own outlines are here; they brought (a promise). A page that
+//                                        opens on stored shapes leaves them out (<body data-outlines="the file">)
 
 import { near, quantum, ringsOf, shapeOf } from './geometry.js';
 
 export function makeShapes(quiz) {
   const svg = document.getElementById('map'), stage = document.getElementById('stage'), S = mapShapes();
   const facts = {}, els = {}, spare = S.el('g'), ids = quiz.areas.map(a => a.id);
+  // (what a page's stored shapes draw by the area itself comes with them)
+  const own = (typeof SHAPES === 'object' && SHAPES.own) || {}, later = document.body.dataset.outlines;
+  let waiting = 0, bringing = null;
   for (const a of quiz.areas) {
     facts[a.id] = a;
+    a.d ||= own[a.id] || '';
+    if (!a.d) waiting++;
     const p = S.el('path');
     p.setAttribute('d', a.d); p.setAttribute('class', 'r');
     p.dataset.a = a.id; p.dataset.g = a.g;
@@ -38,8 +45,21 @@ export function makeShapes(quiz) {
 
   const rings = {}, hits = {};
   let lookup = null;
+  const outlined = () => !later || !waiting;
+  // (the file gives the map's data its outlines, as on a page that loads it with the map)
+  const outlines = () => (bringing ||= outlined() ? Promise.resolve() : new Promise((done, failed) => {
+    const s = document.createElement('script');
+    s.src = later;
+    s.onload = () => {
+      for (const a of quiz.areas) if (!a.d) { a.d = quiz.outlineOf(a.id); els[a.id].setAttribute('d', a.d); }
+      waiting = 0;
+      done();
+    };
+    s.onerror = () => { s.remove(); bringing = null; failed(new Error('no outlines: ' + later)); };
+    document.head.append(s);
+  }));
   return {
-    S, svg, stage, ids, spare,
+    S, svg, stage, ids, spare, outlined, outlines,
     q: quantum(quiz.proj), size: quiz.size,
     area: id => facts[id],
     el: id => els[id],

@@ -194,3 +194,7 @@ svg.streets.plain #ctx path.land,svg.streets.plain #ctx path.lines{stroke:none}
   #ansUse{stroke-width:4;animation:none}
   .merged #ansUse{fill-opacity:.2;animation:none}
 }
+
+/* the areas' own outlines on their way (map/index.js) */
+.map-busy{position:absolute;top:14px;left:50%;width:18px;height:18px;margin-left:-9px;border:2px solid var(--muted);border-top-color:transparent;border-radius:50%;animation:map-busy .8s linear infinite;pointer-events:none;z-index:5}
+@keyframes map-busy{to{transform:rotate(360deg)}}

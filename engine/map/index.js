@@ -4,7 +4,9 @@
 //   const map = createMap(quiz, { root })
 //   map.area(id)                          an area's facts: { lx, ly, a, s, g, top, dot } (the Model's geo)
 //   map.draw(kind, { hints, letters, asking })   the kind drawn as its layout (layouts.js), coloured by hint group
-//                                         (while asking, not where those are the answers), with every label (letters)
+//                                         (while asking, not where those are the answers), with every label (letters);
+//                                         where it takes the areas' own outlines, they are brought and it is drawn then
+//   map.outlines(), map.wants(play)       the areas' own outlines brought (a promise); whether a play waits for them
 //   map.mark, tint, blink, fade, unfade, dim, clear, highlight, ask, unask, reveal, box, edges   states (marks.js)
 //   map.label, labels, allLabels, clearLabels, tag, pin, unpin, points, name, guess, unguess   labels (labels.js)
 //   map.home(), map.frame(box), map.frameAreas(areas), map.framePoints(ps), map.zoom(f), map.view(), map.setView(v),
@@ -48,7 +50,7 @@ export function createMap(quiz, { root }) {
   const marks = makeMarks(quiz, shapes, layouts, labels, view);
   const tiles = makeTiles(quiz, shapes, view, { root });
   const onWorld = !!quiz.proj && !quiz.worldMap;
-  if (onWorld) makeWorld(quiz, shapes, { root });
+  if (onWorld) makeWorld(quiz, shapes, view, { root });
 
   let sized = null;
   view.hooks.rest = s => {
@@ -67,23 +69,39 @@ export function createMap(quiz, { root }) {
     const t = glm.at(p), d = t && t.dataset; if (!d) return null;
     if (d.a) return d.a;
     const u = d.u !== undefined ? layouts.underAt(+d.u) : null; if (!u) return null;
-    if (!exact) return u.areas[0];
+    if (!exact || !shapes.outlined()) return u.areas[0];
     const hit = a => inside(shapes.hit(a), p.x, p.y);
     return u.areas.find(hit) || (shapes.near(p.x, p.y).find(s => inside(s, p.x, p.y)) || {}).id || u.areas[0];
   }
   view.input((e, exact) => areaAt(view.toMap(e.clientX, e.clientY), exact));
   installTestView({ shapes, view, marks, labels, areaAt });
 
+  // (asking: a question is on; a kind whose hint colours are its answers (hints: false) then shows only colours of its
+  // own, by neighbour)
+  let last = null, arriving = null;
+  function draw(K, opts = {}) {
+    const { hints = false, letters = false, asking = false } = opts;
+    last = [K, opts];
+    if (layouts.takes(K)) outlines().catch(() => {});
+    layouts.draw(K);
+    const L = layouts.of(K), own = !!(L && L.color && K.hints === false);
+    svg.classList.toggle('hints', hints && !tiles.plain() && (!asking || K.hints !== false || own));
+    svg.classList.toggle('all-labels', !!letters);
+  }
+  // The areas' own outlines, for what stored shapes don't draw; a small mark on the map until they are there.
+  function outlines() {
+    if (shapes.outlined()) return Promise.resolve();
+    if (arriving) return arriving;
+    const mark = document.createElement('div'); mark.className = 'map-busy'; stage.append(mark);
+    return (arriving = shapes.outlines().then(() => { mark.remove(); layouts.outlined(); if (last) draw(...last); }, e => { mark.remove(); arriving = null; throw e; }));
+  }
+
   return {
     area: shapes.area, ids: shapes.ids,
-    // (asking: a question is on; a kind whose hint colours are its answers (hints: false) then shows only colours of its
-    // own, by neighbour)
-    draw(K, { hints = false, letters = false, asking = false } = {}) {
-      layouts.draw(K);
-      const L = layouts.of(K), own = !!(L && L.color && K.hints === false);
-      svg.classList.toggle('hints', hints && !tiles.plain() && (!asking || K.hints !== false || own));
-      svg.classList.toggle('all-labels', !!letters);
-    },
+    draw, outlines,
+    // (what the map draws for it; Draw scores against the areas themselves; Type code outlines parts of a unit; a place
+    // made of several units is cut from the areas)
+    wants: P => !shapes.outlined() && (layouts.takes(P.drawn) || P.mode === 'draw' || P.way === 'code' || ((P.format === 'outline' || P.format === 'shape') && !layouts.oneEach(P.kind))),
     hintLabel: layouts.hintLabel,
     mark: marks.mark, tint: marks.tint, blink: marks.blink, fade: marks.fade, unfade: marks.unfade, dim: marks.dim, clear: marks.clear,
     highlight: marks.highlight, ask: marks.ask, unask: marks.unask, box: marks.box, edges: marks.edges,
@@ -105,7 +123,7 @@ export function createMap(quiz, { root }) {
     // of one shape its own, of several the edges they don't share. A place the map draws as a circle or a dot (too small
     // to see there) by its real outline, where the map has one (real).
     place(K, ids, k) {
-      const areas = [...new Set(ids)], set = new Set(areas), L = layouts.of(K), A = shapes.area, curved = a => /[AaCcQqSsTt]/.test(A(a).d);
+      const areas = [...new Set(ids)], set = new Set(areas), L = layouts.of(K), A = shapes.area, curved = a => /[AaCcQqSsTt]/.test(A(a).d || '');
       const real = a => (A(a).real && (A(a).dot || curved(a)) ? A(a).real : A(a).d), tiny = a => A(a).top || A(a).dot;
       const parts = [];
       if (L) L.units.forEach((u, i) => {

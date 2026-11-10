@@ -3,6 +3,7 @@
 // Mercator like every quiz map (see engine/lib/mercator.js): the world as GeoGuessr's own map shows it.
 //
 //   node tools/worldmap.mjs [--width 2000] [--min-area 0.12] [--dot 8]
+//   (then tools/worldunder.mjs: the same map as it lies under a country's quiz)
 //
 // Writes  const WORLD = { w, h, kpu, proj, reg: [{ id, n, i2, iso, c, d, lx, ly, a, b, dot? }] }
 //   proj { type: 'mercator', k, lng0, y0 } as mercator.js describes it; kpu: km to a map unit at the equator

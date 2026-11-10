@@ -223,6 +223,7 @@ const SRS = (() => {
     const r = STORE.quiz(id), was = JSON.stringify(r.called || {});
     if (JSON.stringify(names) !== was || r.names) STORE.setQuiz(id, r => { r.called = names; delete r.names; });
   }
+  const calledOf = id => STORE.quiz(id).called || {};
   // The maps a page's cards can be played on, as the quiz page says them (for sorting cards on the review page).
   const looksOf = id => STORE.quiz(id).looks || null;
   function setLooks(id, looks) { if (JSON.stringify(looksOf(id)) !== JSON.stringify(looks)) STORE.setQuiz(id, r => { r.looks = looks; }); }
@@ -640,5 +641,5 @@ const SRS = (() => {
   if (!opts().perMap) single();
   addEventListener("geoquizzes:fresh", () => { if (!opts().perMap) single(); });
 
-  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, setGroups, setNames, cardList, reschedule, setLooks, looksOf, sort, clash, convert, keyOf, single, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, clocked, regrade, gradeList, overview, run, setRun, nextStop, stretch, ran, rerun, keepRated, regradeRun, tally, stopUrl, startRun, startPractice, practiceStop, opts, setOpts, resetOpts, until, dayStart, days };
+  return { MISSED, UNSURE, KNOWN, INSTANT, grade, deck, save, remove, setLayers, setGroups, setNames, calledOf, cardList, reschedule, setLooks, looksOf, sort, clash, convert, keyOf, single, decks, all, due, stats, pick, today, dayLeft, reviewed, add, answer, clocked, regrade, gradeList, overview, run, setRun, nextStop, stretch, ran, rerun, keepRated, regradeRun, tally, stopUrl, startRun, startPractice, practiceStop, opts, setOpts, resetOpts, until, dayStart, days };
 })();

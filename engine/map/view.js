@@ -9,6 +9,8 @@
 //   view.home(), view.zoom(f)       all of the map (its home part), and zoomed in or out at the middle
 //   view.frame(box), view.frameBoxes(boxes), view.framePoints(points)   a part brought into view (see each)
 //   view.scale(), view.base         screen pixels per map unit; the view of all of it
+//   view.reach()                    the most of the map a view can show at the stage's shape now, [x0, y0, x1, y1] (what
+//                                   lies under the map: world.js); null while the stage has no size
 //   view.toMap(x, y), view.toScreen(x, y), view.stageBox()
 //   view.dot(s)                     a dot's size on the screen at scale s
 //   view.deep(max)                  how far it zooms: the quiz's maxZoom, or the street map's tiles (screen pixels per
@@ -21,7 +23,7 @@ const REST = 120, TAP_SLOP = 10;
 
 export function makeView(quiz, shapes, glm) {
   const { stage, svg } = shapes, [W, H] = quiz.size, pad = quiz.pad, home = quiz.home || [0, 0, W, H];
-  const onWorld = !!quiz.proj && !quiz.worldMap;
+  const OUT = quiz.proj && !quiz.worldMap ? 3 : 1.15; // (how far out, as clamp says)
   const hooks = { move() {}, rest() {}, near() {} };
   const surface = glm.canvas || stage;
   let base = { x: 0, y: 0, w: W, h: H }, vb = { ...base }, deepest = 0, restTimer = 0, raf = 0, drawn = null, size = '', refitLater = false;
@@ -42,22 +44,31 @@ export function makeView(quiz, shapes, glm) {
   const dot = s => { const r = stageBox(), s0 = r.width ? scaleOf(base, r) : s; return 11 * Math.sqrt(Math.max(1, s / s0)); };
 
   // all of the map: its home part with the padding, to the stage's shape
+  function sizeAt(a) {
+    const w = home[2] - home[0] + pad * 2, h = home[3] - home[1] + pad * 2;
+    return w / h < a ? [h * a, h] : [w, w / a];
+  }
   function fit() {
     const r = stageBox(); if (!r.width || !r.height) return;
-    const a = r.width / r.height;
-    let w = home[2] - home[0] + pad * 2, h = home[3] - home[1] + pad * 2;
-    if (w / h < a) w = h * a; else h = w / a;
+    const [w, h] = sizeAt(r.width / r.height);
     base = { x: (home[0] + home[2]) / 2 - w / 2, y: (home[1] + home[3]) / 2 - h / 2, w, h };
   }
   // A view kept to the map: zoomed in no further than maxZoom (on the tiles: as far as they go), out no further than
   // the whole (a map lying on the world's: three times that), and never more than half of it off the map.
   function clamp(v) {
     const r = stageBox(), deep = deepest && r.width;
-    const minW = deep ? Math.min(r.width, r.height * v.w / v.h) / deepest : base.w / quiz.maxZoom, maxW = base.w * (onWorld ? 3 : 1.15);
+    const minW = deep ? Math.min(r.width, r.height * v.w / v.h) / deepest : base.w / quiz.maxZoom, maxW = base.w * OUT;
     const k = Math.min(Math.max(v.w, minW), maxW) / v.w;
     if (k !== 1) { const cx = v.x + v.w / 2, cy = v.y + v.h / 2; v.w *= k; v.h *= k; v.x = cx - v.w / 2; v.y = cy - v.h / 2; }
     v.x = Math.min(Math.max(v.x, -v.w / 2), W - v.w / 2); v.y = Math.min(Math.max(v.y, -v.h / 2), H - v.h / 2);
     return v;
+  }
+  // (clamp's widest view at either end of the map, and a tenth more for the moments a view keeps its shape as the stage
+  // changes its own)
+  function reach() {
+    const r = stageBox(); if (!r.width || !r.height) return null;
+    const [w, h] = sizeAt(r.width / r.height), mx = w * OUT * .6, my = h * OUT * .6;
+    return [-mx, -my, W + mx, H + my];
   }
   // the view drawn at rest, and while it moves
   function render() {
@@ -186,7 +197,7 @@ export function makeView(quiz, shapes, glm) {
   if (window.ResizeObserver) new ResizeObserver(refit).observe(stage);
 
   return {
-    hooks, surface, input, render, stageBox, scale, toMap, toScreen, dot, zoom, frameBoxes, framePoints,
+    hooks, surface, input, render, stageBox, scale, toMap, toScreen, dot, zoom, frameBoxes, framePoints, reach,
     home: goHome, frame: frame_,
     get base() { return base; },
     get: () => ({ ...vb }),

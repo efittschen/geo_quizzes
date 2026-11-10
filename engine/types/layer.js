@@ -25,7 +25,8 @@
 //     typed      true: the answer is typed, checked from the item's name and NAMES' answers; time: a typed
 //                answer's clock, in clicks
 //     pool       the tables drawn at random (NAMES' pool: an item's entries; FACTS' weights)
-//   NAMES = { explore: { area: { code, title, sub } }, groups: { layer: [[title, sub]…] },
+//   NAMES = { explore: { area: { code, title, sub } }, groups: { layer: [[title, sub]…] }, later: [layer…] (their tables
+//             stand empty here and are filled by names-<layer>.js when the layer is opened),
 //             kinds: { layer: { name, short, chip, chipTitle, about, dial, text, detail, pin, answers (per item),
 //                               clicked, areaLabel (per area), pool: { table: { item: [entries] } } } } }
 //   FACTS = { g: { area: hint group }, groups: { layer: [[ids]…] },
@@ -81,6 +82,8 @@ const QUIZ = (() => {
     ...(base ? { base: (B => ({ land: B.land, lines: B.lines }))(map(base)) } : {}),
     ...(holder.proj ? { proj: holder.proj } : typeof DATA === 'object' && DATA.proj ? { proj: DATA.proj } : {}),
     explore: a => N.explore[a],
+    later: N.later || [], // (the layers whose words come when they are opened: engine/app/words.js)
+    outlineOf: (byId => id => (byId ||= new Map(list.map(r => [String(r[idKey]), r]))).get(id).d)(null), // (where the page leaves the outlines for later)
     kinds: kinds.map(kind),
   };
 })();

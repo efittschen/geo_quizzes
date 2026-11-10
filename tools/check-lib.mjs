@@ -280,7 +280,9 @@ export function asked(page, kind) {
     const want = shape ? (bb => [bb.x, bb.y, bb.x + bb.width, bb.y + bb.height])(shape.getBBox()) : boxOfD(line);
     let best = null, err = Infinity;
     for (const id of ids) {
-      const b = K.areasOf(id).map(a => boxOfD(A[a].d)).reduce((m, b) => [Math.min(m[0], b[0]), Math.min(m[1], b[1]), Math.max(m[2], b[2]), Math.max(m[3], b[3])], [Infinity, Infinity, -Infinity, -Infinity]);
+      // (an area whose outline a page has not brought: the box of the unit it is drawn in)
+      const boxOfA = a => { if (A[a].d) return boxOfD(A[a].d); const x = QUIZ_MAP.box(a); return [x.x, x.y, x.x + x.width, x.y + x.height]; };
+      const b = K.areasOf(id).map(boxOfA).reduce((m, b) => [Math.min(m[0], b[0]), Math.min(m[1], b[1]), Math.max(m[2], b[2]), Math.max(m[3], b[3])], [Infinity, Infinity, -Infinity, -Infinity]);
       const e = b.reduce((s, v, i) => s + Math.abs(v - want[i]), 0);
       if (e < err) { err = e; best = id; }
     }

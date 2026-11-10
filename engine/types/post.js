@@ -93,6 +93,7 @@ const QUIZ = (() => {
       const zs = zonesOf(a, FINE);
       return { code: zs.map(fmt).join(', '), title: places(zs[0]) || regions(zs[0]), sub: [regions(zs[0]), ...P.levels.slice(0, -1).reverse().map(l => `${fmt(cut(zs[0], l))} · ${places(cut(zs[0], l))}`)].filter(Boolean) };
     },
+    outlineOf: (byId => id => (byId ||= new Map(DATA.reg.map(r => [r.id, r]))).get(id).d)(null), // (where the page leaves the outlines for later)
     rounds,
     kinds,
   };

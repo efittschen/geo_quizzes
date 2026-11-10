@@ -21,7 +21,7 @@
 //   setup.onMap(), setup.onPick(look)   the App: the map changed (its layout to draw); a map picked (true: the App took it,
 //                           a review's)
 
-export function makeSetup({ quiz, model, map, storage, ui }) {
+export function makeSetup({ quiz, model, map, storage, ui, words }) {
   const { $, plural, toast } = ui, kinds = model.kinds, K = key => kinds.byKey[key], rounds = model.rounds;
   const last = k => { const l = storage.last(); return (k.startsWith('sel.') ? (l.sel || {})[k.slice(4)] : l[k]) ?? null; };
   const keep = (k, v) => storage.keepLast(l => {
@@ -254,6 +254,7 @@ export function makeSetup({ quiz, model, map, storage, ui }) {
   }
   let groupEls = [], chipEls = {};
   function buildPicker() {
+    if (kinds.waiting(K(pickKind))) { words.bring(pickKind).then(buildPicker, () => {}); return; }
     const Kd = K(pickKind), sel = SEL[pickKind];
     $('pickTitle').textContent = Kd.pickTitle;
     $('topBy').replaceChildren(...Kd.rankings.map((r, i) => new Option(r.label, i)));
@@ -377,7 +378,8 @@ export function makeSetup({ quiz, model, map, storage, ui }) {
       setup.shown = true;
       map.use(chosenMap); map.back(chosenBack); map.clear(); syncCover();
       press($('mapSeg'), chosenMap); press(backSeg, chosenBack);
-      buildPicker(); build(); frame();
+      if (choice === 'custom') buildPicker();
+      build(); frame();
     },
     close() { setup.shown = false; },
     tap(area) {

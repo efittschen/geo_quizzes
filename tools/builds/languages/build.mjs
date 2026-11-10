@@ -150,7 +150,7 @@ const head = (title, description, script) => `<!doctype html>
 <meta name="description" content="${description}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&${FONTS[script]}&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?${FONTS[script]}&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="../../assets/css/base.css">
 <link rel="stylesheet" href="../../engine/css/quiz-page.css">
 <link rel="stylesheet" href="../../engine/css/quiz-map.css">
@@ -439,8 +439,8 @@ for (const dir of fs.readdirSync(quiz()).sort()) {
   const scripts = SCRIPTS.map(([n]) => n).filter(n => by[n]);
   let out = html.replace(SCRIPT_LINES, '');
   if (scripts.length) {
-    const fonts = `<link href="https://fonts.googleapis.com/css2?${fontsOf(scripts)}&display=swap" rel="stylesheet" data-faces>`;
-    out = /<link href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]*" rel="stylesheet">/.test(out) ? out.replace(/(<link href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]*" rel="stylesheet">)/, `$1\n${fonts}`) : out.replace('<link rel="stylesheet" href="../../assets/css/base.css">', `${fonts}\n$&`);
+    const fonts = `<link href="https://fonts.googleapis.com/css2?${fontsOf(scripts)}&display=swap" rel="stylesheet" media="print" onload="this.media='all'" data-faces>`;
+    out = /<link href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]*" rel="stylesheet"[^>]*>/.test(out) ? out.replace(/(<link href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]*" rel="stylesheet"[^>]*>)/, `$1\n${fonts}`) : out.replace('<link rel="stylesheet" href="../../assets/css/base.css">', `${fonts}\n$&`);
     out = out.replace(/\n<script src="\.\.\/\.\.\/engine\/types\/(?:city|layer)\.js"><\/script>/, m => `\n${scripts.map(n => `<script src="../../data/letters/${n}.js"></script>`).join('\n')}\n<script src="../../engine/types/reading.js"></script>${m}`);
     wired.push(`${dir} (${scripts.map(n => `${n} ${by[n]}`).join(', ')} of ${names.length})`);
   }
