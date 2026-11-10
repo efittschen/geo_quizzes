@@ -7,7 +7,6 @@
 //   data-sign="nz-shield"         a class for that frame where it is a road sign: ./formats.css draws each country's
 //   data-han="sc"                 the shape of Chinese characters on the page: Simplified (sc), Traditional (tc);
 //                                 else as Japanese draws them (../../assets/css/base.css)
-//   data-page="paint"             the page of the town-name quizzes (engine/paint.js) instead of the map quizzes'
 //   data-folders="Cities|Town names=../x-town-names/index.html"
 //                                 folders that are pages of their own (the town names beside the cities): tabs above
 //                                 Start, the one without an address being this page
@@ -27,10 +26,10 @@ window.addEventListener('geoquizzes:fresh', e => { if (document.getElementById('
 document.write(`<script src="${new URL('../assets/js/gmaps.js', document.currentScript.src).href}"><\/script>`);
 // Likewise mercator.js: a map's Web Mercator projection, and where the plain map of the world lies under it.
 document.write(`<script src="${new URL('lib/mercator.js', document.currentScript.src).href}"><\/script>`);
-// And on a map quiz's page (not the town names' painting) the map's drawing, gl-map.js (WebGL 2) and earcut.js, which
-// cuts its fills into triangles. The engine is the page's last script, a module (engine/main.js, run once the page and
-// its data are read); its modules are preloaded here, so they are fetched at once and not one import after another.
-if (document.body.dataset.page !== 'paint') {
+// And the map's drawing, gl-map.js (WebGL 2) and earcut.js, which cuts its fills into triangles. The engine is the
+// page's last script, a module (engine/main.js, run once the page and its data are read); its modules are preloaded
+// here, so they are fetched at once and not one import after another.
+{
   for (const f of ['earcut.js', 'gl-map.js']) document.write(`<script src="${new URL('lib/' + f, document.currentScript.src).href}"><\/script>`);
   for (const f of ['app/app', 'app/game', 'app/review', 'formats/cloth', 'formats/code', 'formats/index', 'formats/name', 'formats/outline', 'formats/picture', 'formats/shape', 'formats/text', 'main', 'map/geometry', 'map/index', 'map/labels', 'map/layouts', 'map/marks', 'map/shapes', 'map/test', 'map/tiles', 'map/view', 'map/world', 'model/checks', 'model/custom', 'model/index', 'model/kinds', 'model/quiz', 'model/results', 'model/review', 'model/round', 'model/rounds', 'modes/all-areas', 'modes/draw', 'modes/index', 'modes/map-play', 'modes/map-tap', 'modes/pairs', 'modes/picks', 'modes/typed', 'screens/explore', 'screens/index', 'screens/learn', 'screens/question', 'screens/results', 'screens/setup', 'screens/stats', 'storage/index']) document.head.append(Object.assign(document.createElement('link'), { rel: 'modulepreload', href: new URL(`${f}.js`, document.currentScript.src).href }));
 }
@@ -170,91 +169,9 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
   </main>
 `;
 
-  const PAINT = `
-  <aside class="panel">
-    <header class="brand"></header>
-
-    <section id="setup" class="setup">
-      <div class="group">
-        <h2>Choose a round</h2>
-        <div class="rounds" id="rounds"></div>
-      </div>
-    </section>
-
-    <section id="play" class="group" hidden>
-      <div class="pname" id="pname" aria-live="polite"></div>
-      <div class="muted" id="sQ"></div>
-      <div class="stats">
-        <div><b id="sCover">–</b><span>Covered</span></div>
-        <div><b id="sPaint">–</b><span>Painted</span></div>
-        <div><b id="sScore">–</b><span>Score</span></div>
-        <div><b id="sGood">0/0</b><span>Accepted</span></div>
-      </div>
-      <div class="ticks" id="ticks"></div>
-      <div class="feedback" id="fb" role="status"></div>
-      <ul class="key" id="key" aria-label="Map colors" hidden>
-        <li><i class="mine"></i>Painted</li>
-        <li><i class="zone" id="keyZone"></i>80% area</li>
-        <li><i class="all"></i>Places</li>
-        <li><i class="asked"></i>Asked</li>
-      </ul>
-      <div class="row">
-        <button class="primary" id="doneBtn" type="button">Done</button>
-        <button class="ghost" id="clearBtn" type="button">Clear</button>
-        <button class="ghost" id="endBtn" type="button">End round</button>
-      </div>
-    </section>
-
-    <section id="done" class="group result" hidden>
-      <div>
-        <h2 id="rScore"></h2>
-        <p id="rLine"></p>
-      </div>
-      <div class="group" id="missWrap">
-        <h2>Under 50</h2>
-        <div class="chips" id="chips"></div>
-      </div>
-      <div class="row">
-        <button class="primary" id="againBtn" type="button">Play again</button>
-        <button class="ghost" id="retryBtn" type="button">Retry missed</button>
-        <button class="ghost" id="menuBtn" type="button">Change round</button>
-      </div>
-    </section>
-
-    <section id="explore" class="group" hidden>
-      <div class="group xhead">
-        <div class="row">
-          <button class="ghost small" id="xBack" type="button">← Rounds</button>
-        </div>
-        <div class="pname" id="xName"></div>
-        <div class="stats">
-          <div><b id="xPlaces">–</b><span>Places</span></div>
-          <div><b id="xGain">–</b><span>Points</span></div>
-          <div><b id="xOut">–</b><span>Outside</span></div>
-          <div><b id="xCount">–</b><span>Names</span></div>
-        </div>
-        <div class="muted" id="xEx"></div>
-      </div>
-      <div class="chips" id="xParts"></div>
-    </section>
-
-    <div class="startbar" id="startbar">
-      <div class="folders" id="folders" role="tablist" aria-label="Layers" hidden></div>
-      <div class="row">
-        <button class="primary" id="startBtn" type="button">Start</button>
-        <button class="ghost" id="exploreBtn" type="button">Explore</button>
-      </div>
-    </div>
-  </aside>
-
-  <main class="stage" id="stage">
-    <canvas id="paint" role="img"></canvas>
-  </main>
-`;
-
   const app = document.createElement('div');
   app.className = 'app'; app.id = 'app';
-  app.innerHTML = body.dataset.page === 'paint' ? PAINT : AREA;
+  app.innerHTML = AREA;
   app.querySelector('.brand').append(...[back, h1].filter(Boolean));
   // The map's corner, bottom right: its zoom buttons and, under them, the credits. The page's list of them is a ©
   // that opens on a click or when pointed at. Only OpenStreetMap asks to be named on the map itself: "© OpenStreetMap"
@@ -268,7 +185,7 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
   }
   corner.append(credits);
   app.querySelector('.stage').append(corner);
-  app.querySelector('#map, #paint').setAttribute('aria-label', `${title} map`);
+  app.querySelector('#map').setAttribute('aria-label', `${title} map`);
   // the frame of a phone-number question
   const dial = app.querySelector('#dial');
   if (dial) {

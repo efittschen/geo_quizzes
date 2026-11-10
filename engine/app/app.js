@@ -27,6 +27,7 @@ export function createApp({ quiz, model, map, game, modes, formats, screens, sto
     map.draw(view === 'play' || view === 'done' ? game.def.play.drawn : K, { hints: o.hints, letters: o.letters && view === 'play', asking: view === 'play' });
   }
   setup.onMap = layout;
+  setup.overview = round => explore.preview(round);
   // the item under the mouse outlined (a kind that picks areas: the area alone); in play not where the place asked is
   // outlined already, nor while drawing
   function hover(area) {
@@ -36,10 +37,10 @@ export function createApp({ quiz, model, map, game, modes, formats, screens, sto
     map.hover(area, K.pickAll ? [area] : id ? K.areas[id] : null);
   }
   const RECEIVERS = {
-    setup: { hover, tap: area => { if (area) setup.tap(area); } },
+    setup: { hover: (area, point) => { if (setup.previewed && explore.hover(area, point)) map.hover(null, null); else hover(area); }, tap: (area, point) => { if (setup.previewed) explore.tap(area, point); else if (area) setup.tap(area); } }, // (the round drawn as Explore's overview: its taps and hovers there)
     play: { hover, tap: (area, point, ok) => { if (game.mode && !game.rating) game.mode.tap(area, point, ok); } },
     done: { hover, tap() {} },
-    explore: { hover, exact: true, tap: area => { if (!area) return; if (stats.kind()) stats.tap(area); else explore.tap(area); } },
+    explore: { hover: (area, point) => { if (!stats.kind() && explore.hover(area, point)) map.hover(null, null); else hover(area); }, exact: true, tap: (area, point) => { if (stats.kind()) { if (area) stats.tap(area); } else explore.tap(area, point); } },
   };
 
   function show(id) {
@@ -95,7 +96,7 @@ export function createApp({ quiz, model, map, game, modes, formats, screens, sto
   $('endBtn').onclick = () => { if (!game.round.state.res.some(r => r !== undefined)) openSetup(); else game.stop(); };
   $('menuBtn').onclick = openSetup;
   $('eBack').onclick = openSetup;
-  $('exploreBtn').onclick = () => { enterExplore(); explore.open(); };
+  $('exploreBtn').onclick = () => { enterExplore(); explore.open(setup.round()); };
   function enterExplore() { if (game.mode) game.mode.close(); map.use(setup.look.map); map.clear(); show('explore'); }
   stats.button.onclick = () => { stats.close(); enterExplore(); explore.hidePick(true); stats.open(setup.kind()); };
   stats.pick.onchange = () => { enterExplore(); explore.hidePick(true); stats.open(stats.pick.value); };

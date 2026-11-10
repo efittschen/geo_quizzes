@@ -13,7 +13,8 @@
 
    A shape's triangles come from its outline alone: a closed outline (an area) is cut into the triangles of its fill
    (earcut.js) and the strips of its line, an open one into its line; lines are strips of their width on the screen
-   (dashed where the look says so), dots (lines of no length with round caps) discs, circles rings. They are kept on
+   (dashed where the look says so), dots (lines of no length with round caps) discs, circles rings; a line as wide on
+   the map with round caps and joins (Draw's brush) has a disc at every point, so its ends and bends are round. They are kept on
    the shape until its outline changes, and those of the outlines a zoom step will need are made ahead while the page
    is idle (prepare). Each layer is one block of triangles on the graphics card, built anew only when the layer's
    shapes or outlines change: a look picks only the colours, from a small table the graphics card reads (STYLE),
@@ -36,7 +37,8 @@
                                       screen now (px); drawn at the next frame
      g.at(p)                         the shape under map point p that takes taps, or null
      g.prepare(d, kinds)             makes the triangles of an outline ahead: kinds 'e' (filled, evenodd), 's'
-                                      (outline), 'r' (outline with round caps)
+                                      (outline), 'r' (outline with round caps), 'j' (round caps and joins), 'x'
+                                      (a drawn outline's fill, see loopsOf)
 */
 function mapShapes() {
   const LAYERS = ['ctx', 'free', 'regions', 'borders', 'hl', 'sketch', 'labels', 'pins'];
@@ -295,12 +297,41 @@ function glMap(stage, svg, S) {
   const boxOf = p => { let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; for (let i = 0; i < p.length; i += 2) { if (p[i] < x0) x0 = p[i]; if (p[i] > x1) x1 = p[i]; if (p[i + 1] < y0) y0 = p[i + 1]; if (p[i + 1] > y1) y1 = p[i + 1]; } return [x0, y0, x1, y1]; };
   function inRing(p, x, y) { let c = false; for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) { const yi = p[i + 1], yj = p[j + 1]; if ((yi > y) !== (yj > y) && x < (p[j] - p[i]) * (y - yi) / (yj - yi) + p[i]) c = !c; } return c; }
   const zero = p => { for (let i = 2; i < p.length; i += 2) if (p[i] !== p[0] || p[i + 1] !== p[1]) return false; return true; };
+  // A ring drawn by hand (Draw's outline) may cross itself, which the cutting into triangles does not take: it is cut
+  // where it crosses into loops that don't, each filled on its own, so that all it encloses is filled, as it showed
+  // while it was drawn. Walking it, a step that crosses the way so far closes the loop since that crossing.
+  function loopsOf(p) {
+    const n = p.length / 2; if (n < 4) return [p];
+    const cut = (ax, ay, bx, by, cx, cy, dx, dy) => { // (where a→b crosses c→d, along a→b; not at their ends)
+      const rx = bx - ax, ry = by - ay, sx = dx - cx, sy = dy - cy, den = rx * sy - ry * sx; if (!den) return -1;
+      const t = ((cx - ax) * sy - (cy - ay) * sx) / den, u = ((cx - ax) * ry - (cy - ay) * rx) / den;
+      return t > 1e-9 && t < 1 - 1e-9 && u > 1e-9 && u < 1 - 1e-9 ? t : -1;
+    };
+    const loops = [], way = [p[0], p[1]];
+    for (let k = 1; k <= n; k++) {
+      const x = p[(k % n) * 2], y = p[(k % n) * 2 + 1];
+      for (;;) {
+        const m = way.length / 2, ax = way[2 * m - 2], ay = way[2 * m - 1];
+        let at = -1, first = 2;
+        for (let i = 0; i < m - 2; i++) { const t = cut(ax, ay, x, y, way[2 * i], way[2 * i + 1], way[2 * i + 2], way[2 * i + 3]); if (t >= 0 && t < first) { first = t; at = i; } }
+        if (at < 0) { way.push(x, y); break; }
+        const cx = ax + (x - ax) * first, cy = ay + (y - ay) * first;
+        loops.push([cx, cy, ...way.slice(2 * at + 2)]);
+        way.length = 2 * at + 2; way.push(cx, cy);
+      }
+    }
+    way.length -= 2; // (back where it began)
+    loops.push(way);
+    return loops.filter(l => l.length >= 6);
+  }
   // The triangles of a fill, as [x, y, …]. Evenodd: rings in rings are holes (and islands in those holes shapes
-  // again); nonzero (the world's land, its countries side by side): every ring a shape of its own.
-  function fillOf(parts, evenodd) {
+  // again); nonzero (the world's land, its countries side by side): every ring a shape of its own; drawn (a drawn
+  // outline): each ring's loops (loopsOf).
+  function fillOf(parts, evenodd, drawn = false) {
     const rings = parts.filter(s => s.p.length >= 6).map(s => ({ p: s.p, a: Math.abs(areaOf(s.p)), b: boxOf(s.p), depth: 0, holes: null }));
     const polys = [];
-    if (!evenodd) for (const r of rings) polys.push([r]);
+    if (drawn) for (const r of rings) for (const p of loopsOf(r.p)) polys.push([{ p }]);
+    else if (!evenodd) for (const r of rings) polys.push([r]);
     else {
       rings.sort((u, v) => v.a - u.a);
       rings.forEach((r, i) => {
@@ -322,19 +353,22 @@ function glMap(stage, svg, S) {
     return out;
   }
   // An outline's vertices, [x, y, side x, side y, length along it] each: two triangles a segment (its width added on
-  // the screen), and a disc for a part of no length with round caps (a dot).
-  const DISC = 16;
-  function strokeOf(parts, round) {
+  // the screen), and a disc for a part of no length with round caps (a dot); with round joins too (joins), a disc at
+  // every point of a part, finer (JOIN sides: a brush can be wide on the screen).
+  const DISC = 16, JOIN = 64;
+  function strokeOf(parts, round, joins = false) {
     let n = 0;
-    for (const s of parts) { const m = s.p.length / 2; n += zero(s.p) ? (round ? DISC * 3 : 0) : (m - 1 + (s.closed ? 1 : 0)) * 6; }
+    for (const s of parts) { const m = s.p.length / 2; n += zero(s.p) ? (round ? DISC * 3 : 0) : (m - 1 + (s.closed ? 1 : 0)) * 6 + (joins ? m * JOIN * 3 : 0); }
     const out = new Float32Array(n * 5); let o = 0;
     const v = (x, y, ox, oy, l) => { out[o++] = x; out[o++] = y; out[o++] = ox; out[o++] = oy; out[o++] = l; };
+    const disc = (x, y, k, l) => { for (let i = 0; i < k; i++) { const a = 2 * Math.PI * i / k, b = 2 * Math.PI * (i + 1) / k; v(x, y, 0, 0, l); v(x, y, Math.cos(a), Math.sin(a), l); v(x, y, Math.cos(b), Math.sin(b), l); } };
     for (const s of parts) {
       const p = s.p;
       if (zero(p)) {
-        if (round) for (let i = 0; i < DISC; i++) { const a = 2 * Math.PI * i / DISC, b = 2 * Math.PI * (i + 1) / DISC; v(p[0], p[1], 0, 0, 0); v(p[0], p[1], Math.cos(a), Math.sin(a), 0); v(p[0], p[1], Math.cos(b), Math.sin(b), 0); }
+        if (round) disc(p[0], p[1], DISC, 0);
         continue;
       }
+      if (joins) for (let i = 0; i < p.length; i += 2) disc(p[i], p[i + 1], JOIN, 0);
       const m = p.length / 2, last = s.closed ? m : m - 1;
       let len = 0;
       for (let i = 0; i < last; i++) {
@@ -355,7 +389,7 @@ function glMap(stage, svg, S) {
   function trianglesOf(d, kind, arcs = false) {
     const a = arcs ? 'a' : '';
     if (kind === 'e') return keep(WHOLES, kind + a + d, () => fillOf(parse(d, arcs), true));
-    const make = piece => kind === 'n' ? fillOf(parse(piece, arcs), false) : strokeOf(parse(piece, arcs), kind === 'r');
+    const make = piece => kind === 'n' || kind === 'x' ? fillOf(parse(piece, arcs), false, kind === 'x') : strokeOf(parse(piece, arcs), kind !== 's', kind === 'j');
     if (/[mlhvz]/.test(d.replace(/z/g, ''))) return keep(WHOLES, kind + a + d, () => make(d)); // (relative steps: not to be cut apart)
     const pieces = d.split(SPLIT).filter(Boolean);
     if (pieces.length === 1) return keep(PIECES, kind + a + d, () => make(d));
@@ -461,8 +495,9 @@ function glMap(stage, svg, S) {
       wpx: scaled ? 0 : sw - share * dot, wmap: scaled ? sw : 0, wdot: share,
       dash: dash && dash.length && dash.some(v => v > 0) ? [dash[0], dash[1] ?? dash[0]] : null, anim,
       // for taps, whether a fill or an outline is painted at all (a see-through fill takes taps); for the triangles, how
-      // holes count, and dots (round caps)
+      // holes count, dots (round caps), and round bends where a line is as wide on the map (joins: Draw's brush)
       hasFill: cs.fill !== 'none', hasStroke: cs.stroke !== 'none' && (sw > 0 || anim > 0), evenodd: cs.fillRule === 'evenodd', round: cs.strokeLinecap === 'round',
+      joins: cs.strokeLinecap === 'round' && cs.strokeLinejoin === 'round' && scaled && sw > 0,
       events: shown && cs.pointerEvents !== 'none', shown,
     };
   }
@@ -486,10 +521,11 @@ function glMap(stage, svg, S) {
   const schedule = () => { if (!frame) frame = requestAnimationFrame(draw); };
   const DRAWN = new Set(['path', 'circle', 'line']), ON_TOP = new Set(['free', 'hl', 'sketch', 'pins']), TEXTS = ['labels', 'pins'];
   // A change in layer `layer`: of its shapes or an outline, its shapes are read again; of a shape's look, that look (a
-  // group's: every look in the layer; in #hl a look may depend on the one before, so all of them); of a text, the labels.
+  // group's: every look in the layer; in #hl a look may depend on the one before, so all of them); of a text, the labels;
+  // shapes put in or taken out of a layer that shows texts (the pins: a pin's name, a place named), its labels too.
   S.changed = (what, layer, n) => {
-    if (what === 'labels') labelsChanged = true;
-    else { const B = BLOCKS[layer]; if (what === 'shapes' || !DRAWN.has(n.tag) || layer === 'hl') B.all = true; else B.looks.add(n); }
+    if (what === 'labels' || (what === 'shapes' && TEXTS.includes(layer))) labelsChanged = true;
+    if (what !== 'labels') { const B = BLOCKS[layer]; if (what === 'shapes' || !DRAWN.has(n.tag) || layer === 'hl') B.all = true; else B.looks.add(n); }
     schedule();
   };
   const dotOf = () => parseFloat(svg.style.getPropertyValue('--dot')) || 0;
@@ -506,8 +542,9 @@ function glMap(stage, svg, S) {
     return out;
   }
   // a shape's triangles as its look asks for them: its fill's, by the look's fill rule (where it is closed), then its
-  // line's, round-capped or not ('es', 'ns', 'r'…); whether the look paints them is its colours'
-  const formOf = (g, l) => (g.area ? (l.evenodd ? 'e' : 'n') : '') + (l.round ? 'r' : 's');
+  // line's, round-capped or not, with round joins ('es', 'ns', 'r', 'j'…); a drawn outline's fill (the sketch's) by its
+  // loops ('x'); whether the look paints them is its colours'
+  const formOf = (g, l, layer) => (g.area ? (l.evenodd ? 'e' : layer === 'sketch' ? 'x' : 'n') : '') + (l.round ? (l.joins ? 'j' : 'r') : 's');
   // the layers brought up to date; whether a block was built anew
   function update() {
     let looks = false, built = false;
@@ -525,7 +562,7 @@ function glMap(stage, svg, S) {
     const arcs = ON_TOP.has(B.id), old = B.items;
     B.items = collect(B.id, false).map(([n, chain, chainKey], i) => {
       const look = lookOf(n, B.id, chain, chainKey), g = geoOf(n, dOf(n), arcs);
-      return (n.item = { n, i, chain, chainKey, look, g, place: placeOf(n), form: formOf(g, look) });
+      return (n.item = { n, i, chain, chainKey, look, g, place: placeOf(n), form: formOf(g, look, B.id) });
     });
     const same = B.items.length === old.length && B.items.every((it, i) => { const o = old[i]; return it.n === o.n && it.g === o.g && it.form === o.form && it.place.every((v, k) => v === o.place[k]); });
     if (!same) buildBlock(B);
@@ -538,7 +575,7 @@ function glMap(stage, svg, S) {
       const it = n.item;
       if (!it || B.items[it.i] !== it) return readLayer(B); // (a shape not in the layer as it was read)
       it.look = lookOf(n, B.id, it.chain, it.chainKey);
-      const f = formOf(it.g, it.look); if (f !== it.form) { it.form = f; form = true; }
+      const f = formOf(it.g, it.look, B.id); if (f !== it.form) { it.form = f; form = true; }
     }
     B.looks.clear();
     if (form) buildBlock(B);

@@ -13,7 +13,7 @@
 //   marks.box(area), marks.edges(areas)   an area's box; the outline of areas as one place
 //   marks.stateOf(area), marks.states()   for the tools
 
-const RESULT = ['got', 't2', 't3', 'miss'], ALL = ['got', 't2', 't3', 'miss', 'ans', 'sel', 'pick', 'flash', 'found', 'rare', 'out', 'pre'];
+const RESULT = ['got', 't2', 't3', 'miss'], ALL = ['got', 't2', 't3', 'miss', 'ans', 'sel', 'pick', 'flash', 'found', 'rare', 'out', 'pre', 'over', 'thin', 'faint', 'focus'];
 
 export function makeMarks(quiz, shapes, layouts, labels, view) {
   const { S } = shapes, A = shapes.area, el = shapes.el, ids = shapes.ids;
@@ -23,6 +23,11 @@ export function makeMarks(quiz, shapes, layouts, labels, view) {
   function mark(areas, states, on = true) {
     const list = [].concat(states);
     for (const a of areas) for (const n of list) el(a).classList.toggle(n, on);
+    layouts.changed(areas);
+  }
+  // areas given a colour of their own (--hint, which a layout of units sets otherwise: Explore's overview), or none
+  function tint(areas, colour) {
+    for (const a of areas) { if (colour) el(a).style.setProperty('--hint', colour); else el(a).style.removeProperty('--hint'); }
     layouts.changed(areas);
   }
   function blink(key, areas, state, ms, after) {
@@ -129,7 +134,7 @@ export function makeMarks(quiz, shapes, layouts, labels, view) {
   }
 
   return {
-    mark, blink, fade, unfade: () => clearTimeout(fading), dim, clear, highlight, ask, unask, reveal, hover, box, edges,
+    mark, tint, blink, fade, unfade: () => clearTimeout(fading), dim, clear, highlight, ask, unask, reveal, hover, box, edges,
     stateOf: a => ALL.filter(c => el(a).classList.contains(c)),
     states: () => Object.fromEntries(ids.map(a => [a, ALL.filter(c => el(a).classList.contains(c))]).filter(([, s]) => s.length)),
   };

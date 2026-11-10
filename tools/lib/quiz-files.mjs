@@ -26,7 +26,7 @@ import vm from 'node:vm';
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..'); // (as geo.mjs's, without its map packages)
 
 const MAPS = path.join(ROOT, 'data/maps'), QUIZZES = path.join(ROOT, 'data/quizzes');
-const GEO = new Set(['d', 'lx', 'ly', 'a', 's', 'tx', 'ty', 'w', 'dot', 'pin']), FRAME = ['w', 'h', 'kpu', 'proj', 'L'];
+const GEO = new Set(['d', 'lx', 'ly', 'a', 's', 'tx', 'ty', 'w', 'dot', 'pin', 'hide']), FRAME = ['w', 'h', 'kpu', 'proj', 'L'];
 const isPath = v => typeof v === 'string' && /^M[\d.\-]/.test(v);
 const isGeo = v => isPath(v) || (Array.isArray(v) && v.length > 0 && v.every(x => isPath(x) || x === null || (Array.isArray(x) && x.every(n => typeof n === 'number' || n === null))));
 const wordy = v => (typeof v === 'string' && /\p{L}/u.test(v)) || (Array.isArray(v) && v.length > 0 && v.every(x => typeof x === 'string' && /\p{L}/u.test(x)));

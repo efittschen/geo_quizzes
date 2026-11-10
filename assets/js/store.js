@@ -27,7 +27,8 @@
 //              points: map play (city quizzes)
 //     custom   the player's own quizzes: [{ name, kind, ids }]
 //     last     what was chosen last on the setup screen: { choice, kind, lang, map, topN, opts, sel: { <layer>: [ids] } }
-//     paint    a town-name quiz's results: { best: { <round>: places right }, choice }
+//     paint    a town-name quiz's results from before it was a map quiz: { best: { <round>: drawings accepted }, choice },
+//              taken into `best` as its page opens (paintIn)
 //     changed  when `stars` and `custom` last changed here: { stars, custom } (times), and
 //     cleared  when the stack was last removed: what a merge with the online copy goes by (see sync.js)
 //     gone     the page is no more and another page's record took this one in: { to: <that quiz id>, at: when }; the
@@ -212,6 +213,18 @@ const STORE = (() => {
     const [won, lost] = ahead > 0 || (ahead === 0 && a.ms < b.ms) ? [a, b] : [b, a];
     return { ...won, score: Math.max(a.score, b.score), ...(won.name || lost.name ? { name: won.name || lost.name } : {}) };
   }
+  // 2026-11-09: the town-name quizzes, painted on a page of their own until then, are map quizzes (Draw). A record's
+  // `paint` results, the number of drawings accepted per round, become the best results of the rounds with the same
+  // keys, on the quiz map (no time was kept), the better kept where one is there already; `paint` goes. rounds:
+  // [{ key, best: the best's key, of, name }], from the page (engine/storage/index.js).
+  function paintIn(id, rounds) {
+    if (!quiz(id).paint) return;
+    setQuiz(id, r => {
+      const old = (r.paint && r.paint.best) || {};
+      for (const q of rounds) if (old[q.key] != null) (r.best ||= {})[q.best] = better({ name: q.name, of: q.of, score: old[q.key] }, r.best[q.best]);
+      delete r.paint;
+    });
+  }
   function takeIn() {
     for (const id of quizIds()) {
       const T = TAKEN[id], r = T ? quiz(id) : {};
@@ -271,5 +284,5 @@ const STORE = (() => {
   const listen = f => { heard = f; };
 
   carryOver(); takeIn();
-  return { cardKeys, quiz, setQuiz, quizIds, settings, setSettings, review, setReview, print, time, ms, cardOut, cardIn, bestOut, bestIn, adopt, file, restore, sync, setSync, maps, setMaps, names, entry, place, listen };
+  return { cardKeys, quiz, setQuiz, quizIds, settings, setSettings, review, setReview, print, time, ms, cardOut, cardIn, bestOut, bestIn, adopt, paintIn, file, restore, sync, setSync, maps, setMaps, names, entry, place, listen };
 })();

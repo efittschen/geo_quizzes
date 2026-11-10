@@ -1,6 +1,7 @@
 // Names on the map: one label per item of the kind drawn, items at the same spot sharing one ("495 / 499"); a kind with
 // areaLabel one fixed label per area, one with labelPerArea one per area listing every item there. Pins (the town a
-// code belongs to) and map play's guess (a line from the tap to the place). Their sizes are on the screen, set once:
+// code belongs to), an item's places as dots (a town-name part's, the one asked among them) and map play's guess (a
+// line from the tap to the place). Their sizes are on the screen, set once:
 // an area's name its size on the map from 9 px up to NAME (gl-map shrinks it as the map zooms), a city's CITY above its
 // dot, a pin's PIN.
 //
@@ -10,6 +11,9 @@
 //                                       has one
 //   labels.out()                        an area's own label dimmed with its area (a board of tiles keeps them on show)
 //   labels.pin(p), labels.unpin(), labels.guess(from, to), labels.unguess()
+//   labels.points(pts, at)              places as dots, pts [x, y, …], and at [x, y] the one asked (with the pins: unpin
+//                                       takes them off); none: off
+//   labels.name(p)                      one of those places named: { x, y, text } (Explore), or none
 //   labels.size(s, dot)                 the dots (dot px across) and the circles of the pin and the guess sized for s
 //                                       screen pixels per map unit
 //   labels.shown()                      the labels on show, their text (for the tools)
@@ -85,7 +89,23 @@ export function makeLabels(quiz, shapes) {
     t.setAttribute('x', p.x); t.setAttribute('y', p.y); t.setAttribute('font-size', PIN); t.setAttribute('dy', PIN_UP); t.textContent = p.label;
     S.pins.append(c, t); size(sized, dotPx);
   }
-  function unpin() { S.pins.replaceChildren(); }
+  let named = [];
+  function unpin() { S.pins.replaceChildren(); named = []; }
+  function name(p) {
+    for (const e of named) e.remove();
+    named = [];
+    if (!p) return;
+    const dot = S.el('path'), t = S.el('text');
+    dot.setAttribute('d', `M${p.x},${p.y}L${p.x},${p.y}`); dot.setAttribute('class', 'dot pts on');
+    t.setAttribute('x', p.x); t.setAttribute('y', p.y); t.setAttribute('font-size', PIN); t.setAttribute('dy', PIN_UP); t.textContent = p.text;
+    S.pins.append(dot, t); named = [dot, t]; size(sized, dotPx);
+  }
+  // (each a line of no length with round caps: a dot as large as the map's dots say, quiz-map.css #pins .pts)
+  function points(pts, at) {
+    unpin();
+    const dots = (list, cls) => { if (!list || !list.length) return; let d = ''; for (let i = 0; i < list.length; i += 2) d += `M${list[i]},${list[i + 1]}L${list[i]},${list[i + 1]}`; const p = S.el('path'); p.setAttribute('d', d); p.setAttribute('class', cls); S.pins.append(p); };
+    dots(pts, 'dot pts'); dots(at, 'dot pts halo'); dots(at, 'dot pts at');
+  }
   function guess(from, to) {
     const line = S.el('line'), dot = S.el('circle');
     line.setAttribute('x1', from.x); line.setAttribute('y1', from.y); line.setAttribute('x2', to.x); line.setAttribute('y2', to.y);
@@ -104,7 +124,7 @@ export function makeLabels(quiz, shapes) {
     label(K, id, on = true) { build(K); for (const e of ofItem[id] || []) { if (on) e.shown.add(id); else e.shown.delete(id); render(e); } },
     only, all: K => only(K, K.ids), clear, out,
     tag(K, area, tag, on) { build(K); const e = ofArea[area]; if (!e) return; if (on) e.shown.add(tag); else e.shown.delete(tag); render(e); },
-    pin, unpin, guess, unguess: () => S.free.replaceChildren(),
+    pin, unpin, points, name, guess, unguess: () => S.free.replaceChildren(),
     size, get sized() { return sized; },
     shown: () => entries.filter(e => !e.el.classList.contains('off')).map(e => e.el.textContent),
   };

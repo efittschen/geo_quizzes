@@ -67,6 +67,16 @@ svg#map{display:none}
 #regions .r.rare{--fill:var(--rare)}   /* right, but rare there: its own colour, whatever the try */
 #regions .r.flash{--fill:var(--bad)}
 
+/* a place drawn only as an answer (a hide area: a region of its own, not one to tap) */
+#regions .r.hide:not(.sh1):not(.sh2):not(.sh3):not(.ans):not(.sel):not(.got):not(.t2):not(.t3):not(.miss):not(.over){visibility:hidden}
+/* Explore's overview (screens/explore.js, exploreList.overview: places that overlap, the town-name parts): each a
+   see-through patch in its colour (its unit's --hint), paler where many are shown (thin); the one pointed at stronger,
+   the others faint */
+#regions .r.over{--fill:var(--hint,var(--h1));fill-opacity:.42;stroke:color-mix(in srgb,var(--hint,var(--h1)) 45%,var(--ink));stroke-width:1.4;stroke-opacity:.9}
+#regions .r.over.thin{fill-opacity:.16;stroke-opacity:.55}
+#regions .r.over.faint{fill-opacity:.05;stroke-opacity:.18}
+#regions .r.over.focus{fill-opacity:.55;stroke-opacity:1}
+
 /* ---------- units: areas drawn as one place (map/layouts.js) ---------- */
 /* Each area's seam is no wider than the unit's outline drawn over it, which hides it at the coast and between units,
    so shapes keep their real edge at every zoom. An area that needs none (tight: the one shape under its unit shows
@@ -134,6 +144,10 @@ svg#map.mine #regions .r.out{pointer-events:auto}
 #labels text.off{display:none}
 .all-labels #labels text.off{display:inline}   /* every name on the map (the quiz's lettersLabel option) */
 #pins circle{fill:var(--ink);stroke:var(--panel);stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none}
+#pins .pts{fill:none;stroke:var(--ink);stroke-width:calc(var(--dot,11px) * .3);stroke-linecap:round;stroke-opacity:.75;vector-effect:non-scaling-stroke;pointer-events:none}   /* an item's places (labels.points) */
+#pins .pts.halo{stroke:var(--halo);stroke-width:calc(var(--dot,11px) * 1.35);stroke-opacity:1}
+#pins .pts.at{stroke:var(--ok);stroke-width:calc(var(--dot,11px) * 1.05);stroke-opacity:1}   /* the one asked */
+#pins .pts.on{stroke:var(--ink);stroke-width:calc(var(--dot,11px) * .75);stroke-opacity:1}   /* the one named (Explore) */
 #pins text{font-family:var(--sans);font-weight:600;fill:var(--ink);stroke:var(--halo);stroke-width:3px;paint-order:stroke;text-anchor:middle;pointer-events:none}
 #free line{stroke:var(--ink);stroke-width:2;stroke-dasharray:6 4;vector-effect:non-scaling-stroke;pointer-events:none}
 #free circle{fill:var(--panel);stroke:var(--ink);stroke-width:2.5;vector-effect:non-scaling-stroke;pointer-events:none}

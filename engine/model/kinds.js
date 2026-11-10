@@ -6,6 +6,10 @@
 //   of, lang       the items of kind `of` in another language or under another label; start: the one shown first
 //   cards          '<kind>': it shares that kind's review cards
 //   asCards        it is played as cards too (Cards: the question on a card, turned over to the answer, then rated)
+//   ways           the ways it is played, all of them, where its config names them (else worked out: WAYS below)
+//   alone          ms: an answer shows on the map that long (Draw: with the drawing), or until the next drawing begins,
+//                  not to the round's end (places that overlap: the town-name parts)
+//   points(id)     its places, shown as dots with its answer (and the place of the example asked, `at`)
 //   onlyCards      it is played as cards alone (a map to learn, with no place to tap or draw)
 //   modes, defaultMode, answer(id), answers(id) (other spellings that count), typeMode, typed(id, text) (or true: typed,
 //                  checked from its name and answers), choices(), time(id)
@@ -59,7 +63,7 @@ export function makeKinds(quiz, geo) {
   const drawable = K => !quiz.dots && !quiz.board && K.prompt !== 'area' && !K.typed && !K.fresh && !K.pickAll;
   // (Name it, Shape: one place a question, asked by its name, or its name in another script or on a sign)
   const nameable = K => !quiz.board && (K.prompt === 'name' || K.prompt === 'text') && !K.typed && !K.fresh && !K.pickAll && !K.clickAll && !K.areaLabel && !K.labelPerArea;
-  const ways = K => K.onlyCards ? ['cards'] : ['map', ...(K.modes || []), ...(nameable(K) ? ['name', ...(quiz.dots ? [] : ['shape'])] : []), ...(drawable(K) ? ['draw'] : []), ...(K.asCards ? ['cards'] : [])];
+  const ways = K => K.ways ? K.ways : K.onlyCards ? ['cards'] : ['map', ...(K.modes || []), ...(nameable(K) ? ['name', ...(quiz.dots ? [] : ['shape'])] : []), ...(drawable(K) ? ['draw'] : []), ...(K.asCards ? ['cards'] : [])];
 
   const answerNameOf = K => K.answer || (byKey[K.of] ? i => byKey[K.of].name(i) : K.name);
   // (Name it and Shape share their names, made as the page opens: a text drawn at random is drawn there)

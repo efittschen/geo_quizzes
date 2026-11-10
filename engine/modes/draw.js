@@ -2,7 +2,9 @@
 // closes itself and is filled once let go; Brush: a broad round brush, as wide on the screen at every zoom (zoomed in it
 // draws finer). As many pieces as it takes, Undo (Backspace, Z) the last, Clear all, Done (Enter) answers: one try. One
 // finger draws, two move and zoom the map; with a mouse the left button draws, the wheel zooms, the right or middle
-// button or Space held moves the map. The drawing stays until the next one begins.
+// button or Space held moves the map. The drawing stays until the next one begins (in Hard mode every answer goes
+// then); a kind whose answers show alone (alone: ms, the town-name parts, whose places overlap) has its answer and the
+// drawing shown that long, or until the next drawing begins.
 //
 // A drawing is pieces in map units, so it stays where it was drawn as the map moves: { tool, pts: [x, y, …], r: the
 // brush's half width }. The piece being drawn is drawn on a canvas over the map; let go, it is a path in the map's own
@@ -12,7 +14,7 @@ const TOOLS = [['outline', 'Outline'], ['brush', 'Brush']], BRUSH = 14, EDGE = 5
 
 export function makeDraw({ model, map, game, storage, $ }) {
   const kept = storage.last().tool;
-  let tool = TOOLS.some(([t]) => t === kept) ? kept : 'outline', pieces = [], old = false, live = null, raf = 0, P = null;
+  let tool = TOOLS.some(([t]) => t === kept) ? kept : 'outline', pieces = [], old = false, live = null, raf = 0, P = null, gone = 0;
   const canvas = document.createElement('canvas');
   canvas.className = 'sketch-live';
   $('map').after(canvas);
@@ -68,7 +70,7 @@ export function makeDraw({ model, map, game, storage, $ }) {
   map.capture({
     active: drawing, live: () => !!live, owns: id => !!live && live.id === id, follow: soon,
     from(e) {
-      if (old) { wipe(); if (game.opts.hard) map.fade(0, true); }
+      if (old) { wipe(); if (game.opts.hard || P.kind.alone) map.fade(0, true); if (P.kind.alone) { clearTimeout(gone); map.unpin(); } }
       const { r, s, ox, oy } = onStage();
       live = { id: e.pointerId, tool, pts: [(e.clientX - r.left - ox) / s, (e.clientY - r.top - oy) / s], r: BRUSH / s, t: performance.now(), len: 0 };
       soon(); sync();
@@ -97,6 +99,7 @@ export function makeDraw({ model, map, game, storage, $ }) {
     const score = model.check.drawing({ place: map.rings(areas), pieces: mine.map(p => ({ brush: p.tool === 'brush' ? p.r : 0, pts: p.pts })), dot: BRUSH / map.scale(), edge, weight: map.weight });
     game.answer({ drawn: score });
     old = true; map.sketch.old();
+    if (K.alone) { clearTimeout(gone); gone = setTimeout(() => { if (old) wipe(); map.fade(0, true); map.unpin(); }, K.alone); }
     const bs = areas.map(map.box), x0 = Math.min(...bs.map(b => b.x)), y0 = Math.min(...bs.map(b => b.y)), x1 = Math.max(...bs.map(b => b.x + b.width)), y1 = Math.max(...bs.map(b => b.y + b.height)), v = map.view();
     if (x1 < v.x || x0 > v.x + v.w || y1 < v.y || y0 > v.y + v.h) map.framePoints([{ x: x0, y: y0 }, { x: x1, y: y1 }, ...mine.flatMap(p => p.pts.filter((_, i) => i % 2 === 0).map((x, i) => ({ x, y: p.pts[2 * i + 1] })))]);
     sync();
@@ -110,6 +113,6 @@ export function makeDraw({ model, map, game, storage, $ }) {
       if (e.key === 'Enter') { e.preventDefault(); finish(); }
       else if (e.key === 'Backspace' || e.key === 'z' || e.key === 'Z') { e.preventDefault(); undo.onclick(); }
     },
-    close() { P = null; wipe(); sync(); },
+    close() { P = null; clearTimeout(gone); wipe(); sync(); },
   });
 }

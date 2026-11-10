@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // cities: a country's largest cities -> data/maps/<slug>-cities/cities.js for the city quiz (engine/types/city.js),
-// which its town-name quiz (engine/paint.js) loads too.
+// on whose map its town-name quiz is drawn too (tools/builds/town-names/quiz.mjs).
 //
 //   node tools/cities.mjs --iso2 TH --iso3 THA --name Thailand --adm1 regions.geojson --langs th
 //        --out data/maps/thailand-cities/cities.js [--top 200] [--lang-by-region map.json]

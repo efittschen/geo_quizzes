@@ -149,6 +149,7 @@ export function createGame({ quiz, model, map, storage, formats }) {
       if (A.lx < v.x || A.lx > v.x + v.w || A.ly < v.y || A.ly > v.y + v.h) map.framePoints([lastPoint, { x: A.lx, y: A.ly }]);
     }
     if (k.pin) map.pin(k.pin(out.id));
+    if (k.points) map.points(k.points(out.id), asked.shown && asked.shown.at); // (its places, and the one of the example asked: formats)
     formats.say(P, out.id);
     const ms = now() - askedAt;
     out.members.forEach((m, n) => {

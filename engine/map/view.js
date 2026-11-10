@@ -123,7 +123,7 @@ export function makeView(quiz, shapes, glm) {
 
   /* ---------- the pointer ---------- */
   // A tap goes to the receiver: tap(area, point, ok): the area under the press (or null), the map point, and whether
-  // it was a plain click or tap that began on the map; hover(area) for a mouse. Draw takes the pointer while it draws
+  // it was a plain click or tap that began on the map; hover(area, point) for a mouse. Draw takes the pointer while it draws
   // (capture: { active(), live(), owns(id), from(e), to(e), end(), drop(), follow() }).
   function input(at) {
     let drag = null, pinch = null, downArea = null, moved = false;
@@ -148,7 +148,7 @@ export function makeView(quiz, shapes, glm) {
     });
     surface.addEventListener('contextmenu', e => { if (capture && capture.active()) e.preventDefault(); });
     surface.addEventListener('pointermove', e => {
-      if (!held.has(e.pointerId)) { if (e.pointerType === 'mouse' && receiver && receiver.hover) receiver.hover(at(e, exact())); return; }
+      if (!held.has(e.pointerId)) { if (e.pointerType === 'mouse' && receiver && receiver.hover) receiver.hover(at(e, exact()), toMap(e.clientX, e.clientY)); return; }
       held.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (capture && capture.owns(e.pointerId)) capture.to(e);
       else if (pinch && held.size === 2) {

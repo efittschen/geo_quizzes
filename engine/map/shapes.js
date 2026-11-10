@@ -24,6 +24,7 @@ export function makeShapes(quiz) {
     p.dataset.a = a.id; p.dataset.g = a.g;
     if (a.top) p.classList.add('top');
     if (a.dot) p.classList.add('dot');
+    if (a.hide) p.classList.add('hide'); // (a place drawn only as an answer: quiz-map.css)
     // (a dot of a size on the ground grows and shrinks with the map, and has no ring around it)
     if (a.w) { p.style.strokeWidth = a.w + 'px'; p.style.vectorEffect = 'none'; svg.classList.add('ground'); }
     spare.appendChild(p); els[a.id] = p;

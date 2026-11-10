@@ -1,11 +1,10 @@
 // Controller support. A game controller (any the browser's Gamepad API sees: Xbox, PlayStation, Switch Pro, Steam Deck…)
 // moves a cursor of its own over the page and clicks with it, through the same pointer, mouse and wheel events a mouse
 // sends. So every page and every quiz works with it as with a mouse, without code of its own: the map quizzes
-// (engine/) and their street map (map-tiles.js), the town names' painting (engine/paint.js), the home map
-// (D3) and the coverage map, also inside a country page's box (a frame of the same site, driven from the page around it).
+// (engine/) and their street map (map-tiles.js), Draw in them, the home map (D3) and the coverage map, also inside a country page's box (a frame of the same site, driven from the page around it).
 //
 //   left stick     the cursor; the left trigger held slows it, for small areas
-//   A (✕)          a click; held, a drag: pans a map, paints a town name's region
+//   A (✕)          a click; held, a drag: pans a map, or draws (Draw)
 //   B (○)          back: leaves a text field, closes a box, an enlarged picture or this list
 //   right stick    pans the map under the cursor, or scrolls the list under it
 //   LB / RB        zoom out / in where the cursor is
@@ -25,9 +24,9 @@
   const DEAD = 0.15, WHEEL = 200, SAVE = 'geoquizzes-gamepad';
   const CLICKABLE = 'a[href], button, input:not([type=hidden]), select, textarea, summary, label.toggle, [role=tab], [role=link], [tabindex]:not([tabindex="-1"])';
   const FIELD = 'input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=file]), select, textarea';
-  const MAP = 'canvas.glmap, .leaflet-container'; // what the right stick pans (a map quiz's map: its canvas, gl-map.js): the town names' canvas has no panning, and a drag there paints
+  const MAP = 'canvas.glmap, .leaflet-container'; // what the right stick pans (a map quiz's map: its canvas, gl-map.js)
   const CONTROLS = [
-    ['Left stick', 'Move the cursor (hold LT to slow it)'], ['A / ✕', 'Click; hold to drag a map or paint'],
+    ['Left stick', 'Move the cursor (hold LT to slow it)'], ['A / ✕', 'Click; hold to drag a map or draw'],
     ['B / ○', 'Back: leave a field, close a box or picture'], ['Right stick', 'Pan the map, or scroll a list'],
     ['LB / RB', 'Zoom out / in at the cursor'], ['D-pad', 'Jump to the next button that way'],
     ['X / □', 'Show the whole map'], ['Start', 'Start, Play again, Done, Next'], ['Select', 'Show these controls'],

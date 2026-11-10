@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// townnames: the parts of a country's place names that mark a region -> data/maps/<slug>-town-names/names.js for the
-// painting quiz (engine/paint.js).
+// townnames: the parts of a country's place names that mark a region -> NAMES (--out), which
+// tools/builds/town-names/quiz.mjs makes the country's town-name quiz of (tools/builds/town-names/build.mjs runs both).
 //
-//   node tools/townnames.mjs --iso2 DE --map data/maps/germany-cities/cities.js --out data/maps/germany-town-names/names.js
+//   node tools/townnames.mjs --iso2 DE --map data/maps/germany-cities/cities.js --out tools/cache/builds/town-names/germany-names.js
 //        [--chosen tools/cache/builds/town-names/chosen.json]
 //        [--min-places 60] [--parts 100] [--tight 90] [--gain 500] [--brush 120] [--cover 90] [--skip=-lde,-ke]
 //
@@ -22,7 +22,7 @@
 // longer while nine in ten of its places agree on that letter (-ghausen becomes -inghausen).
 // The map (land, region borders, neighbours, projection) is taken from --map: a cities.js made by tools/cities.mjs.
 //
-// Written per part: its places (x, y in map units; a sample of 3000 when it has more) and the names of 80 of them
+// Written per part: its places (x, y in map units; a sample of 3000 when it has more) and their names, the first 80
 // to ask with, gain (the points it adds to a guess), cut (the share of all places its outlines leave
 // outside, percent), side (N, E, S or W: where the middle of its places lies from the middle of the country; the
 // page sorts its rounds by these and by the number of places), dot (see dotOf) and the best drawing: at most three separate lines
@@ -183,10 +183,11 @@ let seed = 20261002; const rnd = () => { seed = seed + 0x6D2B79F5 | 0; let t = M
 const parts = picked.map(x => {
   // the aim: the 80% area (chosen parts) or the best drawing of the brush
   const best = x.aim ? { strokes: [], lines: 0, cover: Math.round(100 * x.aim.cover), painted: Math.round(1000 * x.aim.painted) / 10 } : bestDrawing(x.ids), ids = [...x.ids];
-  // The places in a shuffled order (the same on every run): the first SHOW are written, the first ASK with names.
+  // The places in a shuffled order (the same on every run): the first SHOW are written with their names, the first
+  // ASK of them to ask with.
   for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; }
   ids.length = Math.min(ids.length, SHOW);
-  return { label: label(x.kind, longer(x)), where: x.kind, n: x.n, gain: Math.round(x.gain), cut: x.aim ? Math.round(100 - 100 * x.aim.painted) : Math.round(x.cut * 100), side: sideOf(x), dot: dotOf(x), x: ids.map(i => Math.round(places[i].x)), y: ids.map(i => Math.round(places[i].y)), names: ids.slice(0, ASK).map(i => places[i].name), ...(x.aim ? { area: x.aim.area } : { best: best.strokes, lines: best.lines }), cover: best.cover, painted: best.painted };
+  return { label: label(x.kind, longer(x)), where: x.kind, n: x.n, gain: Math.round(x.gain), cut: x.aim ? Math.round(100 - 100 * x.aim.painted) : Math.round(x.cut * 100), side: sideOf(x), dot: dotOf(x), x: ids.map(i => Math.round(places[i].x)), y: ids.map(i => Math.round(places[i].y)), names: ids.map(i => places[i].name), ...(x.aim ? { area: x.aim.area } : { best: best.strokes, lines: best.lines }), cover: best.cover, painted: best.painted };
 });
 const NAMES = { country: MAP.country, iso2: CC, w: MAP.w, h: MAP.h, kpu: MAP.kpu, cell: CELL, gw, gh, brush: R, total: places.length, points: Math.round(countryPoints(places)), counts, parts };
 // Every part looked at, with its numbers and why it is out (next to the build's log, for checking):
@@ -202,8 +203,8 @@ fs.writeFileSync(o.out, `// ${MAP.country}: ${parts.length} parts of place names
 // word), n (places with the part), gain (the points knowing it adds to a guess; points: the best guess knowing
 // only the country), cut (percent of all places ${o.chosen ? "outside the part's 80% area" : 'its outlines leave outside'}), side (N, E, S, W),
 // dot (how large its places are drawn in the preview of a round, map units),
-// x/y (those places, in map units; ${SHOW} of them, picked at random, when there are more), names (the names of the
-// first ${ASK} of them, to ask with), ${o.chosen ? `cover and painted (what the part's 80% area, the smallest area holding
+// x/y (those places, in map units; ${SHOW} of them, picked at random, when there are more), names (their names, the
+// first ${ASK} to ask with), ${o.chosen ? `cover and painted (what the part's 80% area, the smallest area holding
 // 80% of its smoothed places, covers of the part and of all places, percent: what a drawing is graded against),
 // area (that area's outline, the part's shape on the map: rings of x, y in map units).
 // Parts: the country's of the best 500 over all countries (tools/builds/town-names/choose.mjs).` : `best (the strokes of the best drawing:

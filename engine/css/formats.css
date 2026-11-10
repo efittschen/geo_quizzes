@@ -46,6 +46,7 @@
 .card[data-tag]:not([data-tag=""])::before{content:attr(data-tag);font:600 .8rem/1.2 var(--sans);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:center}   /* where it is read so */
 .sent{margin:0;font:600 2.3rem/1.35 var(--script);overflow-wrap:anywhere;width:100%}
 .card.pop .sent{animation:pop .35s ease-out}
+.sent b{font-weight:inherit;text-decoration:underline;text-decoration-color:var(--yellow);text-decoration-thickness:.14em;text-underline-offset:.14em}   /* the part of it marked (a town name's part) */
 .sent.letter{font-size:4rem;line-height:1.2;text-align:center}   /* a letter, capital and small */
 .sent.word{font-size:2.5rem;line-height:1.3;text-align:center}   /* one word of a sign */
 .sent:lang(ar),.sent:lang(fa),.sent:lang(ur){font-size:2.1rem;line-height:1.9}

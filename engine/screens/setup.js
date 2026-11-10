@@ -16,6 +16,8 @@
 //   setup.tap(area)         a tap on the map: the round picked becomes a custom quiz, the items there toggled
 //   setup.practice          a quiz to play at once (the review page's Practice), or null
 //   setup.look              { map, back }: the maps chosen
+//   setup.round()           the round picked: { kind, ids, label } (Explore's overview)
+//   setup.overview(round)   the App's: the round drawn as Explore's overview draws it (true), where it does; previewed
 //   setup.onMap(), setup.onPick(look)   the App: the map changed (its layout to draw); a map picked (true: the App took it,
 //                           a review's)
 
@@ -86,7 +88,7 @@ export function makeSetup({ quiz, model, map, storage, ui }) {
     if (quiz.backs.includes(params.get('back'))) chosenBack = params.get('back');
   }
   // the way a kind is answered: the one picked last on this page where it offers it, else its own first (defaultMode)
-  const wayFor = key => { const w = kinds.ways(K(key)), d = K(key).defaultMode; return w.includes(chosenMode) ? chosenMode : w.includes(d) ? d : 'map'; };
+  const wayFor = key => { const w = kinds.ways(K(key)), d = K(key).defaultMode; return w.includes(chosenMode) ? chosenMode : w.includes(d) ? d : w.includes('map') ? 'map' : w[0]; }; // (a kind not played on the map: its first way)
 
   // Folders: a tab per layer (a layer in another language in the one it follows); a page whose tabs are other pages
   // (data-folders) lists its layers' rounds as one.
@@ -339,21 +341,26 @@ export function makeSetup({ quiz, model, map, storage, ui }) {
     keep('map', chosenMap);
   }
   // The round picked on the map: the rest dimmed (a kind whose answers are sets of areas, dim: false, the whole map; a
-  // page of one round none: its round is drawn at the start), on the street map alone tinted instead, its labels on.
+  // page of one round none: its round is drawn at the start), on the street map alone tinted instead, its labels on;
+  // or, where Explore's list is an overview (places that overlap: the town-name parts), drawn as it draws them, without
+  // names (setup.overview: the App's, explore.js preview; previewed: it takes the map's taps and hovers).
   function preview() {
     const cur = current(), Kd = K(cur.kind), chosen = Kd.dim === false || single ? [] : cur.ids.flatMap(id => Kd.areas[id]);
     map.dim(Kd.dim === false ? map.ids : chosen);
     const inRound = new Set(chosen);
     map.mark(map.ids, 'pre', false); if (map.plain()) map.mark(map.ids.filter(a => inRound.has(a)), 'pre');
-    map.labels(Kd, single ? [] : cur.ids);
+    setup.previewed = !single && !!setup.overview && setup.overview(setup.round());
+    if (setup.previewed) map.clearLabels(); else map.labels(Kd, single ? [] : cur.ids);
     setup.onMap();
   }
 
   const setup = {
-    shown: false, onMap: () => {}, onPick: null,
+    shown: false, onMap: () => {}, onPick: null, overview: null, previewed: false,
     get practice() { return shared && shared.practice ? shared : null; },
     get look() { return { map: chosenMap, back: chosenBack }; },
     kind: () => kindNow(),
+    // the round chosen, its items and name (Explore's overview shows its items)
+    round: () => ({ ...current(), label: choice === 'custom' ? 'Custom quiz' : (roundOf(choice) || {}).label }),
     // what is picked besides the rounds, for the maps a review asks its cards on: the quiz shared, each kind's selection
     asked: () => [...(shared ? [[shared.kind, shared.ids]] : []), ...kinds.list.flatMap(Kd => kinds.ways(Kd).map(w => [kinds.play(Kd.key, w).key, w === 'map' ? Kd.ids.filter(id => SEL[Kd.key].has(id)) : Kd.ids]))],
     options: () => ({ hints: opt.colors.checked, letters: !!(quiz.lettersLabel && opt.letters.checked), hard: opt.hard.checked, sign: opt.sign.checked, detail: opt.detail.checked }),

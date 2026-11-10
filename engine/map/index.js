@@ -5,15 +5,15 @@
 //   map.area(id)                          an area's facts: { lx, ly, a, s, g, top, dot } (the Model's geo)
 //   map.draw(kind, { hints, letters, asking })   the kind drawn as its layout (layouts.js), coloured by hint group
 //                                         (while asking, not where those are the answers), with every label (letters)
-//   map.mark, blink, fade, unfade, dim, clear, highlight, ask, unask, reveal, box, edges   states (marks.js)
-//   map.label, labels, allLabels, clearLabels, tag, pin, unpin, guess, unguess      labels (labels.js)
+//   map.mark, tint, blink, fade, unfade, dim, clear, highlight, ask, unask, reveal, box, edges   states (marks.js)
+//   map.label, labels, allLabels, clearLabels, tag, pin, unpin, points, name, guess, unguess   labels (labels.js)
 //   map.home(), map.frame(box), map.frameAreas(areas), map.framePoints(ps), map.zoom(f), map.view(), map.setView(v),
 //   map.scale(), map.toScreen(x, y), map.stageBox()                                 the view (view.js)
 //   map.use(name, keep), map.back(name), map.coverage(on), map.shown, map.plain(), map.overlaid(), map.onStreet()
 //                                         which map (tiles.js)
 //   map.look(flag, on)                    a flag of the map's look: picking (setup), fade, freeplay (map play), mine
 //                                         (My stats), sketch (Draw)
-//   map.receive({ tap(area, point, ok), hover(area), exact })   who gets the map's taps (the App, per view); exact:
+//   map.receive({ tap(area, point, ok), hover(area, point), exact })   who gets the map's taps (the App, per view); exact:
 //                                         the area under a tap, not its unit's first
 //   map.hover(area, areas)                the area under the mouse and the outline of what it answers
 //   map.capture(c), map.space(on), map.spaceHeld()   Draw takes the pointer; Space held moves the map
@@ -85,12 +85,12 @@ export function createMap(quiz, { root }) {
       svg.classList.toggle('all-labels', !!letters);
     },
     hintLabel: layouts.hintLabel,
-    mark: marks.mark, blink: marks.blink, fade: marks.fade, unfade: marks.unfade, dim: marks.dim, clear: marks.clear,
+    mark: marks.mark, tint: marks.tint, blink: marks.blink, fade: marks.fade, unfade: marks.unfade, dim: marks.dim, clear: marks.clear,
     highlight: marks.highlight, ask: marks.ask, unask: marks.unask, box: marks.box, edges: marks.edges,
     reveal: (areas, always) => marks.reveal(areas, { overlay: tiles.overlaid(), always }),
     hover(area, areas) { marks.hover(area, areas && !tiles.plain() ? areas : null); },
     label: labels.label, labels: labels.only, allLabels: labels.all, clearLabels: labels.clear, tag: labels.tag,
-    pin: labels.pin, unpin: labels.unpin, guess: labels.guess, unguess: labels.unguess,
+    pin: labels.pin, unpin: labels.unpin, points: labels.points, name: labels.name, guess: labels.guess, unguess: labels.unguess,
     home: view.home, frame: view.frame, framePoints: view.framePoints, zoom: view.zoom,
     frameAreas: areas => view.frameBoxes(areas.map(marks.box)),
     view: view.get, setView: view.set, scale: view.scale, toScreen: view.toScreen, toMap: view.toMap, stageBox: view.stageBox,

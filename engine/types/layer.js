@@ -11,14 +11,17 @@
 // and a name in another script is read where the page loads engine/types/reading.js. Typed answers are checked by
 // the engine, from an item's name and its other spellings (answers).
 //
-//   SETTINGS = { key, map, borders, size, pad, maxZoom, labelScale, fly, hintLabel, exploreKind, hintsDefault,
-//                langsAlways, kinds: [layer…] }
+//   SETTINGS = { key, map, borders, base, size, pad, maxZoom, labelScale, fly, hintLabel, exploreKind, hintsDefault,
+//                langsAlways, rounds, exploreList, kinds: [layer…] }
 //     map        where the areas are: 'DATA.reg', { list: 'DATA.ddd', id: 'c' } where their id has another name, or
 //                { paths: 'DATA.ent', ids } for a bare list of outlines (label points and sizes beside it, in <paths>At)
 //     borders    the map's lines drawn over the areas ('DATA.rb')
+//     base       a city map drawn under the areas ('CITIES': its country and region lines), where the areas are
+//                only answers (the town names: each part's area, shown once answered)
+//     rounds, exploreList   hand-made rounds and Explore's list, as the engine takes them (engine/model/quiz.js)
 //     circles, top   true: the quiz draws the map's tiny areas as circles, the map's top areas above their neighbours
 //   layer = { key, label, noun, prompt, modes, detail (its option's label), typed, time, presets, rankings, pool,
-//             and the engine's switches (hints, clickAll, merge, dim, of, lang, like, groupsOnly …) }
+//             and the engine's switches (hints, clickAll, merge, dim, of, lang, like, groupsOnly, ways, alone …) }
 //     typed      true: the answer is typed, checked from the item's name and NAMES' answers; time: a typed
 //                answer's clock, in clicks
 //     pool       the tables drawn at random (NAMES' pool: an item's entries; FACTS' weights)
@@ -27,7 +30,8 @@
 //                               clicked, areaLabel (per area), pool: { table: { item: [entries] } } } } }
 //   FACTS = { g: { area: hint group }, groups: { layer: [[ids]…] },
 //             kinds: { layer: { areas, chipClass (per item), primary, colors (per area), expand: [per ranking],
-//                               weights: { item: [weights] } } } }
+//                               weights: { item: [weights] }, points: { item: [x, y, …] } } } }
+//     points     the places of an item, shown as dots with its answer (a town-name part's places)
 const QUIZ = (() => {
   const S = SETTINGS, N = NAMES, F = FACTS;
   const map = name => new Function(`return ${name}`)(); // (a list of the map: 'DATA.reg')
@@ -39,6 +43,7 @@ const QUIZ = (() => {
     const K = { ...rest, groups: N.groups[k.key].map(([title, sub], i) => ({ title, sub, ids: F.groups[k.key][i] })), areasOf: id => f.areas[id] };
     for (const t of ['name', 'short', 'chip', 'chipTitle', 'about', 'dial', 'text']) if (n[t]) K[t] = look(n[t]);
     if (f.chipClass) K.chipClass = look(f.chipClass);
+    if (f.points) K.points = id => f.points[id] || [];
     if (n.pin) K.pin = id => { const p = drawn.pins && drawn.pins[k.key] && drawn.pins[k.key][id]; return p ? { x: p[0], y: p[1], label: n.pin[id] } : n.pin[id] === null ? null : undefined; }; // (null: an item with no pin)
     if (n.areaLabel) K.areaLabel = look(n.areaLabel);
     if (n.clicked) K.clicked = look(n.clicked);
@@ -63,7 +68,7 @@ const QUIZ = (() => {
     }
     return K;
   };
-  const { kinds, map: where, borders, circles, top: above, ...view } = S;
+  const { kinds, map: where, borders, circles, top: above, base, ...view } = S;
   const listName = typeof where === 'string' ? where : where.list || where.paths, idKey = where.id || 'id';
   const holder = map(listName.split('.')[0]) || {}, drawn = holder.drawn || {}; // (what holds the areas: DATA for DATA.reg)
   const at = where.paths ? map(where.paths + 'At') : null;
@@ -71,8 +76,9 @@ const QUIZ = (() => {
   const top = new Set(above ? drawn.top : []), d = circles ? drawn.circles : {};
   return {
     ...view,
-    areas: list.map(r => { const id = String(r[idKey]); return { id, d: d[id] || r.d, lx: r.lx, ly: r.ly, a: r.a, g: F.g[id], ...(top.has(id) ? { top: true } : {}), ...(r.s !== undefined ? { s: r.s } : {}), ...(d[id] && r.s !== undefined ? { real: r.d } : {}) }; }),
+    areas: list.map(r => { const id = String(r[idKey]); return { id, d: d[id] || r.d, lx: r.lx, ly: r.ly, a: r.a, g: F.g[id], ...(top.has(id) ? { top: true } : {}), ...(r.hide ? { hide: true } : {}), ...(r.s !== undefined ? { s: r.s } : {}), ...(d[id] && r.s !== undefined ? { real: r.d } : {}) }; }),
     borders: borders ? [].concat(map(borders)) : [],
+    ...(base ? { base: (B => ({ land: B.land, lines: B.lines }))(map(base)) } : {}),
     ...(holder.proj ? { proj: holder.proj } : typeof DATA === 'object' && DATA.proj ? { proj: DATA.proj } : {}),
     explore: a => N.explore[a],
     kinds: kinds.map(kind),

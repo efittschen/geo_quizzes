@@ -51,7 +51,7 @@ function pickPages() {
   const kindOf = q => {
     const h = fs.readFileSync(path.join(ROOT, q.url), 'utf8'), s = [...h.matchAll(/src="([^"]+\.js)"/g)].map(m => (/engine\//.test(m[1]) ? m[1].replace(/^.*engine\//, '') : m[1].split('/').pop()));
     const has = n => s.includes(n);
-    if (has('paint.js')) return 'town names';
+    if (q.role === 'names') return 'town names';
     if (has('types/flag.js')) return 'flags';
     if (has('types/world.js')) return 'world';
     if (has('types/lang.js')) return 'letters';

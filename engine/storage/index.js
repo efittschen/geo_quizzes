@@ -18,6 +18,9 @@
 
 export function createStorage(quiz, { page, root }) {
   STORE.adopt(page, quiz.key, quiz.kinds.map(k => k.key));
+  // (a town-name quiz's results from before it was a map quiz, by its rounds' keys: store.js paintIn; its parts are
+  // drawn, the one way they are played)
+  if (quiz.rounds && STORE.quiz(page).paint) STORE.paintIn(page, quiz.rounds.filter(r => r.key && Array.isArray(r.ids)).map(r => ({ key: r.key, best: `${r.kind}~draw/quiz/${STORE.print(r.ids)}`, of: r.ids.length, name: r.label })));
   // the record, read once per task
   let held = null;
   const record = () => held || (queueMicrotask(() => { held = null; }), (held = STORE.quiz(page)));
