@@ -33,6 +33,7 @@
 //   review.hooks          what the Game asks of it (game.review): grade, asked, missed, answered, after, finished
 //   review.look(look)     a map picked during the review: for the rest of it
 //   review.active()       a review is being played
+//   review.away()         End with nothing answered: back to where a run or a practice was started (true), or not
 
 const RATE_TIME = 4000, LEAD = 1500, GROUP_PAUSE = 700;
 
@@ -136,6 +137,8 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
   let index = null;
   // (this page as a stop of a practice over several quizzes: its place in it, from 1; see srs.js startPractice)
   const practiceAt = Math.max(0, parseInt(new URLSearchParams(location.search).get('run'), 10) || 0);
+  // (the page a practice of this quiz goes back to, ?return: the review page's tab it was started on; only this site's pages)
+  const practiceBack = (() => { const b = new URLSearchParams(location.search).get('return'); if (!b) return null; try { const u = new URL(b, root); return u.origin === new URL(root).origin ? u.href : null; } catch (e) { return null; } })();
   async function travel() {
     stack();
     index ||= fetch(root + 'data/site/quizzes.json').then(r => r.json()).then(j => j.quizzes.filter(q => !q.hidden)).catch(() => [{ id: page, url: location.pathname }]);
@@ -402,19 +405,36 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
     }
     syncButtons();
     // a stop of a practice over several quizzes (?run): its round played, on to the next stop after a moment, as a
-    // review goes from quiz to quiz (a round ended early stays, with its results)
-    if (practiceAt && !result.def.review && !result.ended) {
+    // review goes from quiz to quiz; ended early, the practice is over: back to the page it was started on
+    if (practiceAt && !result.def.review) {
       $('app').classList.add('moving');
-      setTimeout(() => { location.href = SRS.practiceStop(root, practiceAt); }, GROUP_PAUSE);
+      setTimeout(() => { location.href = SRS.practiceStop(root, result.ended ? Infinity : practiceAt); }, GROUP_PAUSE);
+      return;
+    }
+    // a practice of one quiz from the review page (?practice…&return=): back there once played, or ended early
+    if (practiceBack && setup.practice && !result.def.review) {
+      $('app').classList.add('moving');
+      setTimeout(() => { location.href = practiceBack; }, GROUP_PAUSE);
       return;
     }
     if (!result.def.review || !S || S.leaving) return;
+    // a review over several quizzes ended early: over, back to the page it was started on, its result there
+    if (result.ended && S.chain) { S.leaving = true; $('app').classList.add('moving'); const r = SRS.run(); r.left = {}; r.again = {}; SRS.setRun(r); setTimeout(() => { location.href = SRS.stopUrl(root, null); }, GROUP_PAUSE); return; }
     if (!result.ended && S.rounds.length) { nextRound(); return; }
     cancelAnimationFrame(raf); bar.hidden = true;
     if (!result.ended && S.chain) { leave(); return; }
     results();
     listed();
     [...$('done').querySelectorAll('.legend li')].forEach((li, i) => { li.lastChild.textContent = ['Known', 'Unsure', '', 'Not known'][i]; });
+  }
+
+  // End before anything is answered: a review over several quizzes, or a practice started on the review page, goes
+  // back to the page it was started on as well (true: it goes)
+  function away() {
+    if (practiceAt) { location.href = SRS.practiceStop(root, Infinity); return true; }
+    if (practiceBack && setup.practice) { location.href = practiceBack; return true; }
+    if (S && S.chain && game.def && game.def.review) { S.leaving = true; const r = SRS.run(); r.left = {}; r.again = {}; SRS.setRun(r); location.href = SRS.stopUrl(root, null); return true; }
+    return false;
   }
 
   syncButtons();
@@ -424,6 +444,7 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
 
   return {
     hooks: { grade, asked, missed, answered, after, finished },
+    away,
     active: () => !!(game.def && game.def.review),
     rating: () => !!C,
     look(l) { if (!S) return; S.look = { ...S.look, ...l }; light(game.def.play); if (S.chain) { const r = SRS.run(); r.look = S.look; SRS.setRun(r); } },

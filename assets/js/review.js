@@ -3,11 +3,15 @@
 // are shown; the stack of a quiz that left the list is kept.
 
 const $ = (id) => document.getElementById(id);
-const BACK = "review.html";
-// The stack's two views ("tree": by place and quiz, down to every card; "due": every card by when it is due), and
-// the tree's branches the player opened or closed, kept while the page shows its numbers anew: places start open
+const BACK = "review.html", BACK_MAP = "review.html#map"; // (where a review started here comes back to)
+// The map button of a line in the Stack (By quiz): a folded map.
+const MAP_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 3.6l4-1.6 5 2 4-1.6v10l-4 1.6-5-2-4 1.6z"/><path d="M5.5 2v10M10.5 4v10"/></svg>';
+// The stack's two views ("tree": by place and quiz, down to every card; "due": every card by when it is due), the tab
+// shown (TAB: "review" the Stack, "stats", "map" the stack on the map, review-map.js; stats.js switches them, each
+// with its address: review.html#stats, #map), and the tree's branches the player opened or closed, kept while the page shows its numbers anew: places start open
 // (their quizzes show), everything under a quiz closed.
-let VIEW = "tree";
+let VIEW = "tree", TAB = location.hash === "#map" ? "map" : location.hash === "#stats" ? "stats" : "review";
+const showTab = (tab) => document.querySelector(`#tabs [data-tab="${tab}"]`)?.click();
 const FLIPPED = new Set();
 const isOpen = (node) => node.startsWith("p:") !== FLIPPED.has(node);
 // A card's interval, short: 12 d, 1.5 y.
@@ -27,6 +31,24 @@ function dueWhen(ts, now) {
   out.append(long, short);
   return out;
 }
+// When the next card is due, at its shortest: 8m, 5h, 9d, 3mo, 1.5y.
+function nextShort(ts, now) {
+  const n = SRS.days(now, ts), m = Math.max(1, Math.ceil((ts - now) / 60000));
+  if (n < 1) return m < 60 ? `${m}m` : `${Math.round(m / 60)}h`;
+  return n < 60 ? `${n}d` : n < 730 ? `${Math.round(n / 30.4)}mo` : `${(n / 365).toFixed(1)}y`;
+}
+// The heading bar keeps everything on one line, Review and All always: where it has too little room, first the three
+// numbers go, then "Next in 8 min" becomes "Next 8m", then "← Back to map" an arrow, then Next goes, then the spaces
+// narrow, then the page's name ("Review") goes (the user's order, 2026-11-10); below that the brand is cut. Worked out
+// by measuring, at every new width.
+const FIT_STEPS = ["no-n", "short-next", "short-back", "no-next", "tight", "no-title", "squeeze"];
+function fitHeader() {
+  const h = document.querySelector(".site-header.wide");
+  if (!h) return;
+  h.classList.remove(...FIT_STEPS);
+  for (const step of FIT_STEPS) { if (h.scrollWidth <= h.clientWidth) break; h.classList.add(step); }
+}
+if (window.ResizeObserver) { let w = 0; new ResizeObserver(([e]) => { const now = Math.round(e.contentRect.width); if (now !== w) { w = now; fitHeader(); } }).observe(document.querySelector(".site-header")); }
 // Country names too long for the stack, in their usual short form.
 const SHORT_NAMES = { "United States of America": "USA", "United Kingdom": "UK", "United Arab Emirates": "UAE" };
 // A city quiz (its maps: by distance, or the dots), and the maps a quiz's cards can be on, as its page says them.
@@ -78,14 +100,17 @@ function render(index, nameByCode) {
   $("rt-week").textContent = dueIn(SRS.dayStart(now, 7));
   $("review-go").replaceChildren(...(reviewButtons(index, index.quizzes, BACK, "top", null, decks) ?? []));
   if (decks.length && !sum(decks, "due")) {
-    const next = document.createElement("span");
-    next.className = "label";
-    next.textContent = `Next ${SRS.until(decks[0].next, now)}`;
+    // (and shorter where the heading bar has little room: "Next 8m", see fitHeader)
+    const next = document.createElement("span"), long = document.createElement("span"), short = document.createElement("span");
+    next.className = "label next"; long.className = "next-long"; short.className = "next-short";
+    long.textContent = `Next ${SRS.until(decks[0].next, now)}`; short.textContent = `Next ${nextShort(decks[0].next, now)}`;
+    next.append(long, short);
     $("review-go").prepend(next);
   }
+  fitHeader();
   const result = reviewResult();
   document.querySelector(".run-done")?.remove();
-  if (result) $("review-top").after(result);
+  if (result) document.querySelector("main.review-page > section").prepend(result);
 
   // Countries (or areas like South Asia, or the world or a continent as a whole) with their quizzes, most due first.
   const places = new Map(), placeOf = new Map();
@@ -95,13 +120,13 @@ function render(index, nameByCode) {
     placeOf.set(d.id, place);
   }
   for (const b of document.querySelectorAll("#view-pick button")) b.setAttribute("aria-pressed", b.dataset.view === VIEW);
+  const redraw = () => render(index, nameByCode);
   $("list-bar").hidden = !decks.length;
   const count = (n, one) => `${n.toLocaleString("en-US")} ${one}${n === 1 ? "" : "s"}`;
   $("stack-count").textContent = VIEW === "due" ? count(sum(decks, "total"), "card") : count(places.size, "place");
   $("decks").hidden = !decks.length || VIEW !== "tree";
   $("due-list").hidden = !decks.length || VIEW !== "due";
   $("empty").hidden = decks.length > 0;
-  if (VIEW === "due") { renderDue(decks, placeOf, now); return; }
   DUE_JOB++;
   // The tree: each row a branch (node) under another (parent), shown while every branch above it is open.
   const parents = new Map();
@@ -113,7 +138,6 @@ function render(index, nameByCode) {
       if (twist) { twist.setAttribute("aria-expanded", isOpen(tr.dataset.node)); twist.setAttribute("aria-label", isOpen(tr.dataset.node) ? "Close" : "Open"); }
     }
   };
-  const redraw = () => render(index, nameByCode);
   // Converting cards to another map (jobs: [quiz id, kind, look, to], see SRS.convert): where a question then has two
   // cards on that map, the one answered last stays, asked first.
   const converting = (what, label, jobs) => {
@@ -123,6 +147,55 @@ function render(index, nameByCode) {
     for (const [id, kind, look, to] of jobs) SRS.convert(id, kind, look, to);
     return true;
   };
+  // A place's ⋯: its quizzes' maps (a city quiz's apart, its "quiz" being the dots), each converting the cards of the
+  // quizzes that have it; or all of them off the stack.
+  const placeMenuOf = (place, list) => {
+    const targets = new Map(), kindOfQuiz = (d) => (cityOf(d) ? "c" : "a");
+    for (const d of list) for (const x of looksOf(d)) targets.set(`${kindOfQuiz(d)}:${x}`, lookLabel(x, cityOf(d)));
+    const ORDER = ["a:quiz", "a:overlay", "a:street", "a:bare", "a:sat", "c:free", "c:quiz"], rank = (k) => (ORDER.indexOf(k) + 1 || 99);
+    return moreMenu(`“${place}”`, [["Convert to", [...targets].sort((a, b) => rank(a[0]) - rank(b[0])).map(([k, label]) => [label, k])]], (k) => {
+      const [q, x] = k.split(":");
+      return converting(`“${place}”`, targets.get(k), list.filter((d) => kindOfQuiz(d) === q && looksOf(d).includes(x)).map((d) => [d.id, null, null, x]));
+    }, () => {
+      if (!window.confirm(`Remove “${place}” from the stack?`)) return false;
+      for (const d of list) SRS.remove(d.id);
+      return true;
+    }, redraw);
+  };
+  // A quiz's, a layer's or a map's ⋯ (kind and look null for all of them): its cards converted to another map of the
+  // quiz (here: the maps they are on now; one alone is not offered), or taken off the stack.
+  const deckMenuOf = (d, what, kind, look, here) => {
+    const to = looksOf(d).filter((x) => !(here.length === 1 && here[0] === x)), city = d.quiz.role === "cities";
+    return moreMenu(what, [["Convert to", to.map((x) => [lookLabel(x, city), x])]], (x) => converting(what, lookLabel(x, city), [[d.id, kind, look, x]]), () => {
+      if (!window.confirm(`Remove ${what} from the stack?`)) return false;
+      SRS.remove(d.id, kind, look);
+      return true;
+    }, redraw);
+  };
+  // The map button of a line: the place, the quiz or the layer on the map (By map).
+  const mapButton = (place, quiz = null, kind = null) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "map-btn"; b.title = "On the map"; b.setAttribute("aria-label", "On the map");
+    b.innerHTML = MAP_ICON;
+    b.onclick = () => { REVIEW_MAP.open(place, quiz, kind, null); showTab("map"); window.scrollTo({ top: Math.max(0, $("tabs").getBoundingClientRect().top + window.scrollY - 8), behavior: "smooth" }); };
+    return b;
+  };
+  // A card's name opens the card (card-view.js), where it is from said above it.
+  const opensCard = (td, d, c, place) => {
+    td.classList.add("opens");
+    td.onclick = () => CARD_VIEW.open(d.id, c.kind, c.item, { pick: c.key, where: `${place} · ${d.quiz.title}` });
+  };
+  if (TAB === "map") {
+    REVIEW_MAP.show($("map-view"), {
+      index, decks, back: BACK_MAP, places: [...places].sort((a, b) => a[0].localeCompare(b[0])),
+      codeOf: (place) => { const d = places.get(place)?.find((d) => !d.quiz.area && !d.quiz.scope); return d ? quizCountries(d.quiz)[0] ?? null : null; },
+      menu: ({ place, deck, layer }) => (place ? placeMenuOf(place, places.get(place) || []) : deckMenuOf(deck, `“${deck.title}”, ${layer.label}`, layer.key, null, layer.maps.map((m) => m.look))),
+      toStack: (place, quiz) => { VIEW = "tree"; TAB = "review"; showTab("review"); FLIPPED.delete(`p:${place}`); if (quiz) FLIPPED.add(`q:${quiz}`); redraw(); const tr = [...$("deck-rows").children].find((r) => r.dataset.node === (quiz ? `q:${quiz}` : `p:${place}`)); if (tr) { tr.classList.remove("flash"); void tr.offsetWidth; tr.classList.add("flash"); tr.scrollIntoView({ block: "center", behavior: "smooth" }); } },
+      redraw,
+    });
+    return;
+  }
+  if (VIEW === "due") { renderDue(decks, placeOf, now); return; }
   const tree = (tr, node, parent = null) => {
     if (parent) tr.dataset.parent = parent;
     if (node) {
@@ -163,20 +236,7 @@ function render(index, nameByCode) {
     th.textContent = place;
     th.title = place;
     const P = `p:${place}`;
-    // A place's ⋯: its quizzes' maps (a city quiz's apart, its "quiz" being the dots), each converting the cards of
-    // the quizzes that have it; or all of them off the stack.
-    const targets = new Map(), kindOfQuiz = (d) => (cityOf(d) ? "c" : "a");
-    for (const d of list) for (const x of looksOf(d)) targets.set(`${kindOfQuiz(d)}:${x}`, lookLabel(x, cityOf(d)));
-    const ORDER = ["a:quiz", "a:overlay", "a:street", "a:bare", "a:sat", "c:free", "c:quiz"], rank = (k) => (ORDER.indexOf(k) + 1 || 99);
-    const placeMenu = moreMenu(`“${place}”`, [["Convert to", [...targets].sort((a, b) => rank(a[0]) - rank(b[0])).map(([k, label]) => [label, k])]], (k) => {
-      const [q, x] = k.split(":");
-      return converting(`“${place}”`, targets.get(k), list.filter((d) => kindOfQuiz(d) === q && looksOf(d).includes(x)).map((d) => [d.id, null, null, x]));
-    }, () => {
-      if (!window.confirm(`Remove “${place}” from the stack?`)) return false;
-      for (const d of list) SRS.remove(d.id);
-      return true;
-    }, redraw);
-    return [tree(row("place", th, list, [placeMenu]), P), ...list.map((d) => {
+    return [tree(row("place", th, list, [mapButton(place), placeMenuOf(place, list)]), P), ...list.map((d) => {
       const Q = `q:${d.id}`, cards = SRS.cardList(d.id).sort((a, b) => a.due - b.due), called = STORE.quiz(d.id).called || {};
       // A container's cards, each on a line of its own (depth: how far in; lines: the branches above that go on past
       // them, at those offsets).
@@ -184,6 +244,7 @@ function render(index, nameByCode) {
         const tr = document.createElement("tr");
         tr.className = `cardline d${depth}`;
         const name = cardCell(called, c);
+        opensCard(name, d, c, place);
         if (lines.length) name.style.setProperty("--lines", lines.map((x) => `linear-gradient(var(--line),var(--line)) no-repeat ${x}px 0/1.5px 100%`).join(","));
         const cell = (text, cls) => { const td = document.createElement("td"); td.textContent = text; if (cls) td.className = cls; return td; };
         const due = cell("", c.due <= now ? "mid due" : "mid");
@@ -209,16 +270,7 @@ function render(index, nameByCode) {
       const same = (label) => label.toLowerCase() === d.quiz.title.toLowerCase();
       const named = d.layers.map((l) => ({ ...l, label: !same(l.label) ? l.label : d.quiz.role === "area-codes" ? "Full codes" : `${l.label} only` }));
       const city = d.quiz.role === "cities";
-      // A quiz's, a layer's or a map's ⋯ (kind and look null for all of them): its cards converted to another map of
-      // the quiz (here: the maps they are on now; one alone is not offered), or taken off the stack.
-      const menu = (what, kind, look, here) => {
-        const to = looksOf(d).filter((x) => !(here.length === 1 && here[0] === x));
-        return moreMenu(what, [["Convert to", to.map((x) => [lookLabel(x, city), x])]], (x) => converting(what, lookLabel(x, city), [[d.id, kind, look, x]]), () => {
-          if (!window.confirm(`Remove ${what} from the stack?`)) return false;
-          SRS.remove(d.id, kind, look);
-          return true;
-        }, redraw);
-      };
+      const menu = (what, kind, look, here) => deckMenuOf(d, what, kind, look, here);
       // The maps of a layer, hanging from it (deep: under a layer line, else under the quiz's own line).
       const mapRows = (l, deep, more) => {
         const maps = l.maps.length > 1 ? l.maps : [], n = maps.length;
@@ -227,7 +279,7 @@ function render(index, nameByCode) {
           const cell = document.createElement("td"), M = `m:${d.id}|${l.key}|${m.look}`, parent = deep ? `l:${d.id}|${l.key}` : Q;
           cell.textContent = lookLabel(m.look, city);
           const lines = [...(deep && more ? [42] : []), ...(i < n - 1 ? [deep ? 68 : 42] : [])];
-          return [tree(row(cls(i), cell, [m], [menu(`“${d.title}”, ${several ? `${l.label}, ` : ""}${lookLabel(m.look, city)}`, l.key, m.look, [m.look])], { id: d.id, key: l.key, look: m.look, quiz: d.quiz }), M, parent),
+          return [tree(row(cls(i), cell, [m], [mapButton(place, d.id, l.key), menu(`“${d.title}”, ${several ? `${l.label}, ` : ""}${lookLabel(m.look, city)}`, l.key, m.look, [m.look])], { id: d.id, key: l.key, look: m.look, quiz: d.quiz }), M, parent),
             ...cardRows(cards.filter((c) => c.kind === l.key && c.look === m.look), M, deep ? 3 : 2, lines)];
         });
         return rows;
@@ -246,12 +298,12 @@ function render(index, nameByCode) {
         const maps = g.maps.length > 1 ? g.maps : [];
         // (no ⋯ of its own: a gap as wide, so its buttons line up with the others')
         const gap = () => { const x = document.createElement("span"); x.className = "more-gap"; return x; };
-        return [tree(row(levelCls(lv, last), cell, [g], [gap()], { id: d.id, key: l.key, group: g.title, quiz: d.quiz }), G, parent),
+        return [tree(row(levelCls(lv, last), cell, [g], [mapButton(place, d.id, l.key), gap()], { id: d.id, key: l.key, group: g.title, quiz: d.quiz }), G, parent),
           ...(maps.length ? maps.flatMap((m, j) => {
             const mlast = j === maps.length - 1, mc = document.createElement("td"), M = `${G}|${m.look}`;
             mc.textContent = lookLabel(m.look, city);
             mc.style.setProperty("--lines", guide(below));
-            return [tree(row(levelCls(lv + 1, mlast), mc, [m], [gap()], { id: d.id, key: l.key, group: g.title, look: m.look, quiz: d.quiz }), M, G),
+            return [tree(row(levelCls(lv + 1, mlast), mc, [m], [mapButton(place, d.id, l.key), gap()], { id: d.id, key: l.key, group: g.title, look: m.look, quiz: d.quiz }), M, G),
               ...cardRows(cards.filter((c) => c.kind === l.key && c.look === m.look && inGroup(c, g.title)), M, lv + 2, [...below, ...(mlast ? [] : [X(lv + 1)])])];
           }) : cardRows(cards.filter((c) => c.kind === l.key && inGroup(c, g.title)), G, lv + 1, below))];
       });
@@ -261,10 +313,10 @@ function render(index, nameByCode) {
         const cell = document.createElement("td");
         cell.textContent = cell.title = l.label;
         const cls = ["layer", maps ? "parent" : "", last ? "last" : ""].filter(Boolean).join(" "), L = `l:${d.id}|${l.key}`;
-        return [tree(row(cls, cell, [l], [menu(`“${d.title}”, ${l.label}`, l.key, null, l.maps.map((m) => m.look))], { id: d.id, key: l.key, quiz: d.quiz }), L, Q),
+        return [tree(row(cls, cell, [l], [mapButton(place, d.id, l.key), menu(`“${d.title}”, ${l.label}`, l.key, null, l.maps.map((m) => m.look))], { id: d.id, key: l.key, quiz: d.quiz }), L, Q),
           ...(grouped(l) ? groupRows(l, 2, L, last ? [] : [42]) : maps ? mapRows(l, true, !last) : cardRows(cards.filter((c) => c.kind === l.key), L, 2, last ? [] : [42]))];
       }) : grouped(named[0]) ? groupRows(named[0], 1, Q, []) : onlyMaps ? mapRows(named[0], false, false) : cardRows(cards, Q, 1);
-      return [tree(row(several || onlyMaps ? "sum" : "", td, [d], [menu(`“${d.title}”`, null, null, [...new Set(d.layers.flatMap((l) => l.maps.map((m) => m.look)))])]), Q, P), ...layers];
+      return [tree(row(several || onlyMaps ? "sum" : "", td, [d], [mapButton(place, d.id), menu(`“${d.title}”`, null, null, [...new Set(d.layers.flatMap((l) => l.maps.map((m) => m.look)))])]), Q, P), ...layers];
     }).flat()];
   }));
   showTree();
@@ -322,7 +374,11 @@ function renderDue(decks, placeOf, now) {
       return b;
     }), moreMenu(cardCell(called, c).title, [["Review", WHEN]], move));
     grades.append(box);
-    tr.append(due, cardCell(called, c, true), quiz, grades);
+    // (its name opens the card, card-view.js)
+    const name = cardCell(called, c, true);
+    name.classList.add("opens");
+    name.onclick = () => CARD_VIEW.open(d.id, c.kind, c.item, { pick: c.key, where: `${placeOf.get(d.id)} · ${d.quiz.title}` });
+    tr.append(due, name, quiz, grades);
     return tr;
   };
   $("due-rows").replaceChildren(...rows.slice(0, DUE_FIRST).map(line));
@@ -385,6 +441,10 @@ async function init() {
     // Country names come with the world map; without it the quizzes are still listed, under their own titles.
     const [index, world] = await Promise.all([loadIndex(), json(WORLD_URL).catch(() => null)]);
     const nameByCode = new Map((world?.objects.countries.geometries ?? []).map((g) => [g.id, g.properties.name]));
+    // the tab shown (stats.js): the Map drawn when it is
+    document.addEventListener("review:tab", (e) => { TAB = e.detail; if (TAB !== "stats") render(index, nameByCode); });
+    // a card's Map (card-view.js): the Map tab at that question
+    CARD_VIEW.configure({ onMap: (quiz, kind, item) => { REVIEW_MAP.open(null, quiz, kind, item); if (TAB === "map") render(index, nameByCode); else showTab("map"); } });
     render(index, nameByCode);
     if (typeof initStats === "function") initStats(index, nameByCode); // the Stats tab (stats.js)
     fillIn(index, () => render(index, nameByCode));

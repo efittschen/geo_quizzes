@@ -57,11 +57,12 @@ function initStats(index, nameByCode) {
   const givenName = (a, g) => (g.startsWith('"') ? `“${g.slice(1)}”` : nameOf(a.quiz, a.kind, g));
 
   // A round of exactly these items on the quiz's page, the way most of these answers were given (see engine/screens/setup.js).
-  function practiceUrl(quizId, kind, items, answers) {
+  // home: the review page's tab the practice comes back to, once played or ended early (engine/app/review.js; ?return, as ?back is the map's background)
+  function practiceUrl(quizId, kind, items, answers, home = "review.html#stats") {
     const q = byId.get(quizId);
     if (!q || !items.length || !answers.some((a) => a.look)) return null; // (a quiz without a map has its own page, which knows no Practice)
     const mode = most(answers, (a) => a.mode) || "map", [map, back] = (most(answers, (a) => a.look) || "").split("+");
-    const p = new URLSearchParams({ practice: kind, items: items.map((x) => encodeURIComponent(x)).join(","), name: "Practice" });
+    const p = new URLSearchParams({ practice: kind, items: items.map((x) => encodeURIComponent(x)).join(","), name: "Practice", return: home });
     if (mode !== "map" && mode !== "paint") p.set("mode", mode);
     if (map) p.set("map", map);
     if (back) p.set("back", back);
@@ -80,19 +81,26 @@ function initStats(index, nameByCode) {
     return a;
   }
   const empty = (text) => el("p", "empty small", text);
+  if (typeof CARD_VIEW === "object") CARD_VIEW.configure({ practiceUrl }); // (a card's Practice is this tab's)
 
   /* ---------- the tabs ---------- */
-  const page = document.querySelector("main.review-page"), root = $("stats"), tabs = $("tabs");
+  // Three tabs: Stack (the page's own sections), Stats (this), Map (#map-page, review-map.js); each its address, the
+  // Stack's none. The page hears which is shown (review:tab), the Map drawn by review.js then.
+  const page = document.querySelector("main.review-page"), root = $("stats"), mapPage = $("map-page"), tabs = $("tabs");
   let shown = null;
+  const ADDRESS = { stats: "#stats", map: "#map", review: "" };
+  const tabOf = (hash) => (hash === "#stats" ? "stats" : hash === "#map" && mapPage ? "map" : "review");
   function pick(tab) {
-    for (const s of page.children) if (s !== page.firstElementChild) s.hidden = (s === root) !== (tab === "stats");
+    for (const s of page.children) if (s !== page.firstElementChild) s.hidden = tab === "stats" ? s !== root : tab === "map" ? s !== mapPage : s === root || s === mapPage;
     for (const b of tabs.querySelectorAll("button")) b.setAttribute("aria-selected", b.dataset.tab === tab);
-    if (location.hash !== (tab === "stats" ? "#stats" : "")) history.replaceState(null, "", tab === "stats" ? "#stats" : location.pathname + location.search);
+    if (location.hash !== ADDRESS[tab]) history.replaceState(null, "", location.pathname + location.search + ADDRESS[tab]);
+    const was = shown;
     shown = tab;
     if (tab === "stats") draw();
+    if (was !== tab) document.dispatchEvent(new CustomEvent("review:tab", { detail: tab }));
   }
   for (const b of tabs.querySelectorAll("button")) b.onclick = () => pick(b.dataset.tab);
-  window.addEventListener("hashchange", () => pick(location.hash === "#stats" ? "stats" : "review"));
+  window.addEventListener("hashchange", () => pick(tabOf(location.hash)));
 
   /* ---------- charts: inline SVG, the site's colors ---------- */
   // A tooltip shared by every chart: shown at a mark while pointed at, or once tapped until the next tap (in the
@@ -448,7 +456,9 @@ function initStats(index, nameByCode) {
   card.addEventListener("click", (e) => { if (e.target === card) card.close(); });
   card.addEventListener("close", () => { tip.hidden = true; });
   document.body.append(card);
+  // A question of the stack opens its card (card-view.js), in this pop-up's place; any other question this.
   function openItem(quiz, kind, item) {
+    if (typeof CARD_VIEW === "object" && CARD_VIEW.open(quiz, kind, item, { where: where(quiz, kind) })) return;
     const { answers, now } = DATA, list = answers.filter((a) => a.quiz === quiz && a.kind === kind && a.item === item), s = summary(list);
     const head = el("header"), close = el("button", "ghost small", "Close");
     close.type = "button"; close.onclick = () => card.close();
@@ -492,5 +502,5 @@ function initStats(index, nameByCode) {
   if (typeof ANSWERS === "object") ANSWERS.listen((why) => { if (why === "taken" && shown === "stats" && !card.open) draw(); });
   let width = window.innerWidth;
   window.addEventListener("resize", () => { if (Math.abs(window.innerWidth - width) > 40 && shown === "stats" && !card.open) { width = window.innerWidth; draw(); } });
-  pick(location.hash === "#stats" ? "stats" : "review");
+  pick(tabOf(location.hash));
 }

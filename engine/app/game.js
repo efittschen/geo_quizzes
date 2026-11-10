@@ -42,7 +42,9 @@ export function createGame({ quiz, model, map, storage, formats }) {
     round = model.round({ play: P, items: def.items, retry: def.retry, review: def.review, look: def.look, t0: def.t0 });
     map.use(def.look.map); layout(); map.back(def.look.back || 'quiz'); map.clear();
     if (def.box && !map.plain()) map.frame(def.box);
-    map.dim(K().dim === false ? map.ids : def.items.flatMap(id => K().areas[id]));
+    if (def.whole && !def.box && !map.plain()) map.home();
+    // (lit: the round's places; a practice's: every place of the layer, see setup.choice)
+    map.dim(K().dim === false ? map.ids : (def.whole ? K().ids : def.items).flatMap(id => K().areas[id]));
     emit('start', def);
     if (quiz.board) map.frame(def.box);
     if (P.mode === 'pairs') board(); else ask();

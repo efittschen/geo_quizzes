@@ -165,7 +165,36 @@ main > .map-wrap:first-child{margin-top:24px}
 .run .got{background:var(--got)} .run .t2{background:var(--t2)} .run .miss{background:var(--miss)}
 .run b{font:700 1.3rem/1 var(--cond);color:var(--ink);font-variant-numeric:tabular-nums}
 .run-done .rate-list{margin-top:14px;max-width:520px}
-.review-page{max-width:860px}
+.review-page{max-width:1280px}
+/* the review page's heading bar: its due cards, tomorrow's and this week's, and Review / All (assets/js/review.js), on
+   the page's own width; on a slim screen under the title, without the three numbers */
+.site-header.wide{padding-inline:max(16px,calc((100% - 1280px) / 2 + 16px));flex-wrap:nowrap}
+.site-header.wide > *{flex-shrink:0}
+.head-due{display:flex;align-items:center;gap:6px 18px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.head-due .hd-n{color:var(--muted);font-size:.88rem;white-space:nowrap}
+.head-due .hd-n b{font:700 1.35rem/1 var(--cond);color:var(--ink);margin-right:4px;font-variant-numeric:tabular-nums}
+.head-due .review-go{margin-top:0;gap:8px;flex-wrap:nowrap}
+.head-due .review-go .label{font-size:.88rem;white-space:nowrap}
+.head-due .primary{padding:7px 20px}
+.head-due .ghost{padding:5px 14px;white-space:nowrap}
+.site-header.wide nav{padding-left:18px;border-left:1.5px solid var(--line)}
+/* (what gives way where the bar has too little room, in this order: review.js, fitHeader) */
+.head-due .next-short,.site-header .back-short{display:none}
+.site-header.no-n .hd-n{display:none}
+.site-header.short-next .next-long{display:none} .site-header.short-next .next-short{display:inline}
+.site-header.short-back .back-long{display:none} .site-header.short-back .back-short{display:inline}
+.site-header.short-back nav{padding-left:12px}
+.site-header.no-next .head-due .next{display:none}
+.site-header.wide .brand{white-space:nowrap}
+.site-header.tight{column-gap:8px}
+.site-header.tight .head-due{gap:6px 10px}
+.site-header.tight .head-due .review-go{gap:6px}
+.site-header.tight .head-due .primary{padding:7px 14px}
+.site-header.tight .head-due .ghost{padding:5px 10px}
+.site-header.tight nav{padding-left:8px}
+.site-header.no-title .page-title{display:none}
+.site-header.squeeze .brand-row{flex-shrink:1;min-width:0;overflow:hidden}
+.site-header.squeeze .brand{overflow:hidden;text-overflow:ellipsis}
 .decks{width:100%;border-collapse:collapse}
 .decks th,.decks td{padding:8px 14px;text-align:left;border-top:1px solid var(--line);font-weight:400}
 .decks thead th{border-top:0;font:600 .78rem/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
@@ -440,3 +469,164 @@ a.ghost.off{opacity:.45;pointer-events:none}
 .cov-pick button[aria-pressed="true"] small{color:#C9D3D8}
 /* on a narrow screen the credits wrap onto a second line: keep the legend above them */
 @media (max-width:640px){.leaflet-bottom .cov-legend{margin-bottom:44px}}
+
+/* ---------- the review page: a line's map button, a card's name that opens it, a line lit (review.js) ---------- */
+.decks.stack col.c-more{width:66px}
+.decks.stack td.more-cell{white-space:nowrap}
+.map-btn{appearance:none;width:26px;height:24px;display:inline-grid;place-items:center;padding:0;border:1.5px solid transparent;border-radius:999px;background:none;color:var(--muted);cursor:pointer;vertical-align:middle}
+.map-btn:hover,.map-btn:focus-visible{border-color:var(--line);color:var(--ink)}
+.map-btn svg,.rm-icon svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
+.decks td.opens{cursor:pointer}
+.decks td.opens:hover{text-decoration:underline;text-decoration-color:var(--line)}
+tr.flash>*{animation:line-flash 1.6s ease-out}
+@keyframes line-flash{0%,40%{background:color-mix(in srgb,var(--yellow) 35%,transparent)}100%{background:transparent}}
+@media (prefers-reduced-motion:reduce){tr.flash>*{animation:none}}
+@media (max-width:520px){.decks.stack col.c-more{width:50px}.map-btn{width:22px}}
+
+/* ---------- By map (assets/js/review-map.js): the map beside its panel; on a narrow screen the panel under it ---------- */
+.map-page{margin-top:18px}
+.rm{display:grid;grid-template-columns:minmax(0,1fr) 400px;height:clamp(520px,calc(100dvh - 200px),900px);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--card)}
+.rm-stage{position:relative;min-width:0;background:var(--sea);touch-action:none;overflow:hidden}
+.rm-stage > canvas.glmap{position:absolute;inset:0;width:100%;height:100%;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}
+.rm-stage:has(> .rm-svg.grab) > canvas.glmap{cursor:grabbing}
+.rm-nogl{position:absolute;inset:0;display:grid;place-items:center;margin:0;font-weight:600;color:var(--muted)}
+.rm-tag{position:absolute;left:10px;top:10px;max-width:70%;padding:4px 9px;background:var(--panel);border:1px solid var(--line);border-radius:8px;font:600 .8rem/1.2 var(--sans);box-shadow:var(--shadow);pointer-events:none}
+.rm-zoom{position:absolute;right:10px;bottom:10px;display:flex;flex-direction:column;gap:4px}
+.rm-zoom button{appearance:none;width:32px;height:32px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:600 1.1rem/1 var(--sans);cursor:pointer;box-shadow:var(--shadow)}
+.rm-tip{position:absolute;z-index:5;max-width:260px;padding:6px 9px;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);font-size:.82rem;line-height:1.3;pointer-events:none}
+.rm-tip span{color:var(--muted)}
+.rm-panel{display:flex;flex-direction:column;gap:12px;min-width:0;padding:14px 16px 24px;overflow:auto;border-left:1px solid var(--line);background:var(--panel)}
+.rm-panel > *{flex-shrink:0}
+@media (max-width:860px){.rm{grid-template-columns:1fr;height:auto}.rm-stage{height:52vh;min-height:280px}.rm-panel{border-left:0;border-top:1px solid var(--line);overflow:visible}}
+.rm-crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:2px 6px;font-size:.88rem;color:var(--muted);min-height:22px}
+.rm-crumbs b{color:var(--ink);font-weight:600}
+.rm-crumbs .sep{opacity:.5}
+.rm-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.rm-head h2{margin:0;font:700 1.75rem/1.05 var(--cond);text-wrap:balance}
+.rm-head h2 small{display:block;margin-top:3px;font:500 .95rem/1.3 var(--sans);color:var(--muted)}
+.rm-icon{appearance:none;flex:none;width:30px;height:30px;display:inline-grid;place-items:center;padding:0;border:1.5px solid var(--line);border-radius:8px;background:transparent;color:var(--muted);cursor:pointer}
+.rm-icon:hover{border-color:var(--ink);color:var(--ink)}
+.rm-sum{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin:0;font-size:.9rem;color:var(--muted)}
+.rm-acts{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.rm-acts .primary{padding:8px 22px}
+.rm-acts .ghost{padding:6px 14px}
+.rm-acts .sp{flex:1}
+.rm-acts select.more{appearance:none;-webkit-appearance:none;width:30px;height:30px;padding:0;border:1.5px solid var(--line);border-radius:8px;background:none;color:var(--muted);font:700 1rem/1 var(--sans);text-align:center;text-align-last:center;cursor:pointer}
+.rm-acts select.more option,.rm-acts select.more optgroup{font:400 .92rem/1.3 var(--sans);color:var(--ink);background:var(--panel);text-align:left}
+.rm-sect{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.rm-sect h3,h3.rm-sect{margin:0;font:700 .78rem/1 var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.rm-legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin:0;padding:0;list-style:none;font-size:.8rem;color:var(--muted)}
+.rm-legend li{display:inline-flex;align-items:center;gap:5px}
+.rm-legend i{width:12px;height:12px;border-radius:3px;background:var(--faded)}
+.rm-legend i.got{background:var(--got)} .rm-legend i.t2{background:var(--t2)} .rm-legend i.t3{background:var(--t3)} .rm-legend i.miss{background:var(--miss)}
+.rm-v{display:inline-flex;align-items:center;justify-content:center;min-width:46px;padding:3px 7px;border-radius:7px;background:var(--faded);color:var(--ink);font:600 .88rem/1.1 var(--sans);font-variant-numeric:tabular-nums}
+.rm-v.got{background:var(--got)} .rm-v.t2{background:var(--t2)} .rm-v.t3{background:var(--t3)} .rm-v.miss{background:var(--miss)}
+.rm-bar{display:flex;gap:2px;width:100%;height:8px;border-radius:3px;overflow:hidden}
+.rm-bar i{display:block;height:100%}
+.rm-bar .r0,.rm-dots .r0{background:var(--miss)} .rm-bar .r1,.rm-dots .r1{background:var(--t2)} .rm-bar .r2,.rm-dots .r2{background:var(--got)} .rm-bar .r3,.rm-dots .r3{background:var(--rare)}
+.rm-bar.nil{height:2px;background:repeating-linear-gradient(90deg,var(--line) 0 4px,transparent 4px 7px)}
+.rm-colh,.rm-row{display:grid;grid-template-columns:minmax(0,1fr) 50px 58px 58px;gap:8px;align-items:center}
+.rm-colh.q,.rm-row.q{grid-template-columns:minmax(0,1fr) 50px 76px 58px}
+.rm-colh{padding:0 6px 4px;font:600 .72rem/1 var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rm-colh span{text-align:center}
+.rm-rows{display:flex;flex-direction:column}
+.rm-row{padding:8px 6px;border-top:1px solid var(--line);cursor:pointer}
+.rm-row:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.rm-row.sel{background:color-mix(in srgb,var(--ink) 10%,transparent)}
+.rm-row .nm{display:flex;flex-direction:column;gap:1px;min-width:0}
+.rm-row .nm b{font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.rm-row .nm small{color:var(--muted);font-size:.8rem}
+.rm-row .nm .rm-bar{height:6px;margin-top:4px}
+.rm-row .nm .rm-bar.nil{height:2px;margin-block:6px 2px}
+.rm-row .c{display:flex;justify-content:center}
+.rm-row .chip{min-width:0;width:100%;padding:1px 4px}
+.rm-row .when{color:var(--muted);font-size:.84rem;text-align:center}
+.rm-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:3px}
+.rm-dots i{width:9px;height:9px;border-radius:50%;background:var(--faded)}
+/* the map's looks, read by gl-map.js from this never-shown svg: the countries (#ctx), the layer's units (#regions) */
+svg.rm-svg{display:none}
+/* (every width on the screen, as on the quiz maps: without it gl-map.js takes a width as map units, here ~200 m) */
+svg.rm-svg path{vector-effect:non-scaling-stroke}
+svg.rm-svg #ctx .c{fill:var(--land);stroke:none;pointer-events:none}
+svg.rm-svg #ctx .c.has{pointer-events:auto}
+svg.rm-svg #ctx .c.got{fill:var(--got)} svg.rm-svg #ctx .c.t2{fill:var(--t2)} svg.rm-svg #ctx .c.t3{fill:var(--t3)} svg.rm-svg #ctx .c.miss{fill:var(--miss)} svg.rm-svg #ctx .c.none{fill:var(--faded)}
+svg.rm-svg #ctx .c.dim{opacity:.55}
+svg.rm-svg #ctx .c.under{opacity:.75}
+svg.rm-svg #regions .u{fill:var(--faded);stroke:none}
+svg.rm-svg #regions .ln{fill:none;stroke:var(--faded);stroke-width:3px;stroke-linecap:round}
+svg.rm-svg #regions .dt{fill:none;stroke:var(--faded);stroke-width:var(--dot,11px);stroke-linecap:round}
+svg.rm-svg #regions .got{fill:var(--got)} svg.rm-svg #regions .t2{fill:var(--t2)} svg.rm-svg #regions .t3{fill:var(--t3)} svg.rm-svg #regions .miss{fill:var(--miss)}
+svg.rm-svg #regions :is(.ln,.dt).got{fill:none;stroke:var(--got)} svg.rm-svg #regions :is(.ln,.dt).t2{fill:none;stroke:var(--t2)} svg.rm-svg #regions :is(.ln,.dt).t3{fill:none;stroke:var(--t3)} svg.rm-svg #regions :is(.ln,.dt).miss{fill:none;stroke:var(--miss)}
+svg.rm-svg #regions .u.empty{fill:var(--land);pointer-events:none}
+svg.rm-svg #regions .dt.empty{stroke:var(--land);stroke-width:5px;pointer-events:none}
+svg.rm-svg #regions .ln.empty{stroke:var(--line);pointer-events:none}
+/* the outlines, above every fill (#borders): the countries' (firmer where they have cards, faint under a quiz's
+   places, the place shown the firmest), and a quiz's places' as on the quiz maps (--state at 1.2 px, quiz-map.css) */
+svg.rm-svg #borders path{fill:none;pointer-events:none;stroke-linejoin:round}
+svg.rm-svg #borders .co{stroke:var(--edge);stroke-width:.6px}
+svg.rm-svg #borders .co.has{stroke:var(--state);stroke-width:1px;stroke-opacity:.7}
+svg.rm-svg #borders .co.under{stroke:var(--edge);stroke-width:.6px;stroke-opacity:1}
+svg.rm-svg #borders .co.own{stroke:var(--state);stroke-width:1.8px;stroke-opacity:.9}
+svg.rm-svg #borders .co.self{stroke:none}
+svg.rm-svg #borders .uo{stroke:var(--state);stroke-width:1.2px;stroke-opacity:.8}
+svg.rm-svg #borders .uo.empty{stroke-opacity:.35}
+svg.rm-svg #borders .uo.sel{stroke:var(--ink);stroke-width:3px;stroke-opacity:1}
+svg.rm-svg #regions .dt.sel{stroke-width:calc(var(--dot,11px) * 1.6)}
+svg.rm-svg #regions .ln.sel{stroke-width:6px}
+
+/* ---------- a card (assets/js/card-view.js): in By map's panel, and in a pop-up (the Stats tab's .stat-card) ---------- */
+.stat-card.card-pop{width:min(780px,94vw)}
+.card-pop .cv-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+.card-pop .cv-where{color:var(--muted);font-size:.88rem}
+.cv{display:flex;flex-direction:column;gap:12px;min-width:0}
+.cv-head h2{margin:0;font:700 1.75rem/1.05 var(--cond);text-wrap:balance}
+.cv-head h2 small{display:block;margin-top:3px;font:500 .95rem/1.3 var(--sans);color:var(--muted)}
+.cv-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.cv-which{color:var(--muted);font-size:.88rem}
+.cv-box{position:relative;min-width:0}
+.cv-values{display:flex;flex-direction:column;gap:6px}
+.cv-chart{display:block;width:100%;height:auto;overflow:visible}
+.cv-chart .ax{fill:var(--muted);font:500 11px var(--sans)}
+.cv-chart .lbl{fill:var(--ink);font:600 11px var(--sans)}
+.cv-chart .gl{stroke:var(--line);stroke-width:1}
+.cv-chart .tgt{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 4}
+.cv-chart .crv,.cv-chart .ln{fill:none;stroke:var(--ink);stroke-width:2;stroke-linejoin:round}
+.cv-chart .area{fill:color-mix(in srgb,var(--ink) 6%,transparent)}
+.cv-chart .nowl{stroke:var(--ink);stroke-width:1;stroke-dasharray:2 3;opacity:.6}
+.cv-chart .duem{fill:var(--ink)}
+.cv-chart .pt{stroke:var(--panel);stroke-width:2}
+.cv-chart .pt.r0{fill:var(--miss)} .cv-chart .pt.r1{fill:var(--t2)} .cv-chart .pt.r2{fill:var(--got)} .cv-chart .pt.r3{fill:var(--rare)}
+.cv-chart .pt.o{fill:var(--panel);stroke:var(--muted)} .cv-chart .pt.o.bad{stroke:var(--miss)}
+.cv-chart .pt.est{fill:var(--panel);stroke-width:2.2} .cv-chart .pt.est.r0{stroke:var(--miss)} .cv-chart .pt.est.r1{stroke:var(--t2)} .cv-chart .pt.est.r2{stroke:var(--got)} .cv-chart .pt.est.r3{stroke:var(--rare)}
+.cv-tip{position:absolute;right:0;top:0;max-width:280px;padding:6px 9px;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);font-size:.82rem;line-height:1.3;pointer-events:none}
+.cv-key{display:flex;flex-wrap:wrap;gap:4px 12px;margin:0;padding:0;list-style:none;font-size:.8rem;color:var(--muted)}
+.cv-key li{display:inline-flex;align-items:center;gap:5px}
+.cv-key i{width:11px;height:11px;border-radius:50%;background:var(--faded)}
+.cv-key i.r0{background:var(--miss)} .cv-key i.r1{background:var(--t2)} .cv-key i.r2{background:var(--got)} .cv-key i.r3{background:var(--rare)}
+.cv-key i.o,.cv-key i.est{background:transparent;border:2px solid var(--muted)}
+.cv-facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px 12px;margin:0}
+.cv-facts div{display:flex;flex-direction:column;gap:1px}
+.cv-facts dt{font:600 .72rem/1.1 var(--cond);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.cv-facts dd{margin:0;font-weight:600}
+.cv-mix{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0;font-size:.86rem}
+.cv-mix span{padding:2px 8px;border-radius:6px;background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.cv-acts{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding-top:8px;border-top:1px solid var(--line)}
+.cv-acts .sp{flex:1}
+.cv-acts .off{opacity:.45;pointer-events:none}
+.cv-log{overflow-x:auto}
+.cv-log table{width:100%;min-width:560px;border-collapse:collapse;font-size:.86rem}
+.cv-log th{padding:5px 8px;border-bottom:1.5px solid var(--line);text-align:left;font:600 .72rem/1 var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cv-log td{padding:5px 8px;border-top:1px solid var(--line);white-space:nowrap}
+.cv-log td.g{white-space:normal;color:var(--muted)}
+.cv-log .rt{display:inline-block;padding:2px 8px;border-radius:6px;background:var(--faded);font-weight:600;font-size:.8rem}
+.cv-log .rt.r0{background:var(--miss)} .cv-log .rt.r1{background:var(--t2)} .cv-log .rt.r2{background:var(--got)} .cv-log .rt.r3{background:var(--rare)} .cv-log .rt.o{background:transparent;border:1.5px solid var(--line);color:var(--muted)}
+.cv-strip{display:flex;flex-wrap:wrap;gap:10px 14px}
+.cv-strip .day{display:flex;flex-direction:column;gap:4px}
+.cv-strip .day>span{font:600 .72rem/1 var(--cond);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.cv-strip .cells{display:flex;gap:3px;align-items:flex-start}
+.cv-strip .cell{display:flex;flex-direction:column;align-items:center;gap:3px}
+.cv-strip .cell i{display:block;width:16px;height:16px;border-radius:4px;background:var(--faded)}
+.cv-strip .cell i.r0{background:var(--miss)} .cv-strip .cell i.r1{background:var(--t2)} .cv-strip .cell i.r2{background:var(--got)} .cv-strip .cell i.r3{background:var(--rare)}
+.cv-strip .cell i.o{background:transparent;border:2px solid var(--muted)} .cv-strip .cell i.o.bad{border-color:var(--miss)}
+.cv-strip .cell i.rp{transform:scale(.7)}
+.cv-strip .cell u{display:block;width:4px;border-radius:2px;background:var(--muted);opacity:.55}

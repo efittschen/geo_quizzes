@@ -12,7 +12,7 @@
 // random id of its own (store "meta", "device"), a new part after PART answers. Only the browser a chunk is named after
 // adds to it, so of two copies of a chunk the longer one holds the other (as long, the online copy's: the browser it
 // is named after may have put a rating given later into it, see graded), and the logs of two browsers together are
-// the union of their chunks: an answer is never counted twice. A chunk: { id, t0, s, n, a, sent }
+// the union of their chunks: an answer is never counted twice. A chunk: { id, t0, s, n, a, k, sent }
 //   t0     the day's start (midnight there, ms)
 //   s      the texts its answers refer to, by their place in it: quiz ids, layers, items, maps, modes, typed texts
 //   n      what its items and layers are called, as their quiz says them: { "<quiz>.<layer>.<item>" or "<quiz>.<layer>"
@@ -34,6 +34,9 @@
 //            iv      minutes from then until the card was due again
 //            v       a drawing's share (%), a painting's score, or by distance [points, km]
 //            given   what was given instead, places in s: an item of the layer, or a text typed (with a " before it)
+//   k      the card's memory after a rated answer (FSRS), by the answer's place in a: { place: [stability in days,
+//          difficulty 1 to 10] }; only where there is one (kept since 2026-11-10; a page from before leaves it out,
+//          and a chunk it takes from the online copy has none until it is taken again)
 //   sent   how many of its answers the online copy has (this browser's own note, not sent)
 // About 30 characters an answer. The online copy keeps each chunk under "quiz._log.<id>" (see sync.js); the data
 // file holds them as `answers` (see store.js).
@@ -106,6 +109,7 @@ const ANSWERS = (() => {
         for (const a of answers) {
           if (c.a.length >= PART) { log.put(c); part++; await next(); }
           c.a.push(row(c, ix, a));
+          if (a.st != null) (c.k ||= {})[c.a.length - 1] = [a.st, a.df];
         }
         log.put(c); parts[pre] = part;
       }
@@ -140,6 +144,8 @@ const ANSWERS = (() => {
   function graded(quiz, key, g, card, step, when = null) {
     const bar = key.indexOf('|'), at = key.lastIndexOf('@', bar), item = key.slice(bar + 1), join = `${quiz}|${key.slice(0, at >= 0 ? at : bar)}|${item}`;
     const now = Date.now(), it = { g, iv: card && card.d ? Math.max(0, Math.round((card.d - (when ?? now)) / 6e4)) : null, step: !!step, t: now };
+    // (and the card's memory after it, where the scheduler keeps one: FSRS's stability and difficulty, see k above)
+    if (card && card.st != null && card.df != null) { it.st = Math.round(card.st * 1000) / 1000; it.df = Math.round(card.df * 1000) / 1000; }
     for (const [k, v] of early) if (now - v.t > KEEP) early.delete(k);
     const a = [...pending, ...spilled].reverse().find(a => a.card === join && (when == null ? now - a.at < KEEP : Math.abs(a.at - when) <= NEAR));
     if (a) { rate(a, it); if (spilled.includes(a)) spill(); return; }
@@ -162,6 +168,7 @@ const ANSWERS = (() => {
           while (row.length < 11) row.push(null);
           if (row[9] == null && it.step) row[6] |= 4;
           row[9] = it.g; row[10] = it.iv;
+          if (it.st != null) (c.k ||= {})[j] = [it.st, it.df]; else if (c.k) delete c.k[j];
           c.sent = Math.min(c.sent || 0, j);
           log.put(c);
           return;
@@ -170,7 +177,7 @@ const ANSWERS = (() => {
     }).then(() => tell('written'));
   }
   // (an answer graded twice, a miss then a rating: the card's state is the one before the first)
-  const rate = (a, it) => { if (!a.rated && it.step) a.f |= 4; a.rated = true; a.g = it.g; a.iv = it.iv; };
+  const rate = (a, it) => { if (!a.rated && it.step) a.f |= 4; a.rated = true; a.g = it.g; a.iv = it.iv; a.st = it.st ?? null; a.df = it.df ?? null; };
 
   // A page closing: the answers not written go to localStorage, at once; the next page to open writes them. (A rating
   // given as it closes, after this, is put with its answer there.)
@@ -190,8 +197,9 @@ const ANSWERS = (() => {
 
   /* ---------- reading ---------- */
   const chunks = () => (broken ? Promise.resolve([]) : tx('readonly', log => req(log.getAll())).catch(() => []));
-  const decoded = a => ({ review: !!(a.f & 1), replay: !!(a.f & 2), learning: !!(a.f & 4), r: a.r, ms: a.ms, g: a.g ?? null, iv: a.iv ?? null, v: a.v ?? null });
-  // Every answer, oldest first: { at, quiz, kind, item, look, mode, review, replay, learning, r, ms, g, iv, v, given }
+  const decoded = a => ({ review: !!(a.f & 1), replay: !!(a.f & 2), learning: !!(a.f & 4), r: a.r, ms: a.ms, g: a.g ?? null, iv: a.iv ?? null, v: a.v ?? null, st: a.st ?? null, df: a.df ?? null });
+  // Every answer, oldest first: { at, quiz, kind, item, look, mode, review, replay, learning, r, ms, g, iv, v, st, df,
+  // given } (st, df: its card's stability and difficulty after it, where the log has them, see k)
   // (given: item ids, or texts with a " before them); and names: '<quiz>|<layer>|<item>' -> what the item is called,
   // '<quiz>|<layer>' -> what the layer is.
   async function all() {
@@ -199,8 +207,10 @@ const ANSWERS = (() => {
     for (const c of await chunks()) {
       const s = c.s;
       for (const [key, name] of Object.entries(c.n || {})) { const [q, k, i] = key.split('.'); names.set(i == null ? `${s[q]}|${s[k]}` : `${s[q]}|${s[k]}|${s[i]}`, name); }
-      for (const [t, q, k, i, l, m, f, r, ms, g, iv, v, ...given] of c.a)
-        answers.push({ at: c.t0 + t * 1000, quiz: s[q], kind: s[k], item: s[i], look: s[l], mode: s[m], ...decoded({ f, r, ms, g, iv, v }), given: given.map(x => s[x]) });
+      c.a.forEach(([t, q, k, i, l, m, f, r, ms, g, iv, v, ...given], j) => {
+        const [st, df] = (c.k && c.k[j]) || [];
+        answers.push({ at: c.t0 + t * 1000, quiz: s[q], kind: s[k], item: s[i], look: s[l], mode: s[m], ...decoded({ f, r, ms, g, iv, v, st, df }), given: given.map(x => s[x]) });
+      });
     }
     for (const a of [...pending, ...spilled]) {
       answers.push({ at: a.at, quiz: a.quiz, kind: a.kind, item: a.item, look: a.look, mode: a.mode, ...decoded(a), given: a.given });
@@ -212,7 +222,7 @@ const ANSWERS = (() => {
   }
 
   /* ---------- the online copy and the data file ---------- */
-  const plain = c => ({ t0: c.t0, s: c.s, n: c.n, a: c.a });
+  const plain = c => ({ t0: c.t0, s: c.s, n: c.n, a: c.a, ...(c.k ? { k: c.k } : {}) });
   const valid = (id, v) => ID.test(id) && v && Number.isFinite(v.t0) && Array.isArray(v.s) && Array.isArray(v.a);
   const isLog = name => name.startsWith(SYNCED);
   // The chunks the online copy lacks answers of: [{ name, value, n }].
@@ -231,7 +241,7 @@ const ANSWERS = (() => {
     for (const [id, v] of list) {
       if (!valid(id, v)) continue;
       const c = await req(log.get(id)), n = { ...(c && c.n), ...v.n };
-      if (!c || v.a.length > c.a.length || (there && v.a.length === c.a.length && !id.startsWith(device + '.'))) log.put({ id, t0: v.t0, s: v.s, n, a: v.a, sent: there ? v.a.length : (c && c.sent) || 0 });
+      if (!c || v.a.length > c.a.length || (there && v.a.length === c.a.length && !id.startsWith(device + '.'))) log.put({ id, t0: v.t0, s: v.s, n, a: v.a, ...(v.k && typeof v.k === 'object' ? { k: v.k } : {}), sent: there ? v.a.length : (c && c.sent) || 0 });
       else log.put({ ...c, n, sent: there ? v.a.length : c.sent || 0 }); // (the copy there shorter: the rest is sent again)
     }
   }).then(() => tell('taken'), () => {}));

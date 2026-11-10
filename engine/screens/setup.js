@@ -368,6 +368,9 @@ export function makeSetup({ quiz, model, map, storage, ui }) {
       const cur = current();
       if (single) return { play: kinds.play(cur.kind, 'map'), items: single.draw(), look: { map: 'free', back: quiz.back || chosenBack } };
       if (!cur.ids.length) return null;
+      // (a practice from the review page: its few questions asked among every place of the layer, all of them lit and
+      // to be tapped, the whole map in view: lit alone they would give themselves away, the user's rule 2026-11-10)
+      if (cur.practice) return { play: kinds.play(cur.kind, wayFor(cur.kind)), items: cur.ids, whole: true, look: { map: chosenMap, back: chosenBack } };
       return { play: kinds.play(cur.kind, wayFor(cur.kind)), items: cur.ids, box: cur.box, look: { map: chosenMap, back: chosenBack } };
     },
     open() {

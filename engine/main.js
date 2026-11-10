@@ -29,6 +29,8 @@ const storage = createStorage(quiz, { page, root });
 const map = createMap(quiz, { root });
 const model = createModel(quiz, { now: () => performance.now(), random: Math.random, storage, geo: { area: map.area } });
 if (window.SHAPES_DUMP) window.SHAPES_OUT = map.dump(model.kinds.list);
+// For the review-map tool (tools/builds/review-map, window.REVIEW_DUMP): the quiz, its model and its map, to read out.
+if (window.REVIEW_DUMP) window.REVIEW_IN = { quiz, model, map };
 const formats = createFormats({ quiz, model, map, storage });
 const game = createGame({ quiz, model, map, storage, formats });
 const modes = createModes({ quiz, model, map, formats, game, storage });

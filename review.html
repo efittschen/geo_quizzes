@@ -14,21 +14,21 @@
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-  <header class="site-header">
+  <header class="site-header wide">
     <div class="brand-row"><a class="brand" href="index.html">🌍 Geo Quizzes</a><h1 class="page-title">Review</h1></div>
-    <nav><a href="index.html">← Back to map</a></nav>
+    <div class="head-due" id="review-top" hidden>
+      <span class="hd-n"><b id="rt-due"></b>due</span><span class="hd-n"><b id="rt-tomorrow"></b>tomorrow</span><span class="hd-n"><b id="rt-week"></b>this week</span>
+      <div class="review-go" id="review-go"></div>
+    </div>
+    <nav><a href="index.html" aria-label="Back to map"><span class="back-long">← Back to map</span><span class="back-short" aria-hidden="true">←</span></a></nav>
   </header>
 
   <main class="review-page">
     <section>
-      <div class="review-top" id="review-top" hidden>
-        <div class="rt-due"><b id="rt-due"></b><span>due</span></div>
-        <div class="rt-next"><div><b id="rt-tomorrow"></b><span>Tomorrow</span></div><div><b id="rt-week"></b><span>This week</span></div></div>
-        <div class="review-go" id="review-go"></div>
-      </div>
       <div class="tabs" id="tabs" role="tablist" aria-label="Page">
         <button type="button" role="tab" data-tab="review" aria-selected="true">Stack</button>
         <button type="button" role="tab" data-tab="stats" aria-selected="false">Stats</button>
+        <button type="button" role="tab" data-tab="map" aria-selected="false">Map</button>
       </div>
     </section>
 
@@ -59,6 +59,8 @@
       <p id="empty" class="empty" hidden>Nothing learned yet</p>
     </section>
 
+    <section class="map-page" id="map-page" hidden><div class="by-map" id="map-view"></div></section>
+
   </main>
 
   <script src="assets/js/store.js"></script>
@@ -66,6 +68,8 @@
   <script src="assets/js/sync.js"></script>
   <script src="assets/js/common.js"></script>
   <script src="assets/js/srs.js"></script>
+  <script src="assets/js/card-view.js"></script>
+  <script src="assets/js/review-map.js"></script>
   <script src="assets/js/review.js"></script>
   <script src="assets/js/stats.js"></script>
   <script src="assets/js/gamepad.js"></script>

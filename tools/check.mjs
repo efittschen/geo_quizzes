@@ -405,9 +405,52 @@ async function sync(c) {
   } finally { S.server.close(); }
 }
 
+/* ---------- l. Map: the review page's Map tab, the stack on the map, from the seeded log down to a card ---------- */
+async function byMap(c) {
+  const { page } = await c.open('review.html', { wait: 'main' });
+  if (!(await hasLog(page)) || !(await page.locator('#tabs button[data-tab="map"]').count())) c.skip('no Map tab');
+  await seedLog(page);
+  await go(page, base + 'review.html#map', '.rm-row');
+  c.ok(await page.locator('.rm-stage canvas.glmap').count() === 1, 'By map: the map drawn (WebGL)');
+  // Right as the rule has it: a question's last 10 first answers that went to a card, right at once; the place's the mean
+  const truth = await page.evaluate(async () => {
+    const { answers } = await ANSWERS.all(), by = new Map();
+    for (const a of answers) if (a.quiz === 'germany-regions' && a.kind === 'states' && a.g != null && !a.replay) (by.get(a.item) || by.set(a.item, []).get(a.item)).push(a);
+    const shares = [...by.values()].map(l => l.slice(-10)).map(l => l.filter(a => a.r === 0).length / l.length);
+    return Math.round(shares.reduce((x, y) => x + y, 0) / shares.length * 100) + '%';
+  });
+  const row = page.locator('.rm-row', { has: page.locator('.nm b', { hasText: /^Germany$/ }) });
+  c.ok(await row.count() === 1, 'By map: Germany listed');
+  const shown = await row.locator('.rm-v').textContent().catch(() => '');
+  c.ok(shown === truth, 'By map: Germany\'s Right (card answers only)', { shown, truth });
+  await row.click();
+  await page.waitForFunction(() => document.querySelector('.rm-head h2')?.firstChild?.textContent === 'Germany', null, { timeout: 10000 }).catch(() => {});
+  const layer = page.locator('.rm-row', { has: page.locator('.nm b', { hasText: /States/ }) });
+  c.ok(await layer.count() === 1, 'By map: Germany\'s States layer', await page.locator('.rm-row .nm b').allTextContents());
+  await layer.click();
+  await page.waitForFunction(() => document.querySelectorAll('.rm-row.q').length > 0, null, { timeout: 10000 }).catch(() => {});
+  c.ok(await page.locator('.rm-row.q').count() === 16, 'By map: the 16 states as questions', await page.locator('.rm-row.q').count());
+  await page.locator('.rm-row.q').first().click();
+  await page.waitForSelector('.rm-card .cv', { timeout: 10000 }).catch(() => {});
+  c.ok(await page.locator('.rm-card .cv .view-pick button').count() === 4, 'By map: a card with its four views');
+  await page.locator('.rm-card .view-pick button', { hasText: 'Values' }).click();
+  await page.waitForFunction(() => document.querySelectorAll('.rm-card .cv-values svg').length === 4, null, { timeout: 10000 }).catch(() => {});
+  c.ok(await page.locator('.rm-card .cv-values svg').count() === 4, 'By map: Values, four charts');
+  // back to the Stack: the quiz's line lit
+  await page.locator('.rm-crumbs button', { hasText: 'States' }).click().catch(() => {});
+  await page.locator('.rm-icon').click();
+  await page.waitForSelector('#deck-rows tr.flash', { timeout: 5000 }).catch(() => {});
+  c.ok((await page.locator('#deck-rows tr.flash').getAttribute('data-node').catch(() => '')) === 'q:germany-regions', 'By map: back to the quiz\'s line in the Stack');
+  // (the heading bar on one line on a phone: Review and All always in it)
+  await page.setViewportSize({ width: 400, height: 800 });
+  await page.waitForTimeout(300);
+  const bar = await page.evaluate(() => { const h = document.querySelector('.site-header'), r = [...h.querySelectorAll('.brand, .review-go .primary, .review-go .ghost, nav a')].map(e => e.getBoundingClientRect()); return { over: h.scrollWidth - h.clientWidth, one: Math.max(...r.map(x => x.top)) < Math.min(...r.map(x => x.bottom)) }; });
+  c.ok(!bar.over && bar.one, 'Heading bar: one line at 400 px', bar);
+}
+
 /* ---------- running: the long checks first, the page loads between them; at most JOBS pages at once ---------- */
 const CHECKS = [
-  ['c', 'draw', draw], ['e', 'review', review], ['f', 'stats', stats], ['k', 'practice a whole list', practiceRun], ['g', 'cards per map off', cardsPerMap],
+  ['c', 'draw', draw], ['e', 'review', review], ['f', 'stats', stats], ['l', 'map tab', byMap], ['k', 'practice a whole list', practiceRun], ['g', 'cards per map off', cardsPerMap],
   ['d', 'name it, shape', nameShape], ['b', 'map answers, hard mode', mapAnswers], ['h', 'bare map', bareMap], ['j', 'satellite map', c => bareMap(c, 'sat')], ['i', 'sync', sync],
 ].filter(([k]) => !ONLY || ONLY.includes(k));
 const results = {};

@@ -93,7 +93,8 @@ export function createApp({ quiz, model, map, game, modes, formats, screens, sto
   $('restartBtn').onclick = () => again(hold.def.retry);
   $('againBtn').onclick = () => again(hold.def.retry);
   $('retryBtn').onclick = () => play({ ...hold.def, items: game.round.result().missed, retry: true });
-  $('endBtn').onclick = () => { if (!game.round.state.res.some(r => r !== undefined)) openSetup(); else game.stop(); };
+  // (nothing answered: the setup; but a review or practice started elsewhere goes back there, see review.away)
+  $('endBtn').onclick = () => { if (game.round.state.res.some(r => r !== undefined)) game.stop(); else if (!(review && review.away())) openSetup(); };
   $('menuBtn').onclick = openSetup;
   $('eBack').onclick = openSetup;
   $('exploreBtn').onclick = () => { enterExplore(); explore.open(setup.round()); };
