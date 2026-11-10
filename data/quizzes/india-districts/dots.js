@@ -1,0 +1,3 @@
+// Made by tools/builds/tap-dots/build.mjs from its list: the places of india-districts too small to tap, as dots, per layer
+// ([x, y, and the areas each stands for]; engine/model/quiz.js)
+const DOTS = {"districts":[[93.63,583.47,"DD-diu"],[309.44,283.75,"DL-old-delhi"],[127.4,880.8,"LD-lakshadweep"],[874.29,389.51,"NL-dimapur"],[878.82,393.09,"NL-niuland"],[251.9,905.18,"PY-mahe"],[482.79,727.72,"PY-yanam"]],"local":[[93.63,583.47,"DD-diu"],[309.44,283.75,"DL-old-delhi"],[127.4,880.8,"LD-lakshadweep"],[251.9,905.18,"PY-mahe"],[482.79,727.72,"PY-yanam"]],"states":[[127.4,880.8,"LD-lakshadweep"],[398.13,931.49,"PY-karaikal"],[251.9,905.18,"PY-mahe"],[397.1,898.52,"PY-puducherry"],[482.79,727.72,"PY-yanam"]]};

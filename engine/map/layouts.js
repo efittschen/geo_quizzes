@@ -44,6 +44,11 @@ export function makeLayouts(quiz, shapes) {
   const arcs = stored && arcReader(stored), banded = !!(stored && stored.lv);
   const made = new Map();
   let drawn, lines = [], under = [], underOf = {}, version = 0, band = 0; // (drawn: the key of the layout on the map, null for none; undefined before the first)
+  // A dot of one layer only (only: model/quiz.js, DOTS) is drawn itself, in no unit, while a kind it is an area of is on
+  // the map (dotsOf: the kind drawn, where the map has such dots); the units and their stored shapes are the areas'
+  const onlyDots = ids.some(a => A(a).only), ofKind = (K, a) => !A(a).only || !!(K && K.at && K.at[a]);
+  const unitIds = onlyDots ? ids.filter(a => !A(a).only) : ids;
+  let dotsOf = null;
 
   // A unit's points at band T (a ring left with fewer than four corners keeps all its points: an island too small to
   // see stays one), as an outline in numbers (ReadyPath, gl-map.js). A run has one part for each number of points it
@@ -68,7 +73,7 @@ export function makeLayouts(quiz, shapes) {
     if (made.has(K.key)) return made.get(K.key);
     let L = null;
     if (!K.clickAll && !K.areaLabel && K.merge !== false) {
-      const units = unitsOf(K, ids);
+      const units = unitsOf(K, unitIds);
       if (units.some(u => u.length > 1)) {
         const P = stored && (stored.kinds[K.key] || stored.kinds[K.like]), pre = P && P.sig === sigOf(units) ? P : null;
         // (what is worked out from the areas' outlines waits for them, and is not kept until then)
@@ -153,14 +158,14 @@ export function makeLayouts(quiz, shapes) {
   }
   function worked(L, d) {
     const unitOf = new Map(L.units.flatMap((u, i) => u.map(a => [a, i])));
-    const { lines: runs, loose } = outlines(ids.filter(a => !A(a).top).map(shapes.hit), unitOf, L.units.length, DETAIL[d], q);
+    const { lines: runs, loose } = outlines(unitIds.filter(a => !A(a).top).map(shapes.hit), unitOf, L.units.length, DETAIL[d], q);
     return { paths: runs.map(r => pathOf(r, false)), loose };
   }
 
   function draw(K) {
-    const L = K && of(K), key = L ? K.key : null;
-    if (key === drawn) return;
-    drawn = key;
+    const L = K && of(K), key = L ? K.key : null, dots = onlyDots && K ? K : null;
+    if (key === drawn && (dots && dots.key) === (dotsOf && dotsOf.key)) return;
+    drawn = key; dotsOf = dots;
     for (const p of [...lines, ...under]) if (p) p.remove();
     lines = []; under = []; underOf = {};
     for (const a of ids) { el(a).style.removeProperty('--hint'); el(a).classList.remove('tight'); }
@@ -186,7 +191,7 @@ export function makeLayouts(quiz, shapes) {
 
   const itself = a => { const p = under[underOf[a]]; return !p || !p.whole || OWN_STATE.some(c => el(a).classList.contains(c)); };
   function place() {
-    const shown = ids.filter(itself);
+    const shown = ids.filter(a => itself(a) && (!onlyDots || ofKind(dotsOf, a)));
     S.regions.replaceChildren(...under.filter(Boolean), ...shown.filter(a => !A(a).top).map(el), ...lines, ...shown.filter(a => A(a).top).map(el));
     spare.replaceChildren(...ids.filter(a => !el(a).isConnected).map(el));
   }

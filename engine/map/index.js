@@ -123,13 +123,14 @@ export function createMap(quiz, { root }) {
     // of one shape its own, of several the edges they don't share. A place the map draws as a circle or a dot (too small
     // to see there) by its real outline, where the map has one (real).
     place(K, ids, k) {
-      const areas = [...new Set(ids)], set = new Set(areas), L = layouts.of(K), A = shapes.area, curved = a => /[AaCcQqSsTt]/.test(A(a).d || '');
+      const A = shapes.area, all = [...new Set(ids)], areas = all.some(a => !A(a).only) ? all.filter(a => !A(a).only) : all; // (a layer's dot: its areas are the place)
+      const set = new Set(areas), L = layouts.of(K), curved = a => /[AaCcQqSsTt]/.test(A(a).d || '');
       const real = a => (A(a).real && (A(a).dot || curved(a)) ? A(a).real : A(a).d), tiny = a => A(a).top || A(a).dot;
       const parts = [];
       if (L) L.units.forEach((u, i) => {
         if (!set.has(u[0])) return; // (a unit's areas are all of an item, or none)
-        const own = u.filter(a => !tiny(a)), d = own.length > 1 && layouts.wholeAt(L, i, k);
-        parts.push(...(d ? [d] : own.map(real)), ...u.filter(tiny).map(real));
+        const own = u.filter(a => set.has(a) && !tiny(a)), d = own.length > 1 && layouts.wholeAt(L, i, k);
+        parts.push(...(d ? [d] : own.map(real)), ...u.filter(a => set.has(a) && tiny(a)).map(real));
       });
       else parts.push(...areas.map(real));
       const small = areas.filter(a => A(a).dot || curved(a));

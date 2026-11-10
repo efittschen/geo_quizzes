@@ -5,7 +5,8 @@
 //   areas          [{ id, d, lx, ly, a, s, g, top, dot, w, real }]: an area's outline (SVG path in map units), label
 //                  point and size on the map (made by the map's build, never worked out here), size on the ground (s:
 //                  "largest area"), hint group (g), drawn above its neighbours (top), drawn as a dot of a size on the
-//                  screen (dot) or on the ground (w, in map units), its own outline where it is drawn as a circle (real)
+//                  screen (dot) or on the ground (w, in map units), its own outline where it is drawn as a circle (real),
+//                  a dot of one layer only (only: drawn and tapped while a layer it is of is on the map; readQuiz)
 //   borders        [d]: lines drawn above the areas (state lines)
 //   context        a path drawn under the areas, not tapped (a world quiz's places not asked; a board's frames)
 //   base           { land, lines }: a city quiz's country and region borders under its dots; dots: true
@@ -26,12 +27,42 @@
 //   single         a page of one round (Easy to Hard): { draw(), points, tag, cls }; back: its background
 //   langLabel      the languages chosen once for all rounds, under this heading
 // Worked out here: grouping (the layers that only group), maps and backs (the maps a round is played on, a city
-// quiz's backgrounds).
+// quiz's backgrounds), and a layer's places too small to tap drawn as dots (DOTS).
+//
+// DOTS (data/quizzes/<page>/dots.js, made by tools/builds/tap-dots from its list): { layer: [[x, y, area, …], …] }, a
+// dot at x, y in map units for those areas of the layer. Each dot is an area of its own, of that layer only: an item
+// with one of those areas has the dot among its areas, a tap on them is a tap on the dot (dotOf), and it is asked in
+// their place (model/kinds.js: askAreas). The areas stay as they are, in the layer and in every other.
 
-export function readQuiz(QUIZ, data) {
+export function readQuiz(QUIZ, data, dots) {
   const Q = { ...QUIZ };
   // a page shows only the kinds its <body> names (one config, several pages)
   if (data.kinds) { const keep = data.kinds.split(/\s+/); Q.kinds = Q.kinds.filter(k => keep.includes(k.key)); }
+  if (dots) {
+    const byId = new Map(Q.areas.map(a => [String(a.id), a])), added = [], standsAll = {};
+    Q.kinds = Q.kinds.map(k => {
+      const list = dots[k.key]; if (!list) return k;
+      const of = {}, stands = {};
+      list.forEach(([x, y, ...areas], i) => {
+        const first = byId.get(String(areas[0])); if (!first) return;
+        const id = `dot:${k.key}:${i}`;
+        added.push({ id, d: `M${x},${y}l0,0`, lx: x, ly: y, a: 0, g: first.g, dot: true, only: true });
+        stands[id] = standsAll[id] = areas.map(String);
+        for (const a of stands[id]) of[a] = id;
+      });
+      const base = a => (stands[a] ? stands[a][0] : a), own = k.areasOf;
+      return {
+        ...k,
+        areasOf: id => { const list = own(id) || [], mine = [...new Set(list.map(a => of[a]).filter(Boolean))]; return mine.length ? [...list, ...mine] : list; },
+        dotOf: a => of[a],
+        ...(k.primary ? { primary: a => k.primary(base(a)) } : {}),
+        ...(k.clicked ? { clicked: a => k.clicked(base(a)) } : {}),
+        ...(k.areaLabel ? { areaLabel: a => k.areaLabel(base(a)) } : {}),
+      };
+    });
+    Q.areas = [...Q.areas, ...added]; // (last: a dot is drawn above the areas)
+    if (QUIZ.explore) Q.explore = a => QUIZ.explore(standsAll[a] ? standsAll[a][0] : a);
+  }
   if (data.key) Q.key = data.key;
   // a layer that only groups the layers below it into rounds is not asked itself
   Q.grouping = Q.kinds.filter(k => k.groupsOnly);

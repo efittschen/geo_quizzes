@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Brazil Postcodes · Geo Quizzes</title>
-<meta name="description" content="Find the zone of a Brazilian postcode (CEP) by its first one, two or three digits.">
+<meta name="description" content="Find the zone of a Brazilian postcode (CEP) by its first one or two digits.">
 <link rel="stylesheet" href="../../assets/css/base.css">
 <link rel="stylesheet" href="../../engine/css/quiz-page.css">
 <link rel="stylesheet" href="../../engine/css/quiz-map.css">
 <link rel="stylesheet" href="../../engine/css/formats.css">
 <link rel="stylesheet" href="../../data/quizzes/brazil-postcodes/hints.css">
 </head>
-<body>
+<body data-kinds="p1 p2">
 <a class="back" href="../../country.html?code=076">← Brazil</a>
 <h1>Brazil Postcodes</h1>
 <p class="note">Postcodes (CEP): IBGE, CNEFE 2022 (address register of the census) · Zones by where each CEP's addresses are · approximate · Borders: Natural Earth · Street map © OpenStreetMap contributors</p>
@@ -21,6 +21,7 @@
 <script>const POST_OPTS = { key: 'brpost', maxZoom: 60 };</script>
 <script src="../../engine/types/post.js"></script>
 <script src="../../data/quizzes/brazil-postcodes/shapes.js"></script>
+<script src="../../data/quizzes/brazil-postcodes/dots.js"></script>
 <script type="module" src="../../engine/main.js"></script>
 </body>
 </html>

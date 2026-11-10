@@ -60,7 +60,7 @@ const REGIONS = { Northeast: 'CT ME MA NH NJ NY PA RI VT', Midwest: 'IL IN IA KS
 const stateOf = Object.fromEntries(reg.map(r => [r.ab, r.st])), count = reg.reduce((m, r) => (m[r.st] = (m[r.st] || 0) + 1, m), {});
 const unit = s => s === 'Louisiana' ? 'parishes' : s === 'Alaska' ? 'boroughs and census areas' : 'counties';
 const LAYERS = {
-  key: 'usstates', borders: 'DATA.ent', size: [DATA.w, DATA.h], pad: 16, maxZoom: 60, labelScale: 0.14, fly: { pad: 1.6, min: 0.03 },
+  key: 'usstates', borders: 'DATA.ent', size: [DATA.w, DATA.h], pad: 16, maxZoom: 70, labelScale: 0.14, fly: { pad: 1.6, min: 0.03 },
   hintLabel: 'Color by state', exploreKind: 'counties',
   kinds: [
     { key: 'states', label: 'States', noun: ['state', 'states'], prompt: 'name',

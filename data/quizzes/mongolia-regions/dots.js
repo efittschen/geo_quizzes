@@ -1,0 +1,3 @@
+// Made by tools/builds/tap-dots/build.mjs from its list: the places of mongolia-regions too small to tap, as dots, per layer
+// ([x, y, and the areas each stands for]; engine/model/quiz.js)
+const DOTS = {"soums":[[592.33,205.65,"MN1107"],[595.07,200.74,"MN1125"],[596.53,214.94,"MN4101"],[574.58,96.03,"MN4301"],[518.79,397.84,"MN4601"],[467.68,279.86,"MN6201"],[402.82,284.74,"MN6401"],[283.37,213.18,"MN8101"]],"soumsCyr":[[592.33,205.65,"MN1107"],[595.07,200.74,"MN1125"],[596.53,214.94,"MN4101"],[574.58,96.03,"MN4301"],[518.79,397.84,"MN4601"],[467.68,279.86,"MN6201"],[402.82,284.74,"MN6401"],[283.37,213.18,"MN8101"]]};

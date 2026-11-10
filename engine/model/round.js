@@ -12,6 +12,8 @@
 //                               { drawn }  Draw: the share the drawing has in common with the place (0 to 1)
 //                               { rated }  Cards: the player's rating once the answer was shown, as the review's
 //                                          grades: 3 easy, 2 good, 1 hard, 0 missed
+//                             The areas to tap or draw are the kind's askAreas(id): its areas, with a dot in place
+//                             of those it is drawn for (a tap on one of those is a tap on the dot).
 //                             -> an outcome (below). grade(missed, rated) -> a review's result: 0 known, 1 unsure,
 //                             3 missed (rated: Cards' rating, which it takes as it is, not the clock's)
 //   r.board(), r.match(question, tile, grade)   Pairs: the next board; a pair picked (tile: { name, owner })
@@ -46,8 +48,10 @@ export function makeRound(def, { quiz, random, now }) {
   // the question now: its tries, whether its answer is shown, the areas found and picked, its wrong tries and what they
   // gave, a code group and the codes typed of it
   let q = null;
-  const needAll = id => K.clickAll && !PLAIN_MAPS.includes(def.look.map) && K.areas[id].length > 1;
-  const rest = id => K.areas[id].filter(a => !q.found.has(a));
+  const askOf = id => (K.askAreas ? K.askAreas(id) : K.areas[id]);
+  const needAll = id => K.clickAll && !PLAIN_MAPS.includes(def.look.map) && askOf(id).length > 1;
+  const rest = id => askOf(id).filter(a => !q.found.has(a));
+  const asDot = a => (K.dotOf && K.dotOf(a)) || a; // (a tap on an area drawn as a dot is a tap on its dot: kinds.js)
 
   function begin() {
     const id = queue[S.i];
@@ -88,17 +92,18 @@ export function makeRound(def, { quiz, random, now }) {
     const id = q.id;
     if (id === undefined) return null;
     if ('area' in input) {
-      if (!K.areas[id].includes(input.area)) return wrong(K.primary(input.area), { area: input.area });
+      const area = asDot(input.area);
+      if (!askOf(id).includes(area)) return wrong(K.primary(input.area), { area: input.area });
       if (needAll(id)) {
-        const fresh = !q.found.has(input.area);
-        q.found.add(input.area);
+        const fresh = !q.found.has(area);
+        q.found.add(area);
         const left = rest(id).length;
-        if (left > 0) return { kind: 'more', id, found: input.area, fresh, left };
+        if (left > 0) return { kind: 'more', id, found: area, fresh, left };
       }
       return done(settle(grade, q.tries > 0 || q.revealed));
     }
     if ('picks' in input) {
-      const want = K.areas[id], picks = new Set(input.picks);
+      const want = askOf(id), picks = new Set(input.picks.map(asDot));
       if (q.revealed || (picks.size === want.length && want.every(a => picks.has(a)))) return done(settle(grade, q.tries > 0 || q.revealed));
       const extra = [...picks].filter(a => !want.includes(a)), kept = [...picks].filter(a => want.includes(a));
       for (const a of kept) q.found.add(a);

@@ -20,7 +20,7 @@ export function makeOutline(P, { map, place }) {
         tag.className = 'scope ' + scope; tag.textContent = scope === 'part' ? 'Part of a larger area' : 'Whole area';
         el.replaceChildren(tag, question(id, group.length));
       } else el.textContent = question(id, group ? group.length : 1);
-      map.ask(K.areas[id], code && { around: code.around(id), parts: code.parts(id) });
+      map.ask(K.dotOf ? K.askAreas(id) : K.areas[id], code && { around: code.around(id), parts: code.parts(id) }); // (a place drawn as a dot: the dot)
     },
     ahead() {},
     // (Name it: the place in the colour of its answer, its outline kept, a dot without its ring)

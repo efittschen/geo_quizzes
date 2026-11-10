@@ -12,7 +12,8 @@
 //   c    continent (Natural Earth); d: SVG path in map units; lx, ly: label point; a: size in square map units
 //   b    [x0, y0, x1, y1] of the main land (every piece at least a tenth the size of the largest: Alaska yes,
 //        Hawaii no), for framing a continent without its far-off islands
-//   dot  1 for places too small to hit at any sensible zoom (Monaco, Jersey…): quizzes draw them as a dot
+//   dot  1 for places too small to hit at any sensible zoom (Monaco, Jersey…): quizzes draw them as a dot; also the
+//        places of TAP_DOTS, larger than that but on the list of 2026-11-10 (tools/builds/tap-dots: too small to tap)
 // Territories that GeoGuessr treats as places of their own are cut out of their country (Réunion from France,
 // Svalbard from Norway, Christmas Island and the Cocos Islands apart); Gibraltar, missing at this scale, is added.
 import fs from 'node:fs';
@@ -22,6 +23,10 @@ import * as d3 from 'd3-geo';
 import { naturalEarthCountries, planarFeatures, labelAndArea, svgPath, rewind, ROOT } from './lib/geo.mjs';
 
 const { values: o } = parseArgs({ options: { width: { type: 'string', default: '2000' }, 'min-area': { type: 'string', default: '0.12' }, dot: { type: 'string', default: '8' } } });
+
+// Places larger than --dot drawn as dots all the same: too small to tap next to the rest of their quizzes (the list of
+// 2026-11-10, tools/builds/tap-dots), and asked in a quiz.
+const TAP_DOTS = new Set(['BRN', 'CPV', 'CYP', 'FLK', 'FRO', 'GMB', 'ISR', 'LBN', 'LUX', 'PAN', 'PRI', 'PSX', 'QAT', 'RWA', 'SGS', 'TTO', 'VUT']);
 
 // Short everyday names where Natural Earth's are formal or abbreviated.
 const NAMES = { USA: 'United States', KOR: 'South Korea', PRK: 'North Korea', HKG: 'Hong Kong', MAC: 'Macau', ALD: 'Åland', FRO: 'Faroe Islands', SRB: 'Serbia', TZA: 'Tanzania', BHS: 'Bahamas', COG: 'Republic of the Congo', COD: 'DR Congo', CIV: 'Ivory Coast', SWZ: 'Eswatini', TLS: 'East Timor', FSM: 'Micronesia', VAT: 'Vatican City', GNB: 'Guinea-Bissau', CZE: 'Czechia', MKD: 'North Macedonia', BIH: 'Bosnia and Herzegovina', CPV: 'Cape Verde', STP: 'São Tomé and Príncipe', CUW: 'Curaçao', BLM: 'Saint Barthélemy' };
@@ -94,7 +99,7 @@ for (const f of features) {
   const sized = f.geometry.coordinates.map(poly => [poly, Math.abs(d3.geoPath(null).area({ type: 'Polygon', coordinates: poly }))]);
   const main = sized.filter(([, A]) => A >= MAIN * Math.max(...sized.map(([, A]) => A))).map(([poly]) => poly);
   const b = main.length ? d3.geoPath(null).bounds({ type: 'MultiPolygon', coordinates: main }).flat().map(round) : [lx, ly, lx, ly];
-  reg.push({ id: p.id, n: p.n, i2: p.i2, iso: p.iso, c: p.c, d, lx, ly, a, b, ...(a < +o.dot ? { dot: 1 } : {}) });
+  reg.push({ id: p.id, n: p.n, i2: p.i2, iso: p.iso, c: p.c, d, lx, ly, a, b, ...(a < +o.dot || TAP_DOTS.has(p.id) ? { dot: 1 } : {}) });
 }
 reg.sort((x, y) => x.n.localeCompare(y.n));
 

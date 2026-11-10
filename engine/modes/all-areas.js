@@ -22,7 +22,7 @@ export function makeAllAreas({ map, game, $, flash, flashArea }) {
       if (count.hidden) return;
       const left = game.round.rest().length, b = document.createElement('b');
       b.textContent = left;
-      count.replaceChildren(b, left === K.areas[q.id].length ? ` ${K.areaNoun || 'areas'}` : ' more');
+      count.replaceChildren(b, left === (K.askAreas ? K.askAreas(q.id) : K.areas[q.id]).length ? ` ${K.areaNoun || 'areas'}` : ' more');
     };
     const syncCheck = () => {
       check.hidden = !K.pickAll;

@@ -94,7 +94,7 @@ export function makeDraw({ model, map, game, storage, $ }) {
   function finish() {
     const q = game.round && game.round.asked(), mine = old ? [] : pieces;
     if (!drawing() || live || (!mine.length && !q.revealed)) return;
-    const K = P.kind, areas = K.areas[q.id], rs = mine.map(p => p.r).sort((a, b) => a - b);
+    const K = P.kind, areas = K.askAreas ? K.askAreas(q.id) : K.areas[q.id], rs = mine.map(p => p.r).sort((a, b) => a - b); // (a place drawn as a dot: the dot)
     const edge = rs.length ? rs[rs.length >> 1] * EDGE / BRUSH : 0; // (in map units, at the zoom of the middle piece)
     const score = model.check.drawing({ place: map.rings(areas), pieces: mine.map(p => ({ brush: p.tool === 'brush' ? p.r : 0, pts: p.pts })), dot: BRUSH / map.scale(), edge, weight: map.weight });
     game.answer({ drawn: score });

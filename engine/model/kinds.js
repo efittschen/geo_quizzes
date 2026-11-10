@@ -11,12 +11,14 @@
 //                  not to the round's end (places that overlap: the town-name parts)
 //   points(id)     its places, shown as dots with its answer (and the place of the example asked, `at`)
 //   onlyCards      it is played as cards alone (a map to learn, with no place to tap or draw)
+//   dotOf(area)    the dot drawn for an area too small to tap (model/quiz.js: DOTS): a tap on the area is a tap on it
 //   modes, defaultMode, answer(id), answers(id) (other spellings that count), typeMode, typed(id, text) (or true: typed,
 //                  checked from its name and answers), choices(), time(id)
 //   rankings, areaRank, primary(area), presets, pickAll, clickAll, fresh, areaLabel, labelPerArea, dim, plates
 // Worked out here, on each kind:
 //   ids            its items in its groups' order (an item in two groups twice); areas[id]; at[area]: the items an
-//                  area belongs to, in that order
+//                  area belongs to, in that order; askAreas(id): the areas to tap or draw (its areas, with a dot in
+//                  place of the areas it is drawn for)
 //   size(id)       its size on the ground: its areas', each shared equally by the items over it
 //   rankings       'largest area' first (unless areaRank: false), then the config's
 //   primary(area)  the item a tap on the area is (the config's, else the area's first)
@@ -47,9 +49,10 @@ export function makeKinds(quiz, geo) {
     for (const id of ids) areas[id] ??= k.areasOf(id);
     for (const id of ids) for (const a of areas[id]) (at[a] ??= []).push(id);
     const size = id => areas[id].reduce((sum, a) => { const A = geo.area(a); return sum + (A.s ?? A.a ?? 0) / at[a].length; }, 0);
-    const count = new Set(ids).size, [one, many] = k.noun;
+    const count = new Set(ids).size, [one, many] = k.noun, asks = {};
+    const askAreas = k.dotOf ? id => (asks[id] ??= areas[id].filter(a => !k.dotOf(a))) : id => areas[id];
     return {
-      ...k, ids, areas, at, size,
+      ...k, ids, areas, at, size, askAreas,
       rankings: [...(k.areaRank === false ? [] : [{ label: 'largest area', order: ids.slice().sort((a, b) => size(b) - size(a)) }]), ...(k.rankings || [])],
       primary: k.primary || (a => (at[a] || [])[0]),
       dim: k.pickAll ? false : k.dim,

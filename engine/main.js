@@ -26,7 +26,7 @@ import { makeWords } from './app/words.js';
 
 const root = new URL('../', import.meta.url).href; // (the site)
 const page = document.body.dataset.quiz || location.pathname.replace(/\/(index\.html)?$/, '').split('/').pop();
-const quiz = readQuiz(QUIZ, document.body.dataset);
+const quiz = readQuiz(QUIZ, document.body.dataset, typeof DOTS === 'object' ? DOTS : null);
 const storage = createStorage(quiz, { page, root });
 const map = createMap(quiz, { root });
 const model = createModel(quiz, { now: () => performance.now(), random: Math.random, storage, geo: { area: map.area } });

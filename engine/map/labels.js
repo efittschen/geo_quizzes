@@ -53,12 +53,13 @@ export function makeLabels(quiz, shapes) {
     };
     const own = (e, id) => { e.ids.push(id); (ofItem[id] ??= []).push(e); };
     if (K.areaLabel) for (const a of shapes.ids) {
+      if (shapes.area(a).only) continue; // (a layer's dot: its area has the label)
       const e = (ofArea[a] = entry(a, middle([a])));
       e.fixed = K.areaLabel(a); e.el.textContent = e.fixed;
       for (const id of K.at[a] || []) own(e, id);
     }
     else if (K.labelPerArea) for (const a of shapes.ids) {
-      const ids = K.at[a]; if (!ids) continue;
+      const ids = K.at[a]; if (!ids || shapes.area(a).only) continue;
       const e = (ofArea[a] = entry(a, middle([a]))), main = K.primary(a);
       for (const id of [main, ...ids.filter(x => x !== main)]) own(e, id);
     }
