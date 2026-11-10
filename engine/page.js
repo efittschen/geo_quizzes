@@ -37,8 +37,8 @@ if (document.body.dataset.page !== 'paint') {
 // And gamepad.js, which lets a game controller play the page as a mouse would.
 document.write(`<script src="${new URL('../assets/js/gamepad.js', document.currentScript.src).href}"><\/script>`);
 // And the two links that make the site an app on a phone's home screen (manifest.webmanifest and the icon for
-// iPhones), which the pages in the root carry in their <head>.
-for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-icon', 'assets/icons/apple-touch-icon.png']])
+// iPhones), and the icon in the browser's tab, which the pages in the root carry in their <head>.
+for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-icon', 'assets/icons/apple-touch-icon.png'], ['icon', 'assets/icons/favicon-32.png']])
   document.head.append(Object.assign(document.createElement('link'), { rel, href: new URL('../' + file, document.currentScript.src).href }));
 (() => {
   const body = document.body, own = sel => body.querySelector(':scope > ' + sel);
