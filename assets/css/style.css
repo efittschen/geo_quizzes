@@ -166,8 +166,8 @@ main > .map-wrap:first-child{margin-top:24px}
 .run b{font:700 1.3rem/1 var(--cond);color:var(--ink);font-variant-numeric:tabular-nums}
 .run-done .rate-list{margin-top:14px;max-width:520px}
 .review-page{max-width:1280px}
-/* the review page's heading bar: Review (with the number due) and All (assets/js/review.js), on the page's own width */
-.site-header.wide{padding-inline:max(16px,calc((100% - 1280px) / 2 + 16px));flex-wrap:nowrap}
+/* the review page's heading bar: Review (with the number due) and All (assets/js/review.js), in the site's column, as every page's header */
+.site-header.wide{flex-wrap:nowrap} /* (its contents in the site's column, as every page's) */
 .site-header.wide > *{flex-shrink:0}
 .head-due{display:flex;align-items:center;gap:6px 18px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
 .head-due .review-go{margin-top:0;gap:8px;flex-wrap:nowrap}

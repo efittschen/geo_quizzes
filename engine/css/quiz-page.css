@@ -8,9 +8,10 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 html,body{height:100%}
 body{overflow:hidden;display:flex;flex-direction:column}
 
-/* the header, as the site's other pages have it (style.css .site-header): the site's name, the quiz's title, the way
-   back at the right (its arrow alone on a phone); a review's Due and All beside the title (engine/app/review.js) */
-.qbar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 26px;background:var(--panel);border-bottom:1px solid var(--line)}
+/* the header, as the site's other pages have it (style.css .site-header: its size, its height), its contents from the
+   page's edges, as the panel's (the user's choice, 2026-11-11): the site's name, the quiz's title, the way back at the
+   right (its arrow alone on a phone); a review's Due and All beside the title (engine/app/review.js) */
+.qbar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 26px;background:var(--panel);border-bottom:1px solid var(--line)}
 .qbar a{text-decoration:none}
 .qbar-row{display:flex;align-items:center;gap:12px;min-width:0}
 .qbar-home{flex:none;font:700 1.5rem/1 var(--cond);letter-spacing:-.01em;color:var(--ink)}
@@ -351,12 +352,9 @@ body > .rv-rate{position:fixed;top:50%}
   .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
   /* (dvh: the part of the screen the browser leaves the page, where it has one; vh counts what its bars may cover) */
   .panel{border-right:0;border-bottom:1px solid var(--line);padding:14px 16px;gap:10px;max-height:52vh;max-height:52dvh}
-  .qbar{padding:10px 16px;gap:10px}
-  .qbar-row{gap:8px}
-  .qbar-home,.qbar h1{font-size:1.2rem}
-  .qbar h1{padding-left:8px}
+  .qbar{padding-inline:16px;gap:10px}
   .qbar .long{display:none}
-  .qbar .short{display:inline;font-size:1.3rem}
+  .qbar .short{display:inline;font-size:1.3rem;line-height:1}
   .feedback{min-height:0;padding:7px 11px;font-size:.92rem}
   .playing .panel{gap:8px}
   .ask{margin:-4px 0 0;font-size:.9rem}
@@ -405,3 +403,4 @@ body > .rv-rate{position:fixed;top:50%}
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
 }
+@media (max-width:400px){ .qbar-row{gap:8px} .qbar h1{padding-left:8px} } /* (as the site's header, style.css) */
