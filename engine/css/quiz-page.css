@@ -14,10 +14,11 @@ body{overflow:hidden;display:flex;flex-direction:column}
 .qbar a{text-decoration:none}
 .qbar-row{display:flex;align-items:center;gap:12px;min-width:0}
 .qbar-home{flex:none;font:700 1.5rem/1 var(--cond);letter-spacing:-.01em;color:var(--ink)}
-.qbar h1{min-width:0;margin:0;padding-left:12px;border-left:1.5px solid var(--line);font:700 1.5rem/1 var(--cond);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qbar h1{min-width:0;margin:-.15em 0;padding:.15em 0 .15em 12px;border-left:1.5px solid var(--line);font:700 1.5rem/1 var(--cond);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qbar nav a{color:var(--muted);font-weight:500;white-space:nowrap}
 .qbar nav a:hover{color:var(--ink)}
 .qbar .short{display:none}
+.qbar.globe .qbar-home .word{display:none} /* (the title would be cut: the site's globe alone) */
 
 .app{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(300px,360px) 1fr}
 .panel{display:flex;flex-direction:column;gap:20px;padding:28px 26px;border-right:1px solid var(--line);overflow-y:auto;min-height:0}

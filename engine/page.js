@@ -164,10 +164,11 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
   app.className = 'app'; app.id = 'app';
   app.innerHTML = AREA;
   // The header, as the site's other pages have it: the site's name (home), the quiz's title, and at the right the way
-  // back (only its arrow on a narrow screen)
+  // back (only its arrow on a narrow screen). Where the title would be cut, the site's name gives way to its globe first.
   const head = document.createElement('header'), row = document.createElement('div'), home = document.createElement('a'), nav = document.createElement('nav');
   head.className = 'qbar'; head.id = 'qbar'; row.className = 'qbar-row'; home.className = 'qbar-home';
-  home.href = new URL('../index.html', document.currentScript.src).href; home.textContent = '🌍 Geo Quizzes';
+  home.href = new URL('../index.html', document.currentScript.src).href; home.setAttribute('aria-label', 'Geo Quizzes');
+  { const globe = document.createElement('span'), word = document.createElement('span'); globe.textContent = '🌍'; word.className = 'word'; word.textContent = ' Geo Quizzes'; home.append(globe, word); }
   row.append(home); if (h1) row.append(h1);
   if (back) {
     const long = document.createElement('span'), short = document.createElement('span');
@@ -175,6 +176,9 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
     back.setAttribute('aria-label', back.textContent.replace(/^←\s*/, 'Back to ')); back.replaceChildren(long, short); nav.append(back);
   }
   head.append(row, nav);
+  { const fit = () => { const t = head.querySelector('h1'); head.classList.remove('globe'); if (t && t.scrollWidth > t.clientWidth) head.classList.add('globe'); };
+    if (window.ResizeObserver) { const ro = new ResizeObserver(fit); ro.observe(head); if (h1) ro.observe(h1); }
+    if (document.fonts) document.fonts.ready.then(fit); }
   // The map's corner, bottom right: the credits, the page's list of them a © that opens on a click or when pointed at.
   // Only OpenStreetMap asks to be named on the map itself: "© OpenStreetMap" stands beside the © where the page names
   // it for more than the street map (which carries its own line).
