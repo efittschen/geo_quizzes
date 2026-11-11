@@ -37,11 +37,11 @@ function nextShort(ts, now) {
   if (n < 1) return m < 60 ? `${m}m` : `${Math.round(m / 60)}h`;
   return n < 60 ? `${n}d` : n < 730 ? `${Math.round(n / 30.4)}mo` : `${(n / 365).toFixed(1)}y`;
 }
-// The heading bar keeps everything on one line, Review and All always: where it has too little room, first the three
-// numbers go, then "Next in 8 min" becomes "Next 8m", then "← Back to map" an arrow, then Next goes, then the spaces
+// The heading bar keeps everything on one line, Review and All always: where it has too little room, first "Next in
+// 8 min" becomes "Next 8m", then "← Back to map" an arrow, then Next goes, then the spaces
 // narrow, then the page's name ("Review") goes (the user's order, 2026-11-10); below that the brand is cut. Worked out
 // by measuring, at every new width.
-const FIT_STEPS = ["no-n", "short-next", "short-back", "no-next", "tight", "no-title", "squeeze"];
+const FIT_STEPS = ["short-next", "short-back", "no-next", "tight", "no-title", "squeeze"];
 function fitHeader() {
   const h = document.querySelector(".site-header.wide");
   if (!h) return;
@@ -90,14 +90,9 @@ function render(index, nameByCode) {
   const decks = SRS.overview(index.quizzes, now);
   const sum = (list, key) => list.reduce((total, d) => total + d[key], 0);
 
-  // The top: the cards due now, tomorrow and up to the end of the seventh day (now's with them), the buttons that
-  // review the whole world, and when nothing is due, when the next card is.
-  const listed = new Set(decks.map((d) => d.id)), dues = SRS.decks().filter((d) => listed.has(d.id)).flatMap((d) => SRS.all(d).map((k) => d.c[k].d));
-  const dueIn = (to, from = -Infinity) => dues.filter((x) => x >= from && x < to).length.toLocaleString("en-US");
+  // The top: the buttons that review the whole world (Review with the number due), and when nothing is due, when the
+  // next card is.
   $("review-top").hidden = !decks.length;
-  $("rt-due").textContent = sum(decks, "due").toLocaleString("en-US");
-  $("rt-tomorrow").textContent = dueIn(SRS.dayStart(now, 2), SRS.dayStart(now, 1));
-  $("rt-week").textContent = dueIn(SRS.dayStart(now, 7));
   $("review-go").replaceChildren(...(reviewButtons(index, index.quizzes, BACK, "top", null, decks) ?? []));
   if (decks.length && !sum(decks, "due")) {
     // (and shorter where the heading bar has little room: "Next 8m", see fitHeader)

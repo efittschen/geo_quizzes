@@ -166,13 +166,10 @@ main > .map-wrap:first-child{margin-top:24px}
 .run b{font:700 1.3rem/1 var(--cond);color:var(--ink);font-variant-numeric:tabular-nums}
 .run-done .rate-list{margin-top:14px;max-width:520px}
 .review-page{max-width:1280px}
-/* the review page's heading bar: its due cards, tomorrow's and this week's, and Review / All (assets/js/review.js), on
-   the page's own width; on a slim screen under the title, without the three numbers */
+/* the review page's heading bar: Review (with the number due) and All (assets/js/review.js), on the page's own width */
 .site-header.wide{padding-inline:max(16px,calc((100% - 1280px) / 2 + 16px));flex-wrap:nowrap}
 .site-header.wide > *{flex-shrink:0}
 .head-due{display:flex;align-items:center;gap:6px 18px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
-.head-due .hd-n{color:var(--muted);font-size:.88rem;white-space:nowrap}
-.head-due .hd-n b{font:700 1.35rem/1 var(--cond);color:var(--ink);margin-right:4px;font-variant-numeric:tabular-nums}
 .head-due .review-go{margin-top:0;gap:8px;flex-wrap:nowrap}
 .head-due .review-go .label{font-size:.88rem;white-space:nowrap}
 .head-due .primary{padding:7px 20px}
@@ -180,7 +177,6 @@ main > .map-wrap:first-child{margin-top:24px}
 .site-header.wide nav{padding-left:18px;border-left:1.5px solid var(--line)}
 /* (what gives way where the bar has too little room, in this order: review.js, fitHeader) */
 .head-due .next-short,.site-header .back-short{display:none}
-.site-header.no-n .hd-n{display:none}
 .site-header.short-next .next-long{display:none} .site-header.short-next .next-short{display:inline}
 .site-header.short-back .back-long{display:none} .site-header.short-back .back-short{display:inline}
 .site-header.short-back nav{padding-left:12px}

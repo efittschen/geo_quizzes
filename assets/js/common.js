@@ -105,7 +105,7 @@ function starsEl(levels) {
 // index: data/site/quizzes.json; back: the page the review ends on. Null if nothing is learned in these quizzes.
 // Three looks:
 //   "big"    a country page: "Due 12" the main button, "All 80" beside it
-//   "top"    the review page's top: "Review" the main button (the number due stands big beside it), "All 1,055"
+//   "top"    the review page's top: "Review 12" the main button, "All 1,055"
 //   "chip"   a line of the review page's stack: the numbers alone, under its columns Due and Learned; the due one
 //            tinted while something is due
 // layer: { id, key } keeps them to one layer of one quiz (its island groups, not its provinces), and { id, key, look }
@@ -136,7 +136,7 @@ function reviewButtons(index, quizzes, back, look = "big", layer = null, made = 
       b.title = named;
     } else if (look === "top") {
       b.className = all ? "ghost" : "primary";
-      b.textContent = all ? `All ${n.toLocaleString("en-US")}` : "Review";
+      b.textContent = `${all ? "All" : "Review"} ${n.toLocaleString("en-US")}`;
     } else {
       b.className = all ? "ghost" : "primary";
       b.textContent = named;
