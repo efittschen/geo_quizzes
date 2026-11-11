@@ -33,7 +33,7 @@ const CARD_VIEW = (() => {
   const recall = (days, st) => (1 + FACTOR * days / st) ** DECAY;
   const firstDifficulty = (r) => W[4] - Math.exp(W[5] * (r - 1)) + 1;
   const RATINGS = ["Missed", "Hard", "Good", "Easy"];
-  const MODES = { map: "Map", list: "List", type: "Type", pairs: "Pairs", pick: "Pick", pickback: "Pick back", code: "Type code", draw: "Draw", name: "Name it", shape: "Shape", paint: "Paint", cards: "Cards" };
+  const MODES = { map: "Map", list: "List", listback: "List back", type: "Type", typeback: "Type back", pairs: "Pairs", pick: "Pick", pickback: "Pick back", code: "Type code", draw: "Draw", name: "Name it", shape: "Shape", paint: "Paint", cards: "Cards" };
   const LOOKS = { quiz: "Quiz map", overlay: "Overlay", street: "Street map", bare: "Bare map", sat: "Satellite", free: "Map" };
   const VIEWS = [["curve", "Curve"], ["log", "Log"], ["strip", "Strip"], ["values", "Values"]];
   let cfg = { practiceUrl: null, onMap: null };

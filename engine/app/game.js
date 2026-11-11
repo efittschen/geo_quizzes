@@ -65,7 +65,7 @@ export function createGame({ quiz, model, map, storage, formats }) {
     askedAt = now(); shownAt = null;
     map.highlight(null);
     if (back) { map.setView(back); back = null; } // (the view before it flew to a shown answer)
-    format.show(asked.id, asked);
+    format.show(asked.id, { ...asked, sign: opts.sign }); // (Sign: a city on its country's road sign, the setup's option)
     const next = round.queue[asked.pos + (asked.group ? asked.group.length : 1)];
     if (next !== undefined) format.ahead(next);
     mode.ask(asked.id, asked);

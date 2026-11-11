@@ -5,7 +5,9 @@
 // graphics card draws all of it with every frame, and nothing of it changes as the view moves. A map over the 180th
 // meridian has a second copy (mercator.js, MERCATOR.world). Where the file can't be read: world.js, as text.
 //
-//   makeWorld(quiz, shapes, view, { root })
+//   const world = makeWorld(quiz, shapes, view, { root })
+//   world.around(box)        the land within a box of the map, for a picture of it (setup's map pictures): a promise of
+//                            [{ d, transform }], a path and its copy's place each; [] where the world came as text
 
 async function readUnder(root) {
   const res = await fetch(root + 'data/maps/world/under.bin.gz');
@@ -56,7 +58,7 @@ export function makeWorld(quiz, { S, stage }, view, { root }) {
     if (typeof WORLD === 'object') setTimeout(lay); // (after the page's own scripts, which may lay theirs first)
     else { const s = document.createElement('script'); s.src = root + 'data/maps/world/world.js'; s.onload = lay; document.head.append(s); }
   };
-  readUnder(root).then(({ proj, rings, part }) => {
+  const ready = readUnder(root).then(({ proj, rings, part }) => {
     // the rings of a copy within a box of the map (none: all of them)
     const within = ([s, dx, dy], box) => {
       const held = rings.filter(({ box: b }) => !box || (b[2] * s + dx >= box[0] && b[0] * s + dx <= box[2] && b[3] * s + dy >= box[1] && b[1] * s + dy <= box[3]));
@@ -73,5 +75,7 @@ export function makeWorld(quiz, { S, stage }, view, { root }) {
       box = [Math.min(box[0], now[0]), Math.min(box[1], now[1]), Math.max(box[2], now[2]), Math.max(box[3], now[3])];
       lands.forEach((land, i) => land.setAttribute('d', within(copies[i], box)));
     }).observe(stage);
-  }).catch(asText);
+    return around => copies.map(c => ({ d: String(within(c, around)), transform: `translate(${c[1]},${c[2]}) scale(${c[0]})` })).filter(x => x.d);
+  }).catch(() => { asText(); return () => []; });
+  return { around: box => ready.then(f => f(box)) };
 }

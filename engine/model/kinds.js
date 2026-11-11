@@ -26,7 +26,9 @@
 //
 // A play: a kind and a way to answer it (WAYS). Every kind is played on the map ('map'), and in the ways its config
 // names (modes), Name it and Shape where it names one place (nameable), Draw where a place is tapped (drawable),
-// Cards where it says so (asCards). A
+// Cards where it says so (asCards). A kind of words in a script that is picked both ways (pick, pickback) is listed
+// and typed both ways too: List back and Type back after List and Type (the name asked, its words in their script
+// picked from the list or typed). A
 // play other than the map is kept apart under '<kind>~<way>': its best results, its review cards, its stars.
 //   play.kind, play.way, play.key, play.cards, play.label
 //   play.format    how the question shows: name, code, text, picture, outline, shape
@@ -38,9 +40,9 @@
 //                         group: the codes asked together })
 // A layer's words may come later (quiz.later: engine/app/words.js): kinds.waiting(K), kinds.got(key).
 
-import { codeChecks, namedChecks, plainName, typedOf } from './checks.js';
+import { askText, codeChecks, namedChecks, plainName, typedOf } from './checks.js';
 
-export const WAYS = { map: 'Map', list: 'List', type: 'Type', pairs: 'Pairs', pick: 'Pick', pickback: 'Pick back', code: 'Type code', name: 'Name it', shape: 'Shape', draw: 'Draw', cards: 'Cards' };
+export const WAYS = { map: 'Map', list: 'List', listback: 'List back', type: 'Type', typeback: 'Type back', pairs: 'Pairs', pick: 'Pick', pickback: 'Pick back', code: 'Type code', name: 'Name it', shape: 'Shape', draw: 'Draw', cards: 'Cards' };
 const FORMAT = { name: 'name', dial: 'code', text: 'text', photo: 'picture', area: 'outline' };
 
 export function makeKinds(quiz, geo) {
@@ -67,7 +69,9 @@ export function makeKinds(quiz, geo) {
   const drawable = K => !quiz.dots && !quiz.board && K.prompt !== 'area' && !K.typed && !K.fresh && !K.pickAll;
   // (Name it, Shape: one place a question, asked by its name, or its name in another script or on a sign)
   const nameable = K => !quiz.board && (K.prompt === 'name' || K.prompt === 'text') && !K.typed && !K.fresh && !K.pickAll && !K.clickAll && !K.areaLabel && !K.labelPerArea;
-  const ways = K => K.ways ? K.ways : K.onlyCards ? ['cards'] : ['map', ...(K.modes || []), ...(nameable(K) ? ['name', ...(quiz.dots ? [] : ['shape'])] : []), ...(drawable(K) ? ['draw'] : []), ...(K.asCards ? ['cards'] : [])];
+  // (List back, Type back: after List and Type, where a kind of words in a script is picked both ways)
+  const backs = (K, w) => (K.prompt === 'text' && w.includes('pickback') ? w.flatMap(x => (x === 'list' ? ['list', 'listback'] : x === 'type' ? ['type', 'typeback'] : [x])) : w);
+  const ways = K => K.ways ? K.ways : K.onlyCards ? ['cards'] : backs(K, ['map', ...(K.modes || []), ...(nameable(K) ? ['name', ...(quiz.dots ? [] : ['shape'])] : []), ...(drawable(K) ? ['draw'] : []), ...(K.asCards ? ['cards'] : [])]);
 
   const answerNameOf = K => K.answer || (byKey[K.of] ? i => byKey[K.of].name(i) : K.name);
   // (Name it and Shape share their names, made when first asked for: a text drawn at random is drawn there)
@@ -100,6 +104,18 @@ export function makeKinds(quiz, geo) {
         text: reading ? K.typeMode.text : K.text, say: reading ? K.typeMode.say : K.say,
       });
       lazy(P, 'choices', () => (way === 'list' ? [...new Set(K.ids.map(answerName))].sort((a, b) => a.localeCompare(b)) : null));
+    } else if (way === 'listback' || way === 'typeback') {
+      // (the other way round, as Pick back: the name asked, its words in their script picked from the list or typed;
+      // only the script counts, as the name is on the screen)
+      const words = i => askText(K, i);
+      let back = null;
+      Object.assign(P, {
+        format: 'name', mode: way === 'listback' ? 'list' : 'type', back: true, say: K.say,
+        typed: (i, t) => (back ||= typedOf(Object.fromEntries(K.ids.map(x => [x, [plainName(words(x))]]))))(i, t),
+        tell: i => `${answerName(i)} · ${words(i)}`,
+        time: () => (way === 'listback' ? 2 : 4),
+      });
+      lazy(P, 'choices', () => (way === 'listback' ? [...new Set(K.ids.map(words))].sort((a, b) => a.localeCompare(b)) : null));
     } else if (way === 'pairs') Object.assign(P, { format: FORMAT[K.prompt] || 'name', mode: 'pairs', time: () => 1.5 });
     else if (way === 'pick' || way === 'pickback') Object.assign(P, { format: way === 'pickback' ? 'name' : FORMAT[K.prompt] || 'name', mode: 'picks', back: way === 'pickback', time: () => 1.5 });
     else if (way === 'code') Object.assign(lazy(P, 'code', () => codeChecks(K)), { format: 'outline', mode: 'type', fresh: true, keyboard: K.plates ? 'text' : 'numeric', time: (i, ask) => 3 * Math.max(1, ((ask && ask.group) || []).length) });
@@ -116,6 +132,7 @@ export function makeKinds(quiz, geo) {
   function wayLabel(K, way) {
     const mine = K.lang, theirs = byKey[K.of] && byKey[K.of].lang;
     if (mine && theirs && (way === 'pick' || way === 'pickback')) return way === 'pick' ? `${mine} → ${theirs}` : `${theirs} → ${mine}`;
+    if (mine && theirs && (way === 'listback' || way === 'typeback')) return `${WAYS[way === 'listback' ? 'list' : 'type']} ${theirs} → ${mine}`;
     return WAYS[way];
   }
   // (a part of a play made when first asked for: Type code's checks, a list's names)

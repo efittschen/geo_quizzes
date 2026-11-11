@@ -3,6 +3,7 @@
 //
 //   const map = createMap(quiz, { root })
 //   map.area(id)                          an area's facts: { lx, ly, a, s, g, top, dot } (the Model's geo)
+//   map.world(box)                        the world's land within a box of the map (a picture of it): a promise of [{ d, transform }]
 //   map.draw(kind, { hints, letters, asking })   the kind drawn as its layout (layouts.js), coloured by hint group
 //                                         (while asking, not where those are the answers), with every label (letters);
 //                                         where it takes the areas' own outlines, they are brought and it is drawn then
@@ -50,7 +51,7 @@ export function createMap(quiz, { root }) {
   const marks = makeMarks(quiz, shapes, layouts, labels, view);
   const tiles = makeTiles(quiz, shapes, view, { root });
   const onWorld = !!quiz.proj && !quiz.worldMap;
-  if (onWorld) makeWorld(quiz, shapes, view, { root });
+  const world = onWorld ? makeWorld(quiz, shapes, view, { root }) : null;
 
   let sized = null;
   view.hooks.rest = s => {
@@ -98,6 +99,7 @@ export function createMap(quiz, { root }) {
 
   return {
     area: shapes.area, ids: shapes.ids,
+    world: box => (world ? world.around(box) : Promise.resolve([])),
     draw, outlines,
     // (what the map draws for it; Draw scores against the areas themselves; Type code outlines parts of a unit; a place
     // made of several units is cut from the areas)

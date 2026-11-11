@@ -11,7 +11,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
-import { TOOLS, TILE_COUNT, serve, launch, open, go, visible, mapStill, startRound, askedItem, clickItem, otherItem, feedback, drawOne, asked, listed, hasLog, lastAnswers, card, standin } from './check-lib.mjs';
+import { TOOLS, TILE_COUNT, serve, launch, open, go, visible, mapStill, startRound, pickMap, askedItem, clickItem, otherItem, feedback, drawOne, asked, listed, hasLog, lastAnswers, card, standin } from './check-lib.mjs';
 
 const { values: o } = parseArgs({ options: { root: { type: 'string' }, only: { type: 'string' }, jobs: { type: 'string', default: '4' }, pages: { type: 'boolean' } } });
 const ROOT = path.resolve(o.root || path.join(TOOLS, '..')), ONLY = o.only ? o.only.split(',') : null, JOBS = Math.max(1, +o.jobs || 4);
@@ -231,7 +231,7 @@ async function review(c) {
   }
 }
 
-/* ---------- f. Stats: the review page's Stats tab with a seeded log; My stats colours the map ---------- */
+/* ---------- f. Stats: the review page's Stats tab with a seeded log ---------- */
 const seedLog = page => page.evaluate(async () => {
   let r = 1; const rnd = () => ((r = (r * 16807) % 2147483647) / 2147483647);
   const now = Date.now(), DAY = 864e5, D = 41;
@@ -282,19 +282,6 @@ async function stats(c) {
   const empty = await page.locator('#stats .empty').allTextContents();
   c.ok(!empty.length, 'Stats tab: nothing empty', empty);
   c.notes.push(`${n} answers seeded`);
-  // My stats on the quiz page: every state played coloured by its share right
-  await go(page, base + STATES);
-  await page.locator('#rounds .round', { hasText: 'All states' }).first().click({ position: { x: 10, y: 10 } });
-  const btn = page.locator('#statsBtn');
-  if (!(await btn.count()) || !(await btn.isVisible())) { c.notes.push('no My stats'); return; }
-  await btn.click();
-  await page.waitForSelector('#explore', { state: 'visible', timeout: 5000 });
-  await page.waitForTimeout(400);
-  const col = await page.evaluate(() => {
-    const k = QUIZ.kinds.find(x => x.key === 'states'), ids = [...new Set(k.groups.flatMap(g => g.ids))];
-    return ids.filter(id => k.areasOf(id).some(a => QUIZ_MAP.stateOf(a).some(c => ['got', 't2', 't3', 'miss'].includes(c)))).length;
-  });
-  c.ok(col === 16, 'My stats: the 16 states coloured', col);
 }
 
 /* ---------- k. Practice for a whole list: two stops played, straight on from one to the next, then back to Stats ---------- */
@@ -351,10 +338,9 @@ async function cardsPerMap(c) {
 /* ---------- h, j. the bare map, the satellite map: switching to one shows its tiles ---------- */
 async function bareMap(c, look = 'bare') {
   const { page } = await c.open(STATES);
-  const btn = page.locator(`#mapSeg button[data-map="${look}"]`);
-  if (!(await btn.count())) c.skip(`no ${look} map`);
+  if (!(await page.evaluate(look => !!document.querySelector(`#mapSeg [data-map="${look}"]`) || (look !== 'sat' && !!document.querySelector('#mapSeg [data-street]')), look))) c.skip(`no ${look} map`);
   const before = { ...TILE_COUNT };
-  await btn.click();
+  await pickMap(page, look);
   let s = null;
   for (const t0 = Date.now(); Date.now() - t0 < 20000;) {
     s = await page.evaluate(look => {

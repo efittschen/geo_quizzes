@@ -22,8 +22,8 @@
 //            t       seconds after t0
 //            quiz, layer, item, look, mode   places in s: the quiz page (its folder), the layer (the kind, without its
 //                    mode), the item, the map it was answered on ("quiz", "overlay", "street", "bare", "sat", "free", with a
-//                    city quiz's background after a "+"), and how ("map", "list", "type", "pairs", "pick",
-//                    "pickback", "code", "draw", "paint")
+//                    city quiz's background after a "+"), and how ("map", "list", "listback", "type",
+//                    "typeback", "pairs", "pick", "pickback", "code", "draw", "paint")
 //            f       1 in a review, 2 a replay (asked again after a miss: later in the review, or in a Retry round),
 //                    4 its card was still in its learning steps
 //            r       the tries: 0 right at once, 1 and 2 right at the second and third, 3 missed (the answer shown,

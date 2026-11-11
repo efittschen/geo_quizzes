@@ -1,21 +1,28 @@
-/* The quiz page (quiz-page.js): the panel and the stage beside it, on top of ../../assets/css/base.css. The setup
-   screen, the play panel and the answer modes' controls, the results, Explore and My stats, the review's controls,
-   Learn, the map's buttons, a page without the map (a way that answers off it), and phones. The map's look is
-   ./quiz-map.css, the question's ./formats.css. */
+/* The quiz page (page.js): the site's header, the panel and the stage beside it, on top of ../../assets/css/base.css.
+   The setup screen's list, the play panel and the answer modes' controls, the results, Explore and My stats, the
+   review's controls, Learn, the map's corner, a page without the map (a way that answers off it), and phones. The
+   setup screen's menu, preview, maps and phone card are ./setup-menu.css; the map's look ./quiz-map.css, the
+   question's ./formats.css. */
 :root{padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 html,body{height:100%}
-body{overflow:hidden}
+body{overflow:hidden;display:flex;flex-direction:column}
 
-.app{display:grid;grid-template-columns:minmax(300px,360px) 1fr;height:100%}
+/* the header, as the site's other pages have it (style.css .site-header): the site's name, the quiz's title, the way
+   back at the right (its arrow alone on a phone); a review's Due and All beside the title (engine/app/review.js) */
+.qbar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 26px;background:var(--panel);border-bottom:1px solid var(--line)}
+.qbar a{text-decoration:none}
+.qbar-row{display:flex;align-items:center;gap:12px;min-width:0}
+.qbar-home{flex:none;font:700 1.5rem/1 var(--cond);letter-spacing:-.01em;color:var(--ink)}
+.qbar h1{min-width:0;margin:0;padding-left:12px;border-left:1.5px solid var(--line);font:700 1.5rem/1 var(--cond);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qbar nav a{color:var(--muted);font-weight:500;white-space:nowrap}
+.qbar nav a:hover{color:var(--ink)}
+.qbar .short{display:none}
+
+.app{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(300px,360px) 1fr}
 .panel{display:flex;flex-direction:column;gap:20px;padding:28px 26px;border-right:1px solid var(--line);overflow-y:auto;min-height:0}
 /* (clip: the map's picture is larger than the stage, which must not become something that can be scrolled to its rest) */
 .stage{position:relative;background:var(--sea);min-width:0;min-height:0;overflow:hidden;overflow:clip}
-
-.back{display:inline-block;margin-bottom:10px;color:var(--muted);text-decoration:none;font-size:.9rem}
-.back:hover{color:var(--ink)}
-.brand h1{font:700 2.1rem/1 var(--cond);letter-spacing:-.01em;margin:0 0 6px}
-.brand p{margin:0;color:var(--muted);max-width:30ch}
 
 /* setup */
 .setup{display:flex;flex-direction:column;gap:20px}
@@ -55,28 +62,14 @@ body{overflow:hidden}
 .round .n{grid-column:2;grid-row:1;font:600 1rem/1.1 var(--cond);color:var(--muted);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .round .best{grid-column:2;grid-row:2;display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:.75rem;color:var(--muted);white-space:nowrap}
 .tier-t .star{margin-left:2px}
-/* the switches in the box of the round picked, where its sub would be, next to each other (its languages; city
-   quizzes: Map or Dots): each one pill in halves, of which one is on */
+/* the switches of the round picked, where its sub would be (a phone: after its chip; a city quiz's Map or Dots also
+   with the options): its languages or labels, a city quiz's Map or Dots; pills in one shaded track, the one on filled */
 .round .switches{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;margin-top:4px}
 .round .switches .best{margin-left:auto}
-.round .langs{display:inline-flex;border:1.5px solid var(--btn);border-radius:999px;overflow:hidden}
-.round .langs button{appearance:none;padding:1px 10px;border:0;border-radius:0;background:transparent;color:var(--muted);font:500 .8rem/1.35 var(--sans);text-align:center;white-space:nowrap;cursor:pointer}
-.round .langs button + button{border-left:1.5px solid var(--btn)}
-.round .langs button:hover{color:var(--ink)}
-.round .langs button[aria-pressed="true"]{background:var(--btn);color:var(--btnink)}
-/* one of a set (languages, ways to answer): pills in one shaded track, the one picked filled */
-.round .langs:not(.helps){gap:2px;padding:2px;border:0;border-radius:14px;background:color-mix(in srgb,var(--btn) 10%,transparent);overflow:visible}
-.round .langs:not(.helps) button,.round .langs:not(.helps) button + button{border:0;border-radius:999px}
-/* the options (helpRow): yes or no each: a square box, ticked when on, never filled like a set's pick */
-.round .langs.helps{border:0;overflow:visible;gap:5px;flex-wrap:wrap}
-.round .langs.helps button,.round .langs.helps button + button{position:relative;display:inline-flex;align-items:center;gap:6px;padding:1px 10px 1px 6px;border:1.5px solid color-mix(in srgb,var(--btn) 45%,transparent);border-radius:999px}
-.round .langs.helps button::before{content:"";flex:none;width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;box-sizing:border-box}
-.round .langs.helps button[aria-pressed="true"]{background:transparent;color:var(--ink);border-color:var(--btn)}
-.round .langs.helps button[aria-pressed="true"]::before{background:var(--btn);border-color:var(--btn)}
-.round .langs.helps button[aria-pressed="true"]::after{content:"";position:absolute;left:10px;top:50%;width:3px;height:6px;border:solid var(--btnink);border-width:0 1.5px 1.5px 0;transform:translate(-1px,-62%) rotate(45deg)}
-.round .langs.helps[hidden]{display:none}
-/* the ways to answer: each its own pill, on as many lines as they need */
-.round .langs.modes{display:inline-flex;flex-wrap:wrap;max-width:100%}
+:is(.round,.rchip-row,.opts) .langs{display:inline-flex;gap:2px;padding:2px;border-radius:14px;background:color-mix(in srgb,var(--btn) 10%,transparent)}
+:is(.round,.rchip-row,.opts) .langs button{appearance:none;padding:1px 10px;border:0;border-radius:999px;background:transparent;color:var(--muted);font:500 .8rem/1.35 var(--sans);text-align:center;white-space:nowrap;cursor:pointer}
+:is(.round,.rchip-row,.opts) .langs button:hover{color:var(--ink)}
+:is(.round,.rchip-row,.opts) .langs button[aria-pressed="true"]{background:var(--btn);color:var(--btnink)}
 /* the same choice made once for the whole list (Q.langLabel): a row of its own above the rounds */
 .langs.list{display:flex;flex-wrap:wrap;gap:6px}
 .langs.list button{appearance:none;padding:5px 13px;border:1.5px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);font:600 .92rem/1.2 var(--sans);cursor:pointer}
@@ -90,7 +83,7 @@ body{overflow:hidden}
 .save{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .save input{flex:1 1 9em;min-width:0;padding:6px 12px;border:1.5px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);font:inherit;font-size:.92rem}
 .save input:focus{border-color:var(--ink);outline:none}
-/* the start bar stays at the bottom of the panel however long the setup gets */
+/* the start bar (the menu: ./setup-menu.css) stays at the bottom of the panel however long the setup gets */
 .startbar{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;gap:10px;margin:auto -26px 0;padding:12px 26px 16px;background:var(--panel);border-top:1px solid var(--line)}
 /* sticky stops at the panel's padding, so on the setup screen the bar itself provides the bottom space */
 .app:not(.playing) .panel{padding-bottom:0}
@@ -100,8 +93,6 @@ body{overflow:hidden}
 .folders button,.folders a{appearance:none;flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;padding:7px 5px 9px;border:1px solid var(--line);border-radius:0 0 var(--radius) var(--radius);background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--muted);font:600 1rem/1.1 var(--cond);text-align:center;cursor:pointer}
 .folders button:hover,.folders a:hover{color:var(--ink)}
 .folders button[aria-selected="true"]{background:var(--panel);color:var(--ink);border-color:var(--ink);border-top-color:var(--panel);box-shadow:inset 0 -3px 0 var(--ink)}
-.startbar .row{flex-wrap:nowrap}
-.startbar .primary{flex:1;min-width:0}
 .toast{margin:0;font-size:.85rem;color:var(--muted);min-height:0}
 .toast:empty{display:none}
 
@@ -109,7 +100,7 @@ body{overflow:hidden}
 .count{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:1001;pointer-events:none;background:var(--panel);border:1.5px solid var(--ink);border-radius:999px;padding:6px 16px;font-weight:600;white-space:nowrap;box-shadow:var(--shadow)}
 .count b{font:700 1.35rem/1 var(--cond);margin-right:2px;font-variant-numeric:tabular-nums}
 /* A page of one round (QUIZ.single): only its Start; each question with its tier (Easy ×1) */
-.single #setup > .group:first-child,.single #exploreBtn,.single #statsBtn,.single #learnBtn,.single #folders,.single .mapbar{display:none!important}
+.single #roundsGroup,.single .pickhead,.single #ways,.single #opts,.single #previewBtn,.single #learnBtn,.single #folders,.single .mapbar{display:none!important}
 /* the sound switch in the round's panel (a kind with say): filled while the sound is on */
 #soundBtn[aria-pressed="true"]{background:var(--btn);border-color:var(--btn);color:var(--btnink)}
 /* a typed answer (a kind with typed): the field under the prompt */
@@ -160,10 +151,6 @@ body{overflow:hidden}
 .chip.t2{border-color:var(--t2)} .chip.t3{border-color:var(--t3)} .chip.miss{border-color:var(--bad)}
 .chip:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
 /* Explore's overview: the list as buttons, each with its colour on the map and its number (screens/explore.js) */
-.elist .chip{display:inline-flex;align-items:center;gap:6px;color:var(--ink)}
-.elist .chip i{flex:none;width:10px;height:10px;border-radius:50%;border:1px solid color-mix(in srgb,var(--ink) 45%,transparent)}
-.elist .chip .n{font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
-.elist .chip[aria-pressed="true"]{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 10%,transparent)}
 /* (the panel below its title halved: the part described above, its name in a box of one height and its examples two
    lines at most; the list below, scrolling on its own, so nothing above ever moves it) */
 .app:has(#explore.overview:not([hidden])) .panel{overflow:hidden}
@@ -179,6 +166,10 @@ body{overflow:hidden}
   #explore.overview #eInfo .c:last-child{-webkit-line-clamp:1}
   #explore.overview #eBack{padding:5px 14px}
 }
+.elist .chip{display:inline-flex;align-items:center;gap:6px;color:var(--ink)}
+.elist .chip i{flex:none;width:10px;height:10px;border-radius:50%;border:1px solid color-mix(in srgb,var(--ink) 45%,transparent)}
+.elist .chip .n{font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.elist .chip[aria-pressed="true"]{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 10%,transparent)}
 .result .group > h2{font:600 .95rem/1.2 var(--sans);color:var(--muted)}
 .panel .muted{margin:0}
 .legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;padding:0;list-style:none;font-size:.85rem;color:var(--muted)}
@@ -188,10 +179,9 @@ body{overflow:hidden}
 
 /* the review (engine/app/review.js): the clock runs down to the time limit, green while a right answer still counts as known,
    then yellow; the notch marks where known ends. A review has three results, and nothing to restart or retry. */
-/* Due and All: small, to the right of the title, on the setup screen only */
-.brand-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-.brand-row h1{flex:1;min-width:0}
-.rv-go{flex:none;display:flex;gap:4px;margin-top:5px}
+/* Due and All: small, to the right of the title in the header, on the setup screen only */
+.qbar .brand-row{display:flex;align-items:center;gap:10px;min-width:0}
+.rv-go{flex:none;display:flex;gap:4px}
 .rv-go .ghost.small{padding:3px 10px;font-size:.82rem;white-space:nowrap}
 .playing .rv-go{display:none}
 .rv-timer{position:relative;flex:none;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
@@ -201,7 +191,7 @@ body{overflow:hidden}
 .rv-timer::before{left:var(--easy,87%)} .rv-timer::after{left:var(--known,60%)}
 .feedback.unsure{border-left-color:var(--yellow)}
 /* a rating by hand (a replay's, or every answer's with the setting "Rating"): Easy, Good, Hard in a column over the
-   map at its right edge, in the middle (clear of the zoom buttons under it), each with its key; the one taken if none
+   map at its right edge, in the middle (clear of the map's corner under it), each with its key; the one taken if none
    is picked filled (the clock's grade, a replay's Hard), and beside them the bar of its 4 s, where it has them. Where
    the map is hidden (.nomap), at the screen's right edge. */
 .rv-rate{position:absolute;right:14px;top:max(80px,min(50%,calc(100% - 215px)));transform:translateY(-50%);z-index:1300;display:flex;gap:8px;align-items:stretch}
@@ -226,11 +216,10 @@ body > .rv-rate{position:fixed;top:50%}
 #sPick{flex:1;min-width:0;padding:9px 12px;border:1.5px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);font:inherit;font-weight:500}
 /* Explore's list (exploreList), beside Back */
 #ePick{flex:1;min-width:0;padding:9px 12px;border:1.5px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);font:inherit;font-weight:500}
-/* the map's corner, bottom right: the zoom buttons and, under them, the credits. The page's list (.note) is a © that
-   opens on a click or when pointed at; "© OpenStreetMap" stands beside it where the map is drawn from its data or
-   shows its tiles. The street map carries its own line, which the corner stays above. */
+/* the map's corner, bottom right: the credits. The page's list (.note) is a © that opens on a click or when pointed
+   at; "© OpenStreetMap" stands beside it where the map is drawn from its data or shows its tiles. The street map
+   carries its own line, which the corner stays above. */
 .corner{position:absolute;right:0;bottom:0;z-index:1100;display:flex;flex-direction:column;align-items:flex-end;gap:8px;width:min(62%,36rem);padding-bottom:env(safe-area-inset-bottom,0px);pointer-events:none}
-.corner .zoom{position:static;margin-right:14px;pointer-events:auto}
 .credits{display:flex;align-items:flex-end}
 .credits > *{pointer-events:auto}
 .credits .osm,.credits .sat,.note{margin:0;font-size:.7rem;line-height:1.35;color:var(--muted);background:color-mix(in srgb,var(--panel) 85%,transparent)}
@@ -241,20 +230,6 @@ body > .rv-rate{position:fixed;top:50%}
 .note::before{content:'©';position:absolute;inset:0;text-indent:0;text-align:center;font-size:.85rem;line-height:1.45rem}
 .note:hover,.note:focus,.note:focus-within{position:absolute;right:0;bottom:env(safe-area-inset-bottom,0px);z-index:1;width:max-content;max-width:100%;height:auto;padding:3px 8px;white-space:normal;font-size:.7rem;text-align:right;background:var(--panel);border-top-left-radius:6px;cursor:auto;outline:0}
 .note:hover::before,.note:focus::before,.note:focus-within::before{content:none}
-.zoom{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;border-radius:var(--radius);overflow:hidden;background:var(--panel);border:1px solid var(--line)}
-.zoom button{appearance:none;border:0;background:transparent;width:40px;height:40px;font:600 1.25rem/1 var(--sans);cursor:pointer}
-.zoom button + button{border-top:1px solid var(--line)}
-.zoom button:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
-/* which map to play on: a picker on the map itself (above the street map's own layers) */
-.maps{position:absolute;left:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:1100;display:flex;border-radius:var(--radius);overflow:hidden;background:var(--panel);border:1px solid var(--line)}
-.maps button{appearance:none;border:0;background:transparent;color:var(--ink);padding:0 14px;height:40px;font:600 .9rem/1 var(--sans);white-space:nowrap;cursor:pointer}
-.maps button + button{border-left:1px solid var(--line)}
-.maps button:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
-.maps button[aria-pressed="true"]{background:var(--btn);color:var(--btnink)}
-.maps button:disabled{opacity:.45;cursor:default}
-/* the pickers on the map in one bar: the maps and, beside them, the switch for the coverage */
-.mapbar{position:absolute;left:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:1100;display:flex;flex-wrap:wrap-reverse;gap:8px;max-width:calc(100% - 28px)}
-.mapbar .maps{position:static}
 /* Learn (Q.learn): a sheet over the page, a card for each part of the map: a small map of the whole with the part lit,
    what it is, its pictures (formats.css: .ph) */
 .learn{position:fixed;inset:0;z-index:1500;overflow-y:auto;overscroll-behavior:contain;background:var(--panel)}
@@ -290,17 +265,13 @@ body > .rv-rate{position:fixed;top:50%}
   .app.nomap .picks button{min-height:56px;font-size:1.15rem}
 }
 /* Cards (modes/cards.js): the question on a card in the middle of the page, a little smaller than it, on a table a
-   shade darker than the panel; the panel a line above it (the page's name, the score, the round's buttons, the ticks
-   under them). Turned over, the card shows the map with the place lit (a Plonkit map's picture instead, .pic), what is
+   shade darker than the panel; the panel a line above it (the score, the round's buttons, the ticks under them). Turned over, the card shows the map with the place lit (a Plonkit map's picture instead, .pic), what is
    said of it, and Easy, Good, Hard, Missed. While it turns (.turning, 0.5 s) both its sides are on it, each seen from
    its own side only; at rest only the side up, and nothing turned but the map side while it is down (not hidden by
    visibility: the map reads its looks from the page's styles, and would read every shape as not shown). */
 .flip{display:none}
 .app.cards{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);background:color-mix(in srgb,var(--ink) 5%,var(--panel))}
 .app.cards .panel{grid-row:1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 24px;padding:14px 24px 0;border:0;background:transparent;overflow:visible;max-height:none}
-.app.cards .brand{display:flex;align-items:baseline;gap:12px}
-.app.cards .brand .back{margin:0}
-.app.cards .brand h1{margin:0;font-size:1.5rem}
 .app.cards #play{flex:1 1 auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 22px}
 .app.cards #play > .stats{display:flex;gap:18px}
 .app.cards #play > .stats div{flex-direction:row;align-items:baseline;gap:5px}
@@ -379,8 +350,12 @@ body > .rv-rate{position:fixed;top:50%}
   .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
   /* (dvh: the part of the screen the browser leaves the page, where it has one; vh counts what its bars may cover) */
   .panel{border-right:0;border-bottom:1px solid var(--line);padding:14px 16px;gap:10px;max-height:52vh;max-height:52dvh}
-  .playing .brand{display:none}
-  .brand h1{font-size:1.7rem}
+  .qbar{padding:10px 16px;gap:10px}
+  .qbar-row{gap:8px}
+  .qbar-home,.qbar h1{font-size:1.2rem}
+  .qbar h1{padding-left:8px}
+  .qbar .long{display:none}
+  .qbar .short{display:inline;font-size:1.3rem}
   .feedback{min-height:0;padding:7px 11px;font-size:.92rem}
   .playing .panel{gap:8px}
   .ask{margin:-4px 0 0;font-size:.9rem}
@@ -411,14 +386,6 @@ body > .rv-rate{position:fixed;top:50%}
      from one answer to the next */
   #play > .feedback{min-height:calc(2.9em + 14px)}
   #play > .row .ghost{padding:5px 13px;font-size:.88rem}
-  /* the map's buttons: smaller, and the maps' bar leaves the zoom buttons their room (it wraps above them instead) */
-  .zoom button{width:36px;height:36px;font-size:1.15rem}
-  .mapbar{max-width:calc(100% - 74px)}
-  .maps button{height:34px;padding:0 10px;font-size:.84rem}
-  /* (four maps: a little tighter, and slid sideways where even so they don't fit) */
-  .maps{max-width:100%;overflow-x:auto;scrollbar-width:none}
-  .maps::-webkit-scrollbar{display:none}
-  .maps button{padding:0 8px;flex:none}
   /* Draw's tools in one row: the map keeps its room */
   .drawbar{flex-wrap:nowrap;gap:5px}
   .drawbar .tools button{padding:5px 10px}

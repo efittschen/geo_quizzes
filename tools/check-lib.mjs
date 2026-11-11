@@ -98,31 +98,40 @@ export const mapStill = page => page.evaluate(async () => {
 });
 export const visible = (page, id) => page.evaluate(id => { const e = document.getElementById(id); return !!(e && !e.hidden && e.offsetParent); }, id);
 
-// Pick a round (by label, else the first), a mode and a map, and start. -> the round's modes (not started where the
-// mode asked for isn't one of them)
+// Pick a round (by label, else the first), a mode (the menu's ways) and a map, and start. -> the round's modes (not
+// started where the mode asked for isn't one of them)
 export async function startRound(page, { round, mode, map = 'quiz', hard = false } = {}) {
   const boxes = page.locator('#rounds .round');
   const box = round ? boxes.filter({ hasText: round }).first() : boxes.first();
   await box.click({ position: { x: 10, y: 10 } });
-  const picked = page.locator('#rounds .round[aria-pressed="true"]');
-  await picked.waitFor({ timeout: 5000 });
-  const modes = await picked.locator('.modes button').allTextContents();
+  await page.locator('#rounds .round[aria-pressed="true"]').waitFor({ timeout: 5000 });
+  const ways = page.locator('#ways:not([hidden]) .way'), modes = (await ways.allTextContents()).map(s => s.trim());
   if (mode) {
     if (!modes.includes(mode) && !(mode === 'Map' && !modes.length)) return modes; // (a page without modes plays Map)
-    if (modes.length) await picked.locator('.modes button', { hasText: new RegExp(`^${mode}$`) }).click();
+    if (modes.length) await ways.filter({ hasText: new RegExp(`^${mode}$`) }).first().click();
   }
   if (hard) {
-    const h = picked.locator('.helps button', { hasText: 'Hard mode' });
+    const h = page.locator('#opts .opt', { hasText: 'Hard mode' });
     modes.hard = !!(await h.count());
     if (modes.hard && (await h.getAttribute('aria-pressed')) !== 'true') await h.click();
   }
-  const maps = page.locator(`#mapSeg button[data-map="${map}"]`);
-  if (await maps.count() && await maps.isVisible()) await maps.click();
+  await pickMap(page, map);
   await page.locator('#startBtn').click();
   await page.waitForSelector('#play', { state: 'visible', timeout: 8000 });
   await mapStill(page);
   modes.started = true;
   return modes;
+}
+
+// A map picked on the map's bar: its picture, else the street map's picture, then its step (Lines, Plain, Bare)
+export async function pickMap(page, look) {
+  const direct = page.locator(`.mapbar button[data-map="${look}"]`);
+  if (await direct.count() && await direct.first().isVisible()) return direct.first().click();
+  const street = page.locator('.mapbar button[data-street]');
+  if (!(await street.count()) || !(await street.isVisible())) return;
+  await street.click();
+  const step = page.locator(`.mapbar .sm-steps button[data-map="${look}"]`);
+  if (await step.count()) await step.click();
 }
 
 // The item asked, from the question on screen and the page's QUIZ. -> { kind, id, areas: [{ id, d, dot, lx, ly }] }

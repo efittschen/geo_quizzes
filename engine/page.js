@@ -1,7 +1,8 @@
-// The page of every quiz: the panel (setup, play, result, explore) and the map. A page says only what is its own:
-// in <body>, its back link, title and credits (<a class="back">, <h1>, <p class="note">), then its scripts, this one
-// first, so the panel is on screen while the data loads. The credits go to the bottom right corner of the map, as a
-// © that opens them. On <body>:
+// The page of every quiz: the site's header (its name, the quiz's title, the way back), the panel (setup, play,
+// result, explore) and the map. A page says only what is its own: in <body>, its back link, title and credits
+// (<a class="back">, <h1>, <p class="note">), then its scripts, this one first, so the panel is on screen while the
+// data loads. The title and the way back go to the header; the credits to the bottom right corner of the map, as a ©
+// that opens them. On <body>:
 //   data-dial="+49 (#)··· ····"   the frame of a phone-number question: country code, brackets around the code (#),
 //                                 and the rest of the number as dots; without it the code stands alone
 //   data-sign="nz-shield"         a class for that frame where it is a road sign: ./formats.css draws each country's
@@ -31,8 +32,11 @@ document.write(`<script src="${new URL('lib/mercator.js', document.currentScript
 // here, so they are fetched at once and not one import after another.
 {
   for (const f of ['earcut.js', 'gl-map.js']) document.write(`<script src="${new URL('lib/' + f, document.currentScript.src).href}"><\/script>`);
-  for (const f of ['app/app', 'app/game', 'app/review', 'app/words', 'formats/cloth', 'formats/code', 'formats/index', 'formats/name', 'formats/outline', 'formats/picture', 'formats/shape', 'formats/text', 'main', 'map/geometry', 'map/index', 'map/labels', 'map/layouts', 'map/marks', 'map/shapes', 'map/test', 'map/tiles', 'map/view', 'map/world', 'model/checks', 'model/custom', 'model/index', 'model/kinds', 'model/quiz', 'model/results', 'model/review', 'model/round', 'model/rounds', 'modes/all-areas', 'modes/draw', 'modes/index', 'modes/map-play', 'modes/map-tap', 'modes/pairs', 'modes/picks', 'modes/typed', 'screens/explore', 'screens/index', 'screens/learn', 'screens/question', 'screens/results', 'screens/setup', 'screens/stats', 'storage/index']) document.head.append(Object.assign(document.createElement('link'), { rel: 'modulepreload', href: new URL(`${f}.js`, document.currentScript.src).href }));
+  for (const f of ['app/app', 'app/game', 'app/review', 'app/words', 'formats/cloth', 'formats/code', 'formats/index', 'formats/name', 'formats/outline', 'formats/picture', 'formats/shape', 'formats/text', 'main', 'map/geometry', 'map/index', 'map/labels', 'map/layouts', 'map/marks', 'map/shapes', 'map/test', 'map/tiles', 'map/view', 'map/world', 'model/checks', 'model/custom', 'model/index', 'model/kinds', 'model/quiz', 'model/results', 'model/review', 'model/round', 'model/rounds', 'modes/all-areas', 'modes/draw', 'modes/index', 'modes/map-play', 'modes/map-tap', 'modes/pairs', 'modes/picks', 'modes/typed', 'screens/explore', 'screens/index', 'screens/learn', 'screens/question', 'screens/results', 'screens/setup', 'screens/setup-menu', 'screens/stats', 'storage/index']) document.head.append(Object.assign(document.createElement('link'), { rel: 'modulepreload', href: new URL(`${f}.js`, document.currentScript.src).href }));
 }
+// And the setup screen's own stylesheet (css/setup-menu.css: its menu, the preview, the maps as pictures, a phone's
+// card), after the page's, which it builds on.
+document.write(`<link rel="stylesheet" href="${new URL('css/setup-menu.css', document.currentScript.src).href}">`);
 // And gamepad.js, which lets a game controller play the page as a mouse would.
 document.write(`<script src="${new URL('../assets/js/gamepad.js', document.currentScript.src).href}"><\/script>`);
 // And the two links that make the site an app on a phone's home screen (manifest.webmanifest and the icon for
@@ -45,11 +49,10 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
 
   const AREA = `
   <aside class="panel">
-    <header class="brand"></header>
+    <button class="pickhead" id="pickHead" type="button" aria-expanded="false"><b></b><span class="n"></span><span class="caret" aria-hidden="true"></span></button>
 
     <section id="setup" class="setup">
-      <div class="group">
-        <h2>Choose a round</h2>
+      <div class="group" id="roundsGroup">
         <div class="rounds" id="rounds"></div>
       </div>
       <div class="custom-wrap" id="customWrap" hidden>
@@ -77,14 +80,6 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
             <button class="ghost small" id="shareBtn" type="button">Copy link</button>
           </div>
         </div>
-      </div>
-      <div class="group" id="helpWrap">
-        <h2>Help</h2>
-        <label class="toggle" id="optColorsWrap"><input type="checkbox" id="optColors" checked> <span id="optColorsText"></span></label>
-        <label class="toggle" id="optDetailWrap"><input type="checkbox" id="optDetail"> <span id="optDetailText"></span></label>
-        <label class="toggle" id="optLettersWrap" hidden><input type="checkbox" id="optLetters"> <span id="optLettersText"></span></label>
-        <label class="toggle" id="optSignWrap" hidden><input type="checkbox" id="optSign" checked> <span>Sign</span></label>
-        <label class="toggle" id="optHardWrap"><input type="checkbox" id="optHard"> <span>Hard mode</span></label>
       </div>
     </section>
 
@@ -143,9 +138,11 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
 
     <div class="startbar" id="startbar">
       <div class="folders" id="folders" role="tablist" aria-label="Layers" hidden></div>
+      <div class="ways" id="ways" role="group" aria-label="Ways to play"></div>
+      <div class="opts" id="opts"></div>
       <div class="row">
         <button class="primary" id="startBtn" type="button">Start</button>
-        <button class="ghost" id="exploreBtn" type="button">Explore</button>
+        <button class="prevbox" id="previewBtn" type="button" aria-pressed="true"><i class="box"></i>Show preview</button>
         <button class="ghost" id="learnBtn" type="button" hidden>Learn</button>
       </div>
       <p class="toast" id="toast" role="status" aria-live="polite"></p>
@@ -160,25 +157,29 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
       <g id="hl"><path id="askCtx" d=""/><path id="askUse" d=""/><path id="askLine" d=""/><path id="hoverUse" d=""/><path id="ansUse" d=""/></g>
       <g id="labels"></g>
     </svg>
-    <div class="zoom" id="zoomCtl" aria-label="Map zoom">
-      <button id="zIn" type="button" aria-label="Zoom in">+</button>
-      <button id="zOut" type="button" aria-label="Zoom out">&minus;</button>
-      <button id="zFit" type="button" aria-label="Show the whole map">&#8634;</button>
-    </div>
-    <div class="maps" id="mapSeg" role="group" aria-label="Map"></div>
   </main>
 `;
 
   const app = document.createElement('div');
   app.className = 'app'; app.id = 'app';
   app.innerHTML = AREA;
-  app.querySelector('.brand').append(...[back, h1].filter(Boolean));
-  // The map's corner, bottom right: its zoom buttons and, under them, the credits. The page's list of them is a ©
-  // that opens on a click or when pointed at. Only OpenStreetMap asks to be named on the map itself: "© OpenStreetMap"
-  // stands beside the © where the page names it for more than the street map (which carries its own line).
-  const corner = document.createElement('div'), credits = document.createElement('div'), zoom = app.querySelector('#zoomCtl');
+  // The header, as the site's other pages have it: the site's name (home), the quiz's title, and at the right the way
+  // back (only its arrow on a narrow screen)
+  const head = document.createElement('header'), row = document.createElement('div'), home = document.createElement('a'), nav = document.createElement('nav');
+  head.className = 'qbar'; head.id = 'qbar'; row.className = 'qbar-row'; home.className = 'qbar-home';
+  home.href = new URL('../index.html', document.currentScript.src).href; home.textContent = '🌍 Geo Quizzes';
+  row.append(home); if (h1) row.append(h1);
+  if (back) {
+    const long = document.createElement('span'), short = document.createElement('span');
+    long.className = 'long'; long.textContent = back.textContent; short.className = 'short'; short.textContent = '←'; short.setAttribute('aria-hidden', 'true');
+    back.setAttribute('aria-label', back.textContent.replace(/^←\s*/, 'Back to ')); back.replaceChildren(long, short); nav.append(back);
+  }
+  head.append(row, nav);
+  // The map's corner, bottom right: the credits, the page's list of them a © that opens on a click or when pointed at.
+  // Only OpenStreetMap asks to be named on the map itself: "© OpenStreetMap" stands beside the © where the page names
+  // it for more than the street map (which carries its own line).
+  const corner = document.createElement('div'), credits = document.createElement('div');
   corner.className = 'corner'; credits.className = 'credits';
-  if (zoom) corner.append(zoom);
   if (note) {
     if (note.textContent.split(' · ').some(part => /OpenStreetMap/.test(part) && !/^\s*Street map/i.test(part))) credits.insertAdjacentHTML('beforeend', '<span class="osm">&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a></span>');
     note.tabIndex = 0; note.setAttribute('aria-label', 'Credits'); credits.append(note);
@@ -206,5 +207,5 @@ for (const [rel, file] of [['manifest', 'manifest.webmanifest'], ['apple-touch-i
       return tab;
     }));
   }
-  body.prepend(app);
+  body.prepend(head, app);
 })();

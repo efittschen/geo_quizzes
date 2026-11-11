@@ -45,7 +45,7 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
   const cardFor = (P, id, look) => SRS.keyOf(page, rules.cardKey(P, id, look));
   const how = () => ({ chosen: setup.look, asked: setup.asked ? setup.asked() : [] });
   const stack = () => rules.stack(SRS, storage, how());
-  const title = () => (document.querySelector('.brand h1') || {}).textContent || document.title;
+  const title = () => (document.querySelector('#qbar h1') || {}).textContent || document.title;
   // S: the review being played; P: an ordinary round's question; pend: a Retry round's replays, rated once the round
   // goes on; hand: the column an answer is to open (made as its members are answered); C: the column open (see below)
   let S = null, P = null, raf = 0, pend = [], hand = null, C = null;
@@ -53,7 +53,7 @@ export function makeReview({ quiz, model, map, game, storage, screens, setup, pl
   /* ---------- Due and All ---------- */
   const wrap = document.createElement('div'); wrap.className = 'rv-go'; wrap.id = 'reviewWrap';
   wrap.innerHTML = '<button class="ghost small" id="reviewDue" type="button"></button><button class="ghost small" id="reviewAll" type="button"></button>';
-  { const h1 = document.querySelector('.brand h1'), row = document.createElement('div'); row.className = 'brand-row'; h1.replaceWith(row); row.append(h1, wrap); }
+  { const h1 = document.querySelector('#qbar h1'), row = document.createElement('div'); row.className = 'brand-row'; h1.replaceWith(row); row.append(h1, wrap); } // (beside the title in the header)
   const due = wrap.querySelector('#reviewDue'), all = wrap.querySelector('#reviewAll');
   function syncButtons() {
     const now = Date.now(), s = SRS.stats(stack().deck, now), limit = !SRS.dayLeft(now);

@@ -39,7 +39,8 @@
 //                                 to pick from is opened (it starts folded; see engine/modes/typed.js); the review schedule (see srs.js): scheduler
 //                                 ("fsrs" or "sm2"), retention, steps, missStep, kept, firstInterval, ease, unsure, longest;
 //                                 perMap: false where "Cards per map" is off (a question's cards on several maps are
-//                                 one, see srs.js); open: the folders open in "All quizzes"; changed: when any but `open` last
+//                                 one, see srs.js); preview: false once a quiz page's Show preview is turned off (see
+//                                 engine/screens/setup.js); open: the folders open in "All quizzes"; changed: when any but `open` last
 //                                 changed here (a time, for the online copy) }
 //   geoquizzes.review           { day: { date, reviewed }: cards reviewed today; run: a review in progress; practice: a practice over
 //                                 several quizzes in progress (both srs.js) }

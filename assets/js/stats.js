@@ -24,7 +24,7 @@
 function initStats(index, nameByCode) {
   const DAY = 864e5, NS = "http://www.w3.org/2000/svg";
   const byId = new Map(index.quizzes.filter((q) => q.url).map((q) => [q.id, q]));
-  const MODES = { map: "Map", list: "List", type: "Type", pairs: "Pairs", pick: "Pick", pickback: "Pick back", code: "Type code", draw: "Draw", name: "Name it", shape: "Shape", paint: "Paint" };
+  const MODES = { map: "Map", list: "List", listback: "List back", type: "Type", typeback: "Type back", pairs: "Pairs", pick: "Pick", pickback: "Pick back", code: "Type code", draw: "Draw", name: "Name it", shape: "Shape", paint: "Paint" };
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   const svgEl = (tag, attrs = {}) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); return e; };
   const median = (xs) => { if (!xs.length) return null; const s = xs.slice().sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };

@@ -82,8 +82,6 @@ a{color:inherit}
 .seg button:hover{border-color:var(--ink)}
 .seg button[aria-pressed="true"]{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 7%,transparent)}
 
-.toggle{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
-.toggle input{width:18px;height:18px;accent-color:var(--ink);margin:0}
 
 /* "Pick at the end" (srs.js gradeList): a review's answers in its results, each right one with Easy, Good, Hard */
 .rate-list{display:grid;gap:4px}

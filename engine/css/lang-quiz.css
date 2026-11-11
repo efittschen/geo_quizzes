@@ -28,7 +28,6 @@
   .board #eDial .code{font-size:2.4rem}
   .board.words #eDial .code{font-size:1.5rem}
   .board.alphabets #eDial.long .code{font-size:1.6rem}
-  .board .zoom{display:none} /* the board fills the screen, and is fitted again with every round */
   /* alphabets: tiles are tapped one after the other, so the answers' box keeps its place and size from the start
      (three lines, a longer one cut short) and the board under it stays where it is */
   .board.alphabets #fb,.board.alphabets #fb:empty{display:block;height:calc(4.1em + 14px);overflow:hidden}

@@ -20,9 +20,6 @@ export function makeStats({ model, map, storage, ui }) {
   const layers = model.kinds.list.map(k => k.key);
   let kind = null, by = null;
 
-  const button = el('button', 'ghost', 'My stats'); button.type = 'button'; button.id = 'statsBtn';
-  button.hidden = !storage.canLog();
-  ($('learnBtn') || $('exploreBtn')).after(button);
   const pick = el('select'); pick.id = 'sPick'; pick.setAttribute('aria-label', 'Layer'); pick.hidden = true;
   pick.append(...layers.map(k => new Option(K(k).label, k)));
   $('eBack').after(pick);
@@ -56,7 +53,7 @@ export function makeStats({ model, map, storage, ui }) {
   }
 
   const stats = {
-    button, pick,
+    pick,
     kind: () => kind,
     async open(k) {
       const want = (kind = k);

@@ -49,7 +49,7 @@ export function createApp({ quiz, model, map, game, modes, formats, screens, sto
     const P = game.def && game.def.play, playing = id === 'play' || id === 'done';
     // a way that answers without the map (a list, typing, four to pick from, a shape) has none while playing and on its
     // results: the panel takes the page (.nomap)
-    $('app').classList.toggle('nomap', playing && !!P && ['list', 'type', 'pick', 'pickback', 'shape'].includes(P.way));
+    $('app').classList.toggle('nomap', playing && !!P && ['list', 'listback', 'type', 'typeback', 'pick', 'pickback', 'shape'].includes(P.way));
     $('app').classList.toggle('naming', id === 'play' && !!P && P.way === 'name'); // (Name it: on a phone the answer under the field)
     if (id !== 'play') formats.hide();
     for (const x of ['setup', 'play', 'done', 'explore']) $(x).hidden = x !== id;
@@ -57,7 +57,6 @@ export function createApp({ quiz, model, map, game, modes, formats, screens, sto
     $('startbar').hidden = id !== 'setup';
     // the map picker: on the setup screen, and during a review (the map its cards are asked on)
     const picking = id === 'setup' || (id === 'play' && !!review && review.active());
-    $('mapSeg').hidden = !picking || !!quiz.free || $('mapSeg').childElementCount < 2;
     setup.bar.hidden = !picking;
     map.look('picking', id === 'setup');
     map.look('fade', playing); // (hint colours fade while playing and on the results: the answers' colours stand out)
@@ -104,14 +103,11 @@ export function createApp({ quiz, model, map, game, modes, formats, screens, sto
   $('endBtn').onclick = () => { if (game.round.state.res.some(r => r !== undefined)) game.stop(); else if (!(review && review.away())) openSetup(); };
   $('menuBtn').onclick = openSetup;
   $('eBack').onclick = openSetup;
-  $('exploreBtn').onclick = () => { words.bring(quiz.exploreKind).then(() => { enterExplore(); explore.open(setup.round()); }, () => {}); };
   function enterExplore() { if (game.mode) game.mode.close(); map.outlines().catch(() => {}); map.use(setup.look.map); map.clear(); show('explore'); }
   const openStats = key => words.bring(key).then(() => { enterExplore(); explore.hidePick(true); stats.open(key); }, () => {});
-  stats.button.onclick = () => { stats.close(); openStats(setup.kind()); };
   stats.pick.onchange = () => openStats(stats.pick.value);
   $('eBack').addEventListener('click', () => { if (stats.kind()) stats.close(); explore.hidePick(false); });
   if ($('learnBtn')) $('learnBtn').onclick = () => map.outlines().then(learn.open, () => {});
-  $('zIn').onclick = () => map.zoom(1.6); $('zOut').onclick = () => map.zoom(1 / 1.6); $('zFit').onclick = () => frame(true);
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') return;
     if (e.key === 'Escape') { if (learn.shown()) learn.close(); return; }
