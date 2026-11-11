@@ -177,6 +177,7 @@
 
 /* ---------- a phone's setup: the map the whole screen, the panel a card at its foot ---------- */
 /* the round picked at the card's head: a tap opens the list (the layers, the rounds as chips, a custom quiz's picker) */
+.grab{display:none}
 .pickhead{display:none;appearance:none;flex:none;align-items:baseline;gap:10px;width:100%;padding:0;border:0;background:transparent;color:var(--ink);text-align:left;cursor:pointer}
 .pickhead b{font:700 1.5rem/1 var(--cond)}
 .pickhead .n{color:var(--muted);font:600 1rem/1 var(--cond)}
@@ -194,7 +195,11 @@
 @media (max-width:760px){
   .app:not(.playing){position:relative;grid-template-rows:minmax(0,1fr)}
   .app:not(.playing) .panel{position:absolute;left:8px;right:8px;bottom:8px;z-index:1150;max-height:86%;padding:12px 14px 14px;gap:8px;border:0;border-radius:16px;background:var(--panel);box-shadow:0 8px 26px rgba(0,0,0,.25)}
-  .app:not(.playing) .pickhead{display:flex}
+  .app:not(.playing) .pickhead{display:flex;touch-action:none}
+  /* (the card's grab bar: drag it, or the title line, up or down: ../screens/setup.js) */
+  .app:not(.playing) .panel{padding-top:16px}
+  .app:not(.playing) .grab{display:block;position:absolute;top:0;left:50%;width:64px;height:16px;transform:translateX(-50%);cursor:grab;touch-action:none}
+  .app:not(.playing) .grab::before{content:"";position:absolute;left:16px;right:16px;top:6px;height:4px;border-radius:2px;background:color-mix(in srgb,var(--ink) 22%,transparent)}
   .pickhead b{min-width:0;padding-bottom:.12em;margin-bottom:-.12em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pickhead .n,.pickhead .caret{flex:none}
   /* (with the language's tab: the ▴ after the count; the list folded, the title down beside the tab, on the blue

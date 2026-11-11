@@ -390,7 +390,46 @@ export function makeSetup({ quiz, model, map, storage, ui, words, formats }) {
     $('pickHead').setAttribute('aria-expanded', !folded);
     document.querySelector('.panel').classList.toggle('folded', folded);
   }
-  $('pickHead').onclick = () => { folded = !folded; head(); };
+  // (a phone: the card dragged by its grab bar or its title line, up to open the list, down to fold it, and settling
+  // open or folded when let go: 40 px from where it was turns it; a tap on the title line opens or folds it as before.
+  // The card grows from its foot, so the menu stays where it is: first the title leaves the language's tab for a line
+  // of its own (the spacing the open card has, D), then the list comes in under it)
+  {
+    const panel = document.querySelector('.panel'), list = $('setup'), bar = $('startbar'), grab = el('div', 'grab');
+    grab.setAttribute('aria-hidden', 'true'); panel.prepend(grab);
+    let drag = null, moved = false;
+    // the card's height, folded or open (with the list this high)
+    const heightAs = (f, L) => {
+      const was = panel.classList.contains('folded'); panel.classList.toggle('folded', f); if (L != null) list.style.height = L + 'px';
+      const h = panel.getBoundingClientRect().height; list.style.height = ''; panel.classList.toggle('folded', was); return h;
+    };
+    // g: how far the card has grown from folded: the spacing first, then the list
+    const grow = (d, g) => { list.style.height = Math.max(0, g - d.D) + 'px'; bar.style.marginTop = Math.min(g, d.D) - d.D + 'px'; };
+    const still = () => { list.style.height = list.style.transition = bar.style.marginTop = bar.style.transition = ''; };
+    panel.addEventListener('pointerdown', e => {
+      moved = false;
+      if (!narrow() || !setup.shown || drag || !e.target.closest('.grab, .pickhead') || (e.pointerType === 'mouse' && e.button !== 0)) return;
+      const hf = heightAs(true), h0 = heightAs(false, 0), ho = heightAs(false);
+      drag = { id: e.pointerId, y: e.clientY, D: h0 - hf, most: ho - hf, from: folded ? 0 : ho - hf, was: folded, on: false };
+      e.target.setPointerCapture(e.pointerId);
+    });
+    panel.addEventListener('pointermove', e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dy = e.clientY - drag.y;
+      if (!drag.on) { if (Math.abs(dy) < 6) return; drag.on = moved = true; still(); if (folded) { folded = false; head(); } }
+      grow(drag, Math.max(0, Math.min(drag.most, drag.from - dy)));
+    });
+    const end = e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const d = drag; drag = null; if (!d.on) return;
+      const dy = e.clientY - d.y, open = d.was ? dy < -40 : dy <= 40;
+      list.style.transition = 'height .2s ease'; bar.style.transition = 'margin-top .2s ease'; grow(d, open ? d.most : 0);
+      let over = false; const done = () => { if (over) return; over = true; still(); folded = !open; head(); };
+      setTimeout(done, 230);
+    };
+    panel.addEventListener('pointerup', end); panel.addEventListener('pointercancel', end);
+    $('pickHead').onclick = () => { if (moved) { moved = false; return; } folded = !folded; head(); };
+  }
   phone.addEventListener('change', () => { if (setup.shown) build(); }); // (crossing 760 px: the list as boxes or chips)
 
   /* ---------- your quizzes, a custom quiz ---------- */
