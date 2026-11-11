@@ -8,11 +8,11 @@
 // saved by name or shared as a link.
 // Under the list, at the panel's foot, the menu: the layers' tabs, the ways to play the round picked, its options
 // (colours, a detail, every label, Sign, Hard mode) and Start, named after the way, with Show preview beside it.
-// The ways: grey, those where the language does not matter (Map, Name it, Shape, Draw), played in the round's own; a
-// city quiz's Map is two: Dots (on its dots, 3 tries) and Blind (anywhere on the map, by distance);
-// blue, where a round is in another script too: List, Type, Pairs, Pick, played in the direction the round button
-// beside them turns (Kanji → English or English → Kanji); a blue way the engine has not in that direction is shown
-// and previewed, but Start says "not built yet". Show preview plays the way picked on the map (./setup-menu.js); it is
+// The ways: a grey row, a city quiz's Map as two: Dots (on its dots, 3 tries) and Blind (anywhere on the map, by
+// distance). Where a round is in a script too (Kanji, Cyrillic…), all its ways in one blue block, the language on its
+// tab (Kanji or English), turned by the round button on it: Map, Name it, Shape and Draw play the round in that
+// language (its names asked, or answered, in it), List, Type, Pairs and Pick go from it to the other (the user's
+// choice B, 2026-11-11); a way the engine has not in that language is shown, but Start says "not built yet". Show preview plays the way picked on the map (./setup-menu.js); it is
 // a setting of the site (storage.settings: preview, false once turned off).
 // The maps to play on are pictures on the map (./setup-menu.js), with Street View's coverage a box to tick.
 // On a phone (760 px or less, the page's own breakpoint) the map takes the screen and the panel is a card at its foot:
@@ -100,7 +100,15 @@ export function makeSetup({ quiz, model, map, storage, ui, words, formats }) {
   const params = new URLSearchParams(location.search);
   const shared = model.custom.decode(params.get('quiz')) || model.custom.practice(params.get('practice'), params.get('items'));
   if (shared) shared.name = model.custom.name(params.get('name')) || 'Shared quiz';
+  // (a layer's one script is no layer to pick for a custom quiz: a quiz of its own items, custom, saved or shared, is
+  // played in either language by the language's tab, customSide: base or lang; a saved or shared one starts in its own)
+  const scriptOf = Kd => (Kd && K(Kd.of) && Kd.lang && kinds.list.filter(x => x.of === Kd.of && x.lang).length === 1 ? K(Kd.of) : null);
   let pickKind = K(last('kind')) ? last('kind') : kinds.list[0].key;
+  if (scriptOf(K(pickKind))) pickKind = scriptOf(K(pickKind)).key;
+  let customSide = last('cside') === 'lang' ? 'lang' : 'base';
+  if (shared) customSide = scriptOf(K(shared.kind)) ? 'lang' : 'base';
+  // a layer and its one script: { bk, lk, base, lang (their names' holders, as a round's are) }, or null
+  const sidesOf = kind => { const k = K(kind), bk = scriptOf(k) || k, lk = bk && kinds.list.find(x => x.of === bk.key && scriptOf(x)); return lk ? { bk, lk, base: { kind: bk.key }, lang: { kind: lk.key }, custom: true } : null; };
   let chosenMode = last('mode');
   if (shared && shared.practice) {
     chosenMode = kinds.ways(K(shared.kind)).includes(params.get('mode')) ? params.get('mode') : 'map';
@@ -133,18 +141,23 @@ export function makeSetup({ quiz, model, map, storage, ui, words, formats }) {
   }
   function kindNow() {
     valid();
-    if (choice === 'custom') return pickKind;
-    return (choice === 'shared' ? shared : savedOf(choice) || roundOf(choice)).kind;
+    const own = ownQuiz(), c = own && sidesOf(own.kind);
+    if (own) return c ? (customSide === 'lang' ? c.lk : c.bk).key : own.kind;
+    return roundOf(choice).kind;
   }
   function current() {
     const kind = kindNow();
-    if (choice === 'custom') return { kind, ids: K(kind).ids.filter(id => SEL[kind].has(id)) };
-    if (choice === 'shared') return shared;
+    if (choice === 'custom') return { kind, ids: K(kind).ids.filter(id => SEL[pickKind].has(id)) };
+    if (choice === 'shared') return kind === shared.kind ? shared : { ...shared, kind };
+    if (savedOf(choice)) return kind === savedOf(choice).kind ? savedOf(choice) : { ...savedOf(choice), kind };
     const r = roundOf(choice);
-    return savedOf(choice) || { kind, ids: rounds.items(r), box: r.box };
+    return { kind, ids: rounds.items(r), box: r.box };
   }
+  // a quiz of its own items picked (custom, saved, shared): its layer and items; a round: null
+  function ownQuiz() { return choice === 'custom' ? { kind: pickKind } : choice === 'shared' ? shared : savedOf(choice); }
   function choose(key) {
     choice = key; keep('choice', key === 'shared' ? '' : key); soon = null;
+    if (savedOf(key)) { customSide = scriptOf(K(savedOf(key).kind)) ? 'lang' : 'base'; keep('cside', customSide); } // (a saved quiz: in its own language first)
     if (roundOf(key)) lastIn[folderOf(roundOf(key).kind)] = key;
     build();
     if (key === 'custom') { buildPicker(); $('customWrap').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
@@ -268,45 +281,54 @@ export function makeSetup({ quiz, model, map, storage, ui, words, formats }) {
   }
 
   /* ---------- the ways ---------- */
-  // Grey: the ways of the round's own language; blue: List, Type, Pairs, Pick between it and another script, in the
-  // direction picked (from: the script asked, its meaning answered; to: the other way round, List back, Type back, Pick
-  // back). A blue way not built in that direction: soon.
+  // A round in a script too: the language picked (from: the script; to: the round's own). Map, Name it, Shape, Draw:
+  // the round in it; List, Type, Pairs, Pick: from it to the other (in the own language, the script's List back, Type
+  // back, Pick back). A way not built in that language: soon.
   const BLUE = ['list', 'type', 'pairs', 'pick'], BACK = { list: 'listback', type: 'typeback', pick: 'pickback', pairs: 'pairs' }, FROM = { listback: 'list', typeback: 'type', pickback: 'pick' };
   let dir = last('dir') === 'to' ? 'to' : 'from', soon = null;
   // the round's own language and the script it is in too, where it has both
   function scripts() {
+    if (ownQuiz()) return sidesOf(ownQuiz().kind);
     const r = roundOf(choice); if (!r) return null;
     const vs = variantsOf(r.of || r), base = vs.find(v => !K(v.kind).of), lang = vs.find(v => K(v.kind).of && K(v.kind).lang);
     return base && lang ? { base, lang, bk: K(base.kind), lk: K(lang.kind) } : null;
   }
+  // the ways: top (the map's and the rest), bottom (a script's List, Type, Pairs, Pick), the one pressed
   function waysNow() {
     const kind = kindNow(), way = wayFor(kind), L = scripts();
-    if (!L) return { grey: kinds.ways(K(kind)), blue: [], L: null, pressed: ['grey', way] };
-    const lw = kinds.ways(L.lk), onLang = kind === L.lk.key, b = FROM[way] || way;
-    // (a blue way picked tells the direction)
-    if (!soon && onLang && BLUE.includes(b) && way !== 'pairs') { const d = FROM[way] ? 'to' : 'from'; if (d !== dir) { dir = d; keep('dir', d); } }
-    return { grey: kinds.ways(L.bk).filter(w => !BLUE.includes(w)), blue: BLUE.filter(w => lw.includes(w) || lw.includes(BACK[w])), L, lw,
-      pressed: soon ? ['blue', soon] : onLang && BLUE.includes(b) ? ['blue', b] : ['grey', way] };
+    if (!L) return { top: kinds.ways(K(kind)), bottom: [], L: null, pressed: way };
+    const lw = kinds.ways(L.lk), bw = kinds.ways(L.bk), onLang = kind === L.lk.key, other = w => !BLUE.includes(w) && !FROM[w];
+    // (the play picked tells the language: one of the own language's, or a back one, is in it; Pairs keeps it)
+    if (!soon) { const d = !onLang || FROM[way] ? 'to' : way === 'pairs' ? dir : 'from'; if (d !== dir) { dir = d; keep('dir', d); } }
+    return { top: once([...bw.filter(other), ...lw.filter(other)]), bottom: BLUE.filter(w => lw.includes(w) || lw.includes(BACK[w])), L, lw, bw, pressed: soon || FROM[way] || way };
   }
-  const realOf = (W, w) => (dir === 'from' ? (W.lw.includes(w) ? w : null) : W.lw.includes(BACK[w]) ? BACK[w] : null);
+  // a way in the language picked: [the side played (lang, base; none where the round has one language), the way played],
+  // or null
+  const realOf = (W, w) => {
+    if (!W.L) return [null, w];
+    if (BLUE.includes(w)) { const r = dir === 'from' ? w : BACK[w]; return W.lw.includes(r) ? ['lang', r] : null; }
+    return dir === 'from' ? (W.lw.includes(w) ? ['lang', w] : null) : W.bw.includes(w) ? ['base', w] : null;
+  };
+  const langNow = W => langOf(dir === 'to' ? W.L.base : W.L.lang);
   const dirLabel = W => { const a = langOf(W.L.lang), b = langOf(W.L.base); return dir === 'to' ? `${b} → ${a}` : `${a} → ${b}`; };
   function pickWay(w) { soon = null; chosenMode = w; keep('mode', w); build(); }
   // (the round in its other language, the way picked with it: the same items, so the map stays)
   function pickIn(v, w) { soon = null; keep('lang', langOf(v)); choice = keyOf(v); keep('choice', choice); lastIn[folderOf(v.kind)] = choice; chosenMode = w; keep('mode', w); build(); }
-  const goGrey = (W, w) => (W.L && kindNow() !== W.L.bk.key ? pickIn(W.L.base, w) : pickWay(w));
-  function goBlue(W, w) {
-    const real = realOf(W, w);
-    if (!real) { soon = w; build(); return; }
-    if (kindNow() !== W.L.lk.key) pickIn(W.L.lang, real); else pickWay(real);
+  function goWay(W, w) {
+    const r = realOf(W, w);
+    if (!r) { soon = w; build(); return; }
+    const [side, real] = r;
+    if (side && W.L.custom) { if (customSide !== side) { customSide = side; keep('cside', side); } pickWay(real); return; } // (a custom quiz: its items, the side's layer)
+    const v = side && W.L[side];
+    if (v && kindNow() !== v.kind) pickIn(v, real); else pickWay(real);
   }
-  function wayBtn(W, w, group) {
+  function wayBtn(W, w) {
     const b = el('button', 'way'); b.type = 'button'; b.dataset.way = w;
-    b.setAttribute('aria-pressed', W.pressed[0] === group && W.pressed[1] === w);
+    b.setAttribute('aria-pressed', W.pressed === w);
     b.innerHTML = parts.icon(w); b.append(el('span', '', kinds.WAYS[w]));
-    const Kd = group === 'blue' ? W.L.lk : W.L ? W.L.bk : K(kindNow()), real = group === 'blue' ? realOf(W, w) : w;
-    b.title = group === 'blue' ? `${dirLabel(W)} · ${kinds.WAYS[w]}` : kinds.wayLabel(Kd, w);
-    if (!real) b.classList.add('soon');
-    b.onclick = () => (group === 'blue' ? goBlue(W, w) : goGrey(W, w));
+    b.title = !W.L ? kinds.wayLabel(K(kindNow()), w) : `${BLUE.includes(w) ? dirLabel(W) : langNow(W)} · ${kinds.WAYS[w]}`;
+    if (!realOf(W, w)) b.classList.add('soon');
+    b.onclick = () => goWay(W, w);
     return b;
   }
   // a city quiz's Map as two ways: its map to play on, the way's picture and name
@@ -314,15 +336,16 @@ export function makeSetup({ quiz, model, map, storage, ui, words, formats }) {
   const mapWay = P => (MAPWAYS && P.way === 'map' ? MAPWAYS[chosenMap] : null);
   function mapWayBtn(W, m) {
     const [pic, name] = MAPWAYS[m], b = el('button', 'way'); b.type = 'button'; b.dataset.way = 'map'; b.dataset.map = m;
-    b.setAttribute('aria-pressed', W.pressed[0] === 'grey' && W.pressed[1] === 'map' && chosenMap === m);
+    b.setAttribute('aria-pressed', W.pressed === 'map' && chosenMap === m);
     b.innerHTML = parts.icon(pic); b.append(el('span', '', name)); b.title = MAPS[m][1];
-    b.onclick = () => { if (chosenMap !== m) { chosenMap = m; map.use(m, true); setup.onMap(); } goGrey(W, 'map'); };
+    b.onclick = () => { if (chosenMap !== m) { chosenMap = m; map.use(m, true); setup.onMap(); } goWay(W, 'map'); };
     return b;
   }
-  // the play Start plays (soon: one made for the preview alone)
+  // the play Start plays (soon: one made for the preview alone, for List, Type, Pairs, Pick; none for the others)
   function playNow(W) {
     const kind = kindNow();
     if (!soon) return kinds.play(kind, wayFor(kind));
+    if (!BLUE.includes(soon)) return null;
     const lk = W.L.lk, ask = i => model.check.askText(lk, i), name = i => W.L.bk.name(i), to = dir === 'to';
     return { kind: lk, way: soon, icon: soon, mode: soon === 'pick' ? 'picks' : soon, format: 'name', back: true, soon: true, questionName: to ? name : ask, answerName: to ? ask : name, answerLang: i => (to && lk.text ? (lk.text(i) || {}).lang : '') };
   }
@@ -331,16 +354,15 @@ export function makeSetup({ quiz, model, map, storage, ui, words, formats }) {
   let showPreview = storage.settings().preview !== false;
   $('previewBtn').onclick = () => { showPreview = !showPreview; storage.keepSettings(s => { if (showPreview) delete s.preview; else s.preview = false; }); menu(); };
   function menu() {
-    const cur = current(), W = waysNow(), many = !single && W.grey.length + W.blue.length > 1, P = playNow(W);
-    // the ways: grey, then the direction and the blue ones
-    const grey = el('div', 'wayrow'); grey.append(...W.grey.flatMap(w => (w === 'map' && MAPWAYS ? Object.keys(MAPWAYS).map(m => mapWayBtn(W, m)) : [wayBtn(W, w, 'grey')])));
-    const rows = [grey];
-    if (W.blue.length) {
-      const blue = el('div', 'wayrow blue'), [from, to] = dirLabel(W).split(' → ');
-      blue.append(parts.spin(from, to, () => { dir = dir === 'to' ? 'from' : 'to'; keep('dir', dir); if (W.pressed[0] === 'blue') goBlue(W, W.pressed[1]); else build(); }), ...W.blue.map(w => wayBtn(W, w, 'blue')));
-      rows.push(blue);
-    }
-    $('ways').replaceChildren(...rows); $('ways').hidden = !many;
+    const cur = current(), W = waysNow(), many = !single && W.top.length + W.bottom.length > 1, P = playNow(W);
+    // the ways: a grey row; a round in a script too, one blue block (the top line, then List, Type, Pairs, Pick) under
+    // its language's tab, whose button turns the language and plays the way pressed in the other
+    const btns = ws => ws.flatMap(w => (w === 'map' && MAPWAYS ? Object.keys(MAPWAYS).map(m => mapWayBtn(W, m)) : [wayBtn(W, w)]));
+    const row = el('div', W.L ? 'wayrow blue' : 'wayrow');
+    if (W.L) row.append(parts.spin(langNow(W), () => { dir = dir === 'to' ? 'from' : 'to'; keep('dir', dir); goWay(W, W.pressed); }));
+    row.append(...btns(W.top), ...(W.top.length && W.bottom.length ? [el('i', 'brk')] : []), ...btns(W.bottom));
+    $('ways').replaceChildren(row); $('ways').hidden = !many;
+    if (W.L && many) document.querySelector('.panel').style.setProperty('--tabw', row.querySelector('.sm-dir').offsetWidth + 'px'); // (a phone's title beside it)
     // the options, each a box to tick
     const pills = optionsOf(K(cur.kind)).map(([k, text]) => {
       const b = el('button', 'opt', text); b.type = 'button'; b.dataset.opt = k; b.setAttribute('aria-pressed', opt[k]);
@@ -349,15 +371,15 @@ export function makeSetup({ quiz, model, map, storage, ui, words, formats }) {
     });
     $('opts').replaceChildren(...pills); $('opts').hidden = !pills.length;
     // Start, named after the way (only the way: the direction is on its switch)
-    const s = $('startBtn'), blueOne = W.pressed[0] === 'blue', mw = mapWay(P), label = blueOne ? `${dirLabel(W)} · ${kinds.WAYS[W.pressed[1]]}` : mw ? mw[1] : kinds.wayLabel(K(cur.kind), P.way);
+    const s = $('startBtn'), across = !!W.L && BLUE.includes(W.pressed), mw = P && mapWay(P), label = across ? `${dirLabel(W)} · ${kinds.WAYS[W.pressed]}` : mw ? mw[1] : P ? kinds.wayLabel(K(cur.kind), P.way) : kinds.WAYS[W.pressed];
     s.disabled = !cur.ids.length || !!soon;
-    if (many) { s.innerHTML = parts.icon(soon || (mw ? mw[0] : P.way)); const two = el('span', 'st'); two.append(el('b', '', 'Start'), el('small', '', soon ? 'not built yet' : blueOne ? kinds.WAYS[W.pressed[1]] : label)); s.append(two); }
+    if (many) { s.innerHTML = parts.icon(soon || (mw ? mw[0] : P.way)); const two = el('span', 'st'); two.append(el('b', '', 'Start'), el('small', '', soon ? 'not built yet' : across ? kinds.WAYS[W.pressed] : label)); s.append(two); }
     else s.textContent = 'Start';
     // the preview, once its words are here (a layer's words come when it is first shown: ../app/words.js)
     $('previewBtn').setAttribute('aria-pressed', showPreview);
-    const late = setup.shown && showPreview && !single ? [P.kind.key, P.kind.of].filter(k => k && K(k) && kinds.waiting(K(k))) : [];
+    const shown = setup.shown && showPreview && !single && !!P, late = shown ? [P.kind.key, P.kind.of].filter(k => k && K(k) && kinds.waiting(K(k))) : [];
     if (late.length) { parts.preview.stop(); Promise.all(late.map(words.bring)).then(() => build(), () => {}); }
-    else if (setup.shown && showPreview && !single) parts.preview.show(mw ? Object.assign(Object.create(P), { icon: mw[0] }) : P, cur.ids, { label, box: cur.box, blind: !!mw && mw[0] === 'blind' });
+    else if (shown) parts.preview.show(mw ? Object.assign(Object.create(P), { icon: mw[0] }) : P, cur.ids, { label, box: cur.box, blind: !!mw && mw[0] === 'blind' });
     else parts.preview.stop();
   }
   // (a phone: the round picked at the card's head, a tap opening the list)
@@ -389,8 +411,9 @@ export function makeSetup({ quiz, model, map, storage, ui, words, formats }) {
     u.searchParams.set('quiz', model.custom.encode(kind, ids)); if (name) u.searchParams.set('name', name);
     try { await navigator.clipboard.writeText(u.href); toast('Link copied'); } catch (e) { window.prompt('Link', u.href); } // (no clipboard: plain http)
   }
-  $('kindSeg').parentElement.hidden = kinds.list.length < 2;
-  for (const Kd of kinds.list) {
+  const pickable = kinds.list.filter(Kd => !scriptOf(Kd));
+  $('kindSeg').parentElement.hidden = pickable.length < 2;
+  for (const Kd of pickable) {
     const b = document.createElement('button'); b.type = 'button'; b.dataset.kind = Kd.key;
     const t = document.createElement('b'), s = document.createElement('small'); t.textContent = Kd.label; s.textContent = Kd.sub;
     b.append(t, s); $('kindSeg').appendChild(b);
@@ -473,7 +496,9 @@ export function makeSetup({ quiz, model, map, storage, ui, words, formats }) {
     const inRound = new Set(chosen);
     map.mark(map.ids, 'pre', false); if (map.plain()) map.mark(map.ids.filter(a => inRound.has(a)), 'pre');
     setup.previewed = !single && !!setup.overview && setup.overview(setup.round());
-    if (setup.previewed) map.clearLabels(); else map.labels(Kd, single ? [] : cur.ids);
+    // (the names in the language on the tab, where the round is in a script too, whichever layer its way plays)
+    const L = scripts(); if (L) waysNow();
+    if (setup.previewed) map.clearLabels(); else map.labels(L ? (dir === 'from' ? L.lk : L.bk) : Kd, single ? [] : cur.ids);
     setup.onMap();
   }
 
@@ -505,7 +530,7 @@ export function makeSetup({ quiz, model, map, storage, ui, words, formats }) {
     // (the round begun: the preview gone, what it lit left to the round)
     close() { setup.shown = false; parts.preview.stop(true); },
     tap(area) {
-      if (choice !== 'custom') { const cur = current(); pickKind = cur.kind; SEL[pickKind] = new Set(cur.ids); choice = 'custom'; soon = null; keep('choice', choice); build(); buildPicker(); }
+      if (choice !== 'custom') { const cur = current(), sk = scriptOf(K(cur.kind)); pickKind = sk ? sk.key : cur.kind; customSide = sk ? 'lang' : 'base'; keep('cside', customSide); SEL[pickKind] = new Set(cur.ids); choice = 'custom'; soon = null; keep('choice', choice); build(); buildPicker(); }
       const ids = K(pickKind).at[area]; if (ids) toggle(ids);
     },
     frame, box: () => current().box,

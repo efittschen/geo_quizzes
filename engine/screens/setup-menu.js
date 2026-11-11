@@ -3,8 +3,8 @@
 //
 //   const parts = setupMenu({ quiz, model, map, formats, $ })
 //   parts.icon(way)                  the way's picture (24 × 24, in the text colour)
-//   parts.spin(from, to, turn)       the direction button: a round blue button with two arrows turning round each other,
-//                                    "Kanji →" / "English" under it; a tap turns it half round, then turn()
+//   parts.spin(lang, turn)           the language's tab on the blue block: a round button with two arrows turning round
+//                                    each other, then the language (Kanji, English); a tap turns it half round, then turn()
 //   parts.preview.show(play, ids, { label, box, blind })   Show preview: how the round picked is played, with one of its
 //                                    items, again and again, on a card at the map's top right, always: the
 //                                    question as its format shows it, then the answer as its mode takes it. Where the
@@ -67,10 +67,10 @@ export function setupMenu({ quiz, model, map, formats, $ }) {
     } }
   const needOutlines = () => (outlined ? Promise.resolve() : map.outlines().then(() => { outlined = true; }, () => {}));
 
-  /* ---------- the direction button ---------- */
-  function spin(from, to, turn) {
-    const b = el('button', 'sm-dir'); b.type = 'button'; b.title = `${from} → ${to}`;
-    const txt = el('span', 'sm-dtxt'); txt.textContent = `${from} → ${to}`; // (the words: a tab on the row's top edge)
+  /* ---------- the language's tab ---------- */
+  function spin(lang, turn) {
+    const b = el('button', 'sm-dir'); b.type = 'button'; b.title = lang;
+    const txt = el('span', 'sm-dtxt'); txt.textContent = lang;
     b.append(el('span', 'sm-disc', SPIN), txt);
     let busy = false;
     b.onclick = () => { if (busy) return; busy = true; b.classList.add('go'); setTimeout(turn, still ? 0 : 380); };
@@ -86,7 +86,7 @@ export function setupMenu({ quiz, model, map, formats, $ }) {
     return bySize[Math.min(bySize.length - 1, Math.floor(bySize.length * 0.3))];
   };
   // the words a play is answered with: a play the other way round (List back, Type back) its words in their script
-  const wordsOf = P => (P.back && P.mode !== 'picks' && !P.questionName ? i => model.check.askText(P.kind, i) : P.answerName);
+  const wordsOf = P => (P.ownName ? P.ownName : P.back && P.mode !== 'picks' && !P.questionName ? i => model.check.askText(P.kind, i) : P.answerName); // (Name it, Shape: the names the round lists, a script's in it)
   const others = (P, ids, id, n) => { const w = wordsOf(P); return [...new Set(ids.filter(x => x !== id).map(w))].filter(x => x && x !== w(id)).slice(0, n); };
   // the box of some areas, roughly (each area a square of its size around its middle)
   const roughBox = areas => {

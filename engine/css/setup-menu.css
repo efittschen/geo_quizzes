@@ -23,14 +23,16 @@
 /* (not built in this direction: dashed) */
 .way.soon .sm-ic{opacity:.55}
 .way.soon:not([aria-pressed="true"]){outline:1.5px dashed color-mix(in srgb,var(--rare) 70%,transparent);outline-offset:-3px}
-/* the direction: a round blue button whose arrows turn half round when tapped, "Kanji → English" on a tab at the blue row's top edge */
-.wayrow.blue{position:relative;margin-top:7px} /* (the blue row always has the direction button) */
-.sm-dir{appearance:none;flex:0 0 46px;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:2px 3px;border:0;background:transparent;color:var(--ink);text-align:center;cursor:pointer;--dk:color-mix(in srgb,var(--rare) 72%,#15283A)}
-.sm-disc{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--dk);color:#fff;box-shadow:0 2px 5px rgba(0,0,0,.28);transition:transform .38s cubic-bezier(.3,1.4,.5,1)}
-.sm-disc svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
+/* a round in a script too: its ways in one blue block of two lines, the language on a dark tab at its top right (a
+   round button whose arrows turn half round when tapped, then Kanji or English) */
+.wayrow.blue{position:relative;margin-top:24px;row-gap:2px;border-top-right-radius:0;--dk:color-mix(in srgb,var(--rare) 72%,#15283A)}
+.wayrow .brk{flex:0 0 100%;height:0}
+.sm-dir{appearance:none;position:absolute;right:0;top:-24px;z-index:2;display:flex;align-items:center;height:24px;padding:0 10px 0 3px;border:0;border-radius:10px 10px 0 0;background:var(--dk);color:#fff;cursor:pointer}
+.sm-disc{position:relative;z-index:3;flex:none;display:grid;place-items:center;width:22px;height:22px;border:2px solid var(--panel);border-radius:50%;box-sizing:border-box;background:var(--dk);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .38s cubic-bezier(.3,1.4,.5,1)}
+.sm-disc svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 .sm-dir:hover .sm-disc{transform:rotate(-35deg)}
 .sm-dir.go .sm-disc{transform:rotate(180deg)}
-.sm-dtxt{position:absolute;top:-8px;left:6px;z-index:2;padding:0 7px;border-radius:999px;background:var(--dk);color:#fff;font:700 .6rem/15px var(--sans);white-space:nowrap;transition:opacity .2s}
+.sm-dtxt{padding-left:6px;font:700 .68rem/1 var(--sans);white-space:nowrap;transition:opacity .2s}
 .sm-dir.go .sm-dtxt{opacity:.25}
 
 /* the options: each a box to tick */
@@ -193,6 +195,14 @@
   .app:not(.playing){position:relative;grid-template-rows:minmax(0,1fr)}
   .app:not(.playing) .panel{position:absolute;left:8px;right:8px;bottom:8px;z-index:1150;max-height:86%;padding:12px 14px 14px;gap:8px;border:0;border-radius:16px;background:var(--panel);box-shadow:0 8px 26px rgba(0,0,0,.25)}
   .app:not(.playing) .pickhead{display:flex}
+  .pickhead b{min-width:0;padding-bottom:.12em;margin-bottom:-.12em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pickhead .n,.pickhead .caret{flex:none}
+  /* (with the language's tab: the ▴ after the count; the list folded, the title down beside the tab, on the blue
+     block's top edge, --tabw its width) */
+  .panel:has(#ways .sm-dir) .pickhead .caret{margin-left:0}
+  .app:not(.playing) .panel.folded:has(#ways .sm-dir) .startbar{margin-top:-2px} /* (6 px between the title and the block) */
+  .app:not(.playing) .panel.folded:has(#ways .sm-dir) #ways .wayrow.blue{margin-top:0}
+  .app:not(.playing) .panel.folded:has(#ways .sm-dir) .pickhead{width:calc(100% - var(--tabw,110px) - 8px)}
   .app:not(.playing) #setup{max-height:46vh;max-height:46dvh;overflow:auto}
   .panel.folded #setup{display:none}
   .app:not(.playing) .startbar{position:static;margin:0;padding:0;gap:8px;border:0;background:none}
