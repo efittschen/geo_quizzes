@@ -39,6 +39,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { readMap } from '../../lib/quiz-files.mjs';
+import { iconOf } from '../quiz-icons/icons.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 // [name, what its sounds follow, its tab after Letters and Words: the page that tells its countries or regions apart]
@@ -230,7 +231,7 @@ let list = fs.readFileSync(LIST, 'utf8')
   .replace(/,\n    \{\n      "id": "[^"]+",\n      "scope": "Languages",\n      "area": "[^"]+",[\s\S]*?\n    \}/g, '') // (its own: each is in a script's folder; a language quiz without one is someone else's and stays)
   .replace(/,\n    \{\n      "id": "[^"]+",\n      "country": "\d+",\n      "title": "Reading(?: · [^"]+)?",[\s\S]*?\n    \}/g, '') // (the Reading pages of before 2026-10-21, now the Type mode)
   .replace(new RegExp(`,\\n    \\{\\n      "id": "(?:${READING.filter(r => r[3]).map(r => r[3]).join('|')})",[\\s\\S]*?\\n    \\}`, 'g'), ''); // (India's other scripts' city quizzes, removed on 2026-10-23)
-const entry = (id, where, title, levels) => `    {\n      "id": "${id}",\n${where}      "title": "${title}",\n      "levels": ${levels},\n      "url": "quizzes/${id}/index.html"\n    }`;
+const entry = (id, where, title, levels) => `    {\n      "id": "${id}",\n${where}      "title": "${title}",\n      "icon": "${iconOf({ title, scope: 'Languages' })}",\n      "levels": ${levels},\n      "url": "quizzes/${id}/index.html"\n    }`;
 const atEnd = text => { list = list.replace(/\n  \]\n\}\n$/, `,\n${text}\n  ]\n}\n`); };
 
 /* ---------- the scripts ---------- */

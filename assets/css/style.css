@@ -115,10 +115,16 @@ main > .map-wrap:first-child{margin-top:24px}
 .coverage-box header b{font:700 1.25rem/1.1 var(--cond)}
 .coverage-box iframe{flex:1;min-height:0;width:100%;border:0}
 .quiz-cards{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
-.quiz-card{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:12px;height:100%;padding:11px 18px;border:1.5px solid var(--line);border-radius:var(--radius);color:var(--ink);text-decoration:none}
+.quiz-card{display:grid;grid-template-columns:auto 1fr auto;align-items:center;column-gap:12px;height:100%;padding:11px 18px;border:1.5px solid var(--line);border-radius:var(--radius);color:var(--ink);text-decoration:none}
 .quiz-card:hover{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 5%,transparent)}
-.quiz-card strong{display:block;font:700 1.4rem/1.1 var(--cond)}
-.quiz-card .desc{display:block;grid-column:1;margin-top:2px;color:var(--muted);font-size:.92rem}
+.quiz-card strong{display:block;grid-column:2;font:700 1.4rem/1.1 var(--cond)}
+/* the quiz type's picture (assets/js/quiz-icons.js), left of the title */
+.quiz-card .qi{grid-column:1;grid-row:1 / span 2;width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.quiz-card .qi .f{fill:color-mix(in srgb,currentColor 16%,transparent)}
+.quiz-card .qi .s,.quiz-card .qi .d{fill:currentColor}
+.quiz-card .qi .b{stroke-width:2.6}
+.quiz-card.inside .qi{width:20px;height:20px}
+.quiz-card .desc{display:block;grid-column:2;margin-top:2px;color:var(--muted);font-size:.92rem}
 /* the groups of a country's quizzes (basics, codes, extra): a heading across the list before each */
 .quiz-cards .group-t{grid-column:1 / -1;margin:8px 0 -2px;font:600 .78rem/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .quiz-cards .group-t:first-child{margin-top:0}
@@ -131,7 +137,7 @@ main > .map-wrap:first-child{margin-top:24px}
 /* a suite's quizzes are numbered: they are meant to be played in order */
 .quiz-cards.ordered{counter-reset:quiz}
 .quiz-cards.ordered .quiz-card strong::before{counter-increment:quiz;content:counter(quiz);display:inline-block;min-width:1.3em;color:var(--muted);font-weight:600}
-.quiz-card .card-rating{grid-column:2;grid-row:1 / span 2;display:flex;align-items:center;gap:8px;font-size:.85rem}
+.quiz-card .card-rating{grid-column:3;grid-row:1 / span 2;display:flex;align-items:center;gap:8px;font-size:.85rem}
 .empty{padding:32px 20px;text-align:center;border:1.5px dashed var(--line);border-radius:var(--radius);color:var(--muted)}
 
 /* Review: the buttons that start one ("Due 12", "All 80"), its result, and the review page's stack and timer */

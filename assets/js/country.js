@@ -83,6 +83,7 @@ function renderQuizzes(quizzes, placeOf, inside = () => [], group = null) {
     const a = document.createElement("a");
     a.className = "quiz-card";
     a.href = quiz.url;
+    a.insertAdjacentHTML("beforeend", quizIcon(quiz.icon));
     const title = document.createElement("strong");
     const place = placeOf && !quiz.scope ? placeOf(quiz) : "";
     title.textContent = place || quiz.title;
@@ -107,6 +108,7 @@ function renderQuizzes(quizzes, placeOf, inside = () => [], group = null) {
       const b = document.createElement("a");
       b.className = "quiz-card inside";
       b.href = more.url;
+      b.insertAdjacentHTML("beforeend", quizIcon(more.icon));
       const name = document.createElement("strong");
       name.textContent = more.title;
       const stars = starsEl(quizLevels(more));

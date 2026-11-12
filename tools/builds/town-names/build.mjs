@@ -65,7 +65,7 @@ for (const s of slugs) {
   writeTownQuiz(s, N, C, { title, code, back, borders, places: PLACES[s] || 'GeoNames (CC BY 4.0)' });
   // One star per level its rounds reach: the round of all parts is the largest.
   const levels = 1 + [10, 30, 60, Infinity].findIndex(max => N.parts.length < max);
-  const entry = `    {\n      "id": "${id}",\n      "country": "${code}",\n      "title": "Town Names",\n      "role": "names",\n      "levels": ${levels},\n      "url": "quizzes/${id}/index.html"\n    }`;
+  const entry = `    {\n      "id": "${id}",\n      "country": "${code}",\n      "title": "Town Names",\n      "icon": "names",\n      "role": "names",\n      "levels": ${levels},\n      "url": "quizzes/${id}/index.html"\n    }`;
   const mine = new RegExp(`    \\{\\n      "id": "${id}",[\\s\\S]*?\\n    \\}`), after = new RegExp(`(      "id": "${s}-cities",[\\s\\S]*?\\n    \\})`);
   if (mine.test(list)) list = list.replace(mine, entry);
   else if (after.test(list)) list = list.replace(after, `$1,\n${entry}`);
